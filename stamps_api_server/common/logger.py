@@ -10,7 +10,7 @@ class Logger(ABC):
 
         # If no logger name is passed, use the class name
         if not log_name:
-            log_name = self.__class__.__name__
+            log_name = "stamps_api_server.log"
 
         # Create the logging configuration
         # It defines the formatters, handlers, and loggers for the application
