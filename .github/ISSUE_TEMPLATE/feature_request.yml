@@ -3,7 +3,7 @@ description: Suggest new project functionality
 title: "[Feature] - "
 labels: [enhancement]
 assignees: []
-projects: "github/1"
+projects: [github/1]
 
 body:
   - type: markdown
