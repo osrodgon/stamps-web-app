@@ -2,9 +2,15 @@ asgiref==3.9.1
 Django==5.2.5
 django-rest-framework==0.1.0
 djangorestframework==3.16.1
+drf-yasg==1.21.10
 gitdb==4.0.12
 GitPython==3.1.41
+inflection==0.5.1
+packaging==25.0
 pip-autoremove==0.10.0
+pytz==2025.2
+PyYAML==6.0.2
 setuptools==75.6.0
 smmap==5.0.2
 sqlparse==0.5.3
+uritemplate==4.2.0
