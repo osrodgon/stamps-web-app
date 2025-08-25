@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load variables from environment
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,10 +41,22 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "stamps_api",
-    "issues_api",
-    "years_api"
+    'rest_framework',
+    'drf_yasg',         # For Swagger documentation
+    "stamps_api",       # All APIs for the stamp table
+    "issues_api",       # All APIs for the table issue
+    "years_api"         # All APIs for the table year
 ]
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
+            'type': 'basic'
+        }
+    },
+    'DEFAULT_MODEL_RENDERING': 'example',
+}
+SWAGGER_USE_COMPAT_RENDERERS = False
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
