@@ -23,7 +23,8 @@
 				"rangav.vscode-thunder-client",
 				"gnramsay.create-python-module",
 				"kevinrose.vsc-python-indent",
-				"shamanu4.django-intellisense"
+				"shamanu4.django-intellisense",
+				"njpwerner.autodocstring"
 			]
 		}
 	},

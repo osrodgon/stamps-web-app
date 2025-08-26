@@ -6,6 +6,6 @@ from .views.years_view import YearsView
 base_url = ""
 
 urlpatterns = [
-    path(base_url, YearsView.as_view(), name="beneficiaries"),
-    path(base_url + '<int:id>', YearsByIdView.as_view(), name="beneficiary"),
+    path(base_url, YearsView.as_view(), name="years"),
+    path(base_url + '<int:pk>', YearsByIdView.as_view(), name="year"),
 ]

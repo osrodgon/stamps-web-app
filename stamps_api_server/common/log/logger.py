@@ -7,10 +7,11 @@ import inspect
 
 class Logger(ABC):
     def init_log(self, log_name = None):
+        file_name = "stamps_api_server.log"
 
         # If no logger name is passed, use the class name
         if not log_name:
-            log_name = "stamps_api_server.log"
+            log_name = self.__class__.__name__
 
         # Create the logging configuration
         # It defines the formatters, handlers, and loggers for the application
@@ -26,7 +27,7 @@ class Logger(ABC):
                 'file': {
                     'level': os.getenv("LOG_LEVEL"),
                     'class': 'logging.FileHandler',
-                    'filename': log_name,
+                    'filename': file_name,
                     'formatter': 'default',
                     'encoding': 'utf-8',
                 },
