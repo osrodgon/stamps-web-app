@@ -1,12 +1,14 @@
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+
 from common.log.logger import Logger
 from common.serializers.generic_response import GenericResponse
 from years_api.models import Year
 from years_api.serializers.year_response_serializer import YearResponseSerializer
 from years_api.serializers.year_request_serializer import YearRequestSerializer
-from rest_framework.views import APIView
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework import status
 
 
 class YearsByIdView(Logger, APIView):
@@ -35,7 +37,15 @@ class YearsByIdView(Logger, APIView):
         except Exception as e:
             self.warning(f"A unknown error has occured: {e.message}")
             return None
-        
+    
+    @swagger_auto_schema(
+        tags=['Years'],
+        operation_description="Gets a single year",
+        responses={
+            200: YearResponseSerializer(many=False),
+            204: GenericResponse().serializer
+        }
+    )       
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         """GET opration for a single entry
 
@@ -65,6 +75,15 @@ class YearsByIdView(Logger, APIView):
             status=status.HTTP_200_OK
             )
     
+    @swagger_auto_schema(
+        tags=['Years'],
+        operation_description="Updates a single year",
+        responses={
+            200: YearResponseSerializer(many=False),
+            204: GenericResponse().serializer,
+            404: YearRequestSerializer(many=False)
+        }
+    )  
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
         """PUT operation (update) for a single entry
 
@@ -99,6 +118,14 @@ class YearsByIdView(Logger, APIView):
             status=status.HTTP_400_BAD_REQUEST
             )
     
+    @swagger_auto_schema(
+        tags=['Years'],
+        operation_description="Deletes a single year",
+        responses={
+            200: GenericResponse().serializer,
+            204: GenericResponse().serializer
+        }
+    )  
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
         """DELETE year from database
 
