@@ -7,6 +7,7 @@ import inspect
 
 class Logger(ABC):
     def init_log(self, log_name = None):
+        file_name = "stamps_api_server.log"
 
         # If no logger name is passed, use the class name
         if not log_name:
@@ -26,7 +27,7 @@ class Logger(ABC):
                 'file': {
                     'level': os.getenv("LOG_LEVEL"),
                     'class': 'logging.FileHandler',
-                    'filename': log_name,
+                    'filename': file_name,
                     'formatter': 'default',
                     'encoding': 'utf-8',
                 },
