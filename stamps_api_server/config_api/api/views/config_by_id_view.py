@@ -12,37 +12,22 @@ from config_api.api.serializers.config_response_serializer import ConfigResponse
 from config_api.models import Config
 
 
-class ConfigByPropertyView(Logger, APIView):
-    def __get_config__(self, property: str) -> Config:
+class ConfigByIdView(Logger, APIView):
+    def __get_config__(self, pk: int) -> Config:
         try:
-            return Config.objects.get(property=property)
+            return Config.objects.get(pk=pk)
         except Config.DoesNotExist:
             return None
         except Exception as e:
             self.warning(f"An unknown error has occurred: {str(e)}")
             return None
         
-    def __validate_payload__(self, payload: dict):
-        self.debug(f"Validating payload: {payload}")
-        
-        message = None
-        if payload.get("property") is not None:
-            message = "Field 'property' is not allowed."
-            self.debug(message)
-            return message
-        
-        if payload.get("value") is None:
-            message = "Field 'value' is required."
-            self.debug(message)
-            return message
-        
-        return message
 
-    def get(self, request: Request, property: str, *args, **kwargs) -> Response:
-        self.debug(f"Getting config entry for property: {property})")
-        config = self.__get_config__(property)
+    def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.debug(f"Getting config entry for id: {pk})")
+        config = self.__get_config__(pk)
         if config is None:
-            message = f"Config entry for property: {property} not found"
+            message = f"Config entry for id: {pk} not found"
             self.debug(message)
             return Response(
                 data=GenericResponse(message).data, 
@@ -56,17 +41,10 @@ class ConfigByPropertyView(Logger, APIView):
             status=status.HTTP_200_OK
             )
     
-    def put(self, request: Request, property: str, *args, **kwargs) -> Response:
-        self.debug(f"Updating config entry for property: {property})")
-        
-        message = self.__validate_payload__(request.data)
-        if message is not None:
-            return Response(
-                data=GenericResponse(message).data,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        config = self.__get_config__(property)
+    def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.debug(f"Updating config entry for id: {pk})")
+    
+        config = self.__get_config__(pk)
         
         if config is None:
             message = "Config entry not found"
