@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "stamps_api_server"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}

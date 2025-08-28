@@ -35,7 +35,7 @@ class YearsByIdView(Logger, APIView):
             self.warning(f"Year with id {pk} does not exist.")
             return None
         except Exception as e:
-            self.warning(f"A unknown error has occured: {e.message}")
+            self.warning(f"An unknown error has occurred: {str(e)}")
             return None
     
     @swagger_auto_schema(
@@ -43,7 +43,7 @@ class YearsByIdView(Logger, APIView):
         operation_description="Gets a single year",
         responses={
             200: YearResponseSerializer(many=False),
-            204: GenericResponse().serializer
+            404: GenericResponse().serializer
         }
     )       
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -55,7 +55,7 @@ class YearsByIdView(Logger, APIView):
 
         Returns:
             Response:   200. The year
-                        204. Year not found
+                        404. Year not found
         """
         self.debug(f"GET year with id: {pk}")
         year = self.__get_year__(pk)
@@ -65,7 +65,7 @@ class YearsByIdView(Logger, APIView):
             self.debug(message)
             return Response(
                 data=GenericResponse(message).data, 
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_404_NOT_FOUND
                 )
         
         response = YearResponseSerializer(year)
@@ -80,8 +80,8 @@ class YearsByIdView(Logger, APIView):
         operation_description="Updates a single year",
         responses={
             200: YearResponseSerializer(many=False),
-            204: GenericResponse().serializer,
-            404: YearRequestSerializer(many=False)
+            404: GenericResponse().serializer,
+            400: YearRequestSerializer(many=False)
         }
     )  
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -93,8 +93,8 @@ class YearsByIdView(Logger, APIView):
 
         Returns:
             Response:   200. Year updated
-                        204. Year not found
-                        404. Bad request (i.e: wrong payload)
+                        404. Year not found
+                        400. Bad request (i.e: wrong payload)
         """
         year = self.__get_year__(pk)
         if year is None:
@@ -102,7 +102,7 @@ class YearsByIdView(Logger, APIView):
             self.debug(message)
             return Response(
                 data=GenericResponse(message).data,
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_404_NOT_FOUND
                 )
         
         updated_year = YearRequestSerializer(data=request.data, instance=year, partial=False)
@@ -123,7 +123,7 @@ class YearsByIdView(Logger, APIView):
         operation_description="Deletes a single year",
         responses={
             200: GenericResponse().serializer,
-            204: GenericResponse().serializer
+            404: GenericResponse().serializer
         }
     )  
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -135,7 +135,7 @@ class YearsByIdView(Logger, APIView):
 
         Returns:
             Response:   200. Year deleted
-                        204. Year not found
+                        404. Year not found
         """
         year = self.__get_year__(pk)
         if year is None:
@@ -143,7 +143,7 @@ class YearsByIdView(Logger, APIView):
             self.debug(message)
             return Response(
                 GenericResponse(message).data, 
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_404_NOT_FOUND
                 )
         
         year.delete()
