@@ -36,6 +36,7 @@ class YearsView(Logger, APIView):
         self.debug("Getting all years")
         years = Year.objects.all()
         response = YearResponseSerializer(years, many=True)
+        
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK

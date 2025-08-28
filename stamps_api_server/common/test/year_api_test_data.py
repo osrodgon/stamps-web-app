@@ -1,7 +1,6 @@
 import pytest
 from years_api.models import Year
 
-# Mock Year table wit some data
 @pytest.fixture
 def years_table() -> list[Year]:
     return[

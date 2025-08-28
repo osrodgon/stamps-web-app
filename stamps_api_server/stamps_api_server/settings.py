@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'rest_framework',
     'drf_yasg',         # For Swagger documentation
+    "config_api",       # All APIs for the config table
     "stamps_api",       # All APIs for the stamp table
     "issues_api",       # All APIs for the table issue
     "years_api"         # All APIs for the table year
