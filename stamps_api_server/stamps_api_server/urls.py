@@ -42,6 +42,7 @@ urlpatterns = [
     path(os.getenv('SERVER_URL_V1'), include(
         [
             path(os.getenv('YEARS_ENDPOINT'), include('years_api.urls')),
+            path(os.getenv('CONFIG_ENDPOINT'), include('config_api.urls')),
             path(os.getenv('SWAGGER_ENDPOINT'),schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
         ]
     ))

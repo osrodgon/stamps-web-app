@@ -1,0 +1,11 @@
+from django.urls import path
+
+from config_api.api.views.config_by_property_view import ConfigByPropertyView
+from config_api.api.views.config_view import ConfigView
+
+base_url = ""
+
+urlpatterns = [
+    path(base_url, ConfigView.as_view(), name="config_all"),
+    path(base_url + '<str:property>', ConfigByPropertyView.as_view(), name="config")
+]
