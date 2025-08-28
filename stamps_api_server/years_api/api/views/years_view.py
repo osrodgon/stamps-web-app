@@ -5,7 +5,6 @@ from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 
 from common.log.logger import Logger
-from common.api.serializers.generic_response import GenericResponse
 from years_api.models import Year
 from years_api.api.serializers.year_response_serializer import YearResponseSerializer
 from years_api.api.serializers.year_request_serializer import YearRequestSerializer
@@ -59,7 +58,7 @@ class YearsView(Logger, APIView):
 
         Returns:
             Response:   201. Record created
-                        404. Bad request
+                        400. Bad request
         """
         self.debug(f"Create a new year: {request.data}")
         year = YearRequestSerializer(data = request.data)

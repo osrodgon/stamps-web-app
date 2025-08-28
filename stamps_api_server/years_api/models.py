@@ -7,4 +7,4 @@ class Year(models.Model):
         verbose_name_plural = "Years"
 
     def __str__(self):
-        return self.year
+        return str(self.year)

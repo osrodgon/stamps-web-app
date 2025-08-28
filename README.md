@@ -1,14 +1,14 @@
-# stamps-web-app
-This project is an application to store a stamps collection. It has two differentiated parts:
+# Stamps Collection Web App
+This project is an application to store and stamps collection. It has two differentiated parts:
 
-- The backend. 
-- The frontend.
+- The backend (API REST interface). 
+- The frontend (User's interfaces).
 
 ## Backend
-The backend is made with the Django framework. It provides an API to access the stamps collection stored in the database. For each one of the entities in the database, a django app will be created. Each one of the apps will implement the REST operations that are meaningful for the entity.
+The backend is made with the Django framework. It provides an API to access the stamps collection stored in the database. For each one of the entities in the database, a django app will be created to handle the REST interface for that entity.
 
 ### The database model
-The following model will be used for the stamps collection:
+The following model will be used for the stamps collection (made with ```dbdiagram.io```):
 
 ![alt text](stamps_api_server/resources/stamps-db-model.png)
 
@@ -70,8 +70,6 @@ Provides system-level configuration settings or customizable metadata.
 #### **Overall Structure and Relationships**
 - A **year** contains many **issues**.
 - An **issue** contains many **stamps**, and is associated with a **stamp_type** and a **location**.
-- An **issue** contains one **stamp_type**.
-- An **issue** contains one **location**.
 
 ## Frontend
 TBD. 
