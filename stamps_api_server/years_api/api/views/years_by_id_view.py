@@ -1,33 +1,21 @@
+from ast import Str
+from turtle import st
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 from common.log.logger import Logger
-from common.api.serializers.generic_response import GenericResponse
+from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
+from common.core.schemas import standardized_response
 from years_api.models import Year
 from years_api.api.serializers.year_response_serializer import YearResponseSerializer
 from years_api.api.serializers.year_request_serializer import YearRequestSerializer
 
 
 class YearsByIdView(Logger, APIView):
-    """Handles REST operation for single entries in the Year table
-
-    Args:
-        Logger: Abstract class for logging
-        APIView: Abstract class
-    """
-    
     def __get_year__(self, pk: int) -> Year:
-        """Gets a single record from the year table or None if it does not exist
-
-        Args:
-            pk (int): Id of the year to retrieve from the table
-
-        Returns:
-            Year: A record from the table
-        """
         try:
             self.debug(f"Getting a year from database with id: {pk}")
             return Year.objects.get(pk = pk)
@@ -38,25 +26,30 @@ class YearsByIdView(Logger, APIView):
             self.warning(f"An unknown error has occurred: {str(e)}")
             return None
     
-    @swagger_auto_schema(
+    # @swagger_auto_schema(
+    #     tags=['Years'],
+    #     operation_description="Gets a single year",
+    #     responses={
+    #         200: YearResponseSerializer(many=False),
+    #         404: GenericResponse().serializer
+    #     }
+    # )
+    @extend_schema(
         tags=['Years'],
-        operation_description="Gets a single year",
+        summary="Gets a single year",
+        description="Returns a single year from the database",
         responses={
-            200: YearResponseSerializer(many=False),
-            404: GenericResponse().serializer
+            200: standardized_response(
+                YearResponseSerializer,
+                description="Year information retrieved successfully from the database"
+                ),
+            404: standardized_response(
+                None, 
+                description="Year not found in the database"
+                ) 
         }
-    )       
+    )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        """GET opration for a single entry
-
-        Args:
-            request (Request): Request data
-            pk (int): Id of the year to be retrieved
-
-        Returns:
-            Response:   200. The year
-                        404. Year not found
-        """
         self.debug(f"GET year with id: {pk}")
         year = self.__get_year__(pk)
         
@@ -75,27 +68,26 @@ class YearsByIdView(Logger, APIView):
             status=status.HTTP_200_OK
             )
     
-    @swagger_auto_schema(
+    @extend_schema(
         tags=['Years'],
-        operation_description="Updates a single year",
+        summary="Updates a single year",
+        description="Updates a single year in the database",
         responses={
-            200: YearResponseSerializer(many=False),
-            404: GenericResponse().serializer,
-            400: YearRequestSerializer(many=False)
+            200: standardized_response(
+                YearResponseSerializer,
+                description="Year successfully updated in the database"
+                ),
+            404: standardized_response(
+                None, 
+                description="Year not found in the database"
+                ),
+            400: standardized_response(
+                None, 
+                description="Payload validation error"
+                )   
         }
-    )  
+    )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        """PUT operation (update) for a single entry
-
-        Args:
-            request (Request): Request payload
-            pk (int): Id of the year to be updated
-
-        Returns:
-            Response:   200. Year updated
-                        404. Year not found
-                        400. Bad request (i.e: wrong payload)
-        """
         year = self.__get_year__(pk)
         if year is None:
             message = f"Cannot update year with id: {pk}. Not found in the database"
@@ -107,9 +99,9 @@ class YearsByIdView(Logger, APIView):
         
         updated_year = YearRequestSerializer(data=request.data, instance=year, partial=False)
         if updated_year.is_valid():
-            updated_year.save()
+            instace=updated_year.save()
             return Response(
-                data=updated_year.data, 
+                data=YearResponseSerializer(instace).data, 
                 status=status.HTTP_200_OK
                 )
         
@@ -118,25 +110,22 @@ class YearsByIdView(Logger, APIView):
             status=status.HTTP_400_BAD_REQUEST
             )
     
-    @swagger_auto_schema(
+    @extend_schema(
         tags=['Years'],
-        operation_description="Deletes a single year",
+        summary="Deletes a single year",
+        description="Deletes a single year in the database",
         responses={
-            200: GenericResponse().serializer,
-            404: GenericResponse().serializer
+            200: standardized_response(
+                GenericResponseSerializer,
+                description="Year successfully deleted from the database"
+                ),
+            404: standardized_response(
+                None,
+                description="Year not found in the database"
+                )
         }
-    )  
+    )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        """DELETE year from database
-
-        Args:
-            request (Request): Request data
-            pk (int): Id of the year to be deleted
-
-        Returns:
-            Response:   200. Year deleted
-                        404. Year not found
-        """
         year = self.__get_year__(pk)
         if year is None:
             message=f"Cannot delete year with id: {pk}. Not found in the database"

@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
 class GenericResponseSerializer(serializers.Serializer):
-    message = serializers.CharField()
+    information = serializers.CharField()
     
 class GenericResponse():
-    def __init__(self, message=None):
-        self.message = message
+    def __init__(self, information=None, many=False):
+        self.information = information
+        self.many = many
         
     @property
     def data(self):
