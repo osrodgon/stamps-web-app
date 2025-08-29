@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from years_api.models import Year
@@ -17,7 +18,11 @@ class YearsView(Logger, APIView):
         summary="List all years",
         description="Returns a list of all years in the database",
         responses={
-            200: standardized_response(YearResponseSerializer, many=True)
+            200: standardized_response(
+                YearResponseSerializer, 
+                description="Years retrieved successfully from the database",
+                many=True
+                )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -40,7 +45,8 @@ class YearsView(Logger, APIView):
                 description="Year created successfully"
                 ),
             400: standardized_response(
-                None,
+                GenericResponseSerializer,
+                success=False,
                 description="Payload validation error"
                 )
         }
@@ -58,6 +64,6 @@ class YearsView(Logger, APIView):
         
         self.debug(f"Payload validaton error: {year.errors}")
         return Response(
-            data=year.errors, 
+            data=GenericResponseSerializer(GenericResponse(year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
             )

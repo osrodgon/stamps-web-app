@@ -1,5 +1,3 @@
-from ast import Str
-from turtle import st
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -44,7 +42,8 @@ class YearsByIdView(Logger, APIView):
                 description="Year information retrieved successfully from the database"
                 ),
             404: standardized_response(
-                None, 
+                GenericResponseSerializer,
+                success=False,
                 description="Year not found in the database"
                 ) 
         }
@@ -57,7 +56,7 @@ class YearsByIdView(Logger, APIView):
             message = f"Year with id: {pk} not found"
             self.debug(message)
             return Response(
-                data=GenericResponse(message).data, 
+                data=GenericResponse(message).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
@@ -78,11 +77,13 @@ class YearsByIdView(Logger, APIView):
                 description="Year successfully updated in the database"
                 ),
             404: standardized_response(
-                None, 
+                GenericResponseSerializer, 
+                success=False,
                 description="Year not found in the database"
                 ),
             400: standardized_response(
-                None, 
+                GenericResponseSerializer,
+                success=False,
                 description="Payload validation error"
                 )   
         }
@@ -106,7 +107,7 @@ class YearsByIdView(Logger, APIView):
                 )
         
         return Response(
-            data=updated_year.errors, 
+            data=GenericResponseSerializer(GenericResponse(updated_year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
             )
     
@@ -120,7 +121,8 @@ class YearsByIdView(Logger, APIView):
                 description="Year successfully deleted from the database"
                 ),
             404: standardized_response(
-                None,
+                GenericResponseSerializer,
+                success=False,
                 description="Year not found in the database"
                 )
         }

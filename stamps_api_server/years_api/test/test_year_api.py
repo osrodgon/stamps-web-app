@@ -1,3 +1,5 @@
+from codecs import ascii_encode
+import re
 from unittest.mock import patch
 import pytest
 import os
@@ -18,27 +20,40 @@ from common.test.year_api_test_data import (
 class TestYearAPI:
     def test_get_years_returns_data_200_ok(self, api_client, years_table):
         response = api_client.get(self.get_url())
-        
+          
         original = YearResponseSerializer(years_table,many=True)
-        assert len(response.data) == 2
+        assert len(response.json()['data']) == 2
+        assert response.json()['data'] == original.data
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
-        assert response.data == original.data
     
     def test_get_years_returns_no_data_200_ok(self, api_client):
         response = api_client.get(self.get_url())
         
-        assert len(response.data) == 0
+        assert len(response.json()['data']) == 0
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
     def test_post_year_creates_record_201_created(self, api_client, year_post_payload_ok):
         response = api_client.post(self.get_url(), year_post_payload_ok)
         
-        assert response.data["year"] == year_post_payload_ok["year"]
+        assert response.json()['data']['year'] == year_post_payload_ok["year"]
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Created successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
     
     def test_post_year_creates_record_400_bad_request(self, api_client, year_post_payload_not_ok):
         response = api_client.post(self.get_url(), year_post_payload_not_ok)
         
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
     def test_get_year_returns_data_200_ok(self, api_client,years_table):
@@ -47,43 +62,67 @@ class TestYearAPI:
         year = Year.objects.get(pk=1)
         original = YearResponseSerializer(year)
         
-        assert response.data == original.data
+        assert response.json()['data']['year'] == original.data['year']
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
+        
     
     def test_get_year_returns_no_data_404_not_found(self, api_client):
         response = api_client.get(self.get_url() + "1")
         
-        assert response.data['message'] == "Year with id: 1 not found"
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_year_updates_record_200_ok(self, api_client, years_table, year_put_payload_ok):
         response = api_client.put(self.get_url() + "1", year_put_payload_ok)
         
-        assert response.data["year"] == year_put_payload_ok["year"]
+        assert response.json()['data']['year'] == year_put_payload_ok["year"]
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
     
     def test_put_year_updates_record_400_bad_request(self, api_client, years_table, year_put_payload_not_ok):
         response = api_client.put(self.get_url() + "1", year_put_payload_not_ok)
         
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
     def test_put_year_updates_record_400_not_found(self, api_client, year_put_payload_ok):
         response = api_client.put(self.get_url() + "1", year_put_payload_ok)
         
-        assert response.data['message'] == "Cannot update year with id: 1. Not found in the database"
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_404_NOT_FOUND
     
     def test_delete_year_deletes_record_200_ok(self, api_client, years_table):
         response = api_client.delete(self.get_url() + "1")
         
         
-        assert response.data['message'] == "Year with id: 1 deleted"
+        assert response.json()['data']['information'] == "Year with id: 1 deleted"
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
     def test_delete_year_deletes_record_404_not_found(self, api_client):
         response = api_client.delete(self.get_url() + "1")
         
-        assert response.data['message'] == "Cannot delete year with id: 1. Not found in the database"
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('years_api.api.views.years_by_id_view.Year.objects.get')
@@ -91,11 +130,16 @@ class TestYearAPI:
         mock_get.side_effect = Exception("Database connection lost")
         response = api_client.delete(self.get_url() + "1")
                 
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_year_model_str_representation(self):
         test_year_value = 2024
         year = Year.objects.create(year=test_year_value)
+        
         assert str(year) == str(test_year_value)
         
     def get_url(self):
