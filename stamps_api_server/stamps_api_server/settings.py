@@ -42,22 +42,44 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
-    'drf_yasg',         # For Swagger documentation
+    'drf_spectacular',  # For Swagger documentation
     "config_api",       # All APIs for the config table
     "stamps_api",       # All APIs for the stamp table
     "issues_api",       # All APIs for the table issue
     "years_api"         # All APIs for the table year
 ]
 
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'Basic': {
-            'type': 'basic'
-        }
-    },
-    'DEFAULT_MODEL_RENDERING': 'example',
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_RENDERER_CLASSES": (
+        "common.core.renderers.StandardJSONRenderer",
+    ),
+    "EXCEPTION_HANDLER": "common.core.exceptions.custom_exception_handler",
 }
-SWAGGER_USE_COMPAT_RENDERERS = False
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Stamps App API",
+    "DESCRIPTION": "API documentation for the Stamps App.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,  # prevents schema from being included twice
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
+    # Future-friendly:
+    "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
+    "TAGS": [
+        {
+            "name": "Years",
+            "description": "Endpoints for managing year entries."
+        },
+        {
+            "name": "Config",
+            "description": "Endpoints for managing system configuration settings."
+        },
+    ],
+    # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
+    "SWAGGER_UI_SETTINGS": {
+        "defaultModelsExpandDepth": -1,
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

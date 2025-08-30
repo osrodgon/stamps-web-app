@@ -2,39 +2,33 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
+from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
+from common.core.schemas import standardized_response
 from years_api.models import Year
 from years_api.api.serializers.year_response_serializer import YearResponseSerializer
 from years_api.api.serializers.year_request_serializer import YearRequestSerializer
 
 
 class YearsView(Logger, APIView):
-    """Implements REST methods for the year table (all records)
-
-    Args:
-        Logger: Abstract class for logging
-        APIView: Abstract class
-    """
-    @swagger_auto_schema(
+    @extend_schema(
         tags=['Years'],
-        operation_description="List all years",
+        summary="List All Years",
+        description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
         responses={
-            200: YearResponseSerializer(many = True)
+            200: standardized_response(
+                YearResponseSerializer, 
+                description="A list of years was successfully retrieved.",
+                many=True
+                )
         }
-    )    
+    )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        """Gets all records from the year table
-
-        Args:
-            request (Request): Request data
-
-        Returns:
-            Response:   200. List of records
-        """
-        self.debug("Getting all years")
+        self.debug("Attempting to retrieve all years.")
         years = Year.objects.all()
+        self.debug(f"Found {len(years)} year entries.")
         response = YearResponseSerializer(years, many=True)
         
         return Response(
@@ -42,37 +36,37 @@ class YearsView(Logger, APIView):
             status=status.HTTP_200_OK
             )
     
-    @swagger_auto_schema(
+    @extend_schema(
         tags=['Years'],
-        operation_description="Creates a year",
-        request_body=YearRequestSerializer(many=False),
+        summary="Create a New Year",
+        description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",
+        request=YearRequestSerializer,
         responses={
-            200: YearRequestSerializer(many=False),
-            400: YearRequestSerializer(many=False)
+            201: standardized_response(
+                YearResponseSerializer,
+                description="The year was created successfully."
+                ),
+            400: standardized_response(
+                GenericResponseSerializer,
+                success=False,
+                description="The request payload was invalid."
+                )
         }
-    )   
+    )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        """Creates an entry in the year table
-
-        Args:
-            request (Request): Request data (payload)
-
-        Returns:
-            Response:   201. Record created
-                        400. Bad request
-        """
-        self.debug(f"Create a new year: {request.data}")
+        self.debug(f"Attempting to create a new year with payload: {request.data}")
         year = YearRequestSerializer(data = request.data)
         
         if year.is_valid():
-            year.save()
+            instance = year.save()
+            self.info(f"Successfully created year with id: {instance.id}")
             return Response(
-                data=year.data, 
+                data=YearResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.debug(f"Payload validaton error: {year.errors}")
+        self.warning(f"Payload validation failed for new year entry: {year.errors}")
         return Response(
-            data=year.errors, 
+            data=GenericResponseSerializer(GenericResponse(year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
             )

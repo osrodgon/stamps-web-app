@@ -20,11 +20,12 @@
 			"extensions": [
 				"tal7aouy.indent-colorizer",
 				"qwtel.sqlite-viewer",
-				"rangav.vscode-thunder-client",
+				"rapidapi.vscode-rapidapi-client",
 				"gnramsay.create-python-module",
 				"kevinrose.vsc-python-indent",
 				"shamanu4.django-intellisense",
-				"njpwerner.autodocstring"
+				"njpwerner.autodocstring",
+				"google.geminicodeassist"
 			]
 		}
 	},
