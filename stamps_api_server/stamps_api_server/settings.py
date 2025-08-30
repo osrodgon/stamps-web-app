@@ -65,18 +65,21 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
+    "TAGS": [
+        {
+            "name": "Years",
+            "description": "Endpoints for managing year entries."
+        },
+        {
+            "name": "Config",
+            "description": "Endpoints for managing system configuration settings."
+        },
+    ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
+    "SWAGGER_UI_SETTINGS": {
+        "defaultModelsExpandDepth": -1,
+    },
 }
-
-# SWAGGER_SETTINGS = {
-#     'SECURITY_DEFINITIONS': {
-#         'Basic': {
-#             'type': 'basic'
-#         }
-#     },
-#     'DEFAULT_MODEL_RENDERING': 'example',
-# }
-SWAGGER_USE_COMPAT_RENDERERS = False
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

@@ -15,19 +15,20 @@ from years_api.api.serializers.year_request_serializer import YearRequestSeriali
 class YearsView(Logger, APIView):
     @extend_schema(
         tags=['Years'],
-        summary="List all years",
-        description="Returns a list of all years in the database",
+        summary="List All Years",
+        description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
         responses={
             200: standardized_response(
                 YearResponseSerializer, 
-                description="Years retrieved successfully from the database",
+                description="A list of years was successfully retrieved.",
                 many=True
                 )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Getting all years")
+        self.debug("Attempting to retrieve all years.")
         years = Year.objects.all()
+        self.debug(f"Found {len(years)} year entries.")
         response = YearResponseSerializer(years, many=True)
         
         return Response(
@@ -37,32 +38,34 @@ class YearsView(Logger, APIView):
     
     @extend_schema(
         tags=['Years'],
-        summary="Creates a year",
-        description="Creates a year in the database",
+        summary="Create a New Year",
+        description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",
+        request=YearRequestSerializer,
         responses={
             201: standardized_response(
                 YearResponseSerializer,
-                description="Year created successfully"
+                description="The year was created successfully."
                 ),
             400: standardized_response(
                 GenericResponseSerializer,
                 success=False,
-                description="Payload validation error"
+                description="The request payload was invalid."
                 )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Create a new year: {request.data}")
+        self.debug(f"Attempting to create a new year with payload: {request.data}")
         year = YearRequestSerializer(data = request.data)
         
         if year.is_valid():
             instance = year.save()
+            self.info(f"Successfully created year with id: {instance.id}")
             return Response(
                 data=YearResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.debug(f"Payload validaton error: {year.errors}")
+        self.warning(f"Payload validation failed for new year entry: {year.errors}")
         return Response(
             data=GenericResponseSerializer(GenericResponse(year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

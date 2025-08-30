@@ -109,7 +109,7 @@ class TestYearAPI:
         response = api_client.delete(self.get_url() + "1")
         
         
-        assert response.json()['data']['information'] == "Year with id: 1 deleted"
+        assert response.json()['data']['information'] == "Successfully deleted year with id: 1"
         assert response.json()['success'] == True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] == None
