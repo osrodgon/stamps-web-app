@@ -1,6 +1,5 @@
 # utils/schema.py
 from email.policy import default
-from math import e
 from rest_framework import serializers
 from drf_spectacular.utils import inline_serializer, OpenApiResponse
 

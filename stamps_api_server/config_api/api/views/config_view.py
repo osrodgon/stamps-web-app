@@ -17,7 +17,12 @@ class ConfigView(Logger, APIView):
         summary="List All Configuration Entries",
         description="Retrieves a comprehensive list of all configuration key-value pairs stored in the system. This is useful for a complete overview of all settings.",
         responses={
-            200: standardized_response(ConfigResponseSerializer, many=True, description="A list of all configuration entries was successfully retrieved.")
+            200: standardized_response(
+                ConfigResponseSerializer,
+                name="GetAllConfigEntriesSuccess",
+                many=True, 
+                description="A list of all configuration entries was successfully retrieved."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -37,9 +42,14 @@ class ConfigView(Logger, APIView):
         description="Adds a new configuration key-value pair to the database. The request body must contain the 'property' and 'value' for the new setting.",
         request=ConfigRequestSerializer,
         responses={
-            201: standardized_response(ConfigResponseSerializer, description="The configuration entry was created successfully."),
+            201: standardized_response(
+                ConfigResponseSerializer,
+                name="CreateConfigEntrySuccess",
+                description="The configuration entry was created successfully."
+            ),
             400: standardized_response(
                 GenericResponseSerializer,
+                name="CreateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid or missing required fields."
             )
