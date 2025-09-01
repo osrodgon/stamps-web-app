@@ -1,5 +1,4 @@
 from codecs import ascii_encode
-import re
 from unittest.mock import patch
 import pytest
 import os
@@ -11,18 +10,17 @@ from common.test.api_client import api_client
 from common.test.year_api_test_data import (
     years_table,
     year_post_payload_ok,
-    year_post_payload_not_ok,
-    year_put_payload_ok,
-    year_put_payload_not_ok
+    year_put_payload_ok
 )
 
 @pytest.mark.django_db
 class TestYearAPI:
     def test_get_years_returns_data_200_ok(self, api_client, years_table):
         response = api_client.get(self.get_url())
-          
+        
         original = YearResponseSerializer(years_table,many=True)
-        assert len(response.json()['data']) == 2
+        
+        assert len(response.json()['data']) == len(original.data)
         assert response.json()['data'] == original.data
         assert response.json()['success'] == True
         assert response.json()['message'] == "Retrieved successfully"
@@ -47,8 +45,9 @@ class TestYearAPI:
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
     
-    def test_post_year_creates_record_400_bad_request(self, api_client, year_post_payload_not_ok):
-        response = api_client.post(self.get_url(), year_post_payload_not_ok)
+    def test_post_year_creates_record_400_bad_request(self, api_client, year_post_payload_ok):
+        del year_post_payload_ok["year"]
+        response = api_client.post(self.get_url(), year_post_payload_ok)
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
@@ -87,8 +86,9 @@ class TestYearAPI:
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
     
-    def test_put_year_updates_record_400_bad_request(self, api_client, years_table, year_put_payload_not_ok):
-        response = api_client.put(self.get_url() + "1", year_put_payload_not_ok)
+    def test_put_year_updates_record_400_bad_request(self, api_client, years_table, year_put_payload_ok):
+        del year_put_payload_ok["year"]
+        response = api_client.put(self.get_url() + "1", year_put_payload_ok)
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False

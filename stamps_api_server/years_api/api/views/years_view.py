@@ -20,6 +20,7 @@ class YearsView(Logger, APIView):
         responses={
             200: standardized_response(
                 YearResponseSerializer, 
+                name="YearsRetrieved",
                 description="A list of years was successfully retrieved.",
                 many=True
                 )
@@ -44,10 +45,12 @@ class YearsView(Logger, APIView):
         responses={
             201: standardized_response(
                 YearResponseSerializer,
+                name="YearCreated",
                 description="The year was created successfully."
                 ),
             400: standardized_response(
                 GenericResponseSerializer,
+                name="YearCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
                 )

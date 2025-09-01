@@ -19,19 +19,8 @@ def year_post_payload_ok() -> dict:
     }
     
 @pytest.fixture
-def year_post_payload_not_ok() -> dict:
-    return{
-        
-    }
-    
-@pytest.fixture
 def year_put_payload_ok() -> dict:
     return{
         "year": 4444
     }
     
-@pytest.fixture
-def year_put_payload_not_ok() -> dict:
-    return{
-        
-    }

@@ -39,10 +39,12 @@ class YearsByIdView(Logger, APIView):
         responses={
             200: standardized_response(
                 YearResponseSerializer,
+                name="YearRetrieved",
                 description="The requested year's data was retrieved successfully."
                 ),
             404: standardized_response(
                 GenericResponseSerializer,
+                name="RetrieveYearNotFound",
                 success=False,
                 description="No year was found for the provided ID."
                 ) 
@@ -75,15 +77,18 @@ class YearsByIdView(Logger, APIView):
         responses={
             200: standardized_response(
                 YearResponseSerializer,
+                name="YearUpdated",
                 description="The year was updated successfully."
                 ),
             404: standardized_response(
-                GenericResponseSerializer, 
+                GenericResponseSerializer,
+                name="YearUpdateNotFound",
                 success=False,
                 description="The year with the specified ID was not found."
                 ),
             400: standardized_response(
                 GenericResponseSerializer,
+                name="YearUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
                 )   
@@ -122,10 +127,13 @@ class YearsByIdView(Logger, APIView):
         responses={
             200: standardized_response(
                 GenericResponseSerializer,
+                name="YearDeleted",
+                success=True,
                 description="The year was deleted successfully."
                 ),
             404: standardized_response(
                 GenericResponseSerializer,
+                name="YearDeleteNotFound",
                 success=False,
                 description="The year with the specified ID was not found."
                 )
