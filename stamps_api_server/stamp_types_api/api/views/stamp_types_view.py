@@ -8,8 +8,8 @@ from common.api.serializers.generic_response import GenericResponseSerializer, G
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from stamp_types_api.models import StampType
-from stamp_types_api.api.serializers.stamp_types_response_serializer import StampTypesResponseSerializer
-from stamp_types_api.api.serializers.stamp_types_request_serializer import StampTypesRequestSerializer
+from stamp_types_api.api.serializers.stamp_type_response_serializer import StampTypeResponseSerializer
+from stamp_types_api.api.serializers.stamp_type_request_serializer import StampTypeRequestSerializer
 
 
 class StampTypesView(Logger, APIView):
@@ -19,7 +19,7 @@ class StampTypesView(Logger, APIView):
         description="Retrieves a list of all stamp type entries currently stored in the database.",
         responses={
             200: standardized_response(
-                StampTypesResponseSerializer, 
+                StampTypeResponseSerializer, 
                 name="StampTypesRetrieved",
                 description="A list of stamp types was successfully retrieved.",
                 many=True
@@ -30,7 +30,7 @@ class StampTypesView(Logger, APIView):
         self.debug("Attempting to retrieve all stamp types.")
         stamp_types = StampType.objects.all()
         self.debug(f"Found {len(stamp_types)} stamp type entries.")
-        response = StampTypesResponseSerializer(stamp_types, many=True)
+        response = StampTypeResponseSerializer(stamp_types, many=True)
         
         return Response(
             data=response.data, 
@@ -41,10 +41,10 @@ class StampTypesView(Logger, APIView):
         tags=['Stamp Types'],
         summary="Create a New Stamp Type",
         description="Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a 201 Created status code.",
-        request=StampTypesRequestSerializer,
+        request=StampTypeRequestSerializer,
         responses={
             201: standardized_response(
-                StampTypesResponseSerializer,
+                StampTypeResponseSerializer,
                 name="StampTypeCreated",
                 description="The stamp type was created successfully."
                 ),
@@ -58,13 +58,13 @@ class StampTypesView(Logger, APIView):
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
         self.debug(f"Attempting to create a new stamp type with payload: {request.data}")
-        stamp_type = StampTypesRequestSerializer(data = request.data)
+        stamp_type = StampTypeRequestSerializer(data = request.data)
         
         if stamp_type.is_valid():
             instance = stamp_type.save()
             self.info(f"Successfully created stamp type with id: {instance.id}")
             return Response(
-                data=StampTypesResponseSerializer(instance).data, 
+                data=StampTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         

@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from stamp_types_api.models import StampType
+from locations_api.models import Location
 
-class StampTypesRequestSerializer(serializers.ModelSerializer):
+class LocationRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StampType
+        model = Location
         fields = ['name']
         
     def to_internal_value(self, data):

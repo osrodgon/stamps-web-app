@@ -10,7 +10,7 @@ from common.test.stamp_types_api_test_data import (
     stamp_type_post_payload_ok,
     stamp_type_put_payload_ok
 )
-from stamp_types_api.api.serializers.stamp_types_response_serializer import StampTypesResponseSerializer
+from stamp_types_api.api.serializers.stamp_type_response_serializer import StampTypeResponseSerializer
 from stamp_types_api.models import StampType
 
 
@@ -19,7 +19,7 @@ class TestStampTypesAPI:
     def test_get_all_stamp_types_returns_data_200_ok(self, api_client, stamp_types_table):
         response = api_client.get(self.__get_url())
         
-        original = StampTypesResponseSerializer(stamp_types_table,many=True)
+        original = StampTypeResponseSerializer(stamp_types_table,many=True)
         
         assert len(response.json()['data']) == len(original.data)
         assert response.json()['data'] == original.data
@@ -70,7 +70,7 @@ class TestStampTypesAPI:
         response = api_client.get(self.__get_url() + "1")
         
         stamp_type = StampType.objects.get(pk=1)
-        original = StampTypesResponseSerializer(stamp_type)
+        original = StampTypeResponseSerializer(stamp_type)
         
         assert response.json()['data']['name'] == original.data['name']
         assert response.json()['success'] == True

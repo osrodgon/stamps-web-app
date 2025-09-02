@@ -68,7 +68,7 @@ class TestYearAPI:
     def test_get_year_returns_data_200_ok(self, api_client,years_table):
         response = api_client.get(self.get_url() + "1")
         
-        year = Year.objects.get(pk=1)
+        year = Year.objects.get(pk=1)   
         original = YearResponseSerializer(year)
         
         assert response.json()['data']['year'] == original.data['year']

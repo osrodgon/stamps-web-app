@@ -30,6 +30,7 @@ urlpatterns = [
             path(os.getenv('YEARS_ENDPOINT'), include('years_api.urls')),
             path(os.getenv('CONFIG_ENDPOINT'), include('config_api.urls')),
             path(os.getenv('STAMP_TYPES_ENDPOINT'), include('stamp_types_api.urls')),
+            path(os.getenv('LOCATIONS_ENDPOINT'), include('locations_api.urls')),
             path(os.getenv('SCHEMA_ENDPOINT'), SpectacularAPIView.as_view(), name="schema"),
             path(os.getenv('SWAGGER_ENDPOINT'), SpectacularSwaggerView.as_view(), name="swagger"),
             path(os.getenv('REDOC_ENDPOINT'), SpectacularRedocView.as_view(), name="redoc")

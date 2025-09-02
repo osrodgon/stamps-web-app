@@ -8,8 +8,8 @@ from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
 from stamp_types_api.models import StampType
-from stamp_types_api.api.serializers.stamp_types_response_serializer import StampTypesResponseSerializer
-from stamp_types_api.api.serializers.stamp_types_request_serializer import StampTypesRequestSerializer
+from stamp_types_api.api.serializers.stamp_type_response_serializer import StampTypeResponseSerializer
+from stamp_types_api.api.serializers.stamp_type_request_serializer import StampTypeRequestSerializer
 
 
 class StampTypesByIdView(Logger, APIView):
@@ -30,7 +30,7 @@ class StampTypesByIdView(Logger, APIView):
         description="Fetches the details of a specific stamp type entry by its unique identifier.",
         responses={
             200: standardized_response(
-                StampTypesResponseSerializer,
+                StampTypeResponseSerializer,
                 name="StampTypeRetrieved",
                 description="The requested stamp type's data was retrieved successfully."
                 ),
@@ -54,7 +54,7 @@ class StampTypesByIdView(Logger, APIView):
                 status=status.HTTP_404_NOT_FOUND
                 )
         
-        response = StampTypesResponseSerializer(stamp_type)
+        response = StampTypeResponseSerializer(stamp_type)
         self.info(f"Successfully retrieved stamp type with id: {pk}")
         return Response(
             data=response.data, 
@@ -65,10 +65,10 @@ class StampTypesByIdView(Logger, APIView):
         tags=['Stamp Types'],
         summary="Update a Stamp Type",
         description="Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.",
-        request=StampTypesRequestSerializer,
+        request=StampTypeRequestSerializer,
         responses={
             200: standardized_response(
-                StampTypesResponseSerializer,
+                StampTypeResponseSerializer,
                 name="StampTypeUpdated",
                 description="The stamp type was updated successfully."
                 ),
@@ -97,12 +97,12 @@ class StampTypesByIdView(Logger, APIView):
                 status=status.HTTP_404_NOT_FOUND
                 )
         
-        updated_stamp_type = StampTypesRequestSerializer(data=request.data, instance=stamp_type, partial=False)
+        updated_stamp_type = StampTypeRequestSerializer(data=request.data, instance=stamp_type, partial=False)
         if updated_stamp_type.is_valid():
             instance=updated_stamp_type.save()
             self.info(f"Successfully updated stamp type with id: {instance.id}")
             return Response(
-                data=StampTypesResponseSerializer(instance).data,
+                data=StampTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
