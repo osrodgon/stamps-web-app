@@ -70,6 +70,6 @@ class LocationsView(Logger, APIView):
         
         self.warning(f"Payload validation failed for new location entry: {location.errors}")
         return Response(
-            data=GenericResponse(location.errors).data,
+            data=GenericResponseSerializer(GenericResponse(location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
             )

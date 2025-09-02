@@ -1,582 +1,332 @@
-# Stamps Collection API Documentation
+# Stamps API Documentation
 
-This document provides a detailed description of the RESTful API endpoints for the Stamp Collection application.
+This document provides an overview of the available API endpoints for the Stamps application.
 
-## Years API Endpoints
+## General Information
 
-This document details the RESTful API endpoints for managing `Year` entities in the stamp collection database.
-
-**Base URL:** `/api/v1/years/`
-
----
-
-#### 1. List and Create Years
-
-**Endpoint:** `/api/v1/years/`
-
-##### `GET` /
-
--   **Summary:** List All Years
--   **Description:** Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.
--   **Responses:**
-    -   **`200 OK`**: A list of years was successfully retrieved.
-        ```json
-        {
-          "data": [
-            {
-              "id": 1,
-              "year": 2023
-            },
-            {
-              "id": 2,
-              "year": 2024
-            }
-          ],
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
-
-##### `POST` /
-
--   **Summary:** Create a New Year
--   **Description:** Adds a new year entry to the database. A successful creation returns the newly created year object with a `201 Created` status code.
--   **Request Body:**
-    ```json
-    {
-      "year": 2025
-    }
-    ```
--   **Responses:**
-    -   **`201 Created`**: The year was created successfully.
-        ```json
-        {
-          "data": {
-            "id": 3,
-            "year": 2025
-          },
-          "success": true,
-          "message": "Created successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid (e.g., missing a required field).
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'year': ['This field is required.']}"
-          }
-        }
-        ```
+- The base URL for the API is not explicitly defined and is configured via environment variables. Placeholders like `{SERVER_URL_V1}` are used in this document.
+- All responses are wrapped in a standardized JSON format.
 
 ---
 
-#### 2. Retrieve, Update, and Delete a Specific Year
+## Years API
 
-**Endpoint:** `/api/v1/years/{id}`
+**Base Path:** `/{SERVER_URL_V1}/{YEARS_ENDPOINT}`
 
-##### `GET` /{id}
+This API manages the year entries in the database.
 
--   **Summary:** Retrieve a Year by ID
--   **Description:** Fetches the details of a specific year entry by its unique identifier. If the year exists, its data is returned. Otherwise, a `404 Not Found` error is returned.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the year to retrieve.
--   **Responses:**
-    -   **`200 OK`**: The requested year's data was retrieved successfully.
-        ```json
-        {
-          "data": {
-            "id": 1,
-            "year": 2023
-          },
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: No year was found for the provided ID.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Year with id: 999 not found"
-          }
-        }
-        ```
+### `GET /`
 
-##### `PUT` /{id}
+- **Summary:** List All Years
+- **Description:** Retrieves a list of all year entries currently stored in the database.
+- **Responses:**
+    - `200 OK`: A list of years was successfully retrieved.
+        - **Body:** `[{"id": 1, "year": 2023}, {"id": 2, "year": 2024}]`
 
--   **Summary:** Update a Year
--   **Description:** Updates an existing year entry identified by its ID. A complete payload with all required fields is expected.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the year to update.
--   **Request Body:**
-    ```json
-    {
-      "year": 2026
-    }
-    ```
--   **Responses:**
-    -   **`200 OK`**: The year was updated successfully.
-        ```json
-        {
-          "data": {
-            "id": 1,
-            "year": 2026
-          },
-          "success": true,
-          "message": "Updated successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'year': ['A valid integer is required.']}"
-          }
-        }
-        ```
-    -   **`404 Not Found`**: The year with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot update year with id: 999. Not found in the database"
-          }
-        }
-        ```
+### `POST /`
 
-##### `DELETE` /{id}
+- **Summary:** Create a New Year
+- **Description:** Adds a new year entry to the database.
+- **Request Body:** `{ "year": integer }`
+- **Responses:**
+    - `201 Created`: The year was created successfully.
+        - **Body:** `{"id": 1, "year": 2025}`
+    - `400 Bad Request`: The request payload was invalid.
 
--   **Summary:** Delete a Year
--   **Description:** Deletes a year entry from the database using its ID.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the year to delete.
--   **Responses:**
-    -   **`200 OK`**: The year was deleted successfully.
-        ```json
-        {
-          "data": {
-            "information": "Successfully deleted year with id: 1"
-          },
-          "success": true,
-          "message": "Deleted successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: The year with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot delete year with id: 999. Not found in the database"
-          }
-        }
-        ```
+### `GET /{id}`
 
-## Config API Endpoints
+- **Summary:** Retrieve a Year by ID
+- **Description:** Fetches the details of a specific year entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested year's data was retrieved successfully.
+        - **Body:** `{"id": 1, "year": 2023}`
+    - `404 Not Found`: No year was found for the provided ID.
 
-This document details the RESTful API endpoints for managing `Config` entities in the stamp collection database. These endpoints allow for managing system-level configuration settings.
+### `PUT /{id}`
 
-**Base URL:** `/api/v1/config/`
+- **Summary:** Update a Year
+- **Description:** Updates an existing year entry identified by its ID.
+- **Request Body:** `{ "year": integer }`
+- **Responses:**
+    - `200 OK`: The year was updated successfully.
+        - **Body:** `{ "id": integer, "year": integer }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The year with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Year
+- **Description:** Deletes a year entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The year was deleted successfully.
+    - `404 Not Found`: The year with the specified ID was not found.
 
 ---
 
-#### 1. List and Create Configuration Entries
+## Config API
 
-**Endpoint:** `/api/v1/config/`
+**Base Path:** `/{SERVER_URL_V1}/{CONFIG_ENDPOINT}`
 
-##### `GET` /
+This API manages system configuration settings.
 
--   **Summary:** List All Configuration Entries
--   **Description:** Retrieves a comprehensive list of all configuration key-value pairs stored in the system.
--   **Responses:**
-    -   **`200 OK`**: A list of all configuration entries was successfully retrieved.
-        ```json
-        {
-          "data": [
-            {
-              "property": "theme",
-              "value": "dark"
-            },
-            {
-              "property": "language",
-              "value": "en"
-            }
-          ],
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
+### `GET /`
 
-##### `POST` /
+- **Summary:** List All Configuration Entries
+- **Description:** Retrieves a comprehensive list of all configuration key-value pairs.
+- **Responses:**
+    - `200 OK`: A list of all configuration entries was successfully retrieved.
+        - **Body:** `[{ "id": integer, "property": "string", "value": "string" }]`
 
--   **Summary:** Create a Configuration Entry
--   **Description:** Adds a new configuration key-value pair to the database. The request body must contain the 'property' and 'value'.
--   **Request Body:**
-    ```json
-    {
-      "property": "show_tutorials",
-      "value": "true"
-    }
-    ```
--   **Responses:**
-    -   **`201 Created`**: The configuration entry was created successfully.
-        ```json
-        {
-          "data": {
-            "property": "show_tutorials",
-            "value": "true"
-          },
-          "success": true,
-          "message": "Created successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid or missing required fields.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'property': ['This field is required.']}"
-          }
-        }
-        ```
+### `POST /`
+
+- **Summary:** Create a Configuration Entry
+- **Description:** Adds a new configuration key-value pair to the database.
+- **Request Body:** `{ "property": "string", "value": "string" }`
+- **Responses:**
+    - `201 Created`: The configuration entry was created successfully.
+        - **Body:** `{ "id": integer, "property": "string", "value": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+
+### `GET /{id}`
+
+- **Summary:** Retrieve a Configuration Entry by ID
+- **Description:** Fetches a specific configuration entry using its unique ID.
+- **Responses:**
+    - `200 OK`: The configuration entry was retrieved successfully.
+        - **Body:** `{ "id": integer, "property": "string", "value": "string" }`
+    - `404 Not Found`: No configuration entry was found for the provided ID.
+
+### `PUT /{id}`
+
+- **Summary:** Update a Configuration Entry
+- **Description:** Updates an existing configuration entry identified by its ID.
+- **Request Body:** `{ "property": "string", "value": "string" }`
+- **Responses:**
+    - `200 OK`: The configuration entry was updated successfully.
+        - **Body:** `{ "id": integer, "property": "string", "value": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The configuration entry with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Configuration Entry
+- **Description:** Permanently removes a configuration entry from the database.
+- **Responses:**
+    - `200 OK`: The configuration entry was deleted successfully.
+    - `404 Not Found`: The configuration entry with the specified ID was not found.
 
 ---
 
-#### 2. Retrieve, Update, and Delete a Specific Configuration Entry
+## Stamp Types API
 
-**Endpoint:** `/api/v1/config/{id}`
+**Base Path:** `/{SERVER_URL_V1}/{STAMP_TYPES_ENDPOINT}`
 
-##### `GET` /{id}
+This API manages the types of stamps available.
 
--   **Summary:** Retrieve a Configuration Entry by ID
--   **Description:** Fetches a specific configuration entry using its unique ID (the property name).
--   **URL Parameters:**
-    -   `id` (string, required): The unique property name of the configuration entry to retrieve.
--   **Responses:**
-    -   **`200 OK`**: The configuration entry was retrieved successfully.
-        ```json
-        {
-          "data": {
-            "property": "theme",
-            "value": "dark"
-          },
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: No configuration entry was found for the provided ID.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Config entry for id: 999 not found"
-          }
-        }
-        ```
+### `GET /`
 
-##### `PUT` /{id}
+- **Summary:** List All Stamp Types
+- **Description:** Retrieves a list of all stamp type entries.
+- **Responses:**
+    - `200 OK`: A list of stamp types was successfully retrieved.
+        - **Body:** `[{ "id": integer, "name": "string" }]`
 
--   **Summary:** Update a Configuration Entry
--   **Description:** Updates an existing configuration entry identified by its ID. The request body can contain a partial or full update.
--   **URL Parameters:**
-    -   `id` (string, required): The unique property name of the configuration entry to update.
--   **Request Body:**
-    ```json
-    {
-      "value": "light"
-    }
-    ```
--   **Responses:**
-    -   **`200 OK`**: The configuration entry was updated successfully.
-        ```json
-        {
-          "data": {
-            "property": "theme",
-            "value": "light"
-          },
-          "success": true,
-          "message": "Updated successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid (e.g., contained an unknown field).
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'unsupported_field': ['This field is not allowed.']}"
-          }
-        }
-        ```
-    -   **`404 Not Found`**: The configuration entry with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot update config entry with id: 999. Not found."
-          }
-        }
-        ```
+### `POST /`
 
-##### `DELETE` /{id}
+- **Summary:** Create a New Stamp Type
+- **Description:** Adds a new stamp type entry to the database.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `201 Created`: The stamp type was created successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
 
--   **Summary:** Delete a Configuration Entry
--   **Description:** Permanently removes a configuration entry from the database using its ID.
--   **URL Parameters:**
-    -   `id` (string, required): The unique property name of the configuration entry to delete.
--   **Responses:**
-    -   **`200 OK`**: The configuration entry was deleted successfully.
-        ```json
-        {
-          "data": {
-            "information": "Successfully deleted config entry with id: theme"
-          },
-          "success": true,
-          "message": "Deleted successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: The configuration entry with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot delete config entry with id: 999. Not found."
-          }
-        }
-        ```
+### `GET /{id}`
 
-## Stamp Types API Endpoints
+- **Summary:** Retrieve a Stamp Type by ID
+- **Description:** Fetches the details of a specific stamp type entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested stamp type's data was retrieved successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `404 Not Found`: No stamp type was found for the provided ID.
 
-This document details the RESTful API endpoints for managing `Stamp Type` entities in the stamp collection database.
+### `PUT /{id}`
 
-**Base URL:** `/api/v1/stamp-types/`
+- **Summary:** Update a Stamp Type
+- **Description:** Updates an existing stamp type entry identified by its ID.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `200 OK`: The stamp type was updated successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The stamp type with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Stamp Type
+- **Description:** Deletes a stamp type entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The stamp type was deleted successfully.
+    - `404 Not Found`: The stamp type with the specified ID was not found.
 
 ---
 
-#### 1. List and Create Stamp Types
+## Locations API
 
-**Endpoint:** `/api/v1/stamp-types/`
+**Base Path:** `/{SERVER_URL_V1}/{LOCATIONS_ENDPOINT}`
 
-##### `GET` /
+This API manages the locations of stamps.
 
--   **Summary:** List All Stamp Types
--   **Description:** Retrieves a list of all stamp type entries currently stored in the database.
--   **Responses:**
-    -   **`200 OK`**: A list of stamp types was successfully retrieved.
-        ```json
-        {
-          "data": [
-            {
-              "id": 1,
-              "name": "Commemorative"
-            },
-            {
-              "id": 2,
-              "name": "Definitive"
-            }
-          ],
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
+### `GET /`
 
-##### `POST` /
+- **Summary:** List All Locations
+- **Description:** Retrieves a list of all location entries.
+- **Responses:**
+    - `200 OK`: A list of locations was successfully retrieved.
+        - **Body:** `[{ "id": integer, "name": "string" }]`
 
--   **Summary:** Create a New Stamp Type
--   **Description:** Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a `201 Created` status code.
--   **Request Body:**
-    ```json
-    {
-      "name": "Airmail"
-    }
-    ```
--   **Responses:**
-    -   **`201 Created`**: The stamp type was created successfully.
-        ```json
-        {
-          "data": {
-            "id": 3,
-            "name": "Airmail"
-          },
-          "success": true,
-          "message": "Created successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid (e.g., missing a required field).
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'name': ['This field is required.']}"
-          }
-        }
-        ```
+### `POST /`
+
+- **Summary:** Create a New Location
+- **Description:** Adds a new location entry to the database.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `201 Created`: The location was created successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+
+### `GET /{id}`
+
+- **Summary:** Retrieve a Location by ID
+- **Description:** Fetches the details of a specific location entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested location's data was retrieved successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `404 Not Found`: No location was found for the provided ID.
+
+### `PUT /{id}`
+
+- **Summary:** Update a Location
+- **Description:** Updates an existing location entry identified by its ID.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `200 OK`: The location was updated successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The location with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Location
+- **Description:** Deletes a location entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The location was deleted successfully.
+    - `404 Not Found`: The location with the specified ID was not found.
 
 ---
 
-#### 2. Retrieve, Update, and Delete a Specific Stamp Type
+## Issues API
 
-**Endpoint:** `/api/v1/stamp-types/{id}`
+**Base Path:** `/{SERVER_URL_V1}/{ISSUES_ENDPOINT}`
 
-##### `GET` /{id}
+This API manages the stamp issues in the database.
 
--   **Summary:** Retrieve a Stamp Type by ID
--   **Description:** Fetches the details of a specific stamp type entry by its unique identifier.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the stamp type to retrieve.
--   **Responses:**
-    -   **`200 OK`**: The requested stamp type's data was retrieved successfully.
-        ```json
-        {
-          "data": {
-            "id": 1,
-            "name": "Commemorative"
-          },
-          "success": true,
-          "message": "Retrieved successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: No stamp type was found for the provided ID.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "StampType with id: 999 not found"
-          }
-        }
-        ```
+### `GET /`
 
-##### `PUT` /{id}
+- **Summary:** List All Issues
+- **Description:** Retrieves a list of all issue entries currently stored in the database.
+- **Responses:**
+    - `200 OK`: A list of issues was successfully retrieved.
+        - **Body:** `[{ "id": 1, "year_id": 1, "date": "2023-01-15", "country_id": 1, "name": "Historic Monuments", "number_issued": 10000, "value": 5.50, "number_owned": 1, "number_stamps": 5, "stamp_type": 1, "paper_type": 1, "total_value": 5.50, "description": "A series on historic monuments.", "located_in": 1, "note": "First day cover.", "perforated": "13.5" }]`
 
--   **Summary:** Update a Stamp Type
--   **Description:** Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the stamp type to update.
--   **Request Body:**
-    ```json
-    {
-      "name": "Special"
-    }
-    ```
--   **Responses:**
-    -   **`200 OK`**: The stamp type was updated successfully.
-        ```json
-        {
-          "data": {
-            "id": 1,
-            "name": "Special"
-          },
-          "success": true,
-          "message": "Updated successfully",
-          "errors": null
-        }
-        ```
-    -   **`400 Bad Request`**: The request payload was invalid.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "{'name': ['This field may not be blank.']}"
-          }
-        }
-        ```
-    -   **`404 Not Found`**: The stamp type with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot update StampType with id: 999. Not found in the database"
-          }
-        }
-        ```
+### `POST /`
 
-##### `DELETE` /{id}
+- **Summary:** Create a New Issue
+- **Description:** Adds a new issue entry to the database.
+- **Request Body:** `{ "year_id": 1, "date": "2024-02-20", "country_id": 2, "name": "Flora and Fauna", "number_issued": 15000, "value": 7.00, "number_owned": 0, "number_stamps": 6, "stamp_type": 2, "paper_type": 1, "description": "A series on local wildlife.", "located_in": 2, "note": "", "perforated": "14" }`
+- **Responses:**
+    - `201 Created`: The issue was created successfully.
+        - **Body:** `{ "id": 2, "year_id": 1, "date": "2024-02-20", "country_id": 2, "name": "Flora and Fauna", ... }`
+    - `400 Bad Request`: The request payload was invalid.
 
--   **Summary:** Delete a Stamp Type
--   **Description:** Deletes a stamp type entry from the database using its ID.
--   **URL Parameters:**
-    -   `id` (integer, required): The unique ID of the stamp type to delete.
--   **Responses:**
-    -   **`200 OK`**: The stamp type was deleted successfully.
-        ```json
-        {
-          "data": {
-            "information": "Successfully deleted StampType with id: 1"
-          },
-          "success": true,
-          "message": "Deleted successfully",
-          "errors": null
-        }
-        ```
-    -   **`404 Not Found`**: The stamp type with the specified ID was not found.
-        ```json
-        {
-          "data": null,
-          "success": false,
-          "message": "Request failed",
-          "errors": {
-            "information": "Cannot delete StampType with id: 999. Not found in the database"
-          }
-        }
-        ```
+### `GET /{id}`
 
-## Issues API Endpoints
+- **Summary:** Retrieve an Issue by ID
+- **Description:** Fetches the details of a specific issue entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested issue's data was retrieved successfully.
+        - **Body:** `{ "id": 1, "year_id": 1, "date": "2023-01-15", "country_id": 1, "name": "Historic Monuments", ... }`
+    - `404 Not Found`: No issue was found for the provided ID.
 
-TBD. This section will contain the API documentation for managing Issues.
+### `PUT /{id}`
 
-## Stamps API Endpoints
+- **Summary:** Update an Issue
+- **Description:** Updates an existing issue entry identified by its ID.
+- **Request Body:** `{ "name": "Updated Issue Name", "note": "Updated note." }`
+- **Responses:**
+    - `200 OK`: The issue was updated successfully.
+        - **Body:** `{ "id": 1, "name": "Updated Issue Name", "note": "Updated note.", ... }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The issue with the specified ID was not found.
 
-TBD. This section will contain the API documentation for managing Stamps.
+### `DELETE /{id}`
 
-## Countries API Endpoints
+- **Summary:** Delete an Issue
+- **Description:** Deletes an issue entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The issue was deleted successfully.
+    - `404 Not Found`: The issue with the specified ID was not found.
 
-TBD. This section will contain the API documentation for managing Countries.
+---
 
-## Paper Types API Endpoints
+## Stamps API
 
-TBD. This section will contain the API documentation for managing Paper Types.
+**Base Path:** `/{SERVER_URL_V1}/{STAMPS_ENDPOINT}`
 
-## Locations API Endpoints
+This API manages individual stamps within an issue.
 
-TBD. This section will contain the API documentation for managing Locations.
+### `GET /`
+
+- **Summary:** List All Stamps
+- **Description:** Retrieves a list of all stamp entries.
+- **Responses:**
+    - `200 OK`: A list of stamps was successfully retrieved.
+        - **Body:** `[{ "id": 1, "issue_id": 1, "edifil_code": "4567", "face_value": "1.00", "name": "The Castle", "others_code": "SG123", "image": "/images/stamp1.jpg", "color": "Blue" }]`
+
+### `POST /`
+
+- **Summary:** Create a New Stamp
+- **Description:** Adds a new stamp entry to the database, linked to an issue.
+- **Request Body:** `{ "issue_id": 1, "edifil_code": "4568", "face_value": "0.50", "name": "The Bridge", "color": "Green" }`
+- **Responses:**
+    - `201 Created`: The stamp was created successfully.
+        - **Body:** `{ "id": 2, "issue_id": 1, "edifil_code": "4568", "face_value": "0.50", "name": "The Bridge", ... }`
+    - `400 Bad Request`: The request payload was invalid.
+
+### `GET /{id}`
+
+- **Summary:** Retrieve a Stamp by ID
+- **Description:** Fetches the details of a specific stamp entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested stamp's data was retrieved successfully.
+        - **Body:** `{ "id": 1, "issue_id": 1, "edifil_code": "4567", ... }`
+    - `404 Not Found`: No stamp was found for the provided ID.
+
+### `PUT /{id}`
+
+- **Summary:** Update a Stamp
+- **Description:** Updates an existing stamp entry identified by its ID.
+- **Request Body:** `{ "edifil_code": "4567-A", "color": "Dark Blue" }`
+- **Responses:**
+    - `200 OK`: The stamp was updated successfully.
+        - **Body:** `{ "id": 2, "edifil_code": "4567-A", "color": "Dark Blue", ... }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The stamp with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Stamp
+- **Description:** Deletes a stamp entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The stamp was deleted successfully.
+    - `404 Not Found`: The stamp with the specified ID was not found.

@@ -1,5 +1,5 @@
-
 import pytest
+
 from stamp_types_api.models import StampType
 
 @pytest.fixture

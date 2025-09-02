@@ -3,5 +3,8 @@
         "stamps_api_server"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "python.envFile": "${workspaceFolder}/stamps_api_server/.env",
+    "python.testing.cwd": "${workspaceFolder}",
+    "geminicodeassist.updateChannel": "Insiders"
 }

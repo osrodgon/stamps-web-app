@@ -55,7 +55,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == (
+        assert response.json()['errors']['detail'] == (
             "{'property': "
             "[ErrorDetail(string='This field is required.', code='required')]}"
             )
@@ -68,7 +68,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == (
+        assert response.json()['errors']['detail'] == (
             "{'new_field': "
             "ErrorDetail(string='This field is not allowed.', code='invalid')}"
             )
@@ -81,7 +81,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == (
+        assert response.json()['errors']['detail'] == (
             "{'value': "
             "[ErrorDetail(string='This field is required.', code='required')]}"
             )
@@ -106,7 +106,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == "Config entry for id: 1 not found"
+        assert response.json()['errors']['detail'] == "Config entry for id: 1 not found"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_config_updates_record_200_ok(self, api_client, config_table, config_put_payload_ok):
@@ -124,7 +124,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == "Cannot update config entry with id: 1. Not found."
+        assert response.json()['errors']['detail'] == "Cannot update config entry with id: 1. Not found."
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_config_updates_record_400_bad_request(self, api_client, config_table, config_put_payload_ok):
@@ -134,7 +134,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == (
+        assert response.json()['errors']['detail'] == (
             "{'new_field': "
             "ErrorDetail(string='This field is not allowed.', code='invalid')}"
             )
@@ -143,7 +143,7 @@ class TestConfigAPI:
     def test_delete_config_deletes_record_200_ok(self, api_client, config_table):
         response = api_client.delete(self.get_url() + "1")
         
-        assert response.json()['data']['information'] == "Successfully deleted config entry with id: 1"
+        assert response.json()['data']['detail'] == "Successfully deleted config entry with id: 1"
         assert response.json()['success'] == True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] == None
@@ -155,7 +155,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == "Cannot delete config entry with id: 1. Not found."
+        assert response.json()['errors']['detail'] == "Cannot delete config entry with id: 1. Not found."
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('config_api.api.views.config_by_id_view.Config.objects.get')
@@ -166,7 +166,7 @@ class TestConfigAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['information'] == "Cannot delete config entry with id: 1. Not found."
+        assert response.json()['errors']['detail'] == "Cannot delete config entry with id: 1. Not found."
         
     def test_config_model_str_representation(self):
         test_property_value = "test_property"
