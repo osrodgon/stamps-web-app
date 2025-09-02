@@ -50,7 +50,7 @@ class LocationsByIdView(Logger, APIView):
             message = f"Location with id: {pk} not found"
             self.warning(message)
             return Response(
-                data=GenericResponse(message).data,
+                data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         

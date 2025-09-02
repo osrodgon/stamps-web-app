@@ -573,10 +573,199 @@ TBD. This section will contain the API documentation for managing Stamps.
 
 TBD. This section will contain the API documentation for managing Countries.
 
+## Locations API Endpoints
+
+This document details the RESTful API endpoints for managing `Location` entities in the stamp collection database.
+
+**Base URL:** `/api/v1/locations/`
+
+---
+
+#### 1. List and Create Locations
+
+**Endpoint:** `/api/v1/locations/`
+
+##### `GET` /
+
+-   **Summary:** List All Locations
+-   **Description:** Retrieves a list of all location entries currently stored in the database. The response will contain an array of location objects.
+-   **Responses:**
+    -   **`200 OK`**: A list of locations was successfully retrieved.
+        ```json
+        {
+          "data": [
+            {
+              "id": 1,
+              "name": "United States",
+              "code": "USA"
+            },
+            {
+              "id": 2,
+              "name": "Germany",
+              "code": "DEU"
+            }
+          ],
+          "success": true,
+          "message": "Retrieved successfully",
+          "errors": null
+        }
+        ```
+
+##### `POST` /
+
+-   **Summary:** Create a New Location
+-   **Description:** Adds a new location entry to the database. A successful creation returns the newly created location object with a `201 Created` status code.
+-   **Request Body:**
+    ```json
+    {
+      "name": "France",
+      "code": "FRA"
+    }
+    ```
+-   **Responses:**
+    -   **`201 Created`**: The location was created successfully.
+        ```json
+        {
+          "data": {
+            "id": 3,
+            "name": "France",
+            "code": "FRA"
+          },
+          "success": true,
+          "message": "Created successfully",
+          "errors": null
+        }
+        ```
+    -   **`400 Bad Request`**: The request payload was invalid (e.g., missing a required field).
+        ```json
+        {
+          "data": null,
+          "success": false,
+          "message": "Request failed",
+          "errors": {
+            "code": ["This field is required."]
+          }
+        }
+        ```
+
+---
+
+#### 2. Retrieve, Update, and Delete a Specific Location
+
+**Endpoint:** `/api/v1/locations/{id}`
+
+##### `GET` /{id}
+
+-   **Summary:** Retrieve a Location by ID
+-   **Description:** Fetches the details of a specific location entry by its unique identifier. If the location exists, its data is returned. Otherwise, a `404 Not Found` error is returned.
+-   **URL Parameters:**
+    -   `id` (integer, required): The unique ID of the location to retrieve.
+-   **Responses:**
+    -   **`200 OK`**: The requested location's data was retrieved successfully.
+        ```json
+        {
+          "data": {
+            "id": 1,
+            "name": "United States",
+            "code": "USA"
+          },
+          "success": true,
+          "message": "Retrieved successfully",
+          "errors": null
+        }
+        ```
+    -   **`404 Not Found`**: No location was found for the provided ID.
+        ```json
+        {
+          "data": null,
+          "success": false,
+          "message": "Request failed",
+          "errors": {
+            "information": "Location with id: 999 not found"
+          }
+        }
+        ```
+
+##### `PUT` /{id}
+
+-   **Summary:** Update a Location
+-   **Description:** Updates an existing location entry identified by its ID. A complete payload with all required fields is expected.
+-   **URL Parameters:**
+    -   `id` (integer, required): The unique ID of the location to update.
+-   **Request Body:**
+    ```json
+    {
+      "name": "United States of America",
+      "code": "USA"
+    }
+    ```
+-   **Responses:**
+    -   **`200 OK`**: The location was updated successfully.
+        ```json
+        {
+          "data": {
+            "id": 1,
+            "name": "United States of America",
+            "code": "USA"
+          },
+          "success": true,
+          "message": "Updated successfully",
+          "errors": null
+        }
+        ```
+    -   **`400 Bad Request`**: The request payload was invalid.
+        ```json
+        {
+          "data": null,
+          "success": false,
+          "message": "Request failed",
+          "errors": {
+            "name": ["This field may not be blank."]
+          }
+        }
+        ```
+    -   **`404 Not Found`**: The location with the specified ID was not found.
+        ```json
+        {
+          "data": null,
+          "success": false,
+          "message": "Request failed",
+          "errors": {
+            "information": "Cannot update Location with id: 999. Not found in the database"
+          }
+        }
+        ```
+
+##### `DELETE` /{id}
+
+-   **Summary:** Delete a Location
+-   **Description:** Deletes a location entry from the database using its ID.
+-   **URL Parameters:**
+    -   `id` (integer, required): The unique ID of the location to delete.
+-   **Responses:**
+    -   **`200 OK`**: The location was deleted successfully.
+        ```json
+        {
+          "data": {
+            "information": "Successfully deleted Location with id: 1"
+          },
+          "success": true,
+          "message": "Deleted successfully",
+          "errors": null
+        }
+        ```
+    -   **`404 Not Found`**: The location with the specified ID was not found.
+        ```json
+        {
+          "data": null,
+          "success": false,
+          "message": "Request failed",
+          "errors": {
+            "information": "Cannot delete Location with id: 999. Not found in the database"
+          }
+        }
+        ```
+
 ## Paper Types API Endpoints
 
 TBD. This section will contain the API documentation for managing Paper Types.
-
-## Locations API Endpoints
-
-TBD. This section will contain the API documentation for managing Locations.
