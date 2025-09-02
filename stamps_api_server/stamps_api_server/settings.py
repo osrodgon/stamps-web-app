@@ -76,6 +76,14 @@ SPECTACULAR_SETTINGS = {
             "name": "Config",
             "description": "Endpoints for managing system configuration settings."
         },
+        {
+            "name": "Stamp Types",
+            "description": "Endpoints for managing stamp type entries."
+        },
+        {
+            "name": "Locations",
+            "description": "Endpoints for managing location entries."   
+        }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
     "SWAGGER_UI_SETTINGS": {
