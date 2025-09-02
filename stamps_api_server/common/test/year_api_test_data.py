@@ -5,22 +5,22 @@ from years_api.models import Year
 def years_table() -> list[Year]:
     return[
         Year.objects.create(
-            year=1111
+            year=2022
         ),
         Year.objects.create(
-            year=2222
+            year=2023
         )
     ]
     
 @pytest.fixture
 def year_post_payload_ok() -> dict:
     return{
-        "year": 3333
+        "year": 2024
     }
     
 @pytest.fixture
 def year_put_payload_ok() -> dict:
     return{
-        "year": 4444
+        "year": 2025
     }
     

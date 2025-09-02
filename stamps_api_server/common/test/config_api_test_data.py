@@ -5,24 +5,24 @@ from config_api.models import Config
 def config_table() -> list[Config]:
     return[
         Config.objects.create(
-            property="property1",
-            value="value 1"
+            property="app.theme",
+            value="dark"
         ),
         Config.objects.create(
-            property="property2",
-            value="value 2"
+            property="app.language",
+            value="en"
         )
     ]
     
 @pytest.fixture
 def config_post_payload_ok() -> dict:
     return{
-        "property": "property3",
-        "value": "value 3"
+        "property": "app.version",
+        "value": "1.0.0"
     }
 
 @pytest.fixture
 def config_put_payload_ok() -> dict:
     return{
-        "value": "value 4"
+        "value": "1.0.1"
     }

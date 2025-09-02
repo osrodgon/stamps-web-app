@@ -55,6 +55,16 @@ class TestYearAPI:
         assert response.json()['errors']['information'] != None
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
+    def test_post_year_with_invalid_field_returns_400_bad_request(self, api_client, year_post_payload_ok):
+        year_post_payload_ok['new_field'] = 'new_value'
+        response = api_client.post(self.get_url(), year_post_payload_ok)
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors']['information'] != None
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    
     def test_get_year_returns_data_200_ok(self, api_client,years_table):
         response = api_client.get(self.get_url() + "1")
         
