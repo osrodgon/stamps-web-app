@@ -42,11 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
-    'drf_spectacular',  # For Swagger documentation
-    "config_api",       # All APIs for the config table
-    "stamps_api",       # All APIs for the stamp table
-    "issues_api",       # All APIs for the table issue
-    "years_api"         # All APIs for the table year
+    'drf_spectacular',      # For Swagger documentation
+    "config_api",           # All APIs for the config table
+    "stamp_types_api",      # All APIs for the stamp type table
+    "stamps_api",           # All APIs for the stamp table
+    "issues_api",           # All APIs for the table issue
+    "years_api"             # All APIs for the table year
 ]
 
 REST_FRAMEWORK = {

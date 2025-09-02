@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from years_api.models import Year
 
-class YearRequestSerializer(serializers.ModelSerializer):
+from stamp_types_api.models import StampType
+
+class StampTypesRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Year
-        fields = ['year']
+        model = StampType
+        fields = ['name']
         
     def to_internal_value(self, data):
         # Check for unexpected fields
