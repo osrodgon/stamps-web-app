@@ -1,6 +1,6 @@
 name: 🚧 Test Request
 description: Add unit test
-title: "[Test] - "
+title: "[Test]: "
 labels: ["unit test"]
 assignees: []
 projects: [osrodgon/1]
