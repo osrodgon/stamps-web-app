@@ -171,6 +171,60 @@ This API manages the types of stamps available.
 
 ---
 
+## Paper Types API
+
+**Base Path:** `/{SERVER_URL_V1}/{PAPER_TYPES_ENDPOINT}`
+
+This API manages the types of paper used for stamps.
+
+### `GET /`
+
+- **Summary:** List All Paper Types
+- **Description:** Retrieves a list of all paper type entries.
+- **Responses:**
+    - `200 OK`: A list of paper types was successfully retrieved.
+        - **Body:** `[{ "id": integer, "name": "string" }]`
+
+### `POST /`
+
+- **Summary:** Create a New Paper Type
+- **Description:** Adds a new paper type entry to the database.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `201 Created`: The paper type was created successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+
+### `GET /{id}`
+
+- **Summary:** Retrieve a Paper Type by ID
+- **Description:** Fetches the details of a specific paper type entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested paper type's data was retrieved successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `404 Not Found`: No paper type was found for the provided ID.
+
+### `PUT /{id}`
+
+- **Summary:** Update a Paper Type
+- **Description:** Updates an existing paper type entry identified by its ID.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `200 OK`: The paper type was updated successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The paper type with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Paper Type
+- **Description:** Deletes a paper type entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The paper type was deleted successfully.
+    - `404 Not Found`: The paper type with the specified ID was not found.
+
+---
+
 ## Locations API
 
 **Base Path:** `/{SERVER_URL_V1}/{LOCATIONS_ENDPOINT}`

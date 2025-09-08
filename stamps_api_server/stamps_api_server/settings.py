@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "config_api",           # All APIs for the config table
     "stamp_types_api",      # All APIs for the stamp type table
     "locations_api",        # All APIs for the location table
+    "paper_types_api",      # All APIs for the paper type table
     "stamps_api",           # All APIs for the stamp table
     "issues_api",           # All APIs for the table issue
     "years_api"             # All APIs for the table year
