@@ -1,6 +1,6 @@
 name: 🗂️ Chore Request
 description: Add chore
-title: "[Chore] - "
+title: "[Chore]: "
 labels: ["chore"]
 assignees: []
 projects: [osrodgon/1]
