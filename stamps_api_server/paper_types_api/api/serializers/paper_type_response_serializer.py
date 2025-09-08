@@ -1,0 +1,8 @@
+from rest_framework import serializers
+
+from paper_types_api.models import PaperType
+
+class PaperTypeResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaperType
+        fields = ['id','name']
