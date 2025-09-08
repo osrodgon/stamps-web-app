@@ -93,13 +93,13 @@ class LocationsByIdView(Logger, APIView):
             message = f"Cannot update Location with id: {pk}. Not found in the database"
             self.warning(message)
             return Response(
-                data=GenericResponse(message).data,
+                data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         updated_location = LocationRequestSerializer(data=request.data, instance=location, partial=False)
         if updated_location.is_valid():
-            instance=updated_location.save()
+            instance = updated_location.save()
             self.info(f"Successfully updated location with id: {instance.id}")
             return Response(
                 data=LocationResponseSerializer(instance).data,
@@ -108,7 +108,7 @@ class LocationsByIdView(Logger, APIView):
         
         self.warning(f"Payload validation failed for location update (id: {pk}): {updated_location.errors}")
         return Response(
-            data=GenericResponse(updated_location.errors).data,
+            data=GenericResponseSerializer(GenericResponse(updated_location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
             )
     
@@ -138,7 +138,7 @@ class LocationsByIdView(Logger, APIView):
             message=f"Cannot delete Location with id: {pk}. Not found in the database"
             self.warning(message)
             return Response(
-                data=GenericResponse(message).data,
+                data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
@@ -146,6 +146,6 @@ class LocationsByIdView(Logger, APIView):
         message = f"Successfully deleted Location with id: {pk}"
         self.info(message)
         return Response(
-            data=GenericResponse(message).data,
+            data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK
             )
