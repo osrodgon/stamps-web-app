@@ -84,6 +84,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Locations",
             "description": "Endpoints for managing location entries."   
+        },
+        {
+            "name": "Paper Types",
+            "description": "Endpoints for managing paper types entries."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API

@@ -52,7 +52,7 @@ class YearsView(Logger, APIView):
                 GenericResponseSerializer,
                 name="YearCreateInvalidPayload",
                 success=False,
-                description="The request payload was invalid."
+                description="The request payload was invalid.",
                 )
         }
     )

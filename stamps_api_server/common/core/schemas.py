@@ -3,6 +3,12 @@ from email.policy import default
 from rest_framework import serializers
 from drf_spectacular.utils import inline_serializer, OpenApiResponse
 
+class ItemList(serializers.Serializer):
+    field = serializers.CharField()
+    message = serializers.CharField()
+    code = serializers.CharField()
+    
+
 def standardized_response(serializer_class, many=False, success = True, name=None, description=None):
     """
     Generates a standardized drf-spectacular response schema.
@@ -35,11 +41,11 @@ def standardized_response(serializer_class, many=False, success = True, name=Non
     if success:
         data_field = serializer_class(many=many)
         success_field = serializers.BooleanField(default=True)
-        errors_field = serializers.JSONField(required=False, allow_null=True)
+        errors_field = serializers.CharField()
     else:
-        data_field = serializers.JSONField(required=False, allow_null=True)
+        data_field = serializers.CharField()
         success_field = serializers.BooleanField(default=False)
-        errors_field = serializer_class()
+        errors_field = serializers.ListField(child=ItemList())
         
 
     response_serializer = inline_serializer(
