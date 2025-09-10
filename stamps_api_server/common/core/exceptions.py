@@ -18,6 +18,6 @@ def custom_exception_handler(exc, context):
         success=False,
         message="Internal server error",
         data=None,
-        errors={"detail": "Something went wrong"},
+        errors=exc,
         status=500,
     )

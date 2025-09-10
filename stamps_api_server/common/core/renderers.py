@@ -1,6 +1,43 @@
+import ast
+import re
 from rest_framework.renderers import JSONRenderer
 
 class StandardJSONRenderer(JSONRenderer):
+    def errors_to_list(self, errors):
+        # Define a regular expression to find all key-value pairs
+        # This pattern looks for a field name, a message, and a code
+        pattern = r"'([^']+)': ErrorDetail\(string='([^']+)', code='([^']+)'\)"
+
+        # Find all matches in the string
+        matches = re.findall(pattern, errors)
+        
+        if not matches:
+            pattern = r"'([^']+)': \[ErrorDetail\(string='([^']+)', code='([^']+)'\)\]"
+            matches = re.findall(pattern, errors)
+        
+        # Create an empty list to store the results
+        errors_list = []
+
+        # Iterate over each match and format it into a dictionary
+        for field_name, error_message, error_code in matches:
+            error_dict = {
+                "field": field_name,
+                "message": error_message,
+                "code": error_code
+            }
+            errors_list.append(error_dict)
+            
+        if not errors_list:
+            errors_list.append(
+                {
+                    "field": None,
+                    "message": errors,
+                    "code": "other"
+                }
+            )
+
+        return errors_list
+        
     """
     Ensure all responses follow a standard format with dynamic messages.
     """
@@ -12,15 +49,16 @@ class StandardJSONRenderer(JSONRenderer):
         success = True
         message = "Request successful"
         errors = None
+        data =data
 
         if response is not None:
             status_code = response.status_code
-
+            
             # 🔹 Handle errors
             if status_code >= 400:
                 success = False
                 message = "Request failed"
-                errors = data
+                errors = self.errors_to_list(data['message'])
                 data = None
             else:
                 # 🔹 Dynamic success messages
@@ -42,8 +80,8 @@ class StandardJSONRenderer(JSONRenderer):
         standard_data = {
             "success": success,
             "message": message,
-            "data": data,
             "errors": errors,
+            "data": data
         }
 
         return super().render(standard_data, accepted_media_type, renderer_context)

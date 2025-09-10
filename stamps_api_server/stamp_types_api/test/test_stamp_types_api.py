@@ -53,7 +53,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == "name"
+        assert response.json()['errors'][0]['message'] == "This field is required."
+        assert response.json()['errors'][0]['code'] == "required"
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_post_stamp_type_with_invalid_field_returns_400_bad_request(self, api_client, stamp_type_post_payload_ok):
@@ -63,7 +65,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == "new_field"
+        assert response.json()['errors'][0]['message'] == "This field is not allowed."
+        assert response.json()['errors'][0]['code'] == "invalid"
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_get_stamp_type_returns_data_200_ok(self, api_client, stamp_types_table):
@@ -84,7 +88,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "StampType with id: 1 not found"
+        assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_stamp_type_updates_record_200_ok(self, api_client, stamp_types_table, stamp_type_put_payload_ok):
@@ -102,7 +108,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot update StampType with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_stamp_type_updates_record_400_bad_request(self, api_client, stamp_types_table, stamp_type_put_payload_ok):
@@ -112,13 +120,15 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == "new_field"
+        assert response.json()['errors'][0]['message'] == "This field is not allowed."
+        assert response.json()['errors'][0]['code'] == "invalid"
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_delete_stamp_type_deletes_record_200_ok(self, api_client, stamp_types_table):
         response = api_client.delete(self.__get_url() + "1")
         
-        assert response.json()['data']['detail'] == "Successfully deleted StampType with id: 1"
+        assert response.json()['data']['message'] == "Successfully deleted StampType with id: 1"
         assert response.json()['success'] == True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] == None
@@ -130,7 +140,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot delete StampType with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('stamp_types_api.api.views.stamp_types_by_id_view.StampType.objects.get')
@@ -141,7 +153,9 @@ class TestStampTypesAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
-        assert response.json()['errors']['detail'] != None
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot delete StampType with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_stamp_type_model_str_representation(self):
