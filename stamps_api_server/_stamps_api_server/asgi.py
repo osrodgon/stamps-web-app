@@ -1,5 +1,5 @@
 """
-ASGI config for stamps_api_server project.
+ASGI config for _stamps_api_server project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "stamps_api_server.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_stamps_api_server.settings")
 
 application = get_asgi_application()
