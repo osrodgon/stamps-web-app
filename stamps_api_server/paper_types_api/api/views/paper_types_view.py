@@ -13,7 +13,10 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 
 
 class PaperTypesView(Logger, APIView):
+    serializer_class = PaperTypeResponseSerializer
+    
     @extend_schema(
+        operation_id="list_paper_types",
         tags=['Paper Types'],
         summary="List All Paper Types",
         description="Retrieves a list of all paper type entries currently stored in the database.",
@@ -38,6 +41,7 @@ class PaperTypesView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="create_paper_type",
         tags=['Paper Types'],
         summary="Create a New Paper Type",
         description="Adds a new paper type entry to the database. A successful creation returns the newly created paper type object with a 201 Created status code.",

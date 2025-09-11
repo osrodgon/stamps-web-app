@@ -13,7 +13,10 @@ from locations_api.api.serializers.location_request_serializer import LocationRe
 
 
 class LocationsView(Logger, APIView):
+    serializer_class = LocationResponseSerializer
+    
     @extend_schema(
+        operation_id="list_locations",
         tags=['Locations'],
         summary="List All Locations",
         description="Retrieves a list of all location entries currently stored in the database.",
@@ -38,6 +41,7 @@ class LocationsView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="create_location",
         tags=['Locations'],
         summary="Create a New Location",
         description="Adds a new location entry to the database. A successful creation returns the newly created location object with a 201 Created status code.",

@@ -13,6 +13,8 @@ from countries_api.api.serializers.country_request_serializer import CountryRequ
 
 
 class CountriesView(Logger, APIView):
+    serializer_class = CountryResponseSerializer
+    
     @extend_schema(
         operation_id="list_countries",
         tags=['Countries'],

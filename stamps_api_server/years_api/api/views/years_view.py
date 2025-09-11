@@ -13,7 +13,10 @@ from years_api.api.serializers.year_request_serializer import YearRequestSeriali
 
 
 class YearsView(Logger, APIView):
+    serializer_class = YearResponseSerializer
+    
     @extend_schema(
+        operation_id="list_years",
         tags=['Years'],
         summary="List All Years",
         description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
@@ -38,6 +41,7 @@ class YearsView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="create_year",
         tags=['Years'],
         summary="Create a New Year",
         description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",

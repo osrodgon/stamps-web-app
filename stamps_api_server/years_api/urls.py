@@ -7,5 +7,5 @@ base_url = ""
 
 urlpatterns = [
     path(base_url, YearsView.as_view(), name="years"),
-    path(base_url + '<int:pk>', YearsByIdView.as_view(), name="year"),
+    path(base_url + '<int:pk>', YearsByIdView.as_view(), name="year_by_id"),
 ]

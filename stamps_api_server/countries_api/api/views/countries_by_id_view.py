@@ -13,6 +13,7 @@ from countries_api.api.serializers.country_request_serializer import CountryRequ
 
 
 class CountriesByIdView(Logger, APIView):
+    serializer_class = CountryResponseSerializer
     def __get_country__(self, pk: int) -> Country:
         try:
             self.debug(f"Querying database for country with id: {pk}")
@@ -25,7 +26,7 @@ class CountriesByIdView(Logger, APIView):
             return None
     
     @extend_schema(
-        operation_id="retrieve_country_by_id",
+        operation_id="retrieve_country",
         tags=['Countries'],
         summary="Retrieve a Country by ID",
         description="Fetches the details of a specific country entry by its unique identifier.",

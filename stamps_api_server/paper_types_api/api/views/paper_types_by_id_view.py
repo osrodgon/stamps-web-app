@@ -13,6 +13,8 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 
 
 class PaperTypesByIdView(Logger, APIView):
+    serializer_class = PaperTypeResponseSerializer
+    
     def __get_paper_type__(self, pk: int) -> PaperType:
         try:
             self.debug(f"Querying database for paper type with id: {pk}")
@@ -25,6 +27,7 @@ class PaperTypesByIdView(Logger, APIView):
             return None
     
     @extend_schema(
+        operation_id="retrieve_paper_type",
         tags=['Paper Types'],
         summary="Retrieve a Paper Type by ID",
         description="Fetches the details of a specific paper type entry by its unique identifier.",
@@ -62,6 +65,7 @@ class PaperTypesByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="update_paper_type",
         tags=['Paper Types'],
         summary="Update a Paper Type",
         description="Updates an existing paper type entry identified by its ID. A complete payload with all required fields is expected.",
@@ -113,6 +117,7 @@ class PaperTypesByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="delete_paper_type",
         tags=['Paper Types'],
         summary="Delete a Paper Type",
         description="Deletes a paper type entry from the. database using its ID.",
