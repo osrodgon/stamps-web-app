@@ -1,11 +1,28 @@
-from abc import ABC
 import os
 import logging
 import logging.config
 import inspect
 
 
-class Logger(ABC):
+class SingletonMeta(type):
+    """
+    A metaclass for creating singleton classes. This ensures that only one
+    instance of a class is ever created.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class Logger(metaclass=SingletonMeta):
+    """
+    A singleton logger class that configures and provides a logging instance.
+    This class ensures that logging is configured only once.
+    """
     def init_log(self, log_name = None):
         file_name = "stamps_api_server.log"
 
