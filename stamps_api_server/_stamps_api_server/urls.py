@@ -32,6 +32,7 @@ urlpatterns = [
             path(os.getenv('STAMP_TYPES_ENDPOINT'), include('stamp_types_api.urls')),
             path(os.getenv('PAPER_TYPES_ENDPOINT'), include('paper_types_api.urls')),
             path(os.getenv('LOCATIONS_ENDPOINT'), include('locations_api.urls')),
+            path(os.getenv('COUNTRIES_ENDPOINT'), include('countries_api.urls')),
             path(os.getenv('SCHEMA_ENDPOINT'), SpectacularAPIView.as_view(), name="schema"),
             path(os.getenv('SWAGGER_ENDPOINT'), SpectacularSwaggerView.as_view(), name="swagger"),
             path(os.getenv('REDOC_ENDPOINT'), SpectacularRedocView.as_view(), name="redoc")

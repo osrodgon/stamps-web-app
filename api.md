@@ -279,6 +279,60 @@ This API manages the locations of stamps.
 
 ---
 
+## Countries API
+
+**Base Path:** `/{SERVER_URL_V1}/{COUNTRIES_ENDPOINT}`
+
+This API manages the countries of origin for stamp issues.
+
+### `GET /`
+
+- **Summary:** List All Countries
+- **Description:** Retrieves a list of all country entries.
+- **Responses:**
+    - `200 OK`: A list of countries was successfully retrieved.
+        - **Body:** `[{ "id": integer, "name": "string" }]`
+
+### `POST /`
+
+- **Summary:** Create a New Country
+- **Description:** Adds a new country entry to the database.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `201 Created`: The country was created successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+
+### `GET /{id}`
+
+- **Summary:** Retrieve a Country by ID
+- **Description:** Fetches the details of a specific country entry by its unique identifier.
+- **Responses:**
+    - `200 OK`: The requested country's data was retrieved successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `404 Not Found`: No country was found for the provided ID.
+
+### `PUT /{id}`
+
+- **Summary:** Update a Country
+- **Description:** Updates an existing country entry identified by its ID.
+- **Request Body:** `{ "name": "string" }`
+- **Responses:**
+    - `200 OK`: The country was updated successfully.
+        - **Body:** `{ "id": integer, "name": "string" }`
+    - `400 Bad Request`: The request payload was invalid.
+    - `404 Not Found`: The country with the specified ID was not found.
+
+### `DELETE /{id}`
+
+- **Summary:** Delete a Country
+- **Description:** Deletes a country entry from the database using its ID.
+- **Responses:**
+    - `200 OK`: The country was deleted successfully.
+    - `404 Not Found`: The country with the specified ID was not found.
+
+---
+
 ## Issues API
 
 **Base Path:** `/{SERVER_URL_V1}/{ISSUES_ENDPOINT}`

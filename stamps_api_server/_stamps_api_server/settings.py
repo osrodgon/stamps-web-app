@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "stamp_types_api",      # All APIs for the stamp type table
     "locations_api",        # All APIs for the location table
     "paper_types_api",      # All APIs for the paper type table
+    "countries_api",        # All APIs for the country table
     "stamps_api",           # All APIs for the stamp table
     "issues_api",           # All APIs for the table issue
     "years_api"             # All APIs for the table year
@@ -70,16 +71,16 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
     "TAGS": [
         {
-            "name": "Years",
-            "description": "Endpoints for managing year entries."
-        },
-        {
             "name": "Config",
             "description": "Endpoints for managing system configuration settings."
         },
         {
-            "name": "Stamp Types",
-            "description": "Endpoints for managing stamp type entries."
+            "name": "Countries",
+            "description": "Endpoints for managing country entries."
+        },
+        {
+            "name": "Issues",
+            "description": "Endpoints for managing issue entries."
         },
         {
             "name": "Locations",
@@ -88,6 +89,18 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Paper Types",
             "description": "Endpoints for managing paper types entries."
+        },
+        {
+            "name": "Stamp Types",
+            "description": "Endpoints for managing stamp type entries."
+        },
+        {
+            "name": "Stamps",
+            "description": "Endpoints for managing stamp entries."
+        },
+        {
+            "name": "Years",
+            "description": "Endpoints for managing year entries."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
