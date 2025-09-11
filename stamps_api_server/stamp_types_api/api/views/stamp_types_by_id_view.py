@@ -13,6 +13,8 @@ from stamp_types_api.api.serializers.stamp_type_request_serializer import StampT
 
 
 class StampTypesByIdView(Logger, APIView):
+    serializer_class = StampTypeResponseSerializer
+    
     def __get_stamp_type__(self, pk: int) -> StampType:
         try:
             self.debug(f"Querying database for stamp type with id: {pk}")
@@ -25,6 +27,7 @@ class StampTypesByIdView(Logger, APIView):
             return None
     
     @extend_schema(
+        operation_id="retrieve_stamp_type",
         tags=['Stamp Types'],
         summary="Retrieve a Stamp Type by ID",
         description="Fetches the details of a specific stamp type entry by its unique identifier.",
@@ -62,6 +65,7 @@ class StampTypesByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="update_stamp_type",
         tags=['Stamp Types'],
         summary="Update a Stamp Type",
         description="Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.",
@@ -113,6 +117,7 @@ class StampTypesByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="delete_stamp_type",
         tags=['Stamp Types'],
         summary="Delete a Stamp Type",
         description="Deletes a stamp type entry from the database using its ID.",

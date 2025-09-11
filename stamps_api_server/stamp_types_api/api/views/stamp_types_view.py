@@ -13,7 +13,10 @@ from stamp_types_api.api.serializers.stamp_type_request_serializer import StampT
 
 
 class StampTypesView(Logger, APIView):
+    serializer_class = StampTypeResponseSerializer
+    
     @extend_schema(
+        operation_id="list_stamp_types",
         tags=['Stamp Types'],
         summary="List All Stamp Types",
         description="Retrieves a list of all stamp type entries currently stored in the database.",
@@ -38,6 +41,7 @@ class StampTypesView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="create_stamp_type",
         tags=['Stamp Types'],
         summary="Create a New Stamp Type",
         description="Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a 201 Created status code.",

@@ -13,6 +13,8 @@ from locations_api.api.serializers.location_request_serializer import LocationRe
 
 
 class LocationsByIdView(Logger, APIView):
+    serializer_class = LocationResponseSerializer
+    
     def __get_location__(self, pk: int) -> Location:
         try:
             self.debug(f"Querying database for location with id: {pk}")
@@ -25,6 +27,7 @@ class LocationsByIdView(Logger, APIView):
             return None
     
     @extend_schema(
+        operation_id="retrieve_location",
         tags=['Locations'],
         summary="Retrieve a Location by ID",
         description="Fetches the details of a specific location entry by its unique identifier.",
@@ -62,6 +65,7 @@ class LocationsByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="update_location",
         tags=['Locations'],
         summary="Update a Location",
         description="Updates an existing location entry identified by its ID. A complete payload with all required fields is expected.",
@@ -113,6 +117,7 @@ class LocationsByIdView(Logger, APIView):
             )
     
     @extend_schema(
+        operation_id="delete_location",
         tags=['Locations'],
         summary="Delete a Location",
         description="Deletes a location entry from the. database using its ID.",

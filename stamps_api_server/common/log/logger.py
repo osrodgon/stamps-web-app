@@ -4,27 +4,12 @@ import logging.config
 import inspect
 
 
-class SingletonMeta(type):
+class Logger:
     """
-    A metaclass for creating singleton classes. This ensures that only one
-    instance of a class is ever created.
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-
-class Logger(metaclass=SingletonMeta):
-    """
-    A singleton logger class that configures and provides a logging instance.
-    This class ensures that logging is configured only once.
+    A logger mixin class that configures and provides a logging instance for views.
     """
     def init_log(self, log_name = None):
-        file_name = "stamps_api_server.log"
+        file_name = os.getenv("LOG_FILE_NAME", "stamps_api_server.log")
 
         # If no logger name is passed, use the class name
         if not log_name:
