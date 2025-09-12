@@ -1,17 +1,10 @@
 from rest_framework import serializers
 
+from common.api.serializers.generic_serializer import GenericSerializer
 from stamp_types_api.models import StampType
 
-class StampTypeRequestSerializer(serializers.ModelSerializer):
+class StampTypeRequestSerializer(GenericSerializer, serializers.ModelSerializer):
     class Meta:
         model = StampType
         fields = ['name']
         
-    def to_internal_value(self, data):
-        # Check for unexpected fields
-        extra_fields = set(data.keys()) - set(self.fields.keys())
-        if extra_fields:
-            raise serializers.ValidationError(
-                {field: "This field is not allowed." for field in extra_fields}
-            )
-        return super().to_internal_value(data)
