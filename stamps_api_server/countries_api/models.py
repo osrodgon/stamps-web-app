@@ -7,6 +7,7 @@ class Country(models.Model):
     name = models.CharField(max_length=255, unique=True, help_text="The name of the country.")
     
     class Meta:
+        verbose_name = "Country"
         verbose_name_plural = "Countries"
 
     def __str__(self):

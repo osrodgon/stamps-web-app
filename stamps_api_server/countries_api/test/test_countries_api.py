@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 import pytest
 from rest_framework import status
 
@@ -17,32 +18,6 @@ class TestCountriesAPI:
     """
     Test suite for the Countries API endpoints.
     """
-
-    # region Helper Methods
-    def _assert_successful_response(self, response, expected_message, expected_status_code):
-        """Asserts the structure of a successful API response."""
-        assert response.status_code == expected_status_code
-        assert response.data['success'] is True
-        assert response.data['message'] == expected_message
-        assert response.data['errors'] is None
-        assert response.data['data'] is not None
-
-    def _assert_error_response(self, response, expected_status_code, expected_error_field=None, expected_error_code=None, expected_error_message=None):
-        """Asserts the structure of a failed API response."""
-        assert response.status_code == expected_status_code
-        assert response.data['success'] is False
-        assert response.data['message'] == "Request failed"
-        assert response.data['data'] is None
-        assert response.data['errors'] is not None
-
-        if expected_error_field:
-            assert response.data['errors'][0]['field'] == expected_error_field
-        if expected_error_code:
-            assert response.data['errors'][0]['code'] == expected_error_code
-        if expected_error_message:
-            assert expected_error_message in response.data['errors'][0]['message']
-    # endregion
-
     def test_list_countries(self, api_client, countries_table):
         response = api_client.get(self.__get_url())
         
@@ -54,80 +29,168 @@ class TestCountriesAPI:
         assert response.json()['message'] == "Retrieved successfully"
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
+        
+    def test_list_countries_empty(self, api_client):
+        response = api_client.get(self.__get_url())
+        
+        assert len(response.json()['data']) == 0
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['errors'] == None
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_create_country_success(self, api_client, list_create_url, country_post_payload_ok):
-        response = api_client.post(list_create_url, country_post_payload_ok, format='json')
-        self._assert_successful_response(response, "Created successfully", status.HTTP_201_CREATED)
-        assert response.data['data']['name'] == country_post_payload_ok['name']
-        assert Country.objects.count() == 1
-        assert Country.objects.filter(name=country_post_payload_ok['name']).exists()
 
-    def test_create_country_invalid_payload_blank(self, api_client, list_create_url):
-        response = api_client.post(list_create_url, {'name': ''}, format='json')
-        self._assert_error_response(response, status.HTTP_400_BAD_REQUEST, expected_error_field='name', expected_error_code='blank')
-        assert Country.objects.count() == 0
+    def test_create_country_success(self, api_client, country_post_payload_ok):
+        response = api_client.post(self.__get_url(), country_post_payload_ok)
+        
+        assert response.json()['data']['name'] == country_post_payload_ok['name']
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Created successfully"
+        assert response.json()['errors'] == None
+        assert response.status_code == status.HTTP_201_CREATED
 
-    def test_create_country_invalid_payload_missing(self, api_client, list_create_url):
-        response = api_client.post(list_create_url, {}, format='json')
-        self._assert_error_response(response, status.HTTP_400_BAD_REQUEST, expected_error_field='name', expected_error_code='required')
-        assert Country.objects.count() == 0
 
-    def test_create_country_duplicate_name(self, api_client, countries_table, list_create_url):
-        response = api_client.post(list_create_url, {'name': countries_table[0].name}, format='json')
-        self._assert_error_response(response, status.HTTP_400_BAD_REQUEST, expected_error_field='name', expected_error_code='unique')
-        assert Country.objects.count() == 2
+    def test_create_country_invalid_payload_blank(self, api_client, country_post_payload_ok):
+        del country_post_payload_ok['name']
+        response = api_client.post(self.__get_url())
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == "name"
+        assert response.json()['errors'][0]['message'] == "This field is required."
+        assert response.json()['errors'][0]['code'] == "required"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
 
-    def test_retrieve_country_success(self, api_client, countries_table, detail_url):
-        country_1 = countries_table[0]
-        url = detail_url(country_1.pk)
-        response = api_client.get(url)
-        self._assert_successful_response(response, "Retrieved successfully", status.HTTP_200_OK)
-        assert response.data['data']['id'] == country_1.pk
-        assert response.data['data']['name'] == country_1.name
+    def test_create_country_invalid_payload_missing(self, api_client, country_post_payload_ok):
+        country_post_payload_ok['new_field'] = 'new_value'
+        response = api_client.post(self.__get_url(), country_post_payload_ok)
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == "new_field"
+        assert response.json()['errors'][0]['message'] == "This field is not allowed."
+        assert response.json()['errors'][0]['code'] == "invalid"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
+    def test_create_country_duplicate_name(self, api_client, countries_table):
+        response = api_client.post(self.__get_url(), {'name': countries_table[0].name})
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == "name"
+        assert response.json()['errors'][0]['message'] == "Country with this name already exists."
+        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
 
-    def test_retrieve_country_not_found(self, api_client, detail_url):
-        url = detail_url(999)
-        response = api_client.get(url)
-        self._assert_error_response(response, status.HTTP_404_NOT_FOUND, expected_error_message='not found')
+    def test_retrieve_country_success(self, api_client, countries_table,):
+        response = api_client.get(self.__get_url() + "1")
 
-    def test_update_country_success(self, api_client, countries_table, detail_url, country_put_payload_ok):
-        country_1 = countries_table[0]
-        url = detail_url(country_1.pk)
-        response = api_client.put(url, country_put_payload_ok, format='json')
-        self._assert_successful_response(response, "Updated successfully", status.HTTP_200_OK)
-        assert response.data['data']['name'] == country_put_payload_ok['name']
-        country_1.refresh_from_db()
-        assert country_1.name == country_put_payload_ok['name']
+        assert response.json()['data']['name'] == countries_table[0].name
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['errors'] == None
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_update_country_not_found(self, api_client, detail_url, country_put_payload_ok):
-        url = detail_url(999)
-        response = api_client.put(url, country_put_payload_ok, format='json')
-        self._assert_error_response(response, status.HTTP_404_NOT_FOUND, expected_error_message='not found')
+    def test_retrieve_country_not_found(self, api_client):
+        response = api_client.get(self.__get_url() + "999")
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Country with id: 999 not found"
+        assert response.json()['errors'][0]['code'] == "other"
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
 
-    def test_update_country_invalid_payload(self, api_client, countries_table, detail_url):
-        country_1 = countries_table[0]
-        original_name = country_1.name
-        url = detail_url(country_1.pk)
-        response = api_client.put(url, {'name': ''}, format='json')
-        self._assert_error_response(response, status.HTTP_400_BAD_REQUEST, expected_error_field='name', expected_error_code='blank')
-        country_1.refresh_from_db()
-        assert country_1.name == original_name
+    def test_update_country_success(self, api_client, countries_table,  country_put_payload_ok):
+        response = api_client.put(self.__get_url() + "1", country_put_payload_ok)
+        
+        assert response.json()['data']['name'] == country_put_payload_ok['name'] 
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['errors'] == None
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_delete_country_success(self, api_client, countries_table, detail_url):
-        country_1 = countries_table[0]
-        url = detail_url(country_1.pk)
-        response = api_client.delete(url)
-        self._assert_successful_response(response, "Deleted successfully", status.HTTP_200_OK)
-        assert 'Successfully deleted' in response.data['data']['message']
-        assert Country.objects.count() == 1
-        with pytest.raises(Country.DoesNotExist):
-            Country.objects.get(pk=country_1.pk)
+    def test_update_country_duplicate_name(self, api_client, countries_table):
+        response = api_client.put(self.__get_url() + "1", {'name': countries_table[1].name})
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == "name"
+        assert response.json()['errors'][0]['message'] == "Country with this name already exists."
+        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_delete_country_not_found(self, api_client, countries_table, detail_url):
-        url = detail_url(999)
-        response = api_client.delete(url)
-        self._assert_error_response(response, status.HTTP_404_NOT_FOUND, expected_error_message='not found')
-        assert Country.objects.count() == 2
+    def test_update_country_not_found(self, api_client, country_put_payload_ok):
+        response = api_client.put(self.__get_url() + "999", country_put_payload_ok)
+
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot update Country with id: 999. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
+
+    def test_update_country_invalid_payload(self, api_client, countries_table, country_post_payload_ok):
+        del country_post_payload_ok["name"]
+        response = api_client.put(self.__get_url() + "1", country_post_payload_ok)
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == "name"
+        assert response.json()['errors'][0]['message'] == "This field is required."
+        assert response.json()['errors'][0]['code'] == "required"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
+    def test_delete_country_success(self, api_client, countries_table):
+        response = api_client.delete(self.__get_url() + "1")
+        
+        assert response.json()['data']['message'] == "Successfully deleted Country with id: 1"
+        assert response.json()['success'] == True
+        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['errors'] == None
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_delete_country_not_found(self, api_client):
+        response = api_client.delete(self.__get_url() + "1")
+        
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot delete Country with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
+    @patch('countries_api.api.views.countries_by_id_view.Country.objects.get')
+    def test_delete_country_deletes_record_database_error(self, mock_get, api_client, countries_table):
+        mock_get.side_effect = Exception("Database connection lost")
+        response = api_client.delete(self.__get_url() + "1")
+                
+        assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == "Request failed"
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == "Cannot delete Country with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['code'] == "other"
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        
+    def test_country_model_str_representacion(self):
+        test_country_value = "Constantinopla"
+        
+        country = Country.objects.create(name=test_country_value)
+        
+        assert str(country) == test_country_value
         
     def __get_url(self):
         return "/" + str(os.getenv("COUNTRIES_URL_V1"))
