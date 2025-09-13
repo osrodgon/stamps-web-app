@@ -1,0 +1,155 @@
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework import status
+from drf_spectacular.utils import extend_schema
+
+from common.log.logger import Logger
+from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
+from common.core.schemas import standardized_response
+from colors_api.models import Color
+from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
+from colors_api.api.serializers.color_request_serializer import ColorRequestSerializer
+
+
+class ColorsByIdView(Logger, APIView):
+    serializer_class = ColorResponseSerializer
+    def __get_color__(self, pk: int) -> Color:
+        try:
+            self.debug(f"Querying database for color with id: {pk}")
+            return Color.objects.get(pk = pk)
+        except Color.DoesNotExist:
+            self.warning(f"Color with id {pk} does not exist in the database.")
+            return None
+        except Exception as e:
+            self.error(f"An unexpected error occurred while fetching color with id {pk}: {str(e)}")
+            return None
+    
+    @extend_schema(
+        operation_id="retrieve_color",
+        tags=['Colors'],
+        summary="Retrieve a Color by ID",
+        description="Fetches the details of a specific color entry by its unique identifier.",
+        responses={
+            200: standardized_response(
+                ColorResponseSerializer,
+                name="ColorRetrieved",
+                description="The requested color's data was retrieved successfully."
+                ),
+            404: standardized_response(
+                GenericResponseSerializer,
+                name="RetrieveColorNotFound",
+                success=False,
+                description="No color was found for the provided ID."
+                ) 
+        }
+    )    
+    def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.debug(f"Attempting to retrieve color for id: {pk}")
+        color = self.__get_color__(pk)
+        
+        if color is None:
+            message = f"Color with id: {pk} not found"
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND
+                )
+        
+        response = ColorResponseSerializer(color)
+        self.info(f"Successfully retrieved color with id: {pk}")
+        return Response(
+            data=response.data, 
+            status=status.HTTP_200_OK
+            )
+    
+    @extend_schema(
+        operation_id="update_color",
+        tags=['Colors'],
+        summary="Update a Color",
+        description="Updates an existing color entry identified by its ID. A complete payload with all required fields is expected.",
+        request=ColorRequestSerializer,
+        responses={
+            200: standardized_response(
+                ColorResponseSerializer,
+                name="ColorUpdated",
+                description="The color was updated successfully."
+                ),
+            404: standardized_response(
+                GenericResponseSerializer,
+                name="ColorUpdateNotFound",
+                success=False,
+                description="The color with the specified ID was not found."
+                ),
+            400: standardized_response(
+                GenericResponseSerializer,
+                name="ColorUpdateInvalidPayload",
+                success=False,
+                description="The request payload was invalid."
+                )   
+        }
+    )    
+    def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.debug(f"Attempting to update color for id: {pk} with payload: {request.data}")
+        color = self.__get_color__(pk)
+        if color is None:
+            message = f"Cannot update Color with id: {pk}. Not found in the database"
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND
+                )
+        
+        updated_color = ColorRequestSerializer(data=request.data, instance=color, partial=False)
+        if updated_color.is_valid():
+            instance = updated_color.save()
+            self.info(f"Successfully updated color with id: {instance.id}")
+            return Response(
+                data=ColorResponseSerializer(instance).data,
+                status=status.HTTP_200_OK
+                )
+        
+        self.warning(f"Payload validation failed for color update (id: {pk}): {updated_color.errors}")
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(updated_color.errors)).data,
+            status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @extend_schema(
+        operation_id="delete_color",
+        tags=['Colors'],
+        summary="Delete a Color",
+        description="Deletes a color entry from the database using its ID.",
+        responses={
+            200: standardized_response(
+                GenericResponseSerializer,
+                name="ColorDeleted",
+                success=True,
+                description="The color was deleted successfully."
+                ),
+            404: standardized_response(
+                GenericResponseSerializer,
+                name="ColorDeleteNotFound",
+                success=False,
+                description="The color with the specified ID was not found."
+                )
+        }
+    )    
+    def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.debug(f"Attempting to delete color for id: {pk}")
+        color = self.__get_color__(pk)
+        if color is None:
+            message=f"Cannot delete Color with id: {pk}. Not found in the database"
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND
+                )
+        
+        color.delete()
+        message = f"Successfully deleted Color with id: {pk}"
+        self.info(message)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(message)).data,
+            status=status.HTTP_200_OK
+            )

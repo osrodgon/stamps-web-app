@@ -1,10 +1,8 @@
 import os
 from unittest.mock import patch
-from urllib import response
 import pytest
 from rest_framework import status
 
-from common import test
 from common.test.api_client import api_client
 from common.test.config_api_test_data import (
     config_table,
