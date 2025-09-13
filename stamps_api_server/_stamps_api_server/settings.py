@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "locations_api",        # All APIs for the location table
     "paper_types_api",      # All APIs for the paper type table
     "countries_api",        # All APIs for the country table
+    "colors_api",           # All APIs for the color table
     "stamps_api",           # All APIs for the stamp table
     "issues_api",           # All APIs for the table issue
     "years_api"             # All APIs for the table year
@@ -70,6 +71,10 @@ SPECTACULAR_SETTINGS = {
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
     "TAGS": [
+        {
+            "name": "Colors",
+            "description": "Endpoints for managing color entries."
+        },
         {
             "name": "Config",
             "description": "Endpoints for managing system configuration settings."
