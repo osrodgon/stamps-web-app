@@ -38,6 +38,11 @@ class Issue(models.Model):
     )
     note = models.TextField(null=True, blank=True)
     perforation = models.CharField(max_length=255, null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Issue"
+        verbose_name_plural = "Issues"
+        ordering = ['year']
 
     def __str__(self):
         return f"{self.name} ({self.year.year})"
