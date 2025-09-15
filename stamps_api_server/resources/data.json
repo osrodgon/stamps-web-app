@@ -1,0 +1,832 @@
+[
+  {
+    "model": "years_api.year",
+    "pk": 1,
+    "fields": {
+      "year": 1980
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 2,
+    "fields": {
+      "year": 1985
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 3,
+    "fields": {
+      "year": 1990
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 4,
+    "fields": {
+      "year": 1995
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 5,
+    "fields": {
+      "year": 2000
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 6,
+    "fields": {
+      "year": 2005
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 7,
+    "fields": {
+      "year": 2010
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 8,
+    "fields": {
+      "year": 2015
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 9,
+    "fields": {
+      "year": 2020
+    }
+  },
+  {
+    "model": "years_api.year",
+    "pk": 10,
+    "fields": {
+      "year": 2023
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 1,
+    "fields": {
+      "name": "Definitivo"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 2,
+    "fields": {
+      "name": "Conmemorativo"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 3,
+    "fields": {
+      "name": "Aéreo"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 4,
+    "fields": {
+      "name": "De impuesto"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 5,
+    "fields": {
+      "name": "Servicio oficial"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 6,
+    "fields": {
+      "name": "Postal"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 7,
+    "fields": {
+      "name": "Caridad"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 8,
+    "fields": {
+      "name": "Privado"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 9,
+    "fields": {
+      "name": "Colección"
+    }
+  },
+  {
+    "model": "stamp_types_api.stamptype",
+    "pk": 10,
+    "fields": {
+      "name": "Corteza"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 1,
+    "fields": {
+      "name": "Normal"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 2,
+    "fields": {
+      "name": "Grueso"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 3,
+    "fields": {
+      "name": "Delgado"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 4,
+    "fields": {
+      "name": "De seda"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 5,
+    "fields": {
+      "name": "Reciclado"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 6,
+    "fields": {
+      "name": "Blanqueado"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 7,
+    "fields": {
+      "name": "Brillante"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 8,
+    "fields": {
+      "name": "Mate"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 9,
+    "fields": {
+      "name": "Pergamino"
+    }
+  },
+  {
+    "model": "paper_types_api.papertype",
+    "pk": 10,
+    "fields": {
+      "name": "Fotográfico"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 1,
+    "fields": {
+      "name": "Archivo de la ciudad"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 2,
+    "fields": {
+      "name": "Almacén principal"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 3,
+    "fields": {
+      "name": "Caja fuerte 1"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 4,
+    "fields": {
+      "name": "Oficina del gerente"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 5,
+    "fields": {
+      "name": "Exposición 2024"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 6,
+    "fields": {
+      "name": "Caja 3"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 7,
+    "fields": {
+      "name": "Bodega 4"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 8,
+    "fields": {
+      "name": "Sala de reunión"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 9,
+    "fields": {
+      "name": "Oficina 5"
+    }
+  },
+  {
+    "model": "locations_api.location",
+    "pk": 10,
+    "fields": {
+      "name": "Archivador"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 1,
+    "fields": {
+      "name": "España"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 2,
+    "fields": {
+      "name": "Francia"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 3,
+    "fields": {
+      "name": "Alemania"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 4,
+    "fields": {
+      "name": "Reino Unido"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 5,
+    "fields": {
+      "name": "Estados Unidos"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 6,
+    "fields": {
+      "name": "Japón"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 7,
+    "fields": {
+      "name": "Canadá"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 8,
+    "fields": {
+      "name": "Australia"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 9,
+    "fields": {
+      "name": "Brasil"
+    }
+  },
+  {
+    "model": "countries_api.country",
+    "pk": 10,
+    "fields": {
+      "name": "China"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 1,
+    "fields": {
+      "name": "Rojo"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 2,
+    "fields": {
+      "name": "Azul"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 3,
+    "fields": {
+      "name": "Verde"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 4,
+    "fields": {
+      "name": "Amarillo"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 5,
+    "fields": {
+      "name": "Negro"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 6,
+    "fields": {
+      "name": "Blanco"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 7,
+    "fields": {
+      "name": "Marrón"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 8,
+    "fields": {
+      "name": "Naranja"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 9,
+    "fields": {
+      "name": "Morado"
+    }
+  },
+  {
+    "model": "colors_api.color",
+    "pk": 10,
+    "fields": {
+      "name": "Gris"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 1,
+    "fields": {
+      "property": "app_name",
+      "value": "Stamps Collection"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 2,
+    "fields": {
+      "property": "theme",
+      "value": "dark"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 3,
+    "fields": {
+      "property": "version",
+      "value": "1.0.0"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 4,
+    "fields": {
+      "property": "last_updated",
+      "value": "2023-09-15"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 5,
+    "fields": {
+      "property": "admin_email",
+      "value": "admin@example.com"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 6,
+    "fields": {
+      "property": "maintenance_mode",
+      "value": "False"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 7,
+    "fields": {
+      "property": "logo_path",
+      "value": "/static/images/logo.png"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 8,
+    "fields": {
+      "property": "default_currency",
+      "value": "EUR"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 9,
+    "fields": {
+      "property": "items_per_page",
+      "value": "25"
+    }
+  },
+  {
+    "model": "config_api.config",
+    "pk": 10,
+    "fields": {
+      "property": "allow_registrations",
+      "value": "True"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 1,
+    "fields": {
+      "year_id": 1,
+      "date": "1980-05-15",
+      "name": "Nacimiento de la monarquía",
+      "description": "Emisión conmemorativa del inicio del reinado de Juan Carlos I.",
+      "total_printed": 1000000,
+      "market_value": 5.75,
+      "number_owned": 5,
+      "stamp_type_id": 1,
+      "paper_type_id": 1,
+      "location_id": 1,
+      "country_id": 1,
+      "note": "Primera emisión del año",
+      "perforation": "12.5"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 2,
+    "fields": {
+      "year_id": 2,
+      "date": "1985-02-20",
+      "name": "Juegos Olímpicos",
+      "description": "Emisión dedicada a los Juegos Olímpicos de Los Ángeles 1984.",
+      "total_printed": 2500000,
+      "market_value": 8.50,
+      "number_owned": 2,
+      "stamp_type_id": 2,
+      "paper_type_id": 2,
+      "location_id": 2,
+      "country_id": 2,
+      "note": "Serie completa de 4 sellos",
+      "perforation": "13"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 3,
+    "fields": {
+      "year_id": 3,
+      "date": "1990-10-10",
+      "name": "Aviones clásicos",
+      "description": "Serie de sellos que muestran aviones históricos de la primera mitad del siglo XX.",
+      "total_printed": 500000,
+      "market_value": 12.00,
+      "number_owned": 1,
+      "stamp_type_id": 3,
+      "paper_type_id": 3,
+      "location_id": 3,
+      "country_id": 3,
+      "note": "Sellos aéreos conmemorativos",
+      "perforation": "11.75"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 4,
+    "fields": {
+      "year_id": 4,
+      "date": "1995-07-04",
+      "name": "Independencia de EEUU",
+      "description": "Sello emitido para conmemorar el Día de la Independencia de los Estados Unidos.",
+      "total_printed": 5000000,
+      "market_value": 2.50,
+      "number_owned": 10,
+      "stamp_type_id": 4,
+      "paper_type_id": 4,
+      "location_id": 4,
+      "country_id": 5,
+      "note": "Edición especial para coleccionistas",
+      "perforation": "14"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 5,
+    "fields": {
+      "year_id": 5,
+      "date": "2000-01-01",
+      "name": "Mileniun",
+      "description": "Emisión especial para celebrar la llegada del nuevo milenio.",
+      "total_printed": 7500000,
+      "market_value": 1.50,
+      "number_owned": 20,
+      "stamp_type_id": 5,
+      "paper_type_id": 5,
+      "location_id": 5,
+      "country_id": 4,
+      "note": "Primer sello del nuevo milenio",
+      "perforation": "11"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 6,
+    "fields": {
+      "year_id": 6,
+      "date": "2005-09-30",
+      "name": "Fauna exótica",
+      "description": "Serie que destaca la diversidad de la fauna en el continente australiano.",
+      "total_printed": 1200000,
+      "market_value": 9.20,
+      "number_owned": 3,
+      "stamp_type_id": 6,
+      "paper_type_id": 6,
+      "location_id": 6,
+      "country_id": 8,
+      "note": "Serie de animales australianos",
+      "perforation": "12"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 7,
+    "fields": {
+      "year_id": 7,
+      "date": "2010-11-25",
+      "name": "Arquitectura moderna",
+      "description": "Sellos que presentan edificios icónicos de la arquitectura moderna brasileña.",
+      "total_printed": 1500000,
+      "market_value": 7.80,
+      "number_owned": 7,
+      "stamp_type_id": 7,
+      "paper_type_id": 7,
+      "location_id": 7,
+      "country_id": 9,
+      "note": "Sellos conmemorativos de edificios",
+      "perforation": "13.5"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 8,
+    "fields": {
+      "year_id": 8,
+      "date": "2015-08-01",
+      "name": "Dinosaurios",
+      "description": "Serie educativa con ilustraciones de varios dinosaurios para el público infantil.",
+      "total_printed": 3000000,
+      "market_value": 4.90,
+      "number_owned": 15,
+      "stamp_type_id": 8,
+      "paper_type_id": 8,
+      "location_id": 8,
+      "country_id": 6,
+      "note": "Serie educativa para niños",
+      "perforation": "12.75"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 9,
+    "fields": {
+      "year_id": 9,
+      "date": "2020-04-12",
+      "name": "Pandemia Global",
+      "description": "Emisión en homenaje a los trabajadores esenciales durante la pandemia de COVID-19.",
+      "total_printed": 9000000,
+      "market_value": 1.25,
+      "number_owned": 50,
+      "stamp_type_id": 9,
+      "paper_type_id": 9,
+      "location_id": 9,
+      "country_id": 10,
+      "note": "Emisión de solidaridad",
+      "perforation": "11.5"
+    }
+  },
+  {
+    "model": "issues_api.issue",
+    "pk": 10,
+    "fields": {
+      "year_id": 10,
+      "date": "2023-03-21",
+      "name": "Maravillas Naturales",
+      "description": "Serie que muestra la belleza de los paisajes naturales de Canadá.",
+      "total_printed": 1800000,
+      "market_value": 6.75,
+      "number_owned": 8,
+      "stamp_type_id": 10,
+      "paper_type_id": 10,
+      "location_id": 10,
+      "country_id": 7,
+      "note": "Paisajes de Canadá",
+      "perforation": "13.25"
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 1,
+    "fields": {
+      "issue_id": 1,
+      "edifil_code": "E-1980-001",
+      "face_value": "10 Ptas",
+      "name": "Rey Juan Carlos I",
+      "others_code": "Scott-1234",
+      "image": "/static/images/stamp1.jpg",
+      "colors": [1, 7],
+      "market_value": 5.75
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 2,
+    "fields": {
+      "issue_id": 2,
+      "edifil_code": "F-1985-001",
+      "face_value": "5 Francs",
+      "name": "Ciclismo",
+      "others_code": "Scott-5678",
+      "image": "/static/images/stamp2.jpg",
+      "colors": [2, 4, 1],
+      "market_value": 8.50
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 3,
+    "fields": {
+      "issue_id": 3,
+      "edifil_code": "G-1990-001",
+      "face_value": "2 DM",
+      "name": "Avión de hélice",
+      "others_code": "Scott-9101",
+      "image": "/static/images/stamp3.jpg",
+      "colors": [3, 10],
+      "market_value": 12.00
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 4,
+    "fields": {
+      "issue_id": 4,
+      "edifil_code": "US-1995-001",
+      "face_value": "32 Cents",
+      "name": "Águila calva",
+      "others_code": "Scott-1121",
+      "image": "/static/images/stamp4.jpg",
+      "colors": [7, 6, 2],
+      "market_value": 2.50
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 5,
+    "fields": {
+      "issue_id": 5,
+      "edifil_code": "UK-2000-001",
+      "face_value": "1 Pound",
+      "name": "Reina Isabel II",
+      "others_code": "Scott-3141",
+      "image": "/static/images/stamp5.jpg",
+      "colors": [9, 4],
+      "market_value": 1.50
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 6,
+    "fields": {
+      "issue_id": 6,
+      "edifil_code": "AUS-2005-001",
+      "face_value": "$1.50",
+      "name": "Koala",
+      "others_code": "Scott-5161",
+      "image": "/static/images/stamp6.jpg",
+      "colors": [10, 5],
+      "market_value": 9.20
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 7,
+    "fields": {
+      "issue_id": 7,
+      "edifil_code": "BR-2010-001",
+      "face_value": "R$ 3",
+      "name": "Cristo Redentor",
+      "others_code": "Scott-7181",
+      "image": "/static/images/stamp7.jpg",
+      "colors": [6, 10],
+      "market_value": 7.80
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 8,
+    "fields": {
+      "issue_id": 8,
+      "edifil_code": "JP-2015-001",
+      "face_value": "80 Yen",
+      "name": "Tiranosaurio Rex",
+      "others_code": "Scott-9101",
+      "image": "/static/images/stamp8.jpg",
+      "colors": [8, 7],
+      "market_value": 4.90
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 9,
+    "fields": {
+      "issue_id": 9,
+      "edifil_code": "CH-2020-001",
+      "face_value": "1.20 Yuan",
+      "name": "Personal médico",
+      "others_code": "Scott-1121",
+      "image": "/static/images/stamp9.jpg",
+      "colors": [2, 6],
+      "market_value": 1.25
+    }
+  },
+  {
+    "model": "stamps_api.stamp",
+    "pk": 10,
+    "fields": {
+      "issue_id": 10,
+      "edifil_code": "CA-2023-001",
+      "face_value": "1.75 CAD",
+      "name": "Lago Moraine",
+      "others_code": "Scott-3141",
+      "image": "/static/images/stamp10.jpg",
+      "colors": [2, 3, 6],
+      "market_value": 6.75
+    }
+  }
+]

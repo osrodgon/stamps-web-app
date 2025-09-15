@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from stamps_api.models import Stamp
+
+admin.site.register(Stamp)
