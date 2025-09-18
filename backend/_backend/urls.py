@@ -23,7 +23,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from _stamps_api_server.stamps_admin_site import stamps_admin_site
+from _backend.stamps_admin_site import stamps_admin_site
 
 urlpatterns = [
     path(os.getenv('ADMIN_URL'), stamps_admin_site.urls),
