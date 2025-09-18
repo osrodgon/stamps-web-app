@@ -5,6 +5,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
 from common.log.logger import Logger
@@ -47,10 +48,10 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve config entry for id: {pk}")
+        self.debug(Messages.Get.retrieve_one("config entry", pk))
         config = self.__get_config__(pk)
         if config is None:
-            message = f"Config entry for id: {pk} not found"
+            message = Messages.Get.not_found("config entry", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
@@ -58,8 +59,7 @@ class ConfigByIdView(Logger, APIView):
                 )
         
         response = ConfigResponseSerializer(config)
-        self.info(f"Successfully retrieved config entry with id: {pk}")
-        self.debug(f"Returning config entry data: {response.data}")
+        self.info(Messages)
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -92,11 +92,11 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update config entry for id: {pk} with payload: {request.data}")
+        self.debug(Messages.Put.update_one("config entry", pk, request.data))
         config = self.__get_config__(pk)
         
         if config is None:
-            message = f"Cannot update config entry with id: {pk}. Not found."
+            message = Messages.Put.not_found("config entry", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
@@ -106,13 +106,13 @@ class ConfigByIdView(Logger, APIView):
         updated_config = ConfigRequestSerializer(data=request.data, instance=config, partial=True)
         if updated_config.is_valid():
             instance = updated_config.save()
-            self.info(f"Successfully updated config entry with id: {instance.id}")
+            self.info(Messages.Put.updated_one("config entry", pk))
             return Response(
                 data=ConfigResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for config entry update (id: {pk}): {updated_config.errors}")
+        self.warning(Messages.Put.validation_failed("config entry", pk, updated_config.errors))
         return  Response(
             data=GenericResponseSerializer(GenericResponse(updated_config.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST
@@ -142,7 +142,7 @@ class ConfigByIdView(Logger, APIView):
         config = self.__get_config__(pk)
         
         if config is None:
-            message = f"Cannot delete config entry with id: {pk}. Not found."
+            message = Messages.Delete.not_found("config entry", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
@@ -150,7 +150,7 @@ class ConfigByIdView(Logger, APIView):
                 )
             
         config.delete()
-        message = f"Successfully deleted config entry with id: {pk}"
+        message = Messages.Delete.deleted_one("config entry", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

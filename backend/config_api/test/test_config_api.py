@@ -102,7 +102,7 @@ class TestConfigAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Config entry for id: 1 not found"
+        assert response.json()['errors'][0]['message'] == "Config Entry with id: 1 not found."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -122,7 +122,7 @@ class TestConfigAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot update config entry with id: 1. Not found."
+        assert response.json()['errors'][0]['message'] == "Cannot update config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -141,7 +141,7 @@ class TestConfigAPI:
     def test_delete_config_deletes_record_200_ok(self, api_client, config_table):
         response = api_client.delete(self.get_url() + "1")
         
-        assert response.json()['data']['message'] == "Successfully deleted config entry with id: 1"
+        assert response.json()['data']['message'] == "Successfully deleted config entry with id: 1."
         assert response.json()['success'] == True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] == None
@@ -154,7 +154,7 @@ class TestConfigAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found."
+        assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -167,7 +167,7 @@ class TestConfigAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found."
+        assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         

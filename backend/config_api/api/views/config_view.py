@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
 from common.log.logger import Logger
@@ -29,9 +30,9 @@ class ConfigView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all config entries.")
+        self.debug(Messages.Get.retrieve_all("config entries"))
         config = Config.objects.all()
-        self.debug(f"Found {len(config)} config entries.")
+        self.debug(Messages.Get.retrieved_all("config entries", config.count()))
         response = ConfigResponseSerializer(config, many=True)
         
         return Response(
@@ -60,18 +61,18 @@ class ConfigView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new config entry with payload: {request.data}")
+        self.debug(Messages.Post.create_one("config entry", request.data))
         config = ConfigRequestSerializer(data = request.data)
         
         if config.is_valid():
             instance = config.save()
-            self.debug(f"Successfully created config entry with id: {instance.id}")
+            self.debug(Messages.Post.created_one("config entry", instance.id))
             return Response(
                 data=ConfigResponseSerializer(instance).data,
                 status=status.HTTP_201_CREATED
                 )
 
-        self.warning(f"Payload validation failed for new config entry: {config.errors}")
+        self.warning(Messages.Post.validation_failed("config entry", config.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(config.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

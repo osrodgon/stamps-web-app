@@ -1,4 +1,28 @@
 class Messages:
+    def success():
+        return "Request successful"
+    
+    def failed():
+        return "Request failed"
+    
+    def server_error():
+        return "Internal server error"
+    
+    def created_successfully():
+        return "Created successfully"
+    
+    def updated_successfully():
+        return "Updated successfully"
+    
+    def partially_updated_successfully():
+        return "Partially updated successfully"
+    
+    def deleted_successfully():
+        return "Deleted successfully"
+    
+    def retrieved_successfully():
+        return "Retrieved successfully"
+    
     class Database:
         def querying(table_name, id):
             return f"Querying database for {table_name.lower()} with id: {id}."
