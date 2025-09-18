@@ -103,7 +103,7 @@ class TestCountriesAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Country with id: 999 not found"
+        assert response.json()['errors'][0]['message'] == "Country with id: 999 not found."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -135,7 +135,7 @@ class TestCountriesAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot update Country with id: 999. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot update country with id: 999. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -155,7 +155,7 @@ class TestCountriesAPI:
     def test_delete_country_success(self, api_client, countries_table):
         response = api_client.delete(self.__get_url() + "1")
         
-        assert response.json()['data']['message'] == "Successfully deleted Country with id: 1"
+        assert response.json()['data']['message'] == "Successfully deleted country with id: 1."
         assert response.json()['success'] == True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] == None
@@ -168,7 +168,7 @@ class TestCountriesAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Country with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot delete country with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -181,7 +181,7 @@ class TestCountriesAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Country with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot delete country with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
@@ -45,11 +46,11 @@ class CountriesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve country for id: {pk}")
+        self.debug(Messages.Get.retrieve_one("country", pk))
         country = self.__get_country__(pk)
         
         if country is None:
-            message = f"Country with id: {pk} not found"
+            message = Messages.Get.not_found("country", pk) 
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -57,7 +58,7 @@ class CountriesByIdView(Logger, APIView):
                 )
         
         response = CountryResponseSerializer(country)
-        self.info(f"Successfully retrieved country with id: {pk}")
+        self.info(Messages.Get.retrieved_one("country", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -90,10 +91,10 @@ class CountriesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update country for id: {pk} with payload: {request.data}")
+        self.debug(Messages.Put.update_one("country", pk, request.data))
         country = self.__get_country__(pk)
         if country is None:
-            message = f"Cannot update Country with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("country", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -103,13 +104,13 @@ class CountriesByIdView(Logger, APIView):
         updated_country = CountryRequestSerializer(data=request.data, instance=country, partial=False)
         if updated_country.is_valid():
             instance = updated_country.save()
-            self.info(f"Successfully updated country with id: {instance.id}")
+            self.info(Messages.Put.updated_one("country", instance.id))
             return Response(
                 data=CountryResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for country update (id: {pk}): {updated_country.errors}")
+        self.warning(Messages.Put.validation_failed("country", pk, updated_country.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_country.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -136,10 +137,10 @@ class CountriesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete country for id: {pk}")
+        self.debug(Messages.Delete.delete_one("country", pk))
         country = self.__get_country__(pk)
         if country is None:
-            message=f"Cannot delete Country with id: {pk}. Not found in the database"
+            message = Messages.Delete.not_found("country", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -147,7 +148,7 @@ class CountriesByIdView(Logger, APIView):
                 )
         
         country.delete()
-        message = f"Successfully deleted Country with id: {pk}"
+        message = Messages.Delete.deleted_one("country", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
