@@ -1,3 +1,4 @@
+from common.api.messages import Messages
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,15 +15,15 @@ from colors_api.api.serializers.color_request_serializer import ColorRequestSeri
 
 class ColorsByIdView(Logger, APIView):
     serializer_class = ColorResponseSerializer
-    def __get_color__(self, pk: int) -> Color:
+    def __get_color(self, pk: int) -> Color:
         try:
-            self.debug(f"Querying database for color with id: {pk}")
+            self.debug(Messages.Database.querying("color", pk))
             return Color.objects.get(pk = pk)
         except Color.DoesNotExist:
-            self.warning(f"Color with id {pk} does not exist in the database.")
+            self.warning(Messages.Database.not_found("color", pk))
             return None
         except Exception as e:
-            self.error(f"An unexpected error occurred while fetching color with id {pk}: {str(e)}")
+            self.error(Messages.Database.error("color", pk, str(e)))
             return None
     
     @extend_schema(
@@ -46,7 +47,7 @@ class ColorsByIdView(Logger, APIView):
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(f"Attempting to retrieve color for id: {pk}")
-        color = self.__get_color__(pk)
+        color = self.__get_color(pk)
         
         if color is None:
             message = f"Color with id: {pk} not found"
@@ -91,7 +92,7 @@ class ColorsByIdView(Logger, APIView):
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(f"Attempting to update color for id: {pk} with payload: {request.data}")
-        color = self.__get_color__(pk)
+        color = self.__get_color(pk)
         if color is None:
             message = f"Cannot update Color with id: {pk}. Not found in the database"
             self.warning(message)
@@ -137,7 +138,7 @@ class ColorsByIdView(Logger, APIView):
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(f"Attempting to delete color for id: {pk}")
-        color = self.__get_color__(pk)
+        color = self.__get_color(pk)
         if color is None:
             message=f"Cannot delete Color with id: {pk}. Not found in the database"
             self.warning(message)

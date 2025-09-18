@@ -9,7 +9,7 @@ class Logger:
     A logger mixin class that configures and provides a logging instance for views.
     """
     def init_log(self, log_name = None):
-        file_name = os.getenv("LOG_FILE_NAME", "stamps_api_server.log")
+        file_name = os.getenv("LOG_FILE_NAME", "backend.log")
 
         # If no logger name is passed, use the class name
         if not log_name:
