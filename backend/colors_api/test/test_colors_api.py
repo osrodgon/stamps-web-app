@@ -110,7 +110,7 @@ class TestColorsAPI:
         assert response.json()['message'] == "Request failed"
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Color with id: 999 not found"
+        assert response.json()['errors'][0]['message'] == "Color with id: 999 not found."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -150,7 +150,7 @@ class TestColorsAPI:
         assert response.json()['message'] == "Request failed"
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Cannot update Color with id: 999. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot update color with id: 999. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -163,7 +163,7 @@ class TestColorsAPI:
         assert response.json()['success'] is True
         assert response.json()['message'] == "Deleted successfully"
         assert response.json()['errors'] is None
-        assert response.json()['data']['message'] == "Successfully deleted Color with id: 1"
+        assert response.json()['data']['message'] == "Successfully deleted color with id: 1."
         assert response.status_code == status.HTTP_200_OK
 
     def test_delete_color_not_found(self, api_client):
@@ -176,7 +176,7 @@ class TestColorsAPI:
         assert response.json()['message'] == "Request failed"
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Color with id: 999. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot delete color with id: 999. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
@@ -192,7 +192,7 @@ class TestColorsAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == "Request failed"
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Color with id: 1. Not found in the database"
+        assert response.json()['errors'][0]['message'] == "Cannot delete color with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
