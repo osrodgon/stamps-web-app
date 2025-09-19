@@ -23,6 +23,22 @@ class Messages:
     def retrieved_successfully():
         return "Retrieved successfully"
     
+    def field_required():
+        return "This field is required."
+    
+    class Code:
+        def required():
+            return "required"
+        
+        def other():
+            return "other"
+        
+        def unique():
+            return "unique"
+        
+        def invalid():
+            return "invalid"
+
     class Database:
         def querying(table_name, id):
             return f"Querying database for {table_name.lower()} with id: {id}."
@@ -71,6 +87,10 @@ class Messages:
 
         def validation_failed(table_name, id, errors):
             return f"Payload validation failed for {table_name.lower()} update (id: {id}): {errors}."
+        
+        def already_exists(table_name, name):
+            return f"{table_name.title()} with this name already exists."
+
 
     class Delete:
         def delete_one(table_name, id):

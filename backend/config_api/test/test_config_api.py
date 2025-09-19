@@ -52,7 +52,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == "property"
         assert response.json()['errors'][0]['message'] == "This field is required."
         assert response.json()['errors'][0]['code'] == "required"
@@ -64,7 +64,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == "new_field"
         assert response.json()['errors'][0]['message'] == "This field is not allowed."
         assert response.json()['errors'][0]['code'] == "invalid"
@@ -76,7 +76,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == "value"
         assert response.json()['errors'][0]['message'] == "This field is required."
         assert response.json()['errors'][0]['code'] == "required"
@@ -100,7 +100,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == "Config Entry with id: 1 not found."
         assert response.json()['errors'][0]['code'] == "other"
@@ -120,7 +120,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == "Cannot update config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
@@ -132,7 +132,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == "new_field"
         assert response.json()['errors'][0]['message'] == "This field is not allowed."
         assert response.json()['errors'][0]['code'] == "invalid"
@@ -152,7 +152,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
@@ -165,7 +165,7 @@ class TestConfigAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.success()
         assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == "Cannot delete config entry with id: 1. Not found in the database."
         assert response.json()['errors'][0]['code'] == "other"
