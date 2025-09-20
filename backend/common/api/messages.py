@@ -26,6 +26,12 @@ class Messages:
     def field_required():
         return "This field is required."
     
+    def field_not_allowed():
+        return "This field is not allowed."
+    
+    def field_invalid():
+        return "This field is invalid."
+    
     class Code:
         def required():
             return "required"
@@ -74,6 +80,10 @@ class Messages:
         
         def validation_failed(table_name, errors):
             return f"Payload validation failed for new {table_name.lower()} entry: {errors}."
+        
+        def already_exists(table_name, name):
+            return f"{table_name.title()} with this {name} already exists."
+
 
     class Put:
         def update_one(table_name, id, payload):

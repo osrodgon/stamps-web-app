@@ -85,7 +85,7 @@ class TestColorsAPI:
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "Color with this name already exists."
+        assert response.json()['errors'][0]['message'] == Messages.Post.already_exists("color", 'name')  
         assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
