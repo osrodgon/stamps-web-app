@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
@@ -15,7 +16,7 @@ from locations_api.api.serializers.location_request_serializer import LocationRe
 class LocationsByIdView(Logger, APIView):
     serializer_class = LocationResponseSerializer
     
-    def __get_location__(self, pk: int) -> Location:
+    def __get_location(self, pk: int) -> Location:
         try:
             self.debug(f"Querying database for location with id: {pk}")
             return Location.objects.get(pk = pk)
@@ -46,11 +47,11 @@ class LocationsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve location for id: {pk}")
-        location = self.__get_location__(pk)
+        self.debug(Messages.Get.retrieve_one("location", pk))
+        location = self.__get_location(pk)
         
         if location is None:
-            message = f"Location with id: {pk} not found"
+            message = Messages.Get.not_found("location", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -58,7 +59,7 @@ class LocationsByIdView(Logger, APIView):
                 )
         
         response = LocationResponseSerializer(location)
-        self.info(f"Successfully retrieved location with id: {pk}")
+        self.info(Messages.Get.retrieved_one("location", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -91,10 +92,10 @@ class LocationsByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update location for id: {pk} with payload: {request.data}")
-        location = self.__get_location__(pk)
+        self.debug(Messages.Put.update_one("location", pk, request.data))
+        location = self.__get_location(pk)
         if location is None:
-            message = f"Cannot update Location with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("location", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -104,13 +105,13 @@ class LocationsByIdView(Logger, APIView):
         updated_location = LocationRequestSerializer(data=request.data, instance=location, partial=False)
         if updated_location.is_valid():
             instance = updated_location.save()
-            self.info(f"Successfully updated location with id: {instance.id}")
+            self.info(Messages.Put.updated_one("location", instance.id))
             return Response(
                 data=LocationResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for location update (id: {pk}): {updated_location.errors}")
+        self.warning(Messages.Put.validation_failed("location", pk, updated_location.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -137,10 +138,10 @@ class LocationsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete location for id: {pk}")
-        location = self.__get_location__(pk)
+        self.debug(Messages.Delete.delete_one("location", pk))
+        location = self.__get_location(pk)
         if location is None:
-            message=f"Cannot delete Location with id: {pk}. Not found in the database"
+            message=Messages.Delete.not_found("location", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -148,7 +149,7 @@ class LocationsByIdView(Logger, APIView):
                 )
         
         location.delete()
-        message = f"Successfully deleted Location with id: {pk}"
+        message = Messages.Delete.deleted_one("location", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

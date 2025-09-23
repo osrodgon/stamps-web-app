@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class LocationsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all locations.")
+        self.debug(Messages.Get.retrieve_all("locations"))
         locations = Location.objects.all()
-        self.debug(f"Found {len(locations)} location entries.")
+        self.debug(Messages.Get.retrieved_all("locations", len(locations)))
         response = LocationResponseSerializer(locations, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class LocationsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new location with payload: {request.data}")
+        self.debug(Messages.Post.create_one("location", request.data))
         location = LocationRequestSerializer(data = request.data)
         
         if location.is_valid():
             instance = location.save()
-            self.info(f"Successfully created location with id: {instance.id}")
+            self.info(Messages.Post.created_one("location", instance.id))
             return Response(
                 data=LocationResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new location entry: {location.errors}")
+        self.warning(Messages.Post.validation_failed("location", location.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

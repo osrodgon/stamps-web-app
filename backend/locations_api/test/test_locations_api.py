@@ -1,10 +1,9 @@
 import os
-from re import A
 from unittest.mock import patch
-from urllib import response
 import pytest
 from rest_framework import status
 
+from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.locations_api_test_data import (
     locations_table,
@@ -25,7 +24,7 @@ class TestLocationsAPI:
         assert len(response.json()['data']) == len(original.data)
         assert response.json()['data'] == original.data
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -34,7 +33,7 @@ class TestLocationsAPI:
 
         assert len(response.json()['data']) == 0
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -44,7 +43,7 @@ class TestLocationsAPI:
         assert response.json()[
             'data']['name'] == location_post_payload_ok["name"]
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Created successfully"
+        assert response.json()['message'] == Messages.created_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -54,10 +53,10 @@ class TestLocationsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_post_location_with_invalid_field_returns_400_bad_request(self, api_client, location_post_payload_ok):
@@ -66,10 +65,10 @@ class TestLocationsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "new_field"
-        assert response.json()['errors'][0]['message'] == "This field is not allowed."
-        assert response.json()['errors'][0]['code'] == "invalid"
+        assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+        assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_get_location_returns_data_200_ok(self, api_client, locations_table):
@@ -80,7 +79,7 @@ class TestLocationsAPI:
 
         assert response.json()['data']['name'] == original.data['name']
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -89,10 +88,10 @@ class TestLocationsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Location with id: 1 not found"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Get.not_found("location", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_put_location_updates_record_200_ok(self, api_client, locations_table, location_put_payload_ok):
@@ -100,7 +99,7 @@ class TestLocationsAPI:
 
         assert response.json()['data']['name'] == location_put_payload_ok["name"]
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -109,10 +108,10 @@ class TestLocationsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot update Location with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Put.not_found("location", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_location_updates_record_400_bad_request(self, api_client, locations_table, location_put_payload_ok):
@@ -121,19 +120,19 @@ class TestLocationsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "new_field"
-        assert response.json()['errors'][0]['message'] == "This field is not allowed."
-        assert response.json()['errors'][0]['code'] == "invalid"
+        assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+        assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
 
     def test_delete_location_deletes_record_200_ok(self, api_client, locations_table):
         response = api_client.delete(self.__get_url() + "1")
         
-        assert response.json()['data']['message'] == "Successfully deleted Location with id: 1"
+        assert response.json()['data']['message'] == Messages.Delete.deleted_one("location", 1)
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['message'] == Messages.deleted_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -143,8 +142,8 @@ class TestLocationsAPI:
         assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Location with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("location", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('locations_api.api.views.locations_by_id_view.Location.objects.get')
@@ -154,10 +153,10 @@ class TestLocationsAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Location with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("location", 1) #
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_location_model_str_representation(self):
