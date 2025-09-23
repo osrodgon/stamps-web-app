@@ -15,7 +15,7 @@ from countries_api.api.serializers.country_request_serializer import CountryRequ
 
 class CountriesByIdView(Logger, APIView):
     serializer_class = CountryResponseSerializer
-    def __get_country__(self, pk: int) -> Country:
+    def __get_country(self, pk: int) -> Country:
         try:
             self.debug(f"Querying database for country with id: {pk}")
             return Country.objects.get(pk = pk)
@@ -47,7 +47,7 @@ class CountriesByIdView(Logger, APIView):
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(Messages.Get.retrieve_one("country", pk))
-        country = self.__get_country__(pk)
+        country = self.__get_country(pk)
         
         if country is None:
             message = Messages.Get.not_found("country", pk) 
@@ -92,7 +92,7 @@ class CountriesByIdView(Logger, APIView):
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(Messages.Put.update_one("country", pk, request.data))
-        country = self.__get_country__(pk)
+        country = self.__get_country(pk)
         if country is None:
             message = Messages.Put.not_found("country", pk)
             self.warning(message)
@@ -138,7 +138,7 @@ class CountriesByIdView(Logger, APIView):
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(Messages.Delete.delete_one("country", pk))
-        country = self.__get_country__(pk)
+        country = self.__get_country(pk)
         if country is None:
             message = Messages.Delete.not_found("country", pk)
             self.warning(message)

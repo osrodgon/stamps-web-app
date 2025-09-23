@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from common.api.messages import Messages
 from countries_api.api.serializers.country_response_serializer import CountryResponseSerializer
 from common.test.api_client import api_client
 from common.test.countries_api_test_data import (
@@ -26,7 +27,7 @@ class TestCountriesAPI:
         assert len(response.json()['data']) == len(countries_table)
         assert response.json()['data'] == original.data
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
@@ -35,7 +36,7 @@ class TestCountriesAPI:
         
         assert len(response.json()['data']) == 0
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -45,7 +46,7 @@ class TestCountriesAPI:
         
         assert response.json()['data']['name'] == country_post_payload_ok['name']
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Created successfully"
+        assert response.json()['message'] == Messages.created_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -56,10 +57,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
 
@@ -69,10 +70,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "new_field"
-        assert response.json()['errors'][0]['message'] == "This field is not allowed."
-        assert response.json()['errors'][0]['code'] == "invalid"
+        assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+        assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_create_country_duplicate_name(self, api_client, countries_table):
@@ -80,10 +81,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "Country with this name already exists."
-        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.json()['errors'][0]['message'] == Messages.Post.already_exists("country", "name")
+        assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
 
@@ -92,7 +93,7 @@ class TestCountriesAPI:
 
         assert response.json()['data']['name'] == countries_table[0].name
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -101,10 +102,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Country with id: 999 not found."
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Get.not_found("country", "999")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
 
@@ -113,7 +114,7 @@ class TestCountriesAPI:
         
         assert response.json()['data']['name'] == country_put_payload_ok['name'] 
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -122,10 +123,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "Country with this name already exists."
-        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.json()['errors'][0]['message'] == Messages.Put.already_exists("country", "name")
+        assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_update_country_not_found(self, api_client, country_put_payload_ok):
@@ -133,10 +134,10 @@ class TestCountriesAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot update country with id: 999. Not found in the database."
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Put.not_found("country", "999")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
 
@@ -146,18 +147,18 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_delete_country_success(self, api_client, countries_table):
         response = api_client.delete(self.__get_url() + "1")
         
-        assert response.json()['data']['message'] == "Successfully deleted country with id: 1."
+        assert response.json()['data']['message'] == Messages.Delete.deleted_one("country", "1")
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['message'] == Messages.deleted_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -166,10 +167,10 @@ class TestCountriesAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete country with id: 1. Not found in the database."
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("country", "1")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('countries_api.api.views.countries_by_id_view.Country.objects.get')
@@ -179,10 +180,10 @@ class TestCountriesAPI:
                 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete country with id: 1. Not found in the database."
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("country", "1")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_country_model_str_representacion(self):
