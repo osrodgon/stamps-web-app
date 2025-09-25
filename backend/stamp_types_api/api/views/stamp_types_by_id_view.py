@@ -18,13 +18,10 @@ class StampTypesByIdView(Logger, APIView):
     
     def __get_stamp_type(self, pk: int) -> StampType:
         try:
-            self.debug(Messages.Database.querying("StampType", pk))
-            return StampType.objects.get(pk = pk)
+            Messages.Database.querying("StampType", pk)
+            return StampType.objects.get(pk=pk)
         except StampType.DoesNotExist:
-            self.warning(Messages.Database.not_found("StampType", pk))   
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("StampType", pk, e))
+            Messages.Database.not_found("StampType", pk)
             return None
     
     @extend_schema(

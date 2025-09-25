@@ -17,15 +17,12 @@ from config_api.models import Config
 class ConfigByIdView(Logger, APIView):
     serializer_class = ConfigResponseSerializer
     
-    def __get_config__(self, pk: int) -> Config:
+    def __get_config(self, pk: int) -> Config:
         try:
-            self.debug(Messages.Database.querying("Config", pk))
+            Messages.Database.querying("config", pk)
             return Config.objects.get(pk=pk)
         except Config.DoesNotExist:
-            self.warning(Messages.Database.not_found("Config", pk))
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("Config", pk, str(e)))
+            Messages.Database.not_found("config", pk)
             return None
         
     @extend_schema(
@@ -49,7 +46,7 @@ class ConfigByIdView(Logger, APIView):
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(Messages.Get.retrieve_one("config entry", pk))
-        config = self.__get_config__(pk)
+        config = self.__get_config(pk)
         if config is None:
             message = Messages.Get.not_found("config entry", pk)
             self.warning(message)
@@ -93,7 +90,7 @@ class ConfigByIdView(Logger, APIView):
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(Messages.Put.update_one("config entry", pk, request.data))
-        config = self.__get_config__(pk)
+        config = self.__get_config(pk)
         
         if config is None:
             message = Messages.Put.not_found("config entry", pk)
@@ -139,7 +136,7 @@ class ConfigByIdView(Logger, APIView):
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.debug(f"Attempting to delete config entry for id: {pk}")
-        config = self.__get_config__(pk)
+        config = self.__get_config(pk)
         
         if config is None:
             message = Messages.Delete.not_found("config entry", pk)

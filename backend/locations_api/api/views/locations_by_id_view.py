@@ -18,13 +18,10 @@ class LocationsByIdView(Logger, APIView):
     
     def __get_location(self, pk: int) -> Location:
         try:
-            self.debug(Messages.Database.querying("Location", pk))
-            return Location.objects.get(pk = pk)
+            Messages.Database.querying("location", pk)
+            return Location.objects.get(pk=pk)
         except Location.DoesNotExist:
-            self.warning(Messages.Database.not_found("Location", pk))
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("Location", pk, str(e)))
+            Messages.Database.not_found("location", pk)
             return None
     
     @extend_schema(

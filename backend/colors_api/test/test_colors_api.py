@@ -193,9 +193,9 @@ class TestColorsAPI:
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("color", "1")
+        assert response.json()['errors'][0]['message'] == Messages.server_error()
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
 
         

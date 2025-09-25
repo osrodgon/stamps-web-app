@@ -18,13 +18,10 @@ class YearsByIdView(Logger, APIView):
     
     def __get_year__(self, pk: int) -> Year:
         try:
-            self.debug(Messages.Database.querying("year", pk))
-            return Year.objects.get(pk = pk)
+            Messages.Database.querying("year", pk)
+            return Year.objects.get(pk=pk)
         except Year.DoesNotExist:
-            self.warning(Messages.Database.not_found("year", pk))
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("year", pk, str(e)))
+            Messages.Database.not_found("year", pk)
             return None
     
     # @swagger_auto_schema(
