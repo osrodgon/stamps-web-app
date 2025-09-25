@@ -4,6 +4,7 @@ import pytest
 import os
 from rest_framework import status
 
+from common.api.messages import Messages
 from years_api.models import Year
 from years_api.api.serializers.year_response_serializer import YearResponseSerializer
 from common.test.api_client import api_client
@@ -23,7 +24,7 @@ class TestYearAPI:
         assert len(response.json()['data']) == len(original.data)
         assert response.json()['data'] == original.data
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
     
@@ -32,7 +33,7 @@ class TestYearAPI:
         
         assert len(response.json()['data']) == 0
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
 
@@ -41,7 +42,7 @@ class TestYearAPI:
         
         assert response.json()['data']['year'] == year_post_payload_ok["year"]
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Created successfully"
+        assert response.json()['message'] == Messages.created_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
     
@@ -51,10 +52,10 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "year"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
     def test_post_year_with_invalid_field_returns_400_bad_request(self, api_client, year_post_payload_ok):
@@ -63,10 +64,10 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "new_field"
-        assert response.json()['errors'][0]['message'] == "This field is not allowed."
-        assert response.json()['errors'][0]['code'] == "invalid"
+        assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+        assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
     def test_get_year_returns_data_200_ok(self, api_client,years_table):
@@ -77,7 +78,7 @@ class TestYearAPI:
         
         assert response.json()['data']['year'] == original.data['year']
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
@@ -87,10 +88,10 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Year with id: 1 not found"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Get.not_found("year", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_put_year_updates_record_200_ok(self, api_client, years_table, year_put_payload_ok):
@@ -98,7 +99,7 @@ class TestYearAPI:
         
         assert response.json()['data']['year'] == year_put_payload_ok["year"]
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
     
@@ -108,10 +109,10 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == "year"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
     def test_put_year_updates_record_400_not_found(self, api_client, year_put_payload_ok):
@@ -119,19 +120,19 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot update year with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Put.not_found("year", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
     
     def test_delete_year_deletes_record_200_ok(self, api_client, years_table):
         response = api_client.delete(self.__get_url() + "1")
         
         
-        assert response.json()['data']['message'] == "Successfully deleted year with id: 1"
+        assert response.json()['data']['message'] == Messages.Delete.deleted_one("year", 1)
         assert response.json()['success'] == True
-        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['message'] == Messages.deleted_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
@@ -141,10 +142,10 @@ class TestYearAPI:
         
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete year with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("year", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('years_api.api.views.years_by_id_view.Year.objects.get')
@@ -154,10 +155,10 @@ class TestYearAPI:
                 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete year with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("year", 1)
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_year_model_str_representation(self):

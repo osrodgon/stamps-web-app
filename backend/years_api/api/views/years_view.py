@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class YearsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all years.")
+        self.debug(Messages.Get.retrieve_all("years"))
         years = Year.objects.all()
-        self.debug(f"Found {len(years)} year entries.")
+        self.debug(Messages.Get.retrieved_all("years", len(years)))
         response = YearResponseSerializer(years, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class YearsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new year with payload: {request.data}")
+        self.debug(Messages.Post.create_one("year", request.data))
         year = YearRequestSerializer(data = request.data)
         
         if year.is_valid():
             instance = year.save()
-            self.info(f"Successfully created year with id: {instance.id}")
+            self.info(Messages.Post.created_one("year", instance.id))
             return Response(
                 data=YearResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new year entry: {year.errors}")
+        self.warning(Messages.Post.validation_failed("year", year.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
