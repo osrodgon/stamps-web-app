@@ -1,9 +1,11 @@
+from logging import warn
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
@@ -15,7 +17,7 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 class PaperTypesByIdView(Logger, APIView):
     serializer_class = PaperTypeResponseSerializer
     
-    def __get_paper_type__(self, pk: int) -> PaperType:
+    def __get_paper_type(self, pk: int) -> PaperType:
         try:
             self.debug(f"Querying database for paper type with id: {pk}")
             return PaperType.objects.get(pk = pk)
@@ -46,11 +48,11 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve paper type for id: {pk}")
-        paper_type = self.__get_paper_type__(pk)
+        self.debug(Messages.Get.retrieve_one("paper type", pk))
+        paper_type = self.__get_paper_type(pk)
         
         if paper_type is None:
-            message = f"Paper type with id: {pk} not found"
+            message = Messages.Get.not_found("paper type", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -58,7 +60,7 @@ class PaperTypesByIdView(Logger, APIView):
                 )
         
         response = PaperTypeResponseSerializer(paper_type)
-        self.info(f"Successfully retrieved paper type with id: {pk}")
+        self.info(Messages.Get.retrieved_one("paper type", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -91,10 +93,10 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update paper type for id: {pk} with payload: {request.data}")
-        paper_type = self.__get_paper_type__(pk)
+        self.debug(Messages.Put.update_one("paper type", pk, request.data))
+        paper_type = self.__get_paper_type(pk)
         if paper_type is None:
-            message = f"Cannot update Paper Type with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("paper type", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -104,13 +106,13 @@ class PaperTypesByIdView(Logger, APIView):
         updated_paper_type = PaperTypeRequestSerializer(data=request.data, instance=paper_type, partial=False)
         if updated_paper_type.is_valid():
             instance = updated_paper_type.save()
-            self.info(f"Successfully updated paper type with id: {instance.id}")
+            self.info(Messages.Put.updated_one("paper type", instance.id))
             return Response(
                 data=PaperTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for paper type update (id: {pk}): {updated_paper_type.errors}")
+        self.warning(Messages.Put.validation_failed("paper type", pk, updated_paper_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_paper_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -137,10 +139,10 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete paper type for id: {pk}")
-        paper_type = self.__get_paper_type__(pk)
+        self.debug(Messages.Delete.delete_one("paper type", pk))
+        paper_type = self.__get_paper_type(pk)
         if paper_type is None:
-            message=f"Cannot delete Paper Type with id: {pk}. Not found in the database"
+            message=Messages.Delete.not_found("paper type", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -148,7 +150,7 @@ class PaperTypesByIdView(Logger, APIView):
                 )
         
         paper_type.delete()
-        message = f"Successfully deleted Paper Type with id: {pk}"
+        message = Messages.Delete.deleted_one("paper type", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

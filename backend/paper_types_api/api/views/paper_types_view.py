@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class PaperTypesView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all paper types.")
+        self.debug(Messages.Get.retrieve_all("paper types"))
         paper_types = PaperType.objects.all()
-        self.debug(f"Found {len(paper_types)} paper type entries.")
+        self.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
         response = PaperTypeResponseSerializer(paper_types, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class PaperTypesView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new paper type with payload: {request.data}")
+        self.debug(Messages.Post.create_one("paper type", request.data))
         paper_type = PaperTypeRequestSerializer(data = request.data)
         
         if paper_type.is_valid():
             instance = paper_type.save()
-            self.info(f"Successfully created paper type with id: {instance.id}")
+            self.info(Messages.Post.created_one("paper type", instance.id))
             return Response(
                 data=PaperTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new paper type entry: {paper_type.errors}")
+        self.warning(Messages.Post.validation_failed("paper type", paper_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(paper_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
