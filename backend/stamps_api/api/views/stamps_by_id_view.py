@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -40,18 +41,18 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, id: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve stamp with id: {id}")
+        self.debug(Messages.Get.retrieve_one("stamp", id))
         stamp = self.__get_object(id)
         
         if stamp is None:
-            message=f"Stamp with id: {id} not found"
+            message=Messages.Get.not_found("stamp", id)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        self.debug(f"Successfully retrieved stamp with id: {id}")
+        self.debug(Messages.Get.retrieved_one("stamp", id))
         serializer = StampResponseSerializer(stamp)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -82,10 +83,10 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, id: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update stamp with id: {id}")
+        self.debug(Messages.Put.update_one("stamp", id, request.data))
         stamp = self.__get_object(id)
         if stamp is None:
-            message = f"Cannot update Stamp with id: {id}. Not found in the database"
+            message = Messages.Put.not_found("stamp", id)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -95,13 +96,13 @@ class StampsByIdView(Logger, APIView):
         serializer = StampRequestSerializer(stamp, data=request.data)
         if serializer.is_valid():
             instance = serializer.save()
-            self.info(f"Successfully updated stamp with id: {id}")
+            self.info(Messages.Put.updated_one("stamp", instance.id))
             return Response(
                 data=StampResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
             )
         
-        self.warning(f"Payload validation failed for stamp update: {serializer.errors}")
+        self.warning(Messages.Put.validation_failed("stamp", serializer.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -127,10 +128,10 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, id: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete stamp with id: {id}")
+        self.debug(Messages.Delete.delete_one("stamp", id))
         stamp = self.__get_object(id)
         if stamp is None:
-            message = f"Cannot delete Stamp with id: {id}. Not found in the database"
+            message = Messages.Delete.not_found("stamp", id)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -138,8 +139,8 @@ class StampsByIdView(Logger, APIView):
             )
 
         stamp.delete()
-        self.info(f"Successfully deleted stamp with id: {id}")
+        self.info(Messages.Delete.deleted_one("stamp", id))
         return Response(
-            data={'message': f"Successfully deleted Stamp with id: {id}"},
+            data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK
         )
