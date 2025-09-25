@@ -32,9 +32,17 @@ def stamps_table(db, issues_table, colors_table):
 @pytest.fixture
 def stamp_post_payload_ok(issues_table, colors_table):
     """Pytest fixture for a valid stamp post payload."""
-    return {'issue_id': issues_table[0].id, 'edifil_code': 'NEW-2024-001', 'name': 'New Stamp', 'colors': [colors_table[0].id]}
+    return {
+        'issue': issues_table[0].id, 
+        'edifil_code': 'NEW-2024-001', 
+        'name': 'New Stamp', 
+        'colors': [colors_table[0].id],
+        'face_value': '1.00'
+    }
 
 @pytest.fixture
 def stamp_put_payload_ok():
     """Pytest fixture for a valid stamp put payload."""
-    return {'name': 'Stamp Updated'}
+    return {
+        'name': 'Stamp Updated'
+        }

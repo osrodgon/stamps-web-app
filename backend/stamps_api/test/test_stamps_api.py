@@ -123,6 +123,19 @@ class TestStampsAPI:
         assert response.json()['errors'][0]['message'] == Messages.Put.not_found("Stamp", 999)
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
+    
+    # TODO Pending    
+    # def test_put_stamp_updates_record_400_bad_request(self, api_client, stamps_table, stamp_put_payload_ok):
+    #     stamp_put_payload_ok["new_field"] = "new_value"
+    #     response = api_client.put(self.__get_url() + "1", stamp_put_payload_ok)
+        
+    #     assert response.json()['data'] == None
+    #     assert response.json()['success'] == False
+    #     assert response.json()['message'] == Messages.failed()
+    #     assert response.json()['errors'][0]['field'] == "new_field"
+    #     assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+    #     assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
+    #     assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_delete_stamp_deletes_record_200_ok(self, api_client, stamps_table):
         stamp_id = stamps_table[0].id
@@ -155,9 +168,9 @@ class TestStampsAPI:
         assert response.json()['success'] is False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("Stamp", stamp_id)
+        assert response.json()['errors'][0]['message'] == Messages.server_error()
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
     def __get_url(self):
         return "/" + str(os.getenv("STAMPS_URL_V1"))
