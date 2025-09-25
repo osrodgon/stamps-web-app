@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
@@ -17,13 +18,13 @@ class YearsByIdView(Logger, APIView):
     
     def __get_year__(self, pk: int) -> Year:
         try:
-            self.debug(f"Querying database for year with id: {pk}")
+            self.debug(Messages.Database.querying("year", pk))
             return Year.objects.get(pk = pk)
         except Year.DoesNotExist:
-            self.warning(f"Year with id {pk} does not exist in the database.")
+            self.warning(Messages.Database.not_found("year", pk))
             return None
         except Exception as e:
-            self.error(f"An unexpected error occurred while fetching year with id {pk}: {str(e)}")
+            self.error(Messages.Database.error("year", pk, str(e)))
             return None
     
     # @swagger_auto_schema(
@@ -54,11 +55,11 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve year for id: {pk}")
+        self.debug(Messages.Get.retrieve_one("year", pk))
         year = self.__get_year__(pk)
         
         if year is None:
-            message = f"Year with id: {pk} not found"
+            message = Messages.Get.not_found("year", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -66,7 +67,7 @@ class YearsByIdView(Logger, APIView):
                 )
         
         response = YearResponseSerializer(year)
-        self.info(f"Successfully retrieved year with id: {pk}")
+        self.info(Messages.Get.retrieved_one("year", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -99,10 +100,10 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update year for id: {pk} with payload: {request.data}")
+        self.debug(Messages.Put.update_one("year", pk, request.data))
         year = self.__get_year__(pk)
         if year is None:
-            message = f"Cannot update year with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("year", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -112,7 +113,7 @@ class YearsByIdView(Logger, APIView):
         updated_year = YearRequestSerializer(data=request.data, instance=year, partial=False)
         if updated_year.is_valid():
             instance=updated_year.save()
-            self.info(f"Successfully updated year with id: {instance.id}")
+            self.info(Messages.Put.updated_one("year", instance.id))
             return Response(
                 data=YearResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
@@ -145,10 +146,10 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete year for id: {pk}")
+        self.debug(Messages.Delete.delete_one("year", pk))
         year = self.__get_year__(pk)
         if year is None:
-            message=f"Cannot delete year with id: {pk}. Not found in the database"
+            message=Messages.Delete.not_found("year", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -156,7 +157,7 @@ class YearsByIdView(Logger, APIView):
                 )
         
         year.delete()
-        message = f"Successfully deleted year with id: {pk}"
+        message = Messages.Delete.deleted_one("year", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class ColorsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all colors.")
+        self.debug(Messages.Get.retrieve_all("colors"))
         colors = Color.objects.all()
-        self.debug(f"Found {len(colors)} color entries.")
+        self.debug(Messages.Get.retrieved_all("colors", colors.count()))
         response = ColorResponseSerializer(colors, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class ColorsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new color with payload: {request.data}")
+        self.debug(Messages.Post.create_one("color", request.data))
         color = ColorRequestSerializer(data = request.data)
         
         if color.is_valid():
             instance = color.save()
-            self.info(f"Successfully created color with id: {instance.id}")
+            self.info(Messages.Post.created_one("color", instance.id))
             return Response(
                 data=ColorResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new color entry: {color.errors}")
+        self.warning(Messages.Post.validation_failed("color", color.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(color.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

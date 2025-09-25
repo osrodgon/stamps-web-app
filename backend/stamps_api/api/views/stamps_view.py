@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class StampsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all stamps.")
+        self.debug(Messages.Get.retrieve_all("stamps"))
         stamps = Stamp.objects.all()
-        self.debug(f"Found {len(stamps)} stamp entries.")
+        self.debug(Messages.Get.retrieved_all("stamps", len(stamps)))
         response = StampResponseSerializer(stamps, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class StampsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new stamp with payload: {request.data}")
+        self.debug(Messages.Post.create_one("stamp", request.data))
         stamp = StampRequestSerializer(data = request.data)
         
         if stamp.is_valid():
             instance = stamp.save()
-            self.info(f"Successfully created stamp with id: {instance.id}")
+            self.info(Messages.Post.created_one("stamp", instance.id))
             return Response(
                 data=StampResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new stamp entry: {stamp.errors}")
+        self.warning(Messages.Post.validation_failed("stamp", stamp.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(stamp.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
