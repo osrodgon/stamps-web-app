@@ -18,13 +18,13 @@ class LocationsByIdView(Logger, APIView):
     
     def __get_location(self, pk: int) -> Location:
         try:
-            self.debug(f"Querying database for location with id: {pk}")
+            self.debug(Messages.Database.querying("Location", pk))
             return Location.objects.get(pk = pk)
         except Location.DoesNotExist:
-            self.warning(f"Location with id {pk} does not exist in the database.")
+            self.warning(Messages.Database.not_found("Location", pk))
             return None
         except Exception as e:
-            self.error(f"An unexpected error occurred while fetching location with id {pk}: {str(e)}")
+            self.error(Messages.Database.error("Location", pk, str(e)))
             return None
     
     @extend_schema(

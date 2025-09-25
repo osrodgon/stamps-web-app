@@ -19,13 +19,13 @@ class ConfigByIdView(Logger, APIView):
     
     def __get_config__(self, pk: int) -> Config:
         try:
-            self.debug(f"Querying database for config entry with id: {pk}")
+            self.debug(Messages.Database.querying("Config", pk))
             return Config.objects.get(pk=pk)
         except Config.DoesNotExist:
-            self.warning(f"Config entry with id {pk} does not exist in the database.")
+            self.warning(Messages.Database.not_found("Config", pk))
             return None
         except Exception as e:
-            self.error(f"An unexpected error occurred while fetching config entry with id {pk}: {str(e)}")
+            self.error(Messages.Database.error("Config", pk, str(e)))
             return None
         
     @extend_schema(

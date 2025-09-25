@@ -17,13 +17,13 @@ class CountriesByIdView(Logger, APIView):
     serializer_class = CountryResponseSerializer
     def __get_country(self, pk: int) -> Country:
         try:
-            self.debug(f"Querying database for country with id: {pk}")
+            self.debug(Messages.Database.querying("Country", pk))
             return Country.objects.get(pk = pk)
         except Country.DoesNotExist:
-            self.warning(f"Country with id {pk} does not exist in the database.")
+            self.warning(Messages.Database.not_found("Country", pk))
             return None
         except Exception as e:
-            self.error(f"An unexpected error occurred while fetching country with id {pk}: {str(e)}")
+            self.error(Messages.Database.error("Country", pk, str(e)))
             return None
     
     @extend_schema(
