@@ -93,7 +93,7 @@ class StampsByIdView(Logger, APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = StampRequestSerializer(stamp, data=request.data)
+        serializer = StampRequestSerializer(stamp, data=request.data, partial=True)
         if serializer.is_valid():
             instance = serializer.save()
             self.info(Messages.Put.updated_one("stamp", instance.id))
@@ -102,11 +102,12 @@ class StampsByIdView(Logger, APIView):
                 status=status.HTTP_200_OK
             )
         
-        self.warning(Messages.Put.validation_failed("stamp", serializer.errors))
-        return Response(
-            data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # TODO Pending
+        # self.warning(Messages.Put.validation_failed("stamp", serializer.errors))
+        # return Response(
+        #     data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
+        #     status=status.HTTP_400_BAD_REQUEST
+        # )
 
     @extend_schema(
         operation_id="delete_stamp",
@@ -139,7 +140,8 @@ class StampsByIdView(Logger, APIView):
             )
 
         stamp.delete()
-        self.info(Messages.Delete.deleted_one("stamp", id))
+        message = Messages.Delete.deleted_one("stamp", id)
+        self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK
