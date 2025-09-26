@@ -1,3 +1,4 @@
+from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -17,7 +18,7 @@ from common.api.serializers.generic_response import GenericResponse, GenericResp
 class IssuesByIdView(Logger, APIView):
     def __get_object(self, pk):
         try:
-            Messages.Database.querying_one("issue", pk) 
+            Messages.Database.querying("issue", pk) 
             return Issue.objects.get(pk=pk)
         except Issue.DoesNotExist:
             Messages.Database.not_found("issue", pk)
@@ -89,11 +90,11 @@ class IssuesByIdView(Logger, APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        serializer = IssueRequestSerializer(issue, data=request.data)
+        serializer = IssueRequestSerializer(issue, data=request.data, partial=True)
         if not serializer.is_valid():
             self.warning(Messages.Put.validation_failed("issue", pk, serializer.errors))
             return Response(
-                data=serializer.errors, 
+                data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
                 status=status.HTTP_400_BAD_REQUEST
             )
         

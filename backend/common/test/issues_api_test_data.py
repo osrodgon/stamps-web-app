@@ -41,15 +41,21 @@ def issues_table(db, years_table, countries_table, stamp_types_table, paper_type
 def issue_post_payload_ok(years_table, countries_table, stamp_types_table, paper_types_table, locations_table):
     """Pytest fixture for a valid issue post payload."""
     return {
+        'date': '2024-01-01',
         'name': 'New Issue 2024',
-        'year_id': years_table[0].id,
-        'country_id': countries_table[0].id,
-        'stamp_type_id': stamp_types_table[0].id,
-        'paper_type_id': paper_types_table[0].id,
-        'location_id': locations_table[0].id
+        'year': years_table[0].id,
+        'country': countries_table[0].id,
+        'stamp_type': stamp_types_table[0].id,
+        'paper_type': paper_types_table[0].id,
+        'location': locations_table[0].id
     }
 
 @pytest.fixture
-def issue_put_payload_ok():
+def issue_put_payload_ok(years_table, countries_table):
     """Pytest fixture for a valid issue put payload."""
-    return {'name': 'Issue Updated'}
+    return {
+        'name': 'Issue Updated',
+        'date': '2025-01-01',
+        'year': years_table[1].id,
+        'country': countries_table[1].id
+        }

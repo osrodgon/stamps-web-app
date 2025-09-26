@@ -21,6 +21,3 @@ class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'extra': {'allow_extra_fields': False}
         }
         
-    # def validate(self, data):
-    #     super().validate(data)
-    #     return data
