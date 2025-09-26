@@ -1,3 +1,4 @@
+from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -102,12 +103,11 @@ class StampsByIdView(Logger, APIView):
                 status=status.HTTP_200_OK
             )
         
-        # TODO Pending
-        # self.warning(Messages.Put.validation_failed("stamp", serializer.errors))
-        # return Response(
-        #     data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
-        #     status=status.HTTP_400_BAD_REQUEST
-        # )
+        self.warning(Messages.Put.validation_failed("stamp", id, serializer.errors))
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @extend_schema(
         operation_id="delete_stamp",

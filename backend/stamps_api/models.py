@@ -28,4 +28,4 @@ class Stamp(models.Model):
         ordering = ['issue']
 
     def __str__(self):
-        return f"{self.issue.name} - {self.name}"
+        return f"{self.edifil_code} - {self.name}"

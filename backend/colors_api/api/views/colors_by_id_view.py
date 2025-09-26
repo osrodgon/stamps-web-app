@@ -18,13 +18,10 @@ class ColorsByIdView(Logger, APIView):
     serializer_class = ColorResponseSerializer
     def __get_color(self, pk: int) -> Color:
         try:
-            self.debug(Messages.Database.querying("color", pk))
-            return Color.objects.get(pk = pk)
+            Messages.Database.querying("color", pk)
+            return Color.objects.get(pk=pk)
         except Color.DoesNotExist:
-            self.warning(Messages.Database.not_found("color", pk))
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("color", pk, str(e)))
+            Messages.Database.not_found("color", pk)
             return None
     
     @extend_schema(

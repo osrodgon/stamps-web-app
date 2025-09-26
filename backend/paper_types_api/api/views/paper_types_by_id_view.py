@@ -19,13 +19,10 @@ class PaperTypesByIdView(Logger, APIView):
     
     def __get_paper_type(self, pk: int) -> PaperType:
         try:
-            self.debug(Messages.Database.querying("PaperType", pk))
-            return PaperType.objects.get(pk = pk)
+            Messages.Database.querying("PaperType", pk)
+            return PaperType.objects.get(pk=pk)
         except PaperType.DoesNotExist:
-            self.warning(Messages.Database.not_found("PaperType", pk))
-            return None
-        except Exception as e:
-            self.error(Messages.Database.error("PaperType", pk, str(e)))
+            Messages.Database.not_found("PaperType", pk)
             return None
     
     @extend_schema(
