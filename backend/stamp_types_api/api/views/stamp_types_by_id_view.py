@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.schemas import standardized_response
@@ -15,15 +16,12 @@ from stamp_types_api.api.serializers.stamp_type_request_serializer import StampT
 class StampTypesByIdView(Logger, APIView):
     serializer_class = StampTypeResponseSerializer
     
-    def __get_stamp_type__(self, pk: int) -> StampType:
+    def __get_stamp_type(self, pk: int) -> StampType:
         try:
-            self.debug(f"Querying database for stamp type with id: {pk}")
-            return StampType.objects.get(pk = pk)
+            Messages.Database.querying("StampType", pk)
+            return StampType.objects.get(pk=pk)
         except StampType.DoesNotExist:
-            self.warning(f"StampType with id {pk} does not exist in the database.")
-            return None
-        except Exception as e:
-            self.error(f"An unexpected error occurred while fetching stamp type with id {pk}: {str(e)}")
+            Messages.Database.not_found("StampType", pk)
             return None
     
     @extend_schema(
@@ -46,11 +44,11 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve stamp type for id: {pk}")
-        stamp_type = self.__get_stamp_type__(pk)
+        self.debug(Messages.Get.retrieve_one("StampType", pk))
+        stamp_type = self.__get_stamp_type(pk)
         
         if stamp_type is None:
-            message = f"StampType with id: {pk} not found"
+            message = Messages.Get.not_found("StampType", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -58,7 +56,7 @@ class StampTypesByIdView(Logger, APIView):
                 )
         
         response = StampTypeResponseSerializer(stamp_type)
-        self.info(f"Successfully retrieved stamp type with id: {pk}")
+        self.info(Messages.Get.retrieved_one("StampType", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -91,10 +89,10 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update stamp type for id: {pk} with payload: {request.data}")
-        stamp_type = self.__get_stamp_type__(pk)
+        self.debug(Messages.Put.update_one("StampType", pk, request.data))
+        stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
-            message = f"Cannot update StampType with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("StampType", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -104,13 +102,13 @@ class StampTypesByIdView(Logger, APIView):
         updated_stamp_type = StampTypeRequestSerializer(data=request.data, instance=stamp_type, partial=False)
         if updated_stamp_type.is_valid():
             instance=updated_stamp_type.save()
-            self.info(f"Successfully updated stamp type with id: {instance.id}")
+            self.info(Messages.Put.updated_one("StampType", instance.id))
             return Response(
                 data=StampTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for stamp type update (id: {pk}): {updated_stamp_type.errors}")
+        self.warning(Messages.Put.validation_failed("StampType", pk, updated_stamp_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_stamp_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -137,10 +135,10 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete stamp type for id: {pk}")
-        stamp_type = self.__get_stamp_type__(pk)
+        self.debug(Messages.Delete.delete_one("StampType", pk))
+        stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
-            message=f"Cannot delete StampType with id: {pk}. Not found in the database"
+            message=Messages.Delete.not_found("StampType", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -148,7 +146,7 @@ class StampTypesByIdView(Logger, APIView):
                 )
         
         stamp_type.delete()
-        message = f"Successfully deleted StampType with id: {pk}"
+        message = Messages.Delete.deleted_one("StampType", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

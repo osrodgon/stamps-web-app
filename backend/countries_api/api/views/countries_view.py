@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
@@ -30,9 +31,9 @@ class CountriesView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.debug("Attempting to retrieve all countries.")
+        self.debug(Messages.Get.retrieve_all("countries"))
         countries = Country.objects.all()
-        self.debug(f"Found {len(countries)} country entries.")
+        self.debug(Messages.Get.retrieved_all("countries", len(countries)))
         response = CountryResponseSerializer(countries, many=True)
         
         return Response(
@@ -61,18 +62,18 @@ class CountriesView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to create a new country with payload: {request.data}")
+        self.debug(Messages.Post.create_one("country", request.data))
         country = CountryRequestSerializer(data = request.data)
         
         if country.is_valid():
             instance = country.save()
-            self.info(f"Successfully created country with id: {instance.id}")
+            self.info(Messages.Post.created_one("country", instance.id))
             return Response(
                 data=CountryResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(f"Payload validation failed for new country entry: {country.errors}")
+        self.warning(Messages.Post.validation_failed("country", country.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(country.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

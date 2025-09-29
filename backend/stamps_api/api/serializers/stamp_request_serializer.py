@@ -16,3 +16,8 @@ class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'colors',
             'market_value'
         ]
+        
+        extra_kwargs = {
+            'extra': {'allow_extra_fields': False}
+        }
+        

@@ -5,6 +5,7 @@ from rest_framework import status
 
 # Assuming a similar serializer structure as in other apps
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
+from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.colors_api_test_data import (
     colors_table,
@@ -28,7 +29,7 @@ class TestColorsAPI:
         original = ColorResponseSerializer(colors_table, many=True)
         
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] is None
         assert len(response.json()['data']) == len(colors_table)
         assert response.json()['data'] == original.data
@@ -41,7 +42,7 @@ class TestColorsAPI:
         response = api_client.get(self.__get_url())
         
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] is None
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
@@ -54,7 +55,7 @@ class TestColorsAPI:
         response = api_client.post(self.__get_url(), color_post_payload_ok)
         
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Created successfully"
+        assert response.json()['message'] == Messages.created_successfully()
         assert response.json()['errors'] is None
         assert response.json()['data']['name'] == color_post_payload_ok['name']
         assert response.status_code == status.HTTP_201_CREATED
@@ -66,11 +67,11 @@ class TestColorsAPI:
         response = api_client.post(self.__get_url(), {})
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "This field is required."
-        assert response.json()['errors'][0]['code'] == "required"
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
         
@@ -81,11 +82,11 @@ class TestColorsAPI:
         response = api_client.post(self.__get_url(), {'name': colors_table[0].name})
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "Color with this name already exists."
-        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.json()['errors'][0]['message'] == Messages.Post.already_exists("color", 'name')  
+        assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_retrieve_color_success(self, api_client, colors_table):
@@ -95,7 +96,7 @@ class TestColorsAPI:
         response = api_client.get(self.__get_url() + "1")
 
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Retrieved successfully"
+        assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] is None
         assert response.json()['data']['name'] == colors_table[0].name
         assert response.status_code == status.HTTP_200_OK
@@ -107,11 +108,11 @@ class TestColorsAPI:
         response = api_client.get(self.__get_url() + "999")
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Color with id: 999 not found"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Get.not_found("color", "999")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_update_color_success(self, api_client, colors_table,  color_put_payload_ok):
@@ -121,7 +122,7 @@ class TestColorsAPI:
         response = api_client.put(self.__get_url() + "1", color_put_payload_ok)
         
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Updated successfully"
+        assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] is None
         assert response.json()['data']['name'] == color_put_payload_ok['name']
         assert response.status_code == status.HTTP_200_OK
@@ -133,11 +134,11 @@ class TestColorsAPI:
         response = api_client.put(self.__get_url() + "1", {'name': colors_table[1].name})
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] == "name"
-        assert response.json()['errors'][0]['message'] == "Color with this name already exists."
-        assert response.json()['errors'][0]['code'] == "unique"
+        assert response.json()['errors'][0]['message'] == Messages.Put.already_exists("color", colors_table[1].name) 
+        assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_update_color_not_found(self, api_client):
@@ -147,11 +148,11 @@ class TestColorsAPI:
         response = api_client.put(self.__get_url() + "999", {'name': 'New Name'})
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Cannot update Color with id: 999. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Put.not_found("color", "999")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     def test_delete_color_success(self, api_client, colors_table):
@@ -161,9 +162,9 @@ class TestColorsAPI:
         response = api_client.delete(self.__get_url() + "1")
         
         assert response.json()['success'] is True
-        assert response.json()['message'] == "Deleted successfully"
+        assert response.json()['message'] == Messages.deleted_successfully()
         assert response.json()['errors'] is None
-        assert response.json()['data']['message'] == "Successfully deleted Color with id: 1"
+        assert response.json()['data']['message'] == Messages.Delete.deleted_one("color", "1")
         assert response.status_code == status.HTTP_200_OK
 
     def test_delete_color_not_found(self, api_client):
@@ -173,11 +174,11 @@ class TestColorsAPI:
         response = api_client.delete(self.__get_url() + "999")
         
         assert response.json()['success'] is False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] is None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Color with id: 999. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
+        assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("color", "999")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
     @patch('colors_api.api.views.colors_by_id_view.Color.objects.get')
@@ -190,11 +191,11 @@ class TestColorsAPI:
 
         assert response.json()['data'] == None
         assert response.json()['success'] == False
-        assert response.json()['message'] == "Request failed"
+        assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "Cannot delete Color with id: 1. Not found in the database"
-        assert response.json()['errors'][0]['code'] == "other"
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()['errors'][0]['message'] == Messages.server_error()
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
 
         

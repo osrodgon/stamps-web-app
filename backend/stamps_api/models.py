@@ -10,7 +10,7 @@ class Stamp(models.Model):
     )
     edifil_code = models.CharField(max_length=255, null=True, blank=True)
     face_value = models.CharField(max_length=255)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255)
     others_code = models.CharField(max_length=255, null=True, blank=True)
     image = models.ImageField(upload_to='stamps/', null=True, blank=True)
     
@@ -28,4 +28,4 @@ class Stamp(models.Model):
         ordering = ['issue']
 
     def __str__(self):
-        return f"{self.issue.name} - {self.name}"
+        return f"{self.edifil_code} - {self.name}"

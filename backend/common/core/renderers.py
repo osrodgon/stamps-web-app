@@ -1,6 +1,7 @@
 import ast
 import re
 from rest_framework.renderers import JSONRenderer
+from common.api.messages import Messages
 
 class StandardJSONRenderer(JSONRenderer):
     def errors_to_list(self, errors):
@@ -47,7 +48,7 @@ class StandardJSONRenderer(JSONRenderer):
 
         # Default placeholders
         success = True
-        message = "Request successful"
+        message = Messages.success()
         errors = None
         data =data
 
@@ -57,7 +58,7 @@ class StandardJSONRenderer(JSONRenderer):
             # 🔹 Handle errors
             if status_code >= 400:
                 success = False
-                message = "Request failed"
+                message = Messages.failed()
                 errors = self.errors_to_list(data['message'])
                 data = None
             else:
@@ -67,15 +68,15 @@ class StandardJSONRenderer(JSONRenderer):
                     match method:
                         case "POST":
                             if status_code == 201:
-                                message = "Created successfully"
+                                message = Messages.created_successfully()
                         case "PUT":
-                            message = "Updated successfully"
+                            message = Messages.updated_successfully()
                         case "PATCH":
-                            message = "Partially updated successfully"
+                            message = Messages.partially_updated_successfully()
                         case "DELETE":
-                            message = "Deleted successfully"
+                            message = Messages.deleted_successfully()
                         case "GET":
-                            message = "Retrieved successfully"
+                            message = Messages.retrieved_successfully()
 
         standard_data = {
             "success": success,

@@ -1,3 +1,5 @@
+from re import M
+from common.api.messages import Messages
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,15 +16,12 @@ from colors_api.api.serializers.color_request_serializer import ColorRequestSeri
 
 class ColorsByIdView(Logger, APIView):
     serializer_class = ColorResponseSerializer
-    def __get_color__(self, pk: int) -> Color:
+    def __get_color(self, pk: int) -> Color:
         try:
-            self.debug(f"Querying database for color with id: {pk}")
-            return Color.objects.get(pk = pk)
+            Messages.Database.querying("color", pk)
+            return Color.objects.get(pk=pk)
         except Color.DoesNotExist:
-            self.warning(f"Color with id {pk} does not exist in the database.")
-            return None
-        except Exception as e:
-            self.error(f"An unexpected error occurred while fetching color with id {pk}: {str(e)}")
+            Messages.Database.not_found("color", pk)
             return None
     
     @extend_schema(
@@ -45,11 +44,11 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to retrieve color for id: {pk}")
-        color = self.__get_color__(pk)
+        self.debug(Messages.Get.retrieve_one("color", pk))
+        color = self.__get_color(pk)
         
         if color is None:
-            message = f"Color with id: {pk} not found"
+            message = Messages.Get.not_found("color", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -57,7 +56,7 @@ class ColorsByIdView(Logger, APIView):
                 )
         
         response = ColorResponseSerializer(color)
-        self.info(f"Successfully retrieved color with id: {pk}")
+        self.info(Messages.Get.retrieved_one("color", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -90,10 +89,10 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to update color for id: {pk} with payload: {request.data}")
-        color = self.__get_color__(pk)
+        self.debug(Messages.Put.update_one("color", pk, request.data))
+        color = self.__get_color(pk)
         if color is None:
-            message = f"Cannot update Color with id: {pk}. Not found in the database"
+            message = Messages.Put.not_found("color", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -103,13 +102,13 @@ class ColorsByIdView(Logger, APIView):
         updated_color = ColorRequestSerializer(data=request.data, instance=color, partial=False)
         if updated_color.is_valid():
             instance = updated_color.save()
-            self.info(f"Successfully updated color with id: {instance.id}")
+            self.info(Messages.Put.updated_one("color", instance.id))
             return Response(
                 data=ColorResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for color update (id: {pk}): {updated_color.errors}")
+        self.warning(Messages.Put.validation_failed("color", pk, updated_color.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_color.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -136,10 +135,10 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.debug(f"Attempting to delete color for id: {pk}")
-        color = self.__get_color__(pk)
+        self.debug(Messages.Delete.delete_one("color", pk))
+        color = self.__get_color(pk)
         if color is None:
-            message=f"Cannot delete Color with id: {pk}. Not found in the database"
+            message = Messages.Delete.not_found("color", pk)
             self.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
@@ -147,7 +146,7 @@ class ColorsByIdView(Logger, APIView):
                 )
         
         color.delete()
-        message = f"Successfully deleted Color with id: {pk}"
+        message = Messages.Delete.deleted_one("color", pk)
         self.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,

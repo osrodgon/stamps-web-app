@@ -1,10 +1,14 @@
 {
     "python.testing.pytestArgs": [
-        "stamps_api_server"
+        "backend"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.envFile": "${workspaceFolder}/stamps_api_server/.env",
+    "python.envFile": "${workspaceFolder}/backend/.env",
     "python.testing.cwd": "${workspaceFolder}",
-    "geminicodeassist.updateChannel": "Insiders"
+    "geminicodeassist.updateChannel": "Insiders",
+    "python.analysis.extraPaths": [
+        "stamps_api_server",
+        "./backend"
+    ]
 }
