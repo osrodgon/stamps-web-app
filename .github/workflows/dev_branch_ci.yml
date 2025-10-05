@@ -37,7 +37,9 @@ jobs:
         working-directory: ./backend
         # '--check' ensures Black only reports files that need formatting, 
         # but doesn't modify them. It fails the job if any files are not compliant.
-        run: python -m black . --check
+        run: |
+          pip install back
+          black . --check
         
       # ----------------------------------------------------
       # Code Style and Error Check (Flake8)
@@ -46,7 +48,9 @@ jobs:
         working-directory: ./backend
         # Flake8 runs the checks and fails if any errors/warnings are found.
         # Use '--exclude' and '--max-line-length' flags if necessary.
-        run: python -m flake8 .
+        run: |
+          pip install flake8
+          flake8 .
 
       # ----------------------------------------------------
       # Run Pytest with Coverage
