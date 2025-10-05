@@ -4,10 +4,10 @@ name: Django + NiceGUI CI on Develop
 on:
   push:
     branches:
-      - develop
+      - development
   pull_request:
     branches:
-      - develop
+      - development
       
 # --- Jobs Definition ---
 jobs:
