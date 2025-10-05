@@ -1,0 +1,86 @@
+name: Django + NiceGUI CI on Develop
+
+# Trigger the workflow on pushes and pull requests targeting 'develop'
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+      
+# --- Jobs Definition ---
+jobs:
+  # 1. Backend CI Job (Django) - UPDATED
+  backend_ci:
+    name: Django Backend Build & Test (pytest/coverage)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Use your required Python version
+          
+      - name: Install Dependencies
+        working-directory: ./backend
+        # Install dependencies from requirements.txt, including pytest and coverage
+        run: pip install -r requirements.txt
+
+      # ----------------------------------------------------
+      # Code Formatting Check (Black)
+      # ----------------------------------------------------
+      - name: Run Black Formatting Check
+        working-directory: ./backend
+        # '--check' ensures Black only reports files that need formatting, 
+        # but doesn't modify them. It fails the job if any files are not compliant.
+        run: black . --check
+        
+      # ----------------------------------------------------
+      # Code Style and Error Check (Flake8)
+      # ----------------------------------------------------
+      - name: Run Flake8 Linting
+        working-directory: ./backend
+        # Flake8 runs the checks and fails if any errors/warnings are found.
+        # Use '--exclude' and '--max-line-length' flags if necessary.
+        run: flake8 .
+
+      # ----------------------------------------------------
+      # Run Pytest with Coverage
+      # ----------------------------------------------------
+      - name: Run Pytest with Coverage
+        working-directory: ./backend
+        # Run tests and generate an XML report for coverage
+        run: |
+          pytest --cov=. --cov-report=xml --junitxml=results.xml
+          
+      # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: ./backend/coverage.xml
+          
+  # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
+  frontend_ci:
+    name: NiceGUI Frontend Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        # Use pip to install NiceGUI and its dependencies
+        run: pip install -r requirements.txt
+        
+      # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
