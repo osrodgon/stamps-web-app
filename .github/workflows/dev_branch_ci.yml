@@ -56,7 +56,7 @@ jobs:
       # Run Pytest with Coverage
       # ----------------------------------------------------
       - name: Run Pytest with Coverage
-        working-directory: .
+        working-directory: ./backend
         # Run tests and generate an XML report for coverage
         run: |
           pytest --cov=. --cov-report=xml --junitxml=results.xml
