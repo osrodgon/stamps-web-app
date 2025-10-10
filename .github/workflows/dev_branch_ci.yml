@@ -74,7 +74,7 @@ jobs:
           export ADMIN_URL=admin/
           export SERVER_URL_V1=stamps_server/api/v1/
           
-          cat << EOF > .env
+          cat << 'EOF' > .env
 LOG_LEVEL=DEBUG
 LOG_FILE_NAME=backend.log
 COLORS_ENDPOINT=${COLORS_ENDPOINT}
