@@ -75,11 +75,8 @@ jobs:
           export SERVER_URL_V1=stamps_server/api/v1/
           
           cat << EOF > .env
-# Default log level and log name
 LOG_LEVEL=DEBUG
 LOG_FILE_NAME=backend.log
-
-#API endpoints
 COLORS_ENDPOINT=${COLORS_ENDPOINT}
 CONFIG_ENDPOINT=config/
 COUNTRIES_ENDPOINT=countries/
@@ -90,17 +87,11 @@ STAMP_TYPES_ENDPOINT=stamps_type/
 STAMPS_ENDPOINT=stamps/
 YEARS_ENDPOINT=years/
 COLLECTIONS_ENDPOINT=collections/
-
 SWAGGER_ENDPOINT=swagger/
 REDOC_ENDPOINT=redoc/
 SCHEMA_ENDPOINT=schema/
-
-
-
-# URLs
 ADMIN_URL=admin/
 SERVER_URL_V1=stamps_server/api/v1/
-
 COLORS_URL_V1=${SERVER_URL_V1}${COLORS_ENDPOINT}
 CONFIG_URL_V1=${SERVER_URL_V1}${CONFIG_ENDPOINT}
 COUNTRIES_URL_V1=${SERVER_URL_V1}${COUNTRIES_ENDPOINT}
