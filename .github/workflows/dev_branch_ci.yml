@@ -88,15 +88,15 @@ jobs:
           echo "COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}" >> .env
           echo "Done."
 
-	    # ----------------------------------------------------
-	    # Load .env
-	    # ----------------------------------------------------
-	    - name: Load .env
-	      working-directory: ./backend
-	      uses: motdotla/dotenv-action@v0
-	      with:
-	        filepath: .env
-	        args: --multiline --expand
+	  # ----------------------------------------------------
+	  # Load .env
+	  # ----------------------------------------------------
+      - name: Load .env
+        working-directory: ./backend
+        uses: motdotla/dotenv-action@v0
+        with:
+          filepath: .env
+          args: --multiline --expand
 
       # ----------------------------------------------------
       # Run Pytest with Coverage
