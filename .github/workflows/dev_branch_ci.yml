@@ -111,15 +111,16 @@ jobs:
         working-directory: ./backend
         # Run tests and generate an XML report for coverage
         run: |
-          pytest --cov=. --cov-report=xml --junitxml=results.xml
+          pytest --cov=.
+          coverage html
 
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: backend-coverage-report
-          path: ./backend/coverage.xml
+          name: backend-html-coverage-report
+          path: ./backend/htmlcov/
           
   # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
   frontend_ci:
