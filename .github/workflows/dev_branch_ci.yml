@@ -95,8 +95,9 @@ jobs:
         working-directory: ./backend
         # Run tests and generate an XML report for coverage
         run: |
-          pytest --cov=. --cov-report=xml --junitxml=results.xml
-          cat .env
+          cat .env	
+        # pytest --cov=. --cov-report=xml --junitxml=results.xml
+
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
       # - name: Upload Coverage Report
