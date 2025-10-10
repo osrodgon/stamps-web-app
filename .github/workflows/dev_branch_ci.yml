@@ -115,11 +115,11 @@ jobs:
 
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
-      # - name: Upload Coverage Report
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: backend-coverage-report
-      #     path: ./backend/coverage.xml
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: ./backend/coverage.xml
           
   # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
   frontend_ci:
