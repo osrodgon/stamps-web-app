@@ -91,7 +91,7 @@ jobs:
 	  # ----------------------------------------------------
 	  # Load .env
 	  # ----------------------------------------------------
-      - name: Load .env
+      - name: Load .env file
         uses: motdotla/dotenv-action@v0
         with:
           filepath: .env
