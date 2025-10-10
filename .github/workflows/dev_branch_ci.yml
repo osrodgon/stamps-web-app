@@ -53,11 +53,10 @@ jobs:
       #     flake8 .
 
       # ----------------------------------------------------
-      # Run Pytest with Coverage
+      # Create .env file
       # ----------------------------------------------------
-      - name: Run Pytest with Coverage
+      - name: Create .env
         working-directory: ./backend
-        # Run tests and generate an XML report for coverage
         run: |
           echo "Creating temp .env..."
           echo "LOG_LEVEL=DEBUG" >> .env
@@ -88,6 +87,14 @@ jobs:
           echo "YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}" >> .env
           echo "COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}" >> .env
           echo "Done."
+
+      # ----------------------------------------------------
+      # Run Pytest with Coverage
+      # ----------------------------------------------------
+      - name: Run Pytest with Coverage
+        working-directory: ./backend
+        # Run tests and generate an XML report for coverage
+        run: |
           pytest --cov=. --cov-report=xml --junitxml=results.xml
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
