@@ -92,7 +92,6 @@ jobs:
 	  # Load .env
 	  # ----------------------------------------------------
       - name: Load .env
-        working-directory: ./backend
         uses: motdotla/dotenv-action@v0
         with:
           filepath: .env
