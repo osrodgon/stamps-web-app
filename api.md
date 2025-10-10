@@ -1,4 +1,4 @@
-# Stamps API Documentation
+# Stamps API Documentations
 
 This document provides an overview of the available API endpoints for the Stamps application.
 
