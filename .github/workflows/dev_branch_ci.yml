@@ -59,6 +59,35 @@ jobs:
         working-directory: ./backend
         # Run tests and generate an XML report for coverage
         run: |
+          echo "Creating temp .env..."
+          echo "LOG_LEVEL=DEBUG" >> .env
+          echo "LOG_FILE_NAME=backend.log" >> .env
+          echo "COLORS_ENDPOINT=colors/" >> .env
+          echo "CONFIG_ENDPOINT=config/" >> .env
+          echo "COUNTRIES_ENDPOINT=countries/" >> .env
+          echo "ISSUES_ENDPOINT=issues/" >> .env
+          echo "LOCATIONS_ENDPOINT=locations/" >> .env
+          echo "PAPER_TYPES_ENDPOINT=paper_types/" >> .env
+          echo "STAMP_TYPES_ENDPOINT=stamps_type/" >> .env
+          echo "STAMPS_ENDPOINT=stamps/" >> .env
+          echo "YEARS_ENDPOINT=years/" >> .env
+          echo "COLLECTIONS_ENDPOINT=collections/" >> .env
+          echo "SWAGGER_ENDPOINT=swagger/" >> .env
+          echo "REDOC_ENDPOINT=redoc/" >> .env
+          echo "SCHEMA_ENDPOINT=schema/" >> .env
+          echo "ADMIN_URL=admin/" >> .env
+          echo "SERVER_URL_V1=stamps_server/api/v1/" >> .env
+          echo "COLORS_URL_V1=${SERVER_URL_V1}${COLORS_ENDPOINT}" >> .env
+          echo "CONFIG_URL_V1=${SERVER_URL_V1}${CONFIG_ENDPOINT}" >> .env
+          echo "COUNTRIES_URL_V1=${SERVER_URL_V1}${COUNTRIES_ENDPOINT}" >> .env
+          echo "ISSUES_URL_V1=${SERVER_URL_V1}${ISSUES_ENDPOINT}" >> .env
+          echo "LOCATIONS_URL_V1=${SERVER_URL_V1}${LOCATIONS_ENDPOINT}" >> .env
+          echo "PAPER_TYPES_URL_V1=${SERVER_URL_V1}${PAPER_TYPES_ENDPOINT}" >> .env
+          echo "STAMP_TYPES_URL_V1=${SERVER_URL_V1}${STAMP_TYPES_ENDPOINT}" >> .env
+          echo "STAMPS_URL_V1=${SERVER_URL_V1}${STAMPS_ENDPOINT}" >> .env
+          echo "YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}" >> .env
+          echo "COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}" >> .env
+          echo "Done."
           pytest --cov=. --cov-report=xml --junitxml=results.xml
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
