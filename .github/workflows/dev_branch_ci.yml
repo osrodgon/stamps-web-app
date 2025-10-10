@@ -58,35 +58,51 @@ jobs:
       - name: Create .env
         working-directory: ./backend
         run: |
-          echo "Creating temp .env..."
-          echo "LOG_LEVEL=DEBUG" >> .env
-          echo "LOG_FILE_NAME=backend.log" >> .env
-          echo "COLORS_ENDPOINT=colors/" >> .env
-          echo "CONFIG_ENDPOINT=config/" >> .env
-          echo "COUNTRIES_ENDPOINT=countries/" >> .env
-          echo "ISSUES_ENDPOINT=issues/" >> .env
-          echo "LOCATIONS_ENDPOINT=locations/" >> .env
-          echo "PAPER_TYPES_ENDPOINT=paper_types/" >> .env
-          echo "STAMP_TYPES_ENDPOINT=stamps_type/" >> .env
-          echo "STAMPS_ENDPOINT=stamps/" >> .env
-          echo "YEARS_ENDPOINT=years/" >> .env
-          echo "COLLECTIONS_ENDPOINT=collections/" >> .env
-          echo "SWAGGER_ENDPOINT=swagger/" >> .env
-          echo "REDOC_ENDPOINT=redoc/" >> .env
-          echo "SCHEMA_ENDPOINT=schema/" >> .env
-          echo "ADMIN_URL=admin/" >> .env
-          echo "SERVER_URL_V1=stamps_server/api/v1/" >> .env
-          echo "COLORS_URL_V1=${SERVER_URL_V1}${COLORS_ENDPOINT}" >> .env
-          echo "CONFIG_URL_V1=${SERVER_URL_V1}${CONFIG_ENDPOINT}" >> .env
-          echo "COUNTRIES_URL_V1=${SERVER_URL_V1}${COUNTRIES_ENDPOINT}" >> .env
-          echo "ISSUES_URL_V1=${SERVER_URL_V1}${ISSUES_ENDPOINT}" >> .env
-          echo "LOCATIONS_URL_V1=${SERVER_URL_V1}${LOCATIONS_ENDPOINT}" >> .env
-          echo "PAPER_TYPES_URL_V1=${SERVER_URL_V1}${PAPER_TYPES_ENDPOINT}" >> .env
-          echo "STAMP_TYPES_URL_V1=${SERVER_URL_V1}${STAMP_TYPES_ENDPOINT}" >> .env
-          echo "STAMPS_URL_V1=${SERVER_URL_V1}${STAMPS_ENDPOINT}" >> .env
-          echo "YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}" >> .env
-          echo "COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}" >> .env
-          echo "Done."
+          export COLORS_ENDPOINT=colors/
+          export CONFIG_ENDPOINT=config/
+          export COUNTRIES_ENDPOINT=countries/
+          export ISSUES_ENDPOINT=issues/
+          export LOCATIONS_ENDPOINT=locations/
+          export PAPER_TYPES_ENDPOINT=paper_types/
+          export STAMP_TYPES_ENDPOINT=stamps_type/
+          export STAMPS_ENDPOINT=stamps/
+          export YEARS_ENDPOINT=years/
+          export COLLECTIONS_ENDPOINT=collections/
+          export SWAGGER_ENDPOINT=swagger/
+          export REDOC_ENDPOINT=redoc/
+          export SCHEMA_ENDPOINT=schema/
+          export ADMIN_URL=admin/
+          export SERVER_URL_V1=stamps_server/api/v1/
+          
+          cat <<- EOF > .env
+            LOG_LEVEL=DEBUG
+            LOG_FILE_NAME=backend.log
+            COLORS_ENDPOINT=colors/
+            CONFIG_ENDPOINT=config/
+            COUNTRIES_ENDPOINT=countries/
+            ISSUES_ENDPOINT=issues/
+            LOCATIONS_ENDPOINT=locations/
+            PAPER_TYPES_ENDPOINT=paper_types/
+            STAMP_TYPES_ENDPOINT=stamps_type/
+            STAMPS_ENDPOINT=stamps/
+            YEARS_ENDPOINT=years/
+            COLLECTIONS_ENDPOINT=collections/
+            SWAGGER_ENDPOINT=swagger/
+            REDOC_ENDPOINT=redoc/
+            SCHEMA_ENDPOINT=schema/
+            ADMIN_URL=admin/
+            SERVER_URL_V1=stamps_server/api/v1/
+            COLORS_URL_V1=${SERVER_URL_V1}${COLORS_ENDPOINT}
+            CONFIG_URL_V1=${SERVER_URL_V1}${CONFIG_ENDPOINT}
+            COUNTRIES_URL_V1=${SERVER_URL_V1}${COUNTRIES_ENDPOINT}
+            ISSUES_URL_V1=${SERVER_URL_V1}${ISSUES_ENDPOINT}
+            LOCATIONS_URL_V1=${SERVER_URL_V1}${LOCATIONS_ENDPOINT}
+            PAPER_TYPES_URL_V1=${SERVER_URL_V1}${PAPER_TYPES_ENDPOINT}
+            STAMP_TYPES_URL_V1=${SERVER_URL_V1}${STAMP_TYPES_ENDPOINT}
+            STAMPS_URL_V1=${SERVER_URL_V1}${STAMPS_ENDPOINT}
+            YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}
+            COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}
+          EOF	
 
       # ----------------------------------------------------
       # Run Pytest with Coverage
@@ -95,14 +111,16 @@ jobs:
         working-directory: ./backend
         # Run tests and generate an XML report for coverage
         run: |
-          pytest --cov=. --cov-report=xml --junitxml=results.xml
+          pytest --cov=.
+          coverage html
+
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
-      # - name: Upload Coverage Report
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: backend-coverage-report
-      #     path: ./backend/coverage.xml
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-html-coverage-report
+          path: ./backend/htmlcov/
           
   # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
   frontend_ci:
@@ -124,3 +142,4 @@ jobs:
         run: pip install -r requirements.txt
         
       # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
+
