@@ -87,10 +87,10 @@ jobs:
           echo "YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}" >> .env
           echo "COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}" >> .env
           echo "Done."
-
-	  # ----------------------------------------------------
-	  # Load .env
-	  # ----------------------------------------------------
+		  
+      # ----------------------------------------------------
+      # Load .env
+      # ----------------------------------------------------
       - name: Load .env file
         uses: motdotla/dotenv-action@v0
         with:
