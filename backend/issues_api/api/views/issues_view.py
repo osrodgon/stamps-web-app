@@ -28,6 +28,12 @@ class IssuesView(Logger, APIView):
                 name="IssuesRetrieved",
                 description="A list of issues was successfully retrieved.",
                 many=True
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssuesListForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             )
         }
     )
@@ -55,6 +61,12 @@ class IssuesView(Logger, APIView):
                 name="IssueCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             )
         }
     )

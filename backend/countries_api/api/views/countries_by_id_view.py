@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -29,18 +30,18 @@ class CountriesByIdView(Logger, APIView):
         summary="Retrieve a Country by ID",
         description="Fetches the details of a specific country entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CountryResponseSerializer,
                 name="CountryRetrieved",
                 description="The requested country's data was retrieved successfully."
                 ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 CountryResponseSerializer,
                 name="CountryRetrieveForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveCountryNotFound",
                 success=False,
@@ -74,29 +75,29 @@ class CountriesByIdView(Logger, APIView):
         description="Updates an existing country entry identified by its ID. A complete payload with all required fields is expected.",
         request=CountryRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CountryResponseSerializer,
                 name="CountryUpdated",
                 description="The country was updated successfully."
                 ),
-            403: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
+                GenericResponseSerializer,
+                name="CountryUpdateInvalidPayload",
+                success=False,
+                description="The request payload was invalid."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 CountryResponseSerializer,
                 name="CountryUpdateForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="CountryUpdateNotFound",
                 success=False,
                 description="The country with the specified ID was not found."
-                ),
-            400: standardized_response(
-                GenericResponseSerializer,
-                name="CountryUpdateInvalidPayload",
-                success=False,
-                description="The request payload was invalid."
-                )   
+                )
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -131,19 +132,19 @@ class CountriesByIdView(Logger, APIView):
         summary="Delete a Country",
         description="Deletes a country entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="CountryDeleted",
                 success=True,
                 description="The country was deleted successfully."
                 ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 CountryResponseSerializer,
                 name="CountryDeleteForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="CountryDeleteNotFound",
                 success=False,

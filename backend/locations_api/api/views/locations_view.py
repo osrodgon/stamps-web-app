@@ -22,12 +22,18 @@ class LocationsView(Logger, APIView):
         summary="List All Locations",
         description="Retrieves a list of all location entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 LocationResponseSerializer, 
                 name="LocationsRetrieved",
                 description="A list of locations was successfully retrieved.",
                 many=True
-                )
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationsListForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +54,23 @@ class LocationsView(Logger, APIView):
         description="Adds a new location entry to the database. A successful creation returns the newly created location object with a 201 Created status code.",
         request=LocationRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 LocationResponseSerializer,
                 name="LocationCreated",
                 description="The location was created successfully."
-                ),
-            400: standardized_response(
+            ),
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="LocationCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

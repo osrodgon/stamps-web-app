@@ -31,17 +31,23 @@ class PaperTypesByIdView(Logger, APIView):
         summary="Retrieve a Paper Type by ID",
         description="Fetches the details of a specific paper type entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 PaperTypeResponseSerializer,
                 name="PaperTypeRetrieved",
                 description="The requested paper type's data was retrieved successfully."
-                ),
-            404: standardized_response(
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypeRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrievePaperTypeNotFound",
                 success=False,
                 description="No paper type was found for the provided ID."
-                ) 
+            ) 
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -70,18 +76,24 @@ class PaperTypesByIdView(Logger, APIView):
         description="Updates an existing paper type entry identified by its ID. A complete payload with all required fields is expected.",
         request=PaperTypeRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 PaperTypeResponseSerializer,
                 name="PaperTypeUpdated",
                 description="The paper type was updated successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypeUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeUpdateNotFound",
                 success=False,
                 description="The paper type with the specified ID was not found."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeUpdateInvalidPayload",
                 success=False,
@@ -121,13 +133,19 @@ class PaperTypesByIdView(Logger, APIView):
         summary="Delete a Paper Type",
         description="Deletes a paper type entry from the. database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeDeleted",
                 success=True,
                 description="The paper type was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypeDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeDeleteNotFound",
                 success=False,

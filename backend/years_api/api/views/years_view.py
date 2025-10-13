@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,12 +23,18 @@ class YearsView(Logger, APIView):
         summary="List All Years",
         description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 YearResponseSerializer, 
                 name="YearsRetrieved",
                 description="A list of years was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearsRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +55,23 @@ class YearsView(Logger, APIView):
         description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",
         request=YearRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 YearResponseSerializer,
                 name="YearCreated",
                 description="The year was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="YearCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid.",
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

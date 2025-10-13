@@ -31,18 +31,18 @@ class ConfigByIdView(Logger, APIView):
         summary="Retrieve a Configuration Entry by ID",
         description="Fetches a specific configuration entry using its unique ID. Returns the entry's details if found.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 ConfigResponseSerializer,
                 name="GetConfigEntrySuccess",
                 description="The configuration entry was retrieved successfully."
             ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 ConfigResponseSerializer,
                 name="GetConfigEntryForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="GetConfigEntryNotFound",
                 success=False,
@@ -75,24 +75,24 @@ class ConfigByIdView(Logger, APIView):
         description="Updates an existing configuration entry identified by its ID. The request body can contain a partial or full update of the entry's fields.",
         request=ConfigRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 ConfigResponseSerializer,
                 name="UpdateConfigEntrySuccess",
                 description="The configuration entry was updated successfully."
             ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="UpdateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid."
             ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 ConfigResponseSerializer,
                 name="UpdateConfigEntryForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="UpdateConfigEntryNotFound",
                 success=False,
@@ -133,18 +133,18 @@ class ConfigByIdView(Logger, APIView):
         summary="Delete a Configuration Entry",
         description="Permanently removes a configuration entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="DeleteConfigEntrySuccess", 
                 description="The configuration entry was deleted successfully."
             ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 ConfigResponseSerializer,
                 name="DeleteConfigEntryForbidden",
                 success=False,
                 description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
-            404: standardized_response(
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="DeleteConfigEntryNotFound",
                 success=False,

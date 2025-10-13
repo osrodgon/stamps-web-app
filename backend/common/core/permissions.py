@@ -1,3 +1,4 @@
+import re
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_api_key.models import APIKey
@@ -14,8 +15,9 @@ class HasSpecificKeyName(HasAPIKey):
         # This ensures the raw key is valid, unrevoked, and not expired.
         # If this fails, it raises PermissionDenied/NotAuthenticated (401/403).
         if not super().has_permission(request, view):
-            message = "THis is an error"
-            return False
+            raise PermissionDenied(
+                Messages.APIKey.invalid_key()
+            )
 
         # 2. Authorization Check (Name Check)
         # The APIKey instance is attached to request.auth upon successful validation

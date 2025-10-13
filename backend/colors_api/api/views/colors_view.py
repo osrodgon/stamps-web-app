@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -53,18 +54,18 @@ class ColorsView(Logger, APIView):
         description="Adds a new color entry to the database. A successful creation returns the newly created color object with a 201 Created status code.",
         request=ColorRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 ColorResponseSerializer,
                 name="ColorCreated",
                 description="The color was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="ColorCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
                 ),
-            403: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
                 ColorResponseSerializer,
                 name="ColorCreateForbidden",
                 success=False,
