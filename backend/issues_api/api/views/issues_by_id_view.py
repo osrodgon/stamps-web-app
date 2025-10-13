@@ -34,6 +34,12 @@ class IssuesByIdView(Logger, APIView):
                 name="IssueRetrieved",
                 description="The requested issue's data was retrieved successfully."
             ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveIssueNotFound",
@@ -70,6 +76,12 @@ class IssuesByIdView(Logger, APIView):
                 name="IssueUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -115,6 +127,12 @@ class IssuesByIdView(Logger, APIView):
                 GenericResponseSerializer,
                 name="IssueDeleted",
                 description="The issue was deleted successfully."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

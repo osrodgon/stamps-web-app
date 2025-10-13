@@ -31,6 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 
 # Application definition
 
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
+    'rest_framework_api_key',
     'drf_spectacular',      # For Swagger documentation
     "config_api",           # All APIs for the config table
     "stamp_types_api",      # All APIs for the stamp type table
@@ -60,6 +62,12 @@ REST_FRAMEWORK = {
         "common.core.renderers.StandardJSONRenderer",
     ),
     "EXCEPTION_HANDLER": "common.core.exceptions.custom_exception_handler",
+    # This sets the default permission for ALL DRF views
+    'DEFAULT_AUTHENTICATION_CLASSES': [ ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        #'rest_framework_api_key.permissions.HasAPIKey',
+        'common.core.permissions.HasSpecificKeyName'
+    ]
 }
 
 SPECTACULAR_SETTINGS = {
@@ -70,6 +78,28 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
+    "SECURITY": [
+        {
+            'APIKeyHeader': [], 
+            'APINameHeader': []
+        }
+    ],
+    "COMPONENTS": {
+        'securitySchemes': {
+            'APIKeyHeader': { 
+                'type': 'apiKey',          # Must be 'apiKey' for header keys
+                'in': 'header',            # Location in the request
+                'name': 'X-API-Key',       # The RAW header name 
+                'description': 'Custom API Key required for authentication.',
+            },
+            'APINameHeader': { 
+                'type': 'apiKey',          # Must be 'apiKey' for header keys
+                'in': 'header',            # Location in the request
+                'name': 'X-API-User',      # The RAW header name 
+                'description': 'API Key name associated the the API Key.',
+            }
+        }
+    },
     "TAGS": [
         {
             "name": "Colors",
@@ -111,6 +141,8 @@ SPECTACULAR_SETTINGS = {
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
     "SWAGGER_UI_SETTINGS": {
         "defaultModelsExpandDepth": -1,
+        'deepLinking': True,
+        'persistAuthorization': True,
     },
 }
 

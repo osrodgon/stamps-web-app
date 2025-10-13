@@ -30,12 +30,18 @@ class LocationsByIdView(Logger, APIView):
         summary="Retrieve a Location by ID",
         description="Fetches the details of a specific location entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 LocationResponseSerializer,
                 name="LocationRetrieved",
                 description="The requested location's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveLocationNotFound",
                 success=False,
@@ -69,23 +75,29 @@ class LocationsByIdView(Logger, APIView):
         description="Updates an existing location entry identified by its ID. A complete payload with all required fields is expected.",
         request=LocationRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 LocationResponseSerializer,
                 name="LocationUpdated",
                 description="The location was updated successfully."
                 ),
-            404: standardized_response(
-                GenericResponseSerializer,
-                name="LocationUpdateNotFound",
-                success=False,
-                description="The location with the specified ID was not found."
-                ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="LocationUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
-                )   
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="LocationUpdateNotFound",
+                success=False,
+                description="The location with the specified ID was not found."
+            )   
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -120,13 +132,19 @@ class LocationsByIdView(Logger, APIView):
         summary="Delete a Location",
         description="Deletes a location entry from the. database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="LocationDeleted",
                 success=True,
                 description="The location was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="LocationDeleteNotFound",
                 success=False,

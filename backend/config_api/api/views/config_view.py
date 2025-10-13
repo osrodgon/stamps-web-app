@@ -26,6 +26,12 @@ class ConfigView(Logger, APIView):
                 name="GetAllConfigEntriesSuccess",
                 many=True, 
                 description="A list of all configuration entries was successfully retrieved."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="GetAllConfigEntriesForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             )
         }
     )
@@ -57,6 +63,12 @@ class ConfigView(Logger, APIView):
                 name="CreateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid or missing required fields."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="CreateConfigEntryForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             )
         }
     )

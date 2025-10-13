@@ -38,12 +38,18 @@ class YearsByIdView(Logger, APIView):
         summary="Retrieve a Year by ID",
         description="Fetches the details of a specific year entry by its unique identifier. If the year exists, its data is returned. Otherwise, a 404 Not Found error is returned.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 YearResponseSerializer,
                 name="YearRetrieved",
                 description="The requested year's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveYearNotFound",
                 success=False,
@@ -77,18 +83,24 @@ class YearsByIdView(Logger, APIView):
         description="Updates an existing year entry identified by its ID. A complete payload with all required fields is expected. If the update is successful, the updated year data is returned. Returns a 404 error if the year does not exist or a 400 error for an invalid payload.",
         request=YearRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 YearResponseSerializer,
                 name="YearUpdated",
                 description="The year was updated successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="YearUpdateNotFound",
                 success=False,
                 description="The year with the specified ID was not found."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="YearUpdateInvalidPayload",
                 success=False,
@@ -128,13 +140,19 @@ class YearsByIdView(Logger, APIView):
         summary="Delete a Year",
         description="Deletes a year entry from the database using its ID. If the deletion is successful, a confirmation message is returned. A 404 error is returned if the year with the specified ID does not exist.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="YearDeleted",
                 success=True,
                 description="The year was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="YearDeleteNotFound",
                 success=False,

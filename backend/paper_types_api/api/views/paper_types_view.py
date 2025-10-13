@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,12 +23,18 @@ class PaperTypesView(Logger, APIView):
         summary="List All Paper Types",
         description="Retrieves a list of all paper type entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 PaperTypeResponseSerializer, 
                 name="PaperTypesRetrieved",
                 description="A list of paper types was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypesRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +55,23 @@ class PaperTypesView(Logger, APIView):
         description="Adds a new paper type entry to the database. A successful creation returns the newly created paper type object with a 201 Created status code.",
         request=PaperTypeRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 PaperTypeResponseSerializer,
                 name="PaperTypeCreated",
                 description="The paper type was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypeCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

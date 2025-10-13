@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -30,12 +31,18 @@ class StampTypesByIdView(Logger, APIView):
         summary="Retrieve a Stamp Type by ID",
         description="Fetches the details of a specific stamp type entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeRetrieved",
                 description="The requested stamp type's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveStampTypeNotFound",
                 success=False,
@@ -69,18 +76,24 @@ class StampTypesByIdView(Logger, APIView):
         description="Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.",
         request=StampTypeRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeUpdated",
                 description="The stamp type was updated successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeUpdateNotFound",
                 success=False,
                 description="The stamp type with the specified ID was not found."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeUpdateInvalidPayload",
                 success=False,
@@ -120,13 +133,19 @@ class StampTypesByIdView(Logger, APIView):
         summary="Delete a Stamp Type",
         description="Deletes a stamp type entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeDeleted",
                 success=True,
                 description="The stamp type was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeDeleteNotFound",
                 success=False,

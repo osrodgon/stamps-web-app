@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -11,7 +12,6 @@ from common.core.schemas import standardized_response
 from colors_api.models import Color
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
 from colors_api.api.serializers.color_request_serializer import ColorRequestSerializer
-
 
 class ColorsView(Logger, APIView):
     serializer_class = ColorResponseSerializer
@@ -27,7 +27,13 @@ class ColorsView(Logger, APIView):
                 name="ColorsRetrieved",
                 description="A list of colors was successfully retrieved.",
                 many=True
-                )
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorsForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                )   
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +54,23 @@ class ColorsView(Logger, APIView):
         description="Adds a new color entry to the database. A successful creation returns the newly created color object with a 201 Created status code.",
         request=ColorRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 ColorResponseSerializer,
                 name="ColorCreated",
                 description="The color was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="ColorCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ColorResponseSerializer,
+                name="ColorCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                )   
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

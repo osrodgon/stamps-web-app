@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,12 +23,18 @@ class StampTypesView(Logger, APIView):
         summary="List All Stamp Types",
         description="Retrieves a list of all stamp type entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer, 
                 name="StampTypesRetrieved",
                 description="A list of stamp types was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypesRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +55,23 @@ class StampTypesView(Logger, APIView):
         description="Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a 201 Created status code.",
         request=StampTypeRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeCreated",
                 description="The stamp type was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

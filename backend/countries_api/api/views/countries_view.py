@@ -22,12 +22,18 @@ class CountriesView(Logger, APIView):
         summary="List All Countries",
         description="Retrieves a list of all country entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CountryResponseSerializer, 
                 name="CountriesRetrieved",
                 description="A list of countries was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CountryResponseSerializer,
+                name="CountriesRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -48,17 +54,23 @@ class CountriesView(Logger, APIView):
         description="Adds a new country entry to the database. A successful creation returns the newly created country object with a 201 Created status code.",
         request=CountryRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 CountryResponseSerializer,
                 name="CountryCreated",
                 description="The country was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="CountryCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CountryResponseSerializer,
+                name="CountryCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
