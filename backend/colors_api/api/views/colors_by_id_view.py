@@ -40,7 +40,13 @@ class ColorsByIdView(Logger, APIView):
                 name="RetrieveColorNotFound",
                 success=False,
                 description="No color was found for the provided ID."
-                ) 
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="RetrieveColorForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                )   
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -74,18 +80,24 @@ class ColorsByIdView(Logger, APIView):
                 name="ColorUpdated",
                 description="The color was updated successfully."
                 ),
-            404: standardized_response(
-                GenericResponseSerializer,
-                name="ColorUpdateNotFound",
-                success=False,
-                description="The color with the specified ID was not found."
-                ),
             400: standardized_response(
                 GenericResponseSerializer,
                 name="ColorUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
-                )   
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                ),    
+            404: standardized_response(
+                GenericResponseSerializer,
+                name="ColorUpdateNotFound",
+                success=False,
+                description="The color with the specified ID was not found."
+                )
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
@@ -126,6 +138,12 @@ class ColorsByIdView(Logger, APIView):
                 success=True,
                 description="The color was deleted successfully."
                 ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                ),   
             404: standardized_response(
                 GenericResponseSerializer,
                 name="ColorDeleteNotFound",

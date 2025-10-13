@@ -36,6 +36,12 @@ class ConfigByIdView(Logger, APIView):
                 name="GetConfigEntrySuccess",
                 description="The configuration entry was retrieved successfully."
             ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="GetConfigEntryForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
             404: standardized_response(
                 GenericResponseSerializer,
                 name="GetConfigEntryNotFound",
@@ -79,6 +85,12 @@ class ConfigByIdView(Logger, APIView):
                 name="UpdateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="UpdateConfigEntryForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
             404: standardized_response(
                 GenericResponseSerializer,
@@ -125,6 +137,12 @@ class ConfigByIdView(Logger, APIView):
                 GenericResponseSerializer,
                 name="DeleteConfigEntrySuccess", 
                 description="The configuration entry was deleted successfully."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="DeleteConfigEntryForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
             ),
             404: standardized_response(
                 GenericResponseSerializer,

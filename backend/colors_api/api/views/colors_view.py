@@ -12,7 +12,6 @@ from colors_api.models import Color
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
 from colors_api.api.serializers.color_request_serializer import ColorRequestSerializer
 
-
 class ColorsView(Logger, APIView):
     serializer_class = ColorResponseSerializer
     
@@ -27,7 +26,13 @@ class ColorsView(Logger, APIView):
                 name="ColorsRetrieved",
                 description="A list of colors was successfully retrieved.",
                 many=True
-                )
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorsForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                )   
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -58,7 +63,13 @@ class ColorsView(Logger, APIView):
                 name="ColorCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                )   
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

@@ -27,7 +27,13 @@ class CountriesView(Logger, APIView):
                 name="CountriesRetrieved",
                 description="A list of countries was successfully retrieved.",
                 many=True
-                )
+                ),
+            403: standardized_response(
+                CountryResponseSerializer,
+                name="CountriesRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
@@ -58,7 +64,13 @@ class CountriesView(Logger, APIView):
                 name="CountryCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            403: standardized_response(
+                CountryResponseSerializer,
+                name="CountryCreateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:

@@ -111,3 +111,7 @@ class Messages:
 
         def deleted_one(table_name, id):
             return f"Successfully deleted {table_name.lower()} with id: {id}."
+        
+    class APIKey:
+        def invalid_user():
+            return "API Key is valid but not authorized for any API resource. Key name not recognized."

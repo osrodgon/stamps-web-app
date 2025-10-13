@@ -1,6 +1,8 @@
 # core/admin.py
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User, Group
+from rest_framework_api_key.models import APIKey
+from rest_framework_api_key.admin import APIKeyModelAdmin
 
 from colors_api.models import Color
 from config_api.models import Config
@@ -19,6 +21,7 @@ STAMPS_SITE_NAME = "Stamps App"
 CATEGORIES = {
     "User": ADMIN_SITE_NAME,
     "Group": ADMIN_SITE_NAME,
+    "APIKey": ADMIN_SITE_NAME, 
     "Color": STAMPS_SITE_NAME,
     "Config": STAMPS_SITE_NAME,
     "Country": STAMPS_SITE_NAME,
@@ -76,6 +79,7 @@ stamps_admin_site = StampsAdminSite(name="stamsp_app_admin")
 
 stamps_admin_site.register(User)
 stamps_admin_site.register(Group)
+stamps_admin_site.register(APIKey, APIKeyModelAdmin)
 
 # Registrar todos los modelos que quieras unificar
 stamps_admin_site.register(Color)

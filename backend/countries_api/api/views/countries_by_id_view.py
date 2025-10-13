@@ -34,6 +34,12 @@ class CountriesByIdView(Logger, APIView):
                 name="CountryRetrieved",
                 description="The requested country's data was retrieved successfully."
                 ),
+            403: standardized_response(
+                CountryResponseSerializer,
+                name="CountryRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
             404: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveCountryNotFound",
@@ -73,6 +79,12 @@ class CountriesByIdView(Logger, APIView):
                 name="CountryUpdated",
                 description="The country was updated successfully."
                 ),
+            403: standardized_response(
+                CountryResponseSerializer,
+                name="CountryUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
             404: standardized_response(
                 GenericResponseSerializer,
                 name="CountryUpdateNotFound",
@@ -125,6 +137,12 @@ class CountriesByIdView(Logger, APIView):
                 success=True,
                 description="The country was deleted successfully."
                 ),
+            403: standardized_response(
+                CountryResponseSerializer,
+                name="CountryDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+            ),
             404: standardized_response(
                 GenericResponseSerializer,
                 name="CountryDeleteNotFound",
