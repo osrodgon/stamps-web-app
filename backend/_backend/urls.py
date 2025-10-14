@@ -21,6 +21,8 @@ urlpatterns = [
             path(os.getenv('COLORS_ENDPOINT', 'colors/'), include('colors_api.urls')),
             path(os.getenv('ISSUES_ENDPOINT', 'issues/'), include('issues_api.urls')),
             path(os.getenv('STAMPS_ENDPOINT', 'stamps/'), include('stamps_api.urls')),
+            path(os.getenv('COLLECTIONS_ENDPOINT', 'collections/'), include('collections_api.urls')),
+            path(os.getenv('COLLECTION_ITEMS_ENDPOINT', 'collection-items/'), include('collection_items_api.urls')),
             path(os.getenv('SCHEMA_ENDPOINT', 'schema/'), SpectacularAPIView.as_view(), name="schema"),
             path(os.getenv('SWAGGER_ENDPOINT', 'swagger/'), SpectacularSwaggerView.as_view(), name="swagger"),
             path(os.getenv('REDOC_ENDPOINT', 'redoc/'), SpectacularRedocView.as_view(), name="redoc")
