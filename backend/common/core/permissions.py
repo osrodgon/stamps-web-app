@@ -1,4 +1,3 @@
-import re
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_api_key.models import APIKey

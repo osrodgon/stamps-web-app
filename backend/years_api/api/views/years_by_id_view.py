@@ -24,14 +24,6 @@ class YearsByIdView(Logger, APIView):
             Messages.Database.not_found("year", pk)
             return None
     
-    # @swagger_auto_schema(
-    #     tags=['Years'],
-    #     operation_description="Gets a single year",
-    #     responses={
-    #         200: YearResponseSerializer(many=False),
-    #         404: GenericResponse().serializer
-    #     }
-    # )
     @extend_schema(
         operation_id="retrieve_year",
         tags=['Years'],

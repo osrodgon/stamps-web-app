@@ -1,0 +1,155 @@
+import re
+from turtle import st
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from django.http import Http404
+from drf_spectacular.utils import extend_schema
+
+from common import api
+from common.api.messages import Messages
+from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
+from common.core.authentication import APIKeyAuthentication
+from common.log.logger import Logger
+from common.core.schemas import standardized_response
+from collections_api.models import Collection
+from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
+from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
+
+class CollectionsByIdView(Logger, APIView):
+    permission_classes = [AllowAny]
+    serializer_class = CollectionResponseSerializer
+    api_key = APIKeyAuthentication()
+
+    def _get_object(self, pk: int) -> Collection:
+        try:
+            self.debug(Messages.Database.querying("collection", pk))
+            return Collection.objects.get(pk=pk)
+        except Collection.DoesNotExist:
+            self.warning(Messages.Database.not_found("collection", pk))
+            return None
+
+
+    @extend_schema(
+        operation_id="get_collection_by_id",
+        tags=['Collections'],
+        summary="Get Collection by ID",
+        description="Retrieves a single collection entry by its unique ID. A 404 Not Found response is returned if the collection does not exist.",
+        responses={
+            status.HTTP_200_OK: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionRetrieved",
+                description="The collection was retrieved successfully."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing Authorization."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionNotFound",
+                success=False,
+                description="The collection with the specified ID was not found."
+            )
+        }
+    )
+    def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.api_key.authenticate(request)
+        self.debug(Messages.Get.retrieve_one("collection", pk))
+        collection = self._get_object(pk)
+        
+        if collection is None:
+            message = Messages.Get.not_found("collection", pk)
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        response = CollectionResponseSerializer(collection)
+        self.debug(Messages.Get.retrieved_one("collection", pk))
+        return Response(data=response.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        operation_id="update_collection",
+        tags=['Collections'],
+        summary="Update a Collection",
+        description="Updates an existing collection entry identified by its ID. The request body must contain the updated collection data. A successful update returns the modified collection object.",
+        request=CollectionRequestSerializer,
+        responses={
+            status.HTTP_200_OK: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionUpdated",
+                description="The collection was updated successfully."
+            ),
+            status.HTTP_400_BAD_REQUEST: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionUpdateInvalidPayload",
+                success=False,
+                description="The request payload was invalid."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionUpdateForbidden",
+                success=False,
+                description="Permission denied. You're likely missing Authorization."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionUpdateNotFound",
+                success=False,
+                description="The collection with the specified ID was not found."
+            )
+        }
+    )
+    def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.api_key.authenticate(request)
+        self.debug(Messages.Put.update_one("collection", pk, request.data))
+        collection = self._get_object(pk)
+        serializer = CollectionRequestSerializer(collection, data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            self.info(Messages.Put.updated_one("collection", pk))
+            return Response(data=CollectionResponseSerializer(instance).data, status=status.HTTP_200_OK)
+
+        self.warning(Messages.Put.validation_failed("collection", pk, serializer.errors))
+        return Response(data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        operation_id="delete_collection",
+        tags=['Collections'],
+        summary="Delete a Collection",
+        description="Deletes a collection entry by its unique ID. A successful deletion returns a 204 No Content response.",
+        responses={
+            status.HTTP_204_NO_CONTENT: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionDeleted",
+                success=True,
+                description="The collection was deleted successfully."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CollectionResponseSerializer,
+                name="CollectionDeleteForbidden",
+                success=False,
+                description="Permission denied. You're likely missing Authorization."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionDeleteNotFound",
+                success=False,
+                description="The collection with the specified ID was not found."
+            )
+        }
+    )
+    def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        self.api_key.authenticate(request)
+        self.debug(Messages.Delete.remove_one("collection", pk))
+        collection = self._get_object(pk)
+        collection.delete()
+        self.info(Messages.Delete.removed_one("collection", pk))
+        return Response(status=status.HTTP_204_NO_CONTENT)
