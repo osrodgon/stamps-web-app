@@ -87,8 +87,14 @@ class CollectionsView(Logger, APIView):
         if collection.is_valid():
             instance = collection.save(user=self.api_key.user)
             self.info(Messages.Post.created_one("collection", instance.id))
-            return Response(data=CollectionResponseSerializer(instance).data, status=status.HTTP_201_CREATED)
+            return Response(
+                data=CollectionResponseSerializer(instance).data, 
+                status=status.HTTP_201_CREATED
+            )
         
         self.warning(Messages.Post.validation_failed("collection", collection.errors))
-        return Response(data=GenericResponseSerializer(GenericResponse(collection.errors)).data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(collection.errors)).data, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
