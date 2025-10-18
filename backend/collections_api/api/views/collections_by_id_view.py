@@ -1,11 +1,9 @@
-import re
-from turtle import st
+from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from django.http import Http404
 from drf_spectacular.utils import extend_schema
 
 from common import api
@@ -110,15 +108,29 @@ class CollectionsByIdView(Logger, APIView):
         self.api_key.authenticate(request)
         self.debug(Messages.Put.update_one("collection", pk, request.data))
         collection = self._get_object(pk)
-        serializer = CollectionRequestSerializer(collection, data=request.data)
+        if collection is None:
+            message = Messages.Put.not_found("collection", pk)
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND
+                )
+                
+        updated_collection = CollectionRequestSerializer(instance=collection, data=request.data, partial=False)
 
-        if serializer.is_valid():
-            instance = serializer.save()
+        if updated_collection.is_valid():
+            instance = updated_collection.save()
             self.info(Messages.Put.updated_one("collection", pk))
-            return Response(data=CollectionResponseSerializer(instance).data, status=status.HTTP_200_OK)
+            return Response(
+                data=CollectionResponseSerializer(instance).data, 
+                status=status.HTTP_200_OK
+            )
 
-        self.warning(Messages.Put.validation_failed("collection", pk, serializer.errors))
-        return Response(data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, status=status.HTTP_400_BAD_REQUEST)
+        self.warning(Messages.Put.validation_failed("collection", pk, updated_collection.errors))
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(updated_collection.errors)).data, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @extend_schema(
         operation_id="delete_collection",
@@ -148,8 +160,20 @@ class CollectionsByIdView(Logger, APIView):
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
         self.api_key.authenticate(request)
-        self.debug(Messages.Delete.remove_one("collection", pk))
+        self.debug(Messages.Delete.delete_one("collection", pk))
         collection = self._get_object(pk)
+        if collection is None:
+            message = Messages.Delete.not_found("collection", pk)
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND
+                )
+            
         collection.delete()
-        self.info(Messages.Delete.removed_one("collection", pk))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        message = Messages.Delete.deleted_one("collection", pk)
+        self.info(message)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(message)).data,
+            status=status.HTTP_200_OK
+            )

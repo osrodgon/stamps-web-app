@@ -80,12 +80,12 @@ class CollectionsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
+        user, apy_key =self.api_key.authenticate(request)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
         if collection.is_valid():
-            instance = collection.save(user=self.api_key.user)
+            instance = collection.save(user=user)
             self.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
