@@ -156,5 +156,9 @@ class CollectionItemsByIdView(Logger, APIView):
             )
 
         collection_item.delete()
-        self.info(Messages.Delete.deleted_one("collection item", pk))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        message = Messages.Delete.deleted_one("collection item", pk)
+        self.info(message)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(message)).data,
+            status=status.HTTP_200_OK
+            )
