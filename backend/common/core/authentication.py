@@ -10,13 +10,6 @@ class APIKeyAuthentication(BaseAuthentication):
     AUTH_SCHEME = os.getenv("AUTH_TOKEN", "Key").lower()
     REGEX_PATTERN = r'^user\d{3}$'
     
-    def __init__(self):
-        self.__user = None
-    
-    @property
-    def user(self):
-        return self.__user
-    
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         
@@ -39,7 +32,6 @@ class APIKeyAuthentication(BaseAuthentication):
                         
             if not re.fullmatch(self.REGEX_PATTERN, user):
                 raise AuthenticationFailed(Messages.APIKey.not_a_user())
-            self.__user = user
             return (user, api_key)
             
         except APIKey.DoesNotExist:
