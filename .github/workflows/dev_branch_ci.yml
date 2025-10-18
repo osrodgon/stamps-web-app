@@ -68,6 +68,7 @@ jobs:
           export STAMPS_ENDPOINT=stamps/
           export YEARS_ENDPOINT=years/
           export COLLECTIONS_ENDPOINT=collections/
+          export COLLECTION_ITEMS_ENDPOINT=collection_items/
           export SWAGGER_ENDPOINT=swagger/
           export REDOC_ENDPOINT=redoc/
           export SCHEMA_ENDPOINT=schema/
@@ -87,6 +88,7 @@ jobs:
             STAMPS_ENDPOINT=stamps/
             YEARS_ENDPOINT=years/
             COLLECTIONS_ENDPOINT=collections/
+            COLLECTION_ITEMS_ENDPOINT=collection_items/
             SWAGGER_ENDPOINT=swagger/
             REDOC_ENDPOINT=redoc/
             SCHEMA_ENDPOINT=schema/
@@ -102,6 +104,7 @@ jobs:
             STAMPS_URL_V1=${SERVER_URL_V1}${STAMPS_ENDPOINT}
             YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}
             COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}
+            COLLECTION_ITEMS_URL_V1=${SERVER_URL_V1}${COLLECTION_ITEMS_ENDPOINT}
           EOF	
 
       # ----------------------------------------------------
