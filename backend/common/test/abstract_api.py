@@ -16,5 +16,5 @@ class AbstractAPI:
             self.__mocker.patch(self.__permission_class, side_effect=PermissionDenied(message))
             
     def connection_lost(self, method):
-        self.__mocker.patch(method, side_effect=Exception(Messages.Database.connection_lost()))
+        self.__mocker.patch(method, side_effect=Exception(Messages.server_error()))
         
