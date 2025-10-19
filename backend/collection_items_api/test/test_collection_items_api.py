@@ -1,9 +1,9 @@
-import os
 from unittest.mock import patch
 from urllib import response
 import pytest
 from rest_framework import status
 
+from _backend.settings import COLLECTION_ITEMS_URL_V1
 from collection_items_api.api.serializers.collection_items_response_serializer import CollectionItemsResponseSerializer
 from collection_items_api.models import CollectionItem
 from common.api.messages import Messages
@@ -36,11 +36,7 @@ class TestCollectionItemsAPI:
         """
         Tests successful retrieval of a list of collection items.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_view.CollectionItemsView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.get(self.__get_url())
+        response = api_client.get(self.__get_url())
 
         original = CollectionItemsResponseSerializer(collection_items_table, many=True)
 
@@ -52,11 +48,7 @@ class TestCollectionItemsAPI:
         """
         Tests retrieval of an empty list of collection items.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_view.CollectionItemsView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.get(self.__get_url())
+        response = api_client.get(self.__get_url())
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()['data']) == 0
@@ -65,11 +57,7 @@ class TestCollectionItemsAPI:
         """
         Tests successful creation of a new collection item.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_view.CollectionItemsView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
+        response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()['data']['collection']['id'] == collection_item_post_payload_ok['collection']
@@ -80,11 +68,7 @@ class TestCollectionItemsAPI:
         Tests creating a collection item with a missing 'stamp' field.
         """
         del collection_item_post_payload_ok['stamp']
-        with patch(
-            'collection_items_api.api.views.collection_items_view.CollectionItemsView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
+        response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()['errors'][0]['field'] == "stamp"
@@ -97,11 +81,7 @@ class TestCollectionItemsAPI:
             "collection": collection_items_table[0].collection.id,
             "stamp": collection_items_table[0].stamp.id
         }
-        with patch(
-            'collection_items_api.api.views.collection_items_view.CollectionItemsView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.post(self.__get_url(), payload)
+        response = api_client.post(self.__get_url(), payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()['errors'][0]['code'] == 'unique'
@@ -111,11 +91,7 @@ class TestCollectionItemsAPI:
         Tests successful retrieval of a single collection item by ID.
         """
         item_id = collection_items_table[0].id
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.get(f"{self.__get_url()}{item_id}")
+        response = api_client.get(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()['data']['id'] == item_id
@@ -124,11 +100,7 @@ class TestCollectionItemsAPI:
         """
         Tests retrieving a collection item that does not exist.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.get(f"{self.__get_url()}999")
+        response = api_client.get(f"{self.__get_url()}999")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Get.not_found("collection item", "999")
@@ -138,11 +110,7 @@ class TestCollectionItemsAPI:
         Tests successful update of an existing collection item.
         """
         item_id = collection_items_table[0].id
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
+        response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_200_OK
         # This field is not in the payload, so it should not change
@@ -154,11 +122,7 @@ class TestCollectionItemsAPI:
         """
         collection_item_put_payload_ok["new_field"]="new_value"
         item_id = collection_items_table[0].id
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
+        response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()['errors'][0]['field'] == "new_field"
@@ -167,11 +131,7 @@ class TestCollectionItemsAPI:
         """
         Tests updating a collection item that does not exist.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.put(f"{self.__get_url()}999", collection_item_put_payload_ok)
+        response = api_client.put(f"{self.__get_url()}999", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Put.not_found("collection item", "999")
@@ -181,11 +141,7 @@ class TestCollectionItemsAPI:
         Tests successful deletion of a collection item.
         """
         item_id = collection_items_table[0].id
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.delete(f"{self.__get_url()}{item_id}")
+        response = api_client.delete(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -193,11 +149,7 @@ class TestCollectionItemsAPI:
         """
         Tests deleting a collection item that does not exist.
         """
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.delete(f"{self.__get_url()}999")
+        response = api_client.delete(f"{self.__get_url()}999")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("collection item", "999")
@@ -209,11 +161,7 @@ class TestCollectionItemsAPI:
         """
         item_id = collection_items_table[0].id
         mock_get.side_effect = Exception("Database connection lost")
-        with patch(
-            'collection_items_api.api.views.collection_items_by_id_view.CollectionItemsByIdView.api_key.authenticate',
-            return_value=(self.test_user, self.test_key)
-        ):
-            response = api_client.delete(f"{self.__get_url()}{item_id}")
+        response = api_client.delete(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert response.json()['errors'][0]['message'] == Messages.server_error()
@@ -240,4 +188,4 @@ class TestCollectionItemsAPI:
 
 
     def __get_url(self):
-        return "/" + str(os.getenv("COLLECTION_ITEMS_URL_V1"))
+        return f"/{COLLECTION_ITEMS_URL_V1}"

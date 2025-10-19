@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from _backend.settings import COUNTRIES_URL_V1
 from common.api.messages import Messages
 from countries_api.api.serializers.country_response_serializer import CountryResponseSerializer
 from common.test.api_client import api_client
@@ -194,4 +195,5 @@ class TestCountriesAPI:
         assert str(country) == test_country_value
         
     def __get_url(self):
-        return "/" + str(os.getenv("COUNTRIES_URL_V1"))
+        return f"/{COUNTRIES_URL_V1}"
+    

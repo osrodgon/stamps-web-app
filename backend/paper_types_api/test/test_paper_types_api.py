@@ -4,6 +4,7 @@ from urllib import response
 import pytest
 from rest_framework import status
 
+from _backend.settings import PAPER_TYPES_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.paper_types_api_test_data import (
@@ -170,4 +171,5 @@ class TestPaperTypesAPI:
         assert str(paper_type) == test_name
         
     def __get_url(self):
-        return "/" + str(os.getenv("PAPER_TYPES_URL_V1"))
+        return f"/{PAPER_TYPES_URL_V1}"
+

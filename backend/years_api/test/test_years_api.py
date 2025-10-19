@@ -4,6 +4,7 @@ import pytest
 import os
 from rest_framework import status
 
+from _backend.settings import YEARS_URL_V1
 from common.api.messages import Messages
 from years_api.models import Year
 from years_api.api.serializers.year_response_serializer import YearResponseSerializer
@@ -168,4 +169,5 @@ class TestYearAPI:
         assert str(year) == str(test_year_value)
         
     def __get_url(self):
-        return "/" + str(os.getenv("YEARS_URL_V1"))
+        return f"/{YEARS_URL_V1}"
+        

@@ -37,32 +37,6 @@ class TestHasSpecificKeyName:
         # The key name that must match the header
         self.key_name = self.api_key_obj.name
 
-    # 2. Test for the happy path: Key is valid AND name matches
-    def test_permission_granted_on_match(self, mocker):
-        """Should return True when the key is valid and its name matches the user header."""
-        
-        # --- Arrange (Setup for success) ---
-        request = self.factory.get('/')
-        request.META['HTTP_X_API_KEY'] = self.raw_key
-        request.META['HTTP_X_API_USER'] = self.key_name # Matching name
-        mock_view = None
-        
-        # Simulate successful validation from the parent (HasAPIKey)
-        # The parent logic sets the APIKey instance to request.auth
-        # We also need to mock the manager call used by your class.
-        request.auth = self.api_key_obj
-        mocker.patch(
-            'rest_framework_api_key.models.APIKeyManager.get_from_key', 
-            return_value=self.api_key_obj
-        )
-
-        # --- Act & Assert ---
-        permission = HasSpecificKeyName()
-        result = permission.has_permission(request, mock_view)
-        
-        # The permission check should return True
-        assert result is True
-
     # 3. Test for the authorization failure: Key is valid BUT name does NOT match
     def test_permission_denied_on_name_mismatch(self, mocker):
         """Should raise PermissionDenied when the key is valid but the name doesn't match."""

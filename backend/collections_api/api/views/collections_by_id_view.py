@@ -17,9 +17,7 @@ from collections_api.api.serializers.collection_response_serializer import Colle
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
 
 class CollectionsByIdView(Logger, APIView):
-    permission_classes = [AllowAny]
     serializer_class = CollectionResponseSerializer
-    api_key = APIKeyAuthentication()
 
     def _get_object(self, pk: int) -> Collection:
         try:
@@ -45,7 +43,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing Authorization."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -56,7 +54,6 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Get.retrieve_one("collection", pk))
         collection = self._get_object(pk)
         
@@ -94,7 +91,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing Authorization."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -105,7 +102,6 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Put.update_one("collection", pk, request.data))
         collection = self._get_object(pk)
         if collection is None:
@@ -148,7 +144,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing Authorization."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -159,7 +155,6 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Delete.delete_one("collection", pk))
         collection = self._get_object(pk)
         if collection is None:

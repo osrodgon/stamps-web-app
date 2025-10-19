@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from _backend.settings import ISSUES_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.issues_api_test_data import (
@@ -159,6 +160,5 @@ class TestIssuesAPI:
         assert str(issue) == f"{issue.name} ({issue.year.year})"
         
     def __get_url(self):
-        base_url = os.getenv('SERVER_URL_V1', 'api/v1/')
-        endpoint = os.getenv('ISSUES_ENDPOINT', 'issues/')
-        return f"/{base_url}{endpoint}"
+        return f"/{ISSUES_URL_V1}"
+        

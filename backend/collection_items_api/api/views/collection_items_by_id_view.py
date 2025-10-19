@@ -16,9 +16,7 @@ from collection_items_api.api.serializers.collection_items_request_serializer im
 
 
 class CollectionItemsByIdView(Logger, APIView):
-    permission_classes = [AllowAny]
     serializer_class = CollectionItemsResponseSerializer
-    api_key = APIKeyAuthentication()
 
     def _get_object(self, pk: int) -> CollectionItem:
         try:
@@ -39,22 +37,21 @@ class CollectionItemsByIdView(Logger, APIView):
                 name="CollectionItemRetrieved",
                 description="The collection item was retrieved successfully."
             ),
-            status.HTTP_403_FORBIDDEN: standardized_response(
-                CollectionItemsResponseSerializer,
-                name="CollectionItemRetrieveForbidden",
-                success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
-            ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="CollectionItemNotFound",
                 success=False,
                 description="The collection item with the specified ID was not found."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CollectionItemsResponseSerializer,
+                name="CollectionItemRetrieveForbidden",
+                success=False,
+                description="Permission denied. You're likely missing X-API-Key."
             )
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Get.retrieve_one("collection item", pk))
         collection_item = self._get_object(pk)
 
@@ -89,7 +86,7 @@ class CollectionItemsByIdView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -100,7 +97,6 @@ class CollectionItemsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Put.update_one("collection item", pk, request.data))
         collection_item = self._get_object(pk)
 
@@ -133,7 +129,7 @@ class CollectionItemsByIdView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -144,7 +140,6 @@ class CollectionItemsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Delete.delete_one("collection item", pk))
         collection_item = self._get_object(pk)
         if collection_item is None:

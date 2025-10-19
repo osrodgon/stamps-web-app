@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from _backend.settings import LOCATIONS_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.locations_api_test_data import (
@@ -166,4 +167,5 @@ class TestLocationsAPI:
         assert str(location) == test_name
 
     def __get_url(self):
-        return "/" + str(os.getenv("LOCATIONS_URL_V1"))
+        return f"/{LOCATIONS_URL_V1}"
+

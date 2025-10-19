@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from _backend.settings import STAMPS_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.stamps_api_test_data import (
@@ -185,4 +186,5 @@ class TestStampsAPI:
         assert str(stamp) == f"{test_edifil_code} - {test_name}"
         
     def __get_url(self):
-        return "/" + str(os.getenv("STAMPS_URL_V1"))
+        return f"/{STAMPS_URL_V1}"
+        

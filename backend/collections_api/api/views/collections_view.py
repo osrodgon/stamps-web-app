@@ -16,7 +16,6 @@ from collections_api.api.serializers.collection_request_serializer import Collec
 
 
 class CollectionsView(Logger, APIView):
-    permission_classes = [AllowAny]
     serializer_class = CollectionResponseSerializer
     api_key = APIKeyAuthentication()
     
@@ -36,13 +35,11 @@ class CollectionsView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionsRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing Authorization."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
-        
         self.debug(Messages.Get.retrieve_all("collections"))
         collections = Collection.objects.all()
         self.debug(Messages.Get.retrieved_all("collections", len(collections)))
@@ -75,12 +72,12 @@ class CollectionsView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing Authorization."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        user, apy_key =self.api_key.authenticate(request)
+        user = self.api_key.get_name(request)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         

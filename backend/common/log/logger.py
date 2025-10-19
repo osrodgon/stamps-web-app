@@ -3,13 +3,15 @@ import logging
 import logging.config
 import inspect
 
+from _backend.settings import LOG_FILE_NAME, LOG_LEVEL
+
 
 class Logger:
     """
     A logger mixin class that configures and provides a logging instance for views.
     """
     def init_log(self, log_name = None):
-        file_name = os.getenv("LOG_FILE_NAME", "backend.log")
+        file_name = LOG_FILE_NAME
 
         # If no logger name is passed, use the class name
         if not log_name:
@@ -27,14 +29,14 @@ class Logger:
             },
             'handlers': {
                 'file': {
-                    'level': os.getenv("LOG_LEVEL"),
+                    'level': LOG_LEVEL,
                     'class': 'logging.FileHandler',
                     'filename': file_name,
                     'formatter': 'default',
                     'encoding': 'utf-8',
                 },
                 'stdout': {
-                    'level': os.getenv("LOG_LEVEL"),   
+                    'level': LOG_LEVEL,   
                     'class': 'logging.StreamHandler',
                     'formatter': 'default',
                 },

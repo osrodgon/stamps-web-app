@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework import status
 
+from _backend.settings import PAPER_TYPES_URL_V1, STAMP_TYPES_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.stamp_types_api_test_data import (
@@ -169,4 +170,5 @@ class TestStampTypesAPI:
 
         
     def __get_url(self):
-        return "/" + str(os.getenv("STAMP_TYPES_URL_V1"))
+        return f"/{STAMP_TYPES_URL_V1}"
+    

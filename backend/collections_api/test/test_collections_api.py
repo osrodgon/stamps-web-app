@@ -4,6 +4,7 @@ from urllib import response
 import pytest
 from rest_framework import status
 
+from _backend.settings import COLLECTIONS_URL_V1
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.models import Collection
 from common.api.messages import Messages
@@ -251,4 +252,4 @@ class TestCollectionsAPI:
         assert str(collection) ==  f"{self.test_user} - {test_name}"
         
     def __get_url(self):
-        return "/" + str(os.getenv("COLLECTIONS_URL_V1"))
+        return f"/{COLLECTIONS_URL_V1}"

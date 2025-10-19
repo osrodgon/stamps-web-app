@@ -10,6 +10,12 @@ class APIKeyAuthentication(BaseAuthentication):
     AUTH_SCHEME = os.getenv("AUTH_TOKEN", "Key").lower()
     REGEX_PATTERN = r'^user\d{3}$'
     
+    def get_name(self, request):
+        key = request.META.get('HTTP_X_API_KEY')
+        
+        api_key = APIKey.objects.get_from_key(key)
+        return api_key.name
+    
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         

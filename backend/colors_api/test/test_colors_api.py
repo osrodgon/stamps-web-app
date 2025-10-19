@@ -4,6 +4,7 @@ import pytest
 from rest_framework import status
 
 # Assuming a similar serializer structure as in other apps
+from _backend.settings import COLORS_URL_V1
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
 from common.api.messages import Messages
 from common.test.api_client import api_client
@@ -211,4 +212,4 @@ class TestColorsAPI:
         assert str(color) == test_name
         
     def __get_url(self):
-        return "/" + str(os.getenv("COLORS_URL_V1"))
+        return f"/{COLORS_URL_V1}"
