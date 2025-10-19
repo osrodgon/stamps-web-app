@@ -7,7 +7,7 @@ from rest_framework_api_key.models import APIKey
 
 # Assuming this is your custom permission class path
 from common.core.permissions import HasSpecificKeyName
-from common.api.messages import Messages 
+from common.api.messages import Messages
 
 # Assuming you have a simplified version of your Messages class for testing
 class MockMessages:

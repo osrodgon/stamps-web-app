@@ -55,6 +55,9 @@ class Messages:
         def error(table_name, id, error_message):
             return f"An unexpected error occurred while fetching {table_name.lower()} with id {id}: {error_message}."
         
+        def connection_lost():
+            return "Database connection lost."
+        
     class Get:
         def retrieve_one(table_name, id):
             return f"Attempting to retrieve {table_name.lower()} for id: {id}."

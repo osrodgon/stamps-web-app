@@ -1,7 +1,6 @@
-from unittest.mock import patch
-from urllib import response
 import pytest
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 
 from _backend.settings import COLLECTION_ITEMS_URL_V1
 from collection_items_api.api.serializers.collection_items_response_serializer import CollectionItemsResponseSerializer
@@ -14,6 +13,7 @@ from common.test.collection_items_api_test_data import (
     collection_item_put_payload_ok,
 )
 from common.test.collections_api_test_data import collections_table
+from common.test.abstract_api import AbstractAPI
 from common.test.year_api_test_data import years_table
 from common.test.countries_api_test_data import countries_table
 from common.test.stamp_types_api_test_data import stamp_types_table
@@ -25,17 +25,12 @@ from common.test.stamps_api_test_data import stamps_table
 
 
 @pytest.mark.django_db
-class TestCollectionItemsAPI:
-    """
-    Test suite for the Collection Items API endpoints.
-    """
-    test_user = "test_user"
-    test_key = "test_key"
-
+class TestCollectionItemsAPI(AbstractAPI):
     def test_list_collection_items_success(self, api_client, collection_items_table):
         """
         Tests successful retrieval of a list of collection items.
         """
+        self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
         original = CollectionItemsResponseSerializer(collection_items_table, many=True)
@@ -48,15 +43,19 @@ class TestCollectionItemsAPI:
         """
         Tests retrieval of an empty list of collection items.
         """
+        self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()['data']) == 0
 
-    def test_create_collection_item_success(self, api_client, collections_table, stamps_table, collection_item_post_payload_ok):
+    def test_create_collection_item_success(self, api_client, collections_table, stamps_table, 
+                                            collection_item_post_payload_ok
+                                            ):
         """
         Tests successful creation of a new collection item.
         """
+        self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -68,6 +67,7 @@ class TestCollectionItemsAPI:
         Tests creating a collection item with a missing 'stamp' field.
         """
         del collection_item_post_payload_ok['stamp']
+        self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -81,6 +81,7 @@ class TestCollectionItemsAPI:
             "collection": collection_items_table[0].collection.id,
             "stamp": collection_items_table[0].stamp.id
         }
+        self.permission(granted=True)
         response = api_client.post(self.__get_url(), payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -90,6 +91,7 @@ class TestCollectionItemsAPI:
         """
         Tests successful retrieval of a single collection item by ID.
         """
+        self.permission(granted=True)
         item_id = collection_items_table[0].id
         response = api_client.get(f"{self.__get_url()}{item_id}")
 
@@ -100,6 +102,7 @@ class TestCollectionItemsAPI:
         """
         Tests retrieving a collection item that does not exist.
         """
+        self.permission(granted=True)
         response = api_client.get(f"{self.__get_url()}999")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -110,6 +113,7 @@ class TestCollectionItemsAPI:
         Tests successful update of an existing collection item.
         """
         item_id = collection_items_table[0].id
+        self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_200_OK
@@ -122,6 +126,7 @@ class TestCollectionItemsAPI:
         """
         collection_item_put_payload_ok["new_field"]="new_value"
         item_id = collection_items_table[0].id
+        self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -131,6 +136,7 @@ class TestCollectionItemsAPI:
         """
         Tests updating a collection item that does not exist.
         """
+        self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}999", collection_item_put_payload_ok)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -141,6 +147,7 @@ class TestCollectionItemsAPI:
         Tests successful deletion of a collection item.
         """
         item_id = collection_items_table[0].id
+        self.permission(granted=True)
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_200_OK
@@ -149,18 +156,19 @@ class TestCollectionItemsAPI:
         """
         Tests deleting a collection item that does not exist.
         """
+        self.permission(granted=True)
         response = api_client.delete(f"{self.__get_url()}999")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("collection item", "999")
 
-    @patch('collection_items_api.api.views.collection_items_by_id_view.CollectionItem.objects.get')
-    def test_delete_collection_item_database_error(self, mock_get, api_client, collection_items_table):
+    def test_delete_collection_item_database_error(self, api_client, mocker, collection_items_table):
         """
         Tests deleting a collection item when a database error occurs.
         """
         item_id = collection_items_table[0].id
-        mock_get.side_effect = Exception("Database connection lost")
+        self.permission(granted=True)
+        self.connection_lost('collection_items_api.api.views.collection_items_by_id_view.CollectionItem.objects.get')
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -171,6 +179,7 @@ class TestCollectionItemsAPI:
         Tests deleting a collection item when access is denied.
         """
         item_id = collection_items_table[0].id
+        self.permission(granted=False, message=PermissionDenied(Messages.APIKey.invalid_key()))
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -185,7 +194,6 @@ class TestCollectionItemsAPI:
         )
 
         assert str(collection_item) == f"{collections_table[0].user} - {stamps_table[0].name}"
-
 
     def __get_url(self):
         return f"/{COLLECTION_ITEMS_URL_V1}"
