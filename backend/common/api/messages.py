@@ -44,7 +44,13 @@ class Messages:
         
         def invalid():
             return "invalid"
-
+        
+        def connection_lost():
+            return "connection_lost"
+        
+        def permission_denied():
+            return "permission_denied"
+        
     class Database:
         def querying(table_name, id):
             return f"Querying database for {table_name.lower()} with id: {id}."

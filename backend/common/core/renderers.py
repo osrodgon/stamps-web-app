@@ -1,3 +1,4 @@
+from os import error
 import re
 from turtle import st
 from rest_framework.renderers import JSONRenderer
@@ -34,7 +35,7 @@ class StandardJSONRenderer(JSONRenderer):
                 {
                     "field": None,
                     "message": errors,
-                    "code": "other"
+                    "code": Messages.Code.other()
                 }
             )
 
@@ -58,10 +59,13 @@ class StandardJSONRenderer(JSONRenderer):
             
             # 🔹 Handle errors
             if status_code >= status.HTTP_400_BAD_REQUEST:
-                if (status_code == status.HTTP_403_FORBIDDEN):
+                if (
+                    status_code == status.HTTP_403_FORBIDDEN or
+                    status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                ):
                     success = data['success']
                     message = data['message']
-                    errors = data['errors']
+                    errors = self.errors_to_list(f"'internal_server_error': {data['errors']}")
                     data = data['data']
                 else:
                     success = False

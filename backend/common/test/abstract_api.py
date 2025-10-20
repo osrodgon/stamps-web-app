@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.exceptions import PermissionDenied
 
+from common.api.custom_api_exceptions import DatabaseConnectionLost
 from common.api.messages import Messages
 
 class AbstractAPI:
@@ -16,5 +17,5 @@ class AbstractAPI:
             self.__mocker.patch(self.__permission_class, side_effect=PermissionDenied(message))
             
     def connection_lost(self, method):
-        self.__mocker.patch(method, side_effect=Exception(Messages.server_error()))
+        self.__mocker.patch(method, side_effect=DatabaseConnectionLost(Messages.Database.connection_lost()))
         

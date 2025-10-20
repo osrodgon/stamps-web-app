@@ -18,7 +18,7 @@ from colors_api.models import Color
 
 @pytest.mark.django_db
 class TestColorsAPI(AbstractAPI):
-    def test_get_all_colors_returns_data_200_ok(self, api_client, colors_table):
+    def test_get_all_colors_returns_200_ok_data(self, api_client, colors_table):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
         
@@ -31,7 +31,7 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['data'] == original.data
         assert response.status_code == status.HTTP_200_OK
         
-    def test_get_all_colors_returns_no_data_200_ok(self, api_client):
+    def test_get_all_colors_returns_200_ok_no_data(self, api_client):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
         
@@ -48,7 +48,9 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors']['detail'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
     def test_get_all_colors_returns_403_invalid_user(self, api_client):
@@ -58,7 +60,9 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors']['detail'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
     def test_get_all_colors_returns_500_database_error_connection_lost(self, api_client):
@@ -69,9 +73,9 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.server_error()
-        assert response.json()['errors'][0]['code'] == Messages.Code.other()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def test_post_color_returns_201_created(self, api_client, color_post_payload_ok):
@@ -128,7 +132,9 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors']['detail'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
     def test_post_color_returns_403_invalid_user(self, api_client, color_post_payload_ok):
@@ -138,7 +144,9 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors']['detail'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
     def test_post_color_returns_500_database_error_connection_lost(self, api_client, color_post_payload_ok):
@@ -149,93 +157,189 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.server_error()
-        assert response.json()['errors'][0]['code'] == Messages.Code.other()
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    def test_retrieve_color_success(self, api_client, colors_table):
-        """
-        Tests successful retrieval of a single color by ID.
-        """
-        response = api_client.get(self.__get_url() + "1")
+    def test_get_one_color_returns_200_ok_data(self, api_client, colors_table):
+        self.permission(granted=True)
+        id = str(colors_table[0].id)
+        response = api_client.get(self.__get_url() + id)
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert response.json()['data']['name'] == colors_table[0].name
         assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_one_color_returns_403_invalid_key(self, api_client, colors_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+        id = str(colors_table[0].id)
+        response = api_client.get(self.__get_url() + id)
+        
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_get_one_color_returns_403_invalid_user(self, api_client, colors_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+        id = str(colors_table[0].id)
+        response = api_client.get(self.__get_url() + id)
+        
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_retrieve_color_not_found(self, api_client):
-        """
-        Tests retrieving a color that does not exist.
-        """
+    def test_get_one_color_returns_404_not_found(self, api_client):
+        self.permission(granted=True)
         response = api_client.get(self.__get_url() + "999")
         
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.json()['errors'][0]['field'] is None
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == Messages.Get.not_found("color", "999")
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_update_color_success(self, api_client, colors_table,  color_put_payload_ok):
-        """
-        Tests successful update of an existing color.
-        """
-        response = api_client.put(self.__get_url() + "1", color_put_payload_ok)
         
-        assert response.json()['success'] is True
+    def test_get_one_color_returns_500_database_error_connection_lost(self, api_client, colors_table):
+        self.permission(granted=True)
+        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.objects.get')
+        id = str(colors_table[0].id)
+        response = api_client.get(self.__get_url() + id)
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def test_put_color_returns_200_ok(self, api_client, colors_table,  color_put_payload_ok):
+        self.permission(granted=True)
+        id = str(colors_table[0].id)
+        response = api_client.put(self.__get_url() + id, color_put_payload_ok)
+        
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.updated_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert response.json()['data']['name'] == color_put_payload_ok['name']
         assert response.status_code == status.HTTP_200_OK
 
-    def test_update_color_duplicate_name(self, api_client, colors_table):
-        """
-        Tests updating a color to a name that already exists.
-        """
-        response = api_client.put(self.__get_url() + "1", {'name': colors_table[1].name})
+    def test_put_color_returns_400_bad_request_duplicate_name(self, api_client, colors_table):
+        self.permission(granted=True)
+        id = str(colors_table[0].id)
+        response = api_client.put(self.__get_url() + id, {'name': colors_table[1].name})
         
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == "name"
         assert response.json()['errors'][0]['message'] == Messages.Put.already_exists("color", colors_table[1].name) 
         assert response.json()['errors'][0]['code'] == Messages.Code.unique()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
-    def test_update_color_not_found(self, api_client):
-        """
-        Tests updating a color that does not exist.
-        """
+    def test_put_color_returns_403_invalid_key(self, api_client, colors_table, color_put_payload_ok):
+        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+        id = str(colors_table[0].id)
+        response = api_client.put(self.__get_url() + id, color_put_payload_ok)
+        
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_put_color_returns_403_invalid_user(self, api_client, colors_table, color_put_payload_ok):
+        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+        id = str(colors_table[0].id)
+        response = api_client.put(self.__get_url() + id, color_put_payload_ok)
+        
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_put_color_returns_404_not_found(self, api_client):
+        self.permission(granted=True)
         response = api_client.put(self.__get_url() + "999", {'name': 'New Name'})
         
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.json()['errors'][0]['field'] is None
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == Messages.Put.not_found("color", "999")
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
-    def test_delete_color_success(self, api_client, colors_table):
-        """
-        Tests successful deletion of a color.
-        """
-        response = api_client.delete(self.__get_url() + "1")
+    def test_put_color_returns_500_database_error_connection_lost(self, api_client, colors_table, color_put_payload_ok):
+        self.permission(granted=True)
+        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.save')
+        id = str(colors_table[0].id)
+        response = api_client.put(self.__get_url() + id, color_put_payload_ok)
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+    def test_delete_color_returns_200_ok(self, api_client, colors_table):
+        self.permission(granted=True)
+        id = str(colors_table[0].id)
+        response = api_client.delete(self.__get_url() + id)
         
         assert response.json()['success'] is True
         assert response.json()['message'] == Messages.deleted_successfully()
         assert response.json()['errors'] is None
         assert response.json()['data']['message'] == Messages.Delete.deleted_one("color", "1")
         assert response.status_code == status.HTTP_200_OK
+        
+    def test_delete_color_returns_403_invalid_key(self, api_client, colors_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+        id = str(colors_table[0].id)
+        response = api_client.delete(self.__get_url() + id)
 
-    def test_delete_color_not_found(self, api_client):
-        """
-        Tests deleting a color that does not exist.
-        """
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_delete_color_returns_403_invalid_user(self, api_client, colors_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+        id = str(colors_table[0].id)
+        response = api_client.delete(self.__get_url() + id)
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_color_returns_404not_found(self, api_client):
+        self.permission(granted=True)
         response = api_client.delete(self.__get_url() + "999")
         
         assert response.json()['success'] is False
@@ -246,28 +350,21 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
-    @patch('colors_api.api.views.colors_by_id_view.Color.objects.get')
-    def test_delete_color_database_error(self, mock_get, api_client):
-        """
-        Tests deleting a color that raises a database error.
-        """
-        mock_get.side_effect = Exception("Database connection lost")
-        response = api_client.delete(self.__get_url() + "1")
+    def test_delete_color_returns_500_database_error_connection_lost(self, api_client, colors_table):
+        self.permission(granted=True)
+        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.delete')
+        id = str(colors_table[0].id)
+        response = api_client.delete(self.__get_url() + id)
 
-        assert response.json()['data'] == None
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.server_error()
-        assert response.json()['errors'][0]['code'] == Messages.Code.other()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        
 
-        
     def test_color_model_str_representation(self):
-        """
-        Tests the string representation of the Color model.
-        """
         test_name = "test_name"
         color = Color.objects.create(
             name=test_name
