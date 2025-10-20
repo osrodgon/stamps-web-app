@@ -6,7 +6,7 @@ from rest_framework import status
 from _backend.settings import COLORS_URL_V1
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
 from common.api.messages import Messages
-from common.test.abstract_api import AbstractAPI
+from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client
 from common.test.colors_api_test_data import (
     colors_table,
@@ -17,7 +17,7 @@ from colors_api.models import Color
 
 
 @pytest.mark.django_db
-class TestColorsAPI(AbstractAPI):
+class TestColorsAPI(AbstractApiUnitTest):
     def test_get_all_colors_returns_200_ok_data(self, api_client, colors_table):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
@@ -67,7 +67,7 @@ class TestColorsAPI(AbstractAPI):
         
     def test_get_all_colors_returns_500_database_error_connection_lost(self, api_client):
         self.permission(granted=True)
-        self.connection_lost('colors_api.api.views.colors_view.Color.objects.all')
+        self.connection_lost(Color, self.GET_ALL)
         response = api_client.get(self.__get_url())
 
         assert response.json()['success'] == False
@@ -151,7 +151,7 @@ class TestColorsAPI(AbstractAPI):
         
     def test_post_color_returns_500_database_error_connection_lost(self, api_client, color_post_payload_ok):
         self.permission(granted=True)
-        self.connection_lost('colors_api.api.views.colors_view.Color.save')
+        self.connection_lost(Color, self.POST)
         response = api_client.post(self.__get_url(), color_post_payload_ok)
 
         assert response.json()['success'] == False
@@ -213,7 +213,7 @@ class TestColorsAPI(AbstractAPI):
         
     def test_get_one_color_returns_500_database_error_connection_lost(self, api_client, colors_table):
         self.permission(granted=True)
-        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.objects.get')
+        self.connection_lost(Color, self.GET_ONE)
         id = str(colors_table[0].id)
         response = api_client.get(self.__get_url() + id)
 
@@ -289,7 +289,7 @@ class TestColorsAPI(AbstractAPI):
         
     def test_put_color_returns_500_database_error_connection_lost(self, api_client, colors_table, color_put_payload_ok):
         self.permission(granted=True)
-        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.save')
+        self.connection_lost(Color, self.PUT)
         id = str(colors_table[0].id)
         response = api_client.put(self.__get_url() + id, color_put_payload_ok)
 
@@ -338,7 +338,7 @@ class TestColorsAPI(AbstractAPI):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_delete_color_returns_404not_found(self, api_client):
+    def test_delete_color_returns_404_not_found(self, api_client):
         self.permission(granted=True)
         response = api_client.delete(self.__get_url() + "999")
         
@@ -352,7 +352,7 @@ class TestColorsAPI(AbstractAPI):
         
     def test_delete_color_returns_500_database_error_connection_lost(self, api_client, colors_table):
         self.permission(granted=True)
-        self.connection_lost('colors_api.api.views.colors_by_id_view.Color.delete')
+        self.connection_lost(Color, self.DELETE)
         id = str(colors_table[0].id)
         response = api_client.delete(self.__get_url() + id)
 

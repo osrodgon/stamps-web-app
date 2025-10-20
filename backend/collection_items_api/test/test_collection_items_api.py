@@ -13,7 +13,7 @@ from common.test.collection_items_api_test_data import (
     collection_item_put_payload_ok,
 )
 from common.test.collections_api_test_data import collections_table
-from common.test.abstract_api import AbstractAPI
+from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.year_api_test_data import years_table
 from common.test.countries_api_test_data import countries_table
 from common.test.stamp_types_api_test_data import stamp_types_table
@@ -25,7 +25,7 @@ from common.test.stamps_api_test_data import stamps_table
 
 
 @pytest.mark.django_db
-class TestCollectionItemsAPI(AbstractAPI):
+class TestCollectionItemsAPI(AbstractApiUnitTest):
     def test_list_collection_items_success(self, api_client, collection_items_table):
         """
         Tests successful retrieval of a list of collection items.
