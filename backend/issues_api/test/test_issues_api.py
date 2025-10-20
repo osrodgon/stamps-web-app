@@ -1,10 +1,12 @@
 import os
 from unittest.mock import patch
+from urllib import response
 import pytest
 from rest_framework import status
 
 from _backend.settings import ISSUES_URL_V1
 from common.api.messages import Messages
+from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client
 from common.test.issues_api_test_data import (
     issues_table,
@@ -22,49 +24,91 @@ from issues_api.models import Issue
 
 
 @pytest.mark.django_db
-class TestIssuesAPI:
-    def test_get_all_issues_returns_data_200_ok(self, api_client, issues_table):
+class TestIssuesAPI(AbstractApiUnitTest):
+    def test_get_all_issues_returns_200_ok_data(self, api_client, issues_table):
+        self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
         original = IssueResponseSerializer(issues_table, many=True)
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert len(response.json()['data']) == len(original.data)
         assert response.json()['data'] == original.data
         assert response.status_code == status.HTTP_200_OK
         
-    def test_get_all_issues_returns_no_data_200_ok(self, api_client):
+    def test_get_all_issues_returns_200_ok_no_data(self, api_client):
+        self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
         
-    def test_post_issue_creates_record_201_created(self, api_client, issue_post_payload_ok):
+    def test_get_all_issues_returns_403_invalid_key(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_get_all_issues_returns_403_invalid_user(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_get_all_issues_returns_500_database_error_connection_lost(self, api_client, issues_table):
+        self.permission(granted=True)
+        self.connection_lost(Issue, self.GET_ALL)
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+    def test_post_issue_returns_201_created(self, api_client, issue_post_payload_ok):
+        self.permission(granted=True)
         response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.created_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert response.json()['data']['name'] == issue_post_payload_ok["name"]
         assert response.status_code == status.HTTP_201_CREATED
         
-    def test_post_issue_with_missing_name_returns_400_bad_request(self, api_client, issue_post_payload_ok):
+    def test_post_issue_returns_400_bad_request_missing_name(self, api_client, issue_post_payload_ok):
+        self.permission(granted=True)
         del issue_post_payload_ok["name"]
         response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'name'
         assert response.json()['errors'][0]['message'] == Messages.field_required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
-    def test_post_issue_with_invalid_field_returns_400_bad_request(self, api_client, issue_post_payload_ok):
+    def test_post_issue_returns_400_bad_request_invalid_field(self, api_client, issue_post_payload_ok):
+        self.permission(granted=True)
         issue_post_payload_ok['new_field'] = 'new_value'
         response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
 
@@ -74,6 +118,42 @@ class TestIssuesAPI:
         assert response.json()['errors'][0]['field'] == 'new_field'
         assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+    def test_post_issue_returns_403_invalid_key(self, api_client, issue_post_payload_ok):
+        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_post_issue_returns_403_invalid_user(self, api_client, issue_post_payload_ok):
+        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN 
+        
+    def test_post_issue_returns_500_database_error_connection_lost(self, api_client, issue_post_payload_ok):
+        self.permission(granted=True)
+        self.connection_lost(Issue, self.POST)
+        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
+        assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
     def test_get_issue_returns_data_200_ok(self, api_client, issues_table):
         issue_id = issues_table[0].id
