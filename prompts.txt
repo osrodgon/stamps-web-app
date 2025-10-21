@@ -1,0 +1,34 @@
+Using as a reference the file in the context, create the unit tests for <MY API>. The file must follow the same name conventions that the file in the context for the file name and the class and methods. The file mut not have any comments. There must be tests for the following:
+
+- GET (all)
+	- return code 200 (data)
+	- return code with (no data)
+	- return code 403 (invalid key)
+	- return code 403 (invalid user)
+	- return code 500 (database error connection lost)
+- POST
+	- return code 201
+	- return code 400 (missing field)
+	- retrun code 400 (invalid field)
+	- return code 403 (invalid key)
+	- return code 403 (invalid user)
+	- return code 500 (database error connection lost)
+- GET (one)
+	- return code 200
+	- return code 403 (invalid key)
+	- return code 403 (invalid user)
+	- return code 404
+	- return code 500 (database error connection lost)
+- PUT
+	- return code 200
+	- return code 400 (invalid field)
+	- return code 403 (invalid key)
+	- return code 403 (invalid user)
+	- return code 404
+	- return code 500 (database error connection lost)
+- DELETE
+	- return code 200
+	- return code 403 (invalid key)
+	- return code 403 (invalid user)
+	- return code 404
+	- return code 500 (database error connection lost)
