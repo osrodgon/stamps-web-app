@@ -51,62 +51,7 @@ jobs:
       #   run: |
       #     pip install flake8
       #     flake8 .
-
-      # ----------------------------------------------------
-      # Create .env file
-      # ----------------------------------------------------
-      - name: Create .env
-        working-directory: ./backend
-        run: |
-          export COLORS_ENDPOINT=colors/
-          export CONFIG_ENDPOINT=config/
-          export COUNTRIES_ENDPOINT=countries/
-          export ISSUES_ENDPOINT=issues/
-          export LOCATIONS_ENDPOINT=locations/
-          export PAPER_TYPES_ENDPOINT=paper_types/
-          export STAMP_TYPES_ENDPOINT=stamps_type/
-          export STAMPS_ENDPOINT=stamps/
-          export YEARS_ENDPOINT=years/
-          export COLLECTIONS_ENDPOINT=collections/
-          export COLLECTION_ITEMS_ENDPOINT=collection_items/
-          export SWAGGER_ENDPOINT=swagger/
-          export REDOC_ENDPOINT=redoc/
-          export SCHEMA_ENDPOINT=schema/
-          export ADMIN_URL=admin/
-          export SERVER_URL_V1=stamps_server/api/v1/
-          
-          cat <<- EOF > .env
-            LOG_LEVEL=DEBUG
-            LOG_FILE_NAME=backend.log
-            COLORS_ENDPOINT=colors/
-            CONFIG_ENDPOINT=config/
-            COUNTRIES_ENDPOINT=countries/
-            ISSUES_ENDPOINT=issues/
-            LOCATIONS_ENDPOINT=locations/
-            PAPER_TYPES_ENDPOINT=paper_types/
-            STAMP_TYPES_ENDPOINT=stamps_type/
-            STAMPS_ENDPOINT=stamps/
-            YEARS_ENDPOINT=years/
-            COLLECTIONS_ENDPOINT=collections/
-            COLLECTION_ITEMS_ENDPOINT=collection_items/
-            SWAGGER_ENDPOINT=swagger/
-            REDOC_ENDPOINT=redoc/
-            SCHEMA_ENDPOINT=schema/
-            ADMIN_URL=admin/
-            SERVER_URL_V1=stamps_server/api/v1/
-            COLORS_URL_V1=${SERVER_URL_V1}${COLORS_ENDPOINT}
-            CONFIG_URL_V1=${SERVER_URL_V1}${CONFIG_ENDPOINT}
-            COUNTRIES_URL_V1=${SERVER_URL_V1}${COUNTRIES_ENDPOINT}
-            ISSUES_URL_V1=${SERVER_URL_V1}${ISSUES_ENDPOINT}
-            LOCATIONS_URL_V1=${SERVER_URL_V1}${LOCATIONS_ENDPOINT}
-            PAPER_TYPES_URL_V1=${SERVER_URL_V1}${PAPER_TYPES_ENDPOINT}
-            STAMP_TYPES_URL_V1=${SERVER_URL_V1}${STAMP_TYPES_ENDPOINT}
-            STAMPS_URL_V1=${SERVER_URL_V1}${STAMPS_ENDPOINT}
-            YEARS_URL_V1=${SERVER_URL_V1}${YEARS_ENDPOINT}
-            COLLECTIONS_URL_V1=${SERVER_URL_V1}${COLLECTIONS_ENDPOINT}
-            COLLECTION_ITEMS_URL_V1=${SERVER_URL_V1}${COLLECTION_ITEMS_ENDPOINT}
-          EOF	
-
+  
       # ----------------------------------------------------
       # Run Pytest with Coverage
       # ----------------------------------------------------
