@@ -30,9 +30,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
 
         original = CollectionItemsResponseSerializer(collection_items_table, many=True)
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert len(response.json()['data']) == len(collection_items_table)
         assert response.json()['data'] == original.data
         assert response.status_code == status.HTTP_200_OK
@@ -41,9 +41,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
 
@@ -51,9 +51,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=False, message=Messages.APIKey.invalid_key())
         response = api_client.get(self.__get_url())
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -63,9 +63,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=False, message=Messages.APIKey.invalid_user())
         response = api_client.get(self.__get_url())
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -76,9 +76,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.connection_lost(CollectionItem, self.GET_ALL)
         response = api_client.get(self.__get_url())
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
@@ -88,44 +88,44 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.created_successfully()
-        assert response.json()['errors'] is None
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()['errors'] == None
         assert response.json()['data']['collection']['id'] == collection_item_post_payload_ok['collection']
         assert response.json()['data']['stamp']['id'] == collection_item_post_payload_ok['stamp']
-
+        assert response.status_code == status.HTTP_201_CREATED
+        
     def test_post_collection_item_returns_400_missing_field(self, api_client, collection_item_post_payload_ok):
         del collection_item_post_payload_ok['stamp']
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == "stamp"
         assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_post_collection_item_returns_400_invalid_field(self, api_client, collection_item_post_payload_ok):
         collection_item_post_payload_ok['new_field'] = 'new_value'
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == "new_field"
         assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_post_collection_item_returns_403_invalid_key(self, api_client, collection_item_post_payload_ok):
         self.permission(granted=False, message=Messages.APIKey.invalid_key())
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -135,9 +135,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=False, message=Messages.APIKey.invalid_user())
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -148,9 +148,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.connection_lost(CollectionItem, self.POST)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
@@ -161,20 +161,20 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.get(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
-        assert response.json()['errors'] is None
-        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['errors'] == None
         assert response.json()['data']['id'] == item_id
+        assert response.status_code == status.HTTP_200_OK
 
     def test_get_one_collection_item_returns_403_invalid_key(self, api_client, collection_items_table):
         self.permission(granted=False, message=Messages.APIKey.invalid_key())
         item_id = collection_items_table[0].id
         response = api_client.get(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -185,9 +185,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.get(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -197,11 +197,11 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.get(f"{self.__get_url()}999")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['message'] == Messages.Get.not_found("collection item", "999")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_get_one_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table):
         self.permission(granted=True)
@@ -209,9 +209,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.get(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
@@ -222,11 +222,11 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.updated_successfully()
-        assert response.json()['errors'] is None
-        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['errors'] == None
         assert response.json()['data']['collection']['id'] == collection_items_table[0].collection.id
+        assert response.status_code == status.HTTP_200_OK
 
     def test_put_collection_item_returns_400_invalid_field(self, api_client, collection_items_table, collection_item_put_payload_ok):
         collection_item_put_payload_ok["new_field"] = "new_value"
@@ -234,20 +234,20 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == "new_field"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_put_collection_item_returns_403_invalid_key(self, api_client, collection_items_table, collection_item_put_payload_ok):
         self.permission(granted=False, message=Messages.APIKey.invalid_key())
         item_id = collection_items_table[0].id
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -258,9 +258,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -270,11 +270,11 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.put(f"{self.__get_url()}999", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['message'] == Messages.Put.not_found("collection item", "999")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_put_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table, collection_item_put_payload_ok):
         self.permission(granted=True)
@@ -282,9 +282,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.put(f"{self.__get_url()}{item_id}", collection_item_put_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
@@ -295,20 +295,20 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.deleted_successfully()
-        assert response.json()['errors'] is None
-        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['errors'] == None
         assert response.json()['data']['message'] == Messages.Delete.deleted_one("collection item", item_id)
+        assert response.status_code == status.HTTP_200_OK
 
     def test_delete_collection_item_returns_403_invalid_key(self, api_client, collection_items_table):
         self.permission(granted=False, message=Messages.APIKey.invalid_key())
         item_id = collection_items_table[0].id
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -319,9 +319,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
@@ -331,11 +331,11 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.delete(f"{self.__get_url()}999")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("collection item", "999")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_delete_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table):
         self.permission(granted=True)
@@ -343,9 +343,9 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         item_id = collection_items_table[0].id
         response = api_client.delete(f"{self.__get_url()}{item_id}")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()

@@ -113,9 +113,9 @@ class TestIssuesAPI(AbstractApiUnitTest):
         issue_post_payload_ok['new_field'] = 'new_value'
         response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'new_field'
         assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -197,9 +197,9 @@ class TestIssuesAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.get(f"{self.__get_url()}999/")
 
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['message'] == Messages.Get.not_found("issue", 999)
         assert response.status_code == status.HTTP_404_NOT_FOUND
         

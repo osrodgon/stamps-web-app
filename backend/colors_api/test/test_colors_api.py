@@ -117,9 +117,9 @@ class TestColorsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), {'name': colors_table[0].name})
         
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
+        assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == "name"
         assert response.json()['errors'][0]['message'] == Messages.Post.already_exists("color", 'name')  
         assert response.json()['errors'][0]['code'] == Messages.Code.unique()
@@ -306,9 +306,9 @@ class TestColorsAPI(AbstractApiUnitTest):
         id = str(colors_table[0].id)
         response = api_client.delete(self.__get_url() + id)
         
-        assert response.json()['success'] is True
+        assert response.json()['success'] == True
         assert response.json()['message'] == Messages.deleted_successfully()
-        assert response.json()['errors'] is None
+        assert response.json()['errors'] == None
         assert response.json()['data']['message'] == Messages.Delete.deleted_one("color", "1")
         assert response.status_code == status.HTTP_200_OK
         
@@ -342,10 +342,10 @@ class TestColorsAPI(AbstractApiUnitTest):
         self.permission(granted=True)
         response = api_client.delete(self.__get_url() + "999")
         
-        assert response.json()['success'] is False
+        assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['data'] is None
-        assert response.json()['errors'][0]['field'] is None
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == None
         assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("color", "999")
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
