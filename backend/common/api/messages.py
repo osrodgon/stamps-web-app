@@ -44,7 +44,13 @@ class Messages:
         
         def invalid():
             return "invalid"
-
+        
+        def connection_lost():
+            return "connection_lost"
+        
+        def permission_denied():
+            return "permission_denied"
+        
     class Database:
         def querying(table_name, id):
             return f"Querying database for {table_name.lower()} with id: {id}."
@@ -54,6 +60,9 @@ class Messages:
         
         def error(table_name, id, error_message):
             return f"An unexpected error occurred while fetching {table_name.lower()} with id {id}: {error_message}."
+        
+        def connection_lost():
+            return "Database connection lost."
         
     class Get:
         def retrieve_one(table_name, id):
@@ -117,7 +126,7 @@ class Messages:
             return "Invalid or inactive API Key"
         
         def invalid_user():
-            return "API Key is valid but not authorized for any API resource. Key name not recognized."
+            return "API Key is valid but not authorized for any API resource."
         
         def not_a_user():
             return "API Key has not a valid associated collection user."

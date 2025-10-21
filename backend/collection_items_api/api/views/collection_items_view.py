@@ -7,7 +7,7 @@ from drf_spectacular.utils import extend_schema
 
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
-from common.core.authentication import APIKeyAuthentication
+from common.core.api_key_utils import ApiKeyUtils
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from collection_items_api.models import CollectionItem
@@ -16,9 +16,7 @@ from collection_items_api.api.serializers.collection_items_request_serializer im
 
 
 class CollectionItemsView(Logger, APIView):
-    permission_classes = [AllowAny]
     serializer_class = CollectionItemsResponseSerializer
-    api_key = APIKeyAuthentication()
     
     @extend_schema(
         operation_id="list_collection_items",
@@ -36,12 +34,11 @@ class CollectionItemsView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemsRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Get.retrieve_all("collection items"))
         collection_items = CollectionItem.objects.all()
         self.debug(Messages.Get.retrieved_all("collection items", len(collection_items)))
@@ -74,12 +71,11 @@ class CollectionItemsView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        self.api_key.authenticate(request)
         self.debug(Messages.Post.create_one("collection item", request.data))
         collection_item = CollectionItemsRequestSerializer(data = request.data)
         
