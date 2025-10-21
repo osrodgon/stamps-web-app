@@ -71,7 +71,7 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_get_all_collection_items_returns_500_database_error(self, api_client):
+    def test_get_all_collection_items_returns_500_database_error_connection_lost(self, api_client):
         self.permission(granted=True)
         self.connection_lost(CollectionItem, self.GET_ALL)
         response = api_client.get(self.__get_url())
@@ -143,7 +143,7 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_post_collection_item_returns_500_database_error(self, api_client, collection_item_post_payload_ok):
+    def test_post_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_item_post_payload_ok):
         self.permission(granted=True)
         self.connection_lost(CollectionItem, self.POST)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
@@ -203,7 +203,7 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Get.not_found("collection item", "999")
 
-    def test_get_one_collection_item_returns_500_database_error(self, api_client, collection_items_table):
+    def test_get_one_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table):
         self.permission(granted=True)
         self.connection_lost(CollectionItem, self.GET_ONE)
         item_id = collection_items_table[0].id
@@ -276,7 +276,7 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Put.not_found("collection item", "999")
 
-    def test_put_collection_item_returns_500_database_error(self, api_client, collection_items_table, collection_item_put_payload_ok):
+    def test_put_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table, collection_item_put_payload_ok):
         self.permission(granted=True)
         self.connection_lost(CollectionItem, self.PUT)
         item_id = collection_items_table[0].id
@@ -337,7 +337,7 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()['errors'][0]['message'] == Messages.Delete.not_found("collection item", "999")
 
-    def test_delete_collection_item_returns_500_database_error(self, api_client, collection_items_table):
+    def test_delete_collection_item_returns_500_database_error_connection_lost(self, api_client, collection_items_table):
         self.permission(granted=True)
         self.connection_lost(CollectionItem, self.DELETE)
         item_id = collection_items_table[0].id

@@ -6,7 +6,7 @@ import re
 
 from common.api.messages import Messages
 
-class APIKeyAuthentication(BaseAuthentication):
+class ApiKeyUtils(BaseAuthentication):
     AUTH_SCHEME = os.getenv("AUTH_TOKEN", "Key").lower()
     REGEX_PATTERN = r'^user\d{3}$'
     

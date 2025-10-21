@@ -15,13 +15,14 @@ class AbstractApiUnitTest:
     @pytest.fixture(autouse=True)
     def setup_mock(self, mocker):
         self.__mocker = mocker
-        self.__permission_class = 'common.core.permissions.HasSpecificKeyName.has_permission'
+        self.__permission_class = 'common.core.permissions.HasSpecificKeyName'
+        self.__api_key_utils_class = 'common.core.api_key_utils.ApiKeyUtils'
         
     def permission(self, granted: bool, message: str = None):
         if granted:
-            self.__mocker.patch(self.__permission_class, return_value=True)
+            self.__mocker.patch(f"{self.__permission_class}.has_permission", return_value=True)
         else:
-            self.__mocker.patch(self.__permission_class, side_effect=PermissionDenied(message))
+            self.__mocker.patch(f"{self.__permission_class}.has_permission", side_effect=PermissionDenied(message))
             
     def class_path(self, cls: object) -> str:
         return f"{cls.__module__}.{cls.__name__}.objects.get"
@@ -30,4 +31,7 @@ class AbstractApiUnitTest:
         path = f"{cls.__module__}.{cls.__name__}.{method}"
         
         self.__mocker.patch(path, side_effect=DatabaseConnectionLost(Messages.Database.connection_lost()))
+        
+    def get_name(self):
+        self.__mocker.patch(f"{self.__api_key_utils_class}.get_name", return_value="test_user")
         
