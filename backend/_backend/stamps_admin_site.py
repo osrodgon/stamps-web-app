@@ -11,6 +11,7 @@ from locations_api.models import Location
 from paper_types_api.models import PaperType
 from stamp_types_api.models import StampType
 from stamps_api.models import Stamp
+from users_api.models import UserCollection
 from years_api.models import Year
 from collections_api.models import Collection
 from collection_items_api.models import CollectionItem
@@ -35,7 +36,8 @@ CATEGORIES = {
     "Location": COLLECTION_SITE_NAME,
     "Collection": COLLECTION_SITE_NAME,
     "CollectionItem": COLLECTION_SITE_NAME,
-    "ConditionType": COLLECTION_SITE_NAME
+    "ConditionType": COLLECTION_SITE_NAME,
+    "UserCollection": COLLECTION_SITE_NAME
 }
 
 class StampsAdminSite(AdminSite):
@@ -111,3 +113,4 @@ stamps_admin_site.register(Location)
 stamps_admin_site.register(Collection)
 stamps_admin_site.register(CollectionItem)
 stamps_admin_site.register(ConditionType)
+stamps_admin_site.register(UserCollection)

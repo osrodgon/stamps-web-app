@@ -31,7 +31,7 @@ class ConfigView(Logger, APIView):
                 ConfigResponseSerializer,
                 name="GetAllConfigEntriesForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -68,7 +68,7 @@ class ConfigView(Logger, APIView):
                 ConfigResponseSerializer,
                 name="CreateConfigEntryForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

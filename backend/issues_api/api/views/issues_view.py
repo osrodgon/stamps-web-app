@@ -33,7 +33,7 @@ class IssuesView(Logger, APIView):
                 IssueResponseSerializer,
                 name="IssuesListForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -66,7 +66,7 @@ class IssuesView(Logger, APIView):
                 IssueResponseSerializer,
                 name="IssueCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

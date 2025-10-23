@@ -32,7 +32,7 @@ class CountriesView(Logger, APIView):
                 CountryResponseSerializer,
                 name="CountriesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -69,7 +69,7 @@ class CountriesView(Logger, APIView):
                 CountryResponseSerializer,
                 name="CountryCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

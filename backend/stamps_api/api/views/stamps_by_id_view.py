@@ -38,7 +38,7 @@ class StampsByIdView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampRetrievePermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -86,7 +86,7 @@ class StampsByIdView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampUpdatePermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -137,7 +137,7 @@ class StampsByIdView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampDeletePermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

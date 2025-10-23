@@ -43,7 +43,11 @@ USER_VIEWS = [
     "CollectionsView",
     "CollectionsByIdView",
     "CollectionItemsView",
-    "CollectionItemsByIdView"
+    "CollectionItemsByIdView",
+    "UsersView",
+    "UsersByIdView",
+    "LocationsView",
+    "LocationsByIdView",
 ]
 
 # API endpoints
@@ -59,6 +63,7 @@ YEARS_ENDPOINT="years/"
 COLLECTIONS_ENDPOINT="collections/"
 COLLECTION_ITEMS_ENDPOINT="collection_items/"
 CONDITION_TYPES_ENDPOINT="condition_types/"
+USERS_ENDPOINT = "users/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -81,6 +86,7 @@ YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
 COLLECTIONS_URL_V1=f"{SERVER_URL_V1}{COLLECTIONS_ENDPOINT}"
 COLLECTION_ITEMS_URL_V1=f"{SERVER_URL_V1}{COLLECTION_ITEMS_ENDPOINT}"
 CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
+USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 
 # Application definition
 
@@ -105,7 +111,8 @@ INSTALLED_APPS = [
     "years_api",            # All APIs for the table year
     "collections_api",      # All APIs for the table collection
     "collection_items_api", # All APIs for the table collection item
-    "condition_types_api"   # All APIs for the table condition type
+    "condition_types_api",  # All APIs for the table condition type
+    "users_api"             # All APIs for the table user
 ]
 
 REST_FRAMEWORK = {
@@ -160,6 +167,11 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Collection Items",
             "description": "Endpoints for managing collection item entries. Header 'X-API-Key' required."
+        },
+        {
+            "name": "Collection Users",
+            "description": "Endpoints for managing collection user entries. Header 'X-API-Key' required."
+        
         },
         {
             "name": "Colors",

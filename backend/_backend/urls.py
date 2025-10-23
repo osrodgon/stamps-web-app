@@ -23,6 +23,7 @@ from _backend.settings import (
     STAMP_TYPES_ENDPOINT,
     STAMPS_ENDPOINT,
     SWAGGER_ENDPOINT,
+    USERS_ENDPOINT,
     YEARS_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
@@ -43,6 +44,7 @@ urlpatterns = [
             path(COLLECTIONS_ENDPOINT, include('collections_api.urls')),
             path(COLLECTION_ITEMS_ENDPOINT, include('collection_items_api.urls')),
             path(CONDITION_TYPES_ENDPOINT, include('condition_types_api.urls')),
+            path(USERS_ENDPOINT, include('users_api.urls')),
             # Documentations
             path(SCHEMA_ENDPOINT, SpectacularAPIView.as_view(), name="schema"),
             path(SWAGGER_ENDPOINT, SpectacularSwaggerView.as_view(), name="swagger"),
