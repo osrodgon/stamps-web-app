@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common import api
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.core.api_key_utils import ApiKeyUtils
@@ -77,12 +78,12 @@ class CollectionsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        user = self.api_key.get_name(request)
+        api_key_name = self.api_key.get_name(request)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
         if collection.is_valid():
-            instance = collection.save(user=user)
+            instance = collection.save(api_key_name=api_key_name)
             self.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 

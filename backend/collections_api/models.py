@@ -1,7 +1,7 @@
 from django.db import models
 
 class Collection(models.Model):
-    user = models.CharField(max_length=100)
+    api_key_name = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     
     class Meta:
@@ -9,5 +9,5 @@ class Collection(models.Model):
         verbose_name_plural = "Collections"
         
     def __str__(self):
-        return f"{self.user} - {self.name}"
+        return f"{self.api_key_name} - {self.name}"
 

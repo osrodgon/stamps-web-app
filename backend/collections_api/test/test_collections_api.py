@@ -4,6 +4,7 @@ from rest_framework import status
 from _backend.settings import COLLECTIONS_URL_V1
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.models import Collection
+from common import api
 from common.api.messages import Messages
 from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client # api_client == needed for other fixtures
@@ -12,6 +13,7 @@ from common.test.collections_api_test_data import (
     collection_post_payload_ok,
     collection_put_payload_ok,
 )
+
 
 @pytest.mark.django_db
 class TestCollectionsAPI(AbstractApiUnitTest):
@@ -349,7 +351,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
         test_name = "My Test Collection"
         collection = Collection.objects.create(
             name=test_name,
-            user="test_user"
+            api_key_name="test_user"
         )
 
         assert str(collection) == f"test_user - {test_name}"
