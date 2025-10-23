@@ -21,6 +21,8 @@ from common.test.paper_types_api_test_data import paper_types_table
 from common.test.locations_api_test_data import locations_table
 from common.test.year_api_test_data import years_table
 from common.test.colors_api_test_data import colors_table
+from common.test.users_api_test_data import users_table
+
 
 @pytest.mark.django_db
 class TestCollectionItemsAPI(AbstractApiUnitTest):
