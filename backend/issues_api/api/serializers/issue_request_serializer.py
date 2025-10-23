@@ -13,11 +13,9 @@ class IssueRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'name',
             'total_printed',
             'market_value',
-            'number_owned',
             'stamp_type',
             'paper_type',
             'description',
-            'location',
             'note',
             'perforation'
         ]
