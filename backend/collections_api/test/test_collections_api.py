@@ -13,11 +13,13 @@ from common.test.collections_api_test_data import (
     collection_post_payload_ok,
     collection_put_payload_ok,
 )
+from common.test.users_api_test_data import users_table
+
 
 
 @pytest.mark.django_db
 class TestCollectionsAPI(AbstractApiUnitTest):
-    def test_get_all_collections_returns_200_ok_data(self, api_client, collections_table):
+    def test_get_all_collections_returns_200_ok_data(self, api_client, collections_table, users_table):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
 
@@ -63,7 +65,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-
+        
     def test_get_all_collections_returns_500_database_error_connection_lost(self, api_client):
         self.permission(granted=True)
         self.connection_lost(Collection, self.GET_ALL)
@@ -80,6 +82,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
     def test_post_collection_returns_201_created(self, api_client, collection_post_payload_ok):
         self.permission(granted=True)
         self.get_name()
+        self.get_user()
         response = api_client.post(self.__get_url(), collection_post_payload_ok, format='json')
 
         assert response.json()['success'] == True
@@ -91,6 +94,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
     def test_post_collection_returns_400_missing_field(self, api_client, collection_post_payload_ok):
         self.permission(granted=True)
         self.get_name()
+        self.get_user()
         del collection_post_payload_ok['name']
         response = api_client.post(self.__get_url(), collection_post_payload_ok, format='json')
 
@@ -104,6 +108,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
     def test_post_collection_returns_400_invalid_field(self, api_client, collection_post_payload_ok):
         self.permission(granted=True)
         self.get_name()
+        self.get_user()
         collection_post_payload_ok['new_field'] = 'new_value'
         response = api_client.post(self.__get_url(), collection_post_payload_ok, format='json')
 
@@ -137,10 +142,25 @@ class TestCollectionsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+    def test_post_collection_returns_404_not_found(self, api_client, collection_post_payload_ok):
+        self.permission(granted=True)
+        self.get_name()
+        response = api_client.post(self.__get_url(), collection_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == None
+        assert response.json()['errors'][0]['message'] == Messages.Database.user_not_found("test_user")
+        assert response.json()['errors'][0]['code'] == Messages.Code.other()   
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
 
     def test_post_collection_returns_500_database_error_connection_lost(self, api_client, collection_post_payload_ok):
         self.permission(granted=True)
         self.get_name()
+        self.get_user()
         self.connection_lost(Collection, self.POST)
         response = api_client.post(self.__get_url(), collection_post_payload_ok, format='json')
 

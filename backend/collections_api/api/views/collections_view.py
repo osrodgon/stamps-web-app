@@ -14,6 +14,7 @@ from common.core.schemas import standardized_response
 from collections_api.models import Collection
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
+from users_api.models import UserCollection
 
 
 class CollectionsView(Logger, APIView):
@@ -79,11 +80,20 @@ class CollectionsView(Logger, APIView):
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
         api_key_name = self.api_key.get_name(request)
+        user = self.__get_user(api_key_name)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
+        if user is None:
+            message = Messages.Database.user_not_found(api_key_name)
+            self.warning(message) 
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         if collection.is_valid():
-            instance = collection.save(api_key_name=api_key_name)
+            instance = collection.save(api_key_name=api_key_name, user=user)
             self.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
@@ -95,4 +105,10 @@ class CollectionsView(Logger, APIView):
             data=GenericResponseSerializer(GenericResponse(collection.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST
         )
+        
+    def __get_user(self, username):
+        try:
+            return UserCollection.objects.get(username=username)
+        except UserCollection.DoesNotExist:
+            return None
 
