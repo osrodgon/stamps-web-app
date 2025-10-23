@@ -33,7 +33,7 @@ class StampsView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampsListPermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -70,7 +70,7 @@ class StampsView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampCreatePermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

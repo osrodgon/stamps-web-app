@@ -38,7 +38,7 @@ class IssuesByIdView(Logger, APIView):
                 IssueResponseSerializer,
                 name="IssueRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -81,7 +81,7 @@ class IssuesByIdView(Logger, APIView):
                 IssueResponseSerializer,
                 name="IssueUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -132,7 +132,7 @@ class IssuesByIdView(Logger, APIView):
                 IssueResponseSerializer,
                 name="IssueDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
