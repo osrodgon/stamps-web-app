@@ -1,9 +1,11 @@
-from pickle import GET
+# from pickle import GET
 import pytest
 from rest_framework.exceptions import PermissionDenied
+from django.contrib.auth.hashers import make_password
 
 from common.api.custom_api_exceptions import DatabaseConnectionLost
 from common.api.messages import Messages
+from users_api.models import UserCollection
 
 class AbstractApiUnitTest:
     GET_ALL = "objects.all"
@@ -17,6 +19,7 @@ class AbstractApiUnitTest:
         self.__mocker = mocker
         self.__permission_class = 'common.core.permissions.HasSpecificKeyName'
         self.__api_key_utils_class = 'common.core.api_key_utils.ApiKeyUtils'
+        self.__user_collection_class = 'users_api.models.UserCollection'
         
     def permission(self, granted: bool, message: str = None):
         if granted:
@@ -34,4 +37,16 @@ class AbstractApiUnitTest:
         
     def get_name(self):
         self.__mocker.patch(f"{self.__api_key_utils_class}.get_name", return_value="test_user")
+        
+    def get_user(self):
+        self.__mocker.patch(
+            f"{self.__user_collection_class}.objects.get", 
+            return_value=UserCollection.objects.create(
+                username="testuser1",
+                email="test1@example.com",
+                password_hash=make_password("password123"),
+                first_name="Test",
+                last_name="UserOne"
+            )
+        )
         

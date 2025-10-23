@@ -20,7 +20,7 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     
-    market_value = models.FloatField(null=True, blank=True)
+    market_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     
     class Meta:
         verbose_name = "Stamp"

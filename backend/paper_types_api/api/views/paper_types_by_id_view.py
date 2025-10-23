@@ -27,7 +27,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Retrieve a Paper Type by ID",
         description="Fetches the details of a specific paper type entry by its unique identifier.",
         responses={
@@ -40,7 +40,7 @@ class PaperTypesByIdView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypeRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -71,7 +71,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Update a Paper Type",
         description="Updates an existing paper type entry identified by its ID. A complete payload with all required fields is expected.",
         request=PaperTypeRequestSerializer,
@@ -85,7 +85,7 @@ class PaperTypesByIdView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypeUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -129,7 +129,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Delete a Paper Type",
         description="Deletes a paper type entry from the. database using its ID.",
         responses={
@@ -143,7 +143,7 @@ class PaperTypesByIdView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypeDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

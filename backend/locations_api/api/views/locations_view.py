@@ -18,7 +18,7 @@ class LocationsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_locations",
-        tags=['Locations'],
+        tags=['Collection Management'],
         summary="List All Locations",
         description="Retrieves a list of all location entries currently stored in the database.",
         responses={
@@ -32,7 +32,7 @@ class LocationsView(Logger, APIView):
                 LocationResponseSerializer,
                 name="LocationsListForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -49,7 +49,7 @@ class LocationsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_location",
-        tags=['Locations'],
+        tags=['Collection Management'],
         summary="Create a New Location",
         description="Adds a new location entry to the database. A successful creation returns the newly created location object with a 201 Created status code.",
         request=LocationRequestSerializer,
@@ -69,7 +69,7 @@ class LocationsView(Logger, APIView):
                 LocationResponseSerializer,
                 name="LocationCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

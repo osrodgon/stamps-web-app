@@ -18,7 +18,7 @@ class CountriesView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_countries",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="List All Countries",
         description="Retrieves a list of all country entries currently stored in the database.",
         responses={
@@ -32,7 +32,7 @@ class CountriesView(Logger, APIView):
                 CountryResponseSerializer,
                 name="CountriesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -49,7 +49,7 @@ class CountriesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Create a New Country",
         description="Adds a new country entry to the database. A successful creation returns the newly created country object with a 201 Created status code.",
         request=CountryRequestSerializer,
@@ -69,7 +69,7 @@ class CountriesView(Logger, APIView):
                 CountryResponseSerializer,
                 name="CountryCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

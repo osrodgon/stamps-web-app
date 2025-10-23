@@ -19,7 +19,7 @@ class StampsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_stamps",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="List All Stamps",
         description="Retrieves a list of all stamp entries currently stored in the database.",
         responses={
@@ -33,7 +33,7 @@ class StampsView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampsListPermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )
@@ -50,7 +50,7 @@ class StampsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Create a New Stamp",
         description="Adds a new stamp entry to the database. A successful creation returns the newly created stamp object with a 201 Created status code.",
         request=StampRequestSerializer,
@@ -70,7 +70,7 @@ class StampsView(Logger, APIView):
                 StampResponseSerializer,
                 name="StampCreatePermissionDenied",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
             )
         }
     )

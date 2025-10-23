@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from common import api
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.core.api_key_utils import ApiKeyUtils
@@ -13,6 +14,7 @@ from common.core.schemas import standardized_response
 from collections_api.models import Collection
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
+from users_api.models import UserCollection
 
 
 class CollectionsView(Logger, APIView):
@@ -21,7 +23,7 @@ class CollectionsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_collections",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="List All Collections",
         description="Retrieves a list of all collection entries currently stored in the database. The response will contain an array of collection objects.",
         responses={
@@ -52,7 +54,7 @@ class CollectionsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_collection",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="Create a New Collection",
         description="Adds a new collection entry to the database. The request body must contain the collection data. A successful creation returns the newly created collection object with a 201 status code.",
         request=CollectionRequestSerializer,
@@ -77,12 +79,21 @@ class CollectionsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        user = self.api_key.get_name(request)
+        api_key_name = self.api_key.get_name(request)
+        user = self.__get_user(api_key_name)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
+        if user is None:
+            message = Messages.Database.user_not_found(api_key_name)
+            self.warning(message) 
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         if collection.is_valid():
-            instance = collection.save(user=user)
+            instance = collection.save(api_key_name=api_key_name, user=user)
             self.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
@@ -94,4 +105,10 @@ class CollectionsView(Logger, APIView):
             data=GenericResponseSerializer(GenericResponse(collection.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST
         )
+        
+    def __get_user(self, username):
+        try:
+            return UserCollection.objects.get(username=username)
+        except UserCollection.DoesNotExist:
+            return None
 
