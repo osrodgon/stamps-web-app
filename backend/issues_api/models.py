@@ -9,8 +9,7 @@ class Issue(models.Model):
     date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
     total_printed = models.IntegerField(null=True, blank=True)
-    market_value = models.FloatField(null=True, blank=True)
-    number_owned = models.IntegerField(null=True, blank=True)
+    market_value = models.DecimalField(max_digits=8, decimal_places=2,null=True, blank=True)
     stamp_type = models.ForeignKey(
         'stamp_types_api.StampType', 
         on_delete=models.SET_NULL, 
@@ -24,12 +23,6 @@ class Issue(models.Model):
         related_name='issues'
     )
     description = models.TextField(null=True, blank=True)
-    location = models.ForeignKey(
-        'locations_api.Location', 
-        on_delete=models.SET_NULL, 
-        null=True, blank=True,
-        related_name='issues'
-    )
     country = models.ForeignKey(
         'countries_api.Country', 
         on_delete=models.SET_NULL, 
