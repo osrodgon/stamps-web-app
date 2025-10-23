@@ -17,7 +17,7 @@ class ConfigView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_config_entries",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="List All Configuration Entries",
         description="Retrieves a comprehensive list of all configuration key-value pairs stored in the system. This is useful for a complete overview of all settings.",
         responses={
@@ -48,7 +48,7 @@ class ConfigView(Logger, APIView):
         
     @extend_schema(
         operation_id="create_config_entry",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="Create a Configuration Entry",
         description="Adds a new configuration key-value pair to the database. The request body must contain the 'property' and 'value' for the new setting.",
         request=ConfigRequestSerializer,

@@ -23,7 +23,7 @@ class CollectionsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_collections",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="List All Collections",
         description="Retrieves a list of all collection entries currently stored in the database. The response will contain an array of collection objects.",
         responses={
@@ -54,7 +54,7 @@ class CollectionsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_collection",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="Create a New Collection",
         description="Adds a new collection entry to the database. The request body must contain the collection data. A successful creation returns the newly created collection object with a 201 status code.",
         request=CollectionRequestSerializer,

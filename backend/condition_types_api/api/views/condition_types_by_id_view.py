@@ -25,7 +25,7 @@ class ConditionTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_condition_type",
-        tags=['Condition Types'],
+        tags=['Collection Management'],
         summary="Retrieve a Condition Type by ID",
         description="Fetches the details of a specific condition type entry by its unique identifier.",
         responses={
@@ -69,7 +69,7 @@ class ConditionTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_condition_type",
-        tags=['Condition Types'],
+        tags=['Collection Management'],
         summary="Update a Condition Type",
         description="Updates an existing condition type entry identified by its ID. A complete payload with all required fields is expected.",
         request=ConditionTypeRequestSerializer,
@@ -127,7 +127,7 @@ class ConditionTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_condition_type",
-        tags=['Condition Types'],
+        tags=['Collection Management'],
         summary="Delete a Condition Type",
         description="Deletes a condition type entry from the database using its ID.",
         responses={

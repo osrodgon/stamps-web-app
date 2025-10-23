@@ -14,7 +14,7 @@ from common.core.schemas import standardized_response
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 
 
-@extend_schema(tags=["Issues"])
+@extend_schema(tags=['Database Management'])
 class IssuesByIdView(Logger, APIView):
     def __get_object(self, pk):
         try:

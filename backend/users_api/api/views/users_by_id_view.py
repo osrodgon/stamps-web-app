@@ -27,20 +27,20 @@ class UsersByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_user",
-        tags=['Collection Users'],
-        summary="Retrieve a Collection User by ID",
-        description="Fetches the details of a specific collection user entry by its unique identifier.",
+        tags=['User Management'],
+        summary="Retrieve a User by ID",
+        description="Fetches the details of a specific user entry by its unique identifier.",
         responses={
             200: standardized_response(
                 UserResponseSerializer,
                 name="UserRetrieved",
-                description="The requested collection user's data was retrieved successfully."
+                description="The requested user's data was retrieved successfully."
                 ),
             404: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveUserNotFound",
                 success=False,
-                description="No collection user was found for the provided ID."
+                description="No user was found for the provided ID."
                 ),
             403: standardized_response(
                 UserResponseSerializer,
@@ -71,15 +71,15 @@ class UsersByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_user",
-        tags=['Collection Users'],
-        summary="Update a Collection User",
-        description="Updates an existing collection user entry identified by its ID. A complete payload with all required fields is expected.",
+        tags=['User Management'],
+        summary="Update a User",
+        description="Updates an existing user entry identified by its ID. A complete payload with all required fields is expected.",
         request=UserRequestSerializer,
         responses={
             status.HTTP_200_OK: standardized_response(
                 UserResponseSerializer,
                 name="UserUpdated",
-                description="The collection user was updated successfully."
+                description="The user was updated successfully."
                 ),
             status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
@@ -97,7 +97,7 @@ class UsersByIdView(Logger, APIView):
                 GenericResponseSerializer,
                 name="UserUpdateNotFound",
                 success=False,
-                description="The collection user with the specified ID was not found."
+                description="The user with the specified ID was not found."
                 )
         }
     )    
@@ -136,15 +136,15 @@ class UsersByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_user",
-        tags=['Collection Users'],
-        summary="Delete a Collection User",
-        description="Deletes a collection user entry from the database using its ID.",
+        tags=['User Management'],
+        summary="Delete a User",
+        description="Deletes a user entry from the database using its ID.",
         responses={
             status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="UserDeleted",
                 success=True,
-                description="The collection user was deleted successfully."
+                description="The user was deleted successfully."
                 ),
             status.HTTP_403_FORBIDDEN: standardized_response(
                 UserResponseSerializer,
@@ -156,7 +156,7 @@ class UsersByIdView(Logger, APIView):
                 GenericResponseSerializer,
                 name="UserDeleteNotFound",
                 success=False,
-                description="The collection user with the specified ID was not found."
+                description="The user with the specified ID was not found."
                 )
         }
     )    

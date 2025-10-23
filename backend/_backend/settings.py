@@ -161,58 +161,70 @@ SPECTACULAR_SETTINGS = {
     },
     "TAGS": [
         {
-            "name": "Collections",
-            "description": "Endpoints for managing collection entries. Header 'X-API-Key' required."
+            "name": "Database Management",
+            "description": "APIs for accessing static, foundational data like years, published issues, and the master catalog of stamps. Header 'X-API-Key' required."
         },
         {
-            "name": "Collection Items",
-            "description": "Endpoints for managing collection item entries. Header 'X-API-Key' required."
+            "name": "Collection Management",
+            "description": "APIs for managing collections. Header 'X-API-Key' required."
         },
         {
-            "name": "Collection Users",
-            "description": "Endpoints for managing collection user entries. Header 'X-API-Key' required."
-        
-        },
-        {
-            "name": "Colors",
-            "description": "Endpoints for managing color entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Condition Types",
-            "description": "Endpoints for managing condition type entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Config",
+            "name": "Config Management",
             "description": "Endpoints for managing system configuration settings. Header 'X-API-Key' required."
         },
         {
-            "name": "Countries",
-            "description": "Endpoints for managing country entries. ."
+            "name": "User Management",
+            "description": "APIs for managing users. Header 'X-API-Key' required."  
         },
-        {
-            "name": "Issues",
-            "description": "Endpoints for managing issue entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Locations",
-            "description": "Endpoints for managing location entries. Header 'X-API-Key' required."   
-        },
-        {
-            "name": "Paper Types",
-            "description": "Endpoints for managing paper types entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Stamp Types",
-            "description": "Endpoints for managing stamp type entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Stamps",
-            "description": "Endpoints for managing stamp entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Years",
-            "description": "Endpoints for managing year entries. Header 'X-API-Key' required."
-        }
+        # {
+        #     "name": "Collections",
+        #     "description": "Endpoints for managing collection entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Collection Items",
+        #     "description": "Endpoints for managing collection item entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Collection Users",
+        #     "description": "Endpoints for managing collection user entries. Header 'X-API-Key' required."
+        
+        # },
+        # {
+        #     "name": "Colors",
+        #     "description": "Endpoints for managing color entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Condition Types",
+        #     "description": "Endpoints for managing condition type entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Countries",
+        #     "description": "Endpoints for managing country entries. ."
+        # },
+        # {
+        #     "name": "Issues",
+        #     "description": "Endpoints for managing issue entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Locations",
+        #     "description": "Endpoints for managing location entries. Header 'X-API-Key' required."   
+        # },
+        # {
+        #     "name": "Paper Types",
+        #     "description": "Endpoints for managing paper types entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Stamp Types",
+        #     "description": "Endpoints for managing stamp type entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Stamps",
+        #     "description": "Endpoints for managing stamp entries. Header 'X-API-Key' required."
+        # },
+        # {
+        #     "name": "Years",
+        #     "description": "Endpoints for managing year entries. Header 'X-API-Key' required."
+        # }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
     "SWAGGER_UI_SETTINGS": {

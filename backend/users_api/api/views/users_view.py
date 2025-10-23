@@ -18,14 +18,14 @@ class UsersView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_users",
-        tags=['Collection Users'],
-        summary="List All Collection Users",
-        description="Retrieves a list of all collection user entries currently stored in the database.",
+        tags=['User Management'],
+        summary="List All Users",
+        description="Retrieves a list of all user entries currently stored in the database.",
         responses={
             200: standardized_response(
                 UserResponseSerializer, 
                 name="UsersRetrieved",
-                description="A list of collection users was successfully retrieved.",
+                description="A list of users was successfully retrieved.",
                 many=True
                 ),
             403: standardized_response(
@@ -49,15 +49,15 @@ class UsersView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_user",
-        tags=['Collection Users'],
-        summary="Create a New Collection User",
-        description="Adds a new collection user entry to the database. A successful creation returns the newly created user object with a 201 Created status code.",
+        tags=['User Management'],
+        summary="Create a New User",
+        description="Adds a new user entry to the database. A successful creation returns the newly created user object with a 201 Created status code.",
         request=UserRequestSerializer,
         responses={
             status.HTTP_201_CREATED: standardized_response(
                 UserResponseSerializer,
                 name="UserCreated",
-                description="The collection user was created successfully."
+                description="The user was created successfully."
                 ),
             status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,

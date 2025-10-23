@@ -26,7 +26,7 @@ class YearsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_year",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="Retrieve a Year by ID",
         description="Fetches the details of a specific year entry by its unique identifier. If the year exists, its data is returned. Otherwise, a 404 Not Found error is returned.",
         responses={
@@ -70,7 +70,7 @@ class YearsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_year",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="Update a Year",
         description="Updates an existing year entry identified by its ID. A complete payload with all required fields is expected. If the update is successful, the updated year data is returned. Returns a 404 error if the year does not exist or a 400 error for an invalid payload.",
         request=YearRequestSerializer,
@@ -128,7 +128,7 @@ class YearsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_year",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="Delete a Year",
         description="Deletes a year entry from the database using its ID. If the deletion is successful, a confirmation message is returned. A 404 error is returned if the year with the specified ID does not exist.",
         responses={

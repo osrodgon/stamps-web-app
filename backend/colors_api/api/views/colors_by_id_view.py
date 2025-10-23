@@ -26,7 +26,7 @@ class ColorsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Retrieve a Color by ID",
         description="Fetches the details of a specific color entry by its unique identifier.",
         responses={
@@ -70,7 +70,7 @@ class ColorsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Update a Color",
         description="Updates an existing color entry identified by its ID. A complete payload with all required fields is expected.",
         request=ColorRequestSerializer,
@@ -128,7 +128,7 @@ class ColorsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Delete a Color",
         description="Deletes a color entry from the database using its ID.",
         responses={
