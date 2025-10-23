@@ -123,10 +123,16 @@ class UsersByIdView(Logger, APIView):
             user.save()
 
             self.info(Messages.Put.updated_one("collection user", user.id))
-            return Response(data=UserResponseSerializer(user).data, status=status.HTTP_200_OK)
+            return Response(
+                data=UserResponseSerializer(user).data, 
+                status=status.HTTP_200_OK
+            )
         
         self.warning(Messages.Put.validation_failed("collection user", pk, serializer.errors))
-        return Response(data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
     @extend_schema(
         operation_id="delete_user",

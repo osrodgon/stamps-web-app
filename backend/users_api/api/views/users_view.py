@@ -81,7 +81,13 @@ class UsersView(Logger, APIView):
             validated_data['password_hash'] = make_password(validated_data.pop('password'))
             instance = UserCollection.objects.create(**validated_data)
             self.info(Messages.Post.created_one("collection user", instance.id))
-            return Response(data=UserResponseSerializer(instance).data, status=status.HTTP_201_CREATED)
+            return Response(
+                data=UserResponseSerializer(instance).data, 
+                status=status.HTTP_201_CREATED
+            )
         
         self.warning(Messages.Post.validation_failed("collection user", serializer.errors))
-        return Response(data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, 
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -19,6 +19,14 @@ class CollectionItem(models.Model):
         related_name='collected_by'
     )
     
+    location = models.ForeignKey(
+        'locations_api.Location',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='collection_items_location'
+    )
+    
     class Meta:
         unique_together = ('collection', 'stamp')
         verbose_name = "Collection Item"
