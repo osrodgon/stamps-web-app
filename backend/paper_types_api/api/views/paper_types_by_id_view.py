@@ -27,7 +27,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Retrieve a Paper Type by ID",
         description="Fetches the details of a specific paper type entry by its unique identifier.",
         responses={
@@ -71,7 +71,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Update a Paper Type",
         description="Updates an existing paper type entry identified by its ID. A complete payload with all required fields is expected.",
         request=PaperTypeRequestSerializer,
@@ -129,7 +129,7 @@ class PaperTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Delete a Paper Type",
         description="Deletes a paper type entry from the. database using its ID.",
         responses={

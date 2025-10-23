@@ -17,7 +17,7 @@ class ConditionTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_condition_types",
-        tags=['Condition Types'],
+        tags=['Collection Management'],
         summary="List All Condition Types",
         description="Retrieves a list of all condition type entries currently stored in the database.",
         responses={
@@ -48,7 +48,7 @@ class ConditionTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_condition_type",
-        tags=['Condition Types'],
+        tags=['Collection Management'],
         summary="Create a New Condition Type",
         description="Adds a new condition type entry to the database. A successful creation returns the newly created condition type object with a 201 Created status code.",
         request=ConditionTypeRequestSerializer,

@@ -25,7 +25,7 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="retrieve_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Retrieve a Stamp by ID",
         description="Retrieves a single stamp entry by its unique ID.",
         responses={
@@ -66,7 +66,7 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="update_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Update a Stamp",
         description="Updates an existing stamp entry by its ID. The request body should contain the fields to be updated.",
         request=StampRequestSerializer,
@@ -124,7 +124,7 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="delete_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Delete a Stamp",
         description="Deletes a stamp entry by its ID.",
         responses={

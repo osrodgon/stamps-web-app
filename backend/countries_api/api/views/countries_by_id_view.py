@@ -26,7 +26,7 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Retrieve a Country by ID",
         description="Fetches the details of a specific country entry by its unique identifier.",
         responses={
@@ -70,7 +70,7 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Update a Country",
         description="Updates an existing country entry identified by its ID. A complete payload with all required fields is expected.",
         request=CountryRequestSerializer,
@@ -128,7 +128,7 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Delete a Country",
         description="Deletes a country entry from the database using its ID.",
         responses={

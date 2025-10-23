@@ -14,7 +14,7 @@ from issues_api.api.serializers.issue_request_serializer import IssueRequestSeri
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 
 
-@extend_schema(tags=["Issues"])
+@extend_schema(tags=['Database Management'])
 class IssuesView(Logger, APIView):
     serializer_class = IssueResponseSerializer
     
