@@ -32,7 +32,7 @@ class ColorsView(Logger, APIView):
                 ColorResponseSerializer,
                 name="ColorsForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
                 )   
         }
     )
@@ -69,7 +69,7 @@ class ColorsView(Logger, APIView):
                 ColorResponseSerializer,
                 name="ColorCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied. You're likely missing X-API-Key header."
                 )   
         }
     )

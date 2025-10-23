@@ -11,6 +11,7 @@ from _backend.settings import (
     COLLECTION_ITEMS_ENDPOINT,
     COLLECTIONS_ENDPOINT,
     COLORS_ENDPOINT,
+    CONDITION_TYPES_ENDPOINT,
     CONFIG_ENDPOINT,
     COUNTRIES_ENDPOINT,
     ISSUES_ENDPOINT,
@@ -41,6 +42,8 @@ urlpatterns = [
             path(STAMPS_ENDPOINT, include('stamps_api.urls')),
             path(COLLECTIONS_ENDPOINT, include('collections_api.urls')),
             path(COLLECTION_ITEMS_ENDPOINT, include('collection_items_api.urls')),
+            path(CONDITION_TYPES_ENDPOINT, include('condition_types_api.urls')),
+            # Documentations
             path(SCHEMA_ENDPOINT, SpectacularAPIView.as_view(), name="schema"),
             path(SWAGGER_ENDPOINT, SpectacularSwaggerView.as_view(), name="swagger"),
             path(REDOC_ENDPOINT, SpectacularRedocView.as_view(), name="redoc")

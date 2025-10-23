@@ -58,6 +58,7 @@ STAMPS_ENDPOINT="stamps/"
 YEARS_ENDPOINT="years/"
 COLLECTIONS_ENDPOINT="collections/"
 COLLECTION_ITEMS_ENDPOINT="collection_items/"
+CONDITION_TYPES_ENDPOINT="condition_types/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -79,7 +80,7 @@ STAMPS_URL_V1=f"{SERVER_URL_V1}{STAMPS_ENDPOINT}"
 YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
 COLLECTIONS_URL_V1=f"{SERVER_URL_V1}{COLLECTIONS_ENDPOINT}"
 COLLECTION_ITEMS_URL_V1=f"{SERVER_URL_V1}{COLLECTION_ITEMS_ENDPOINT}"
-
+CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 
 # Application definition
 
@@ -103,7 +104,8 @@ INSTALLED_APPS = [
     "issues_api",           # All APIs for the table issue
     "years_api",            # All APIs for the table year
     "collections_api",      # All APIs for the table collection
-    "collection_items_api"  # All APIs for the table collection item
+    "collection_items_api", # All APIs for the table collection item
+    "condition_types_api"   # All APIs for the table condition type
 ]
 
 REST_FRAMEWORK = {
@@ -162,6 +164,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "Colors",
             "description": "Endpoints for managing color entries. Header 'X-API-Key' required."
+        },
+        {
+            "name": "Condition Types",
+            "description": "Endpoints for managing condition type entries. Header 'X-API-Key' required."
         },
         {
             "name": "Config",

@@ -14,6 +14,7 @@ from stamps_api.models import Stamp
 from years_api.models import Year
 from collections_api.models import Collection
 from collection_items_api.models import CollectionItem
+from condition_types_api.models import ConditionType
 
 ADMIN_SITE_NAME = "Administration"
 STAMPS_SITE_NAME = "Stamps App"
@@ -27,13 +28,14 @@ CATEGORIES = {
     "Config": STAMPS_SITE_NAME,
     "Country": STAMPS_SITE_NAME,
     "Issue": STAMPS_SITE_NAME,
-    "Location": STAMPS_SITE_NAME,
     "PaperType": STAMPS_SITE_NAME,
     "StampType": STAMPS_SITE_NAME,
     "Stamp": STAMPS_SITE_NAME,
     "Year": STAMPS_SITE_NAME,
+    "Location": COLLECTION_SITE_NAME,
     "Collection": COLLECTION_SITE_NAME,
-    "CollectionItem": COLLECTION_SITE_NAME
+    "CollectionItem": COLLECTION_SITE_NAME,
+    "ConditionType": COLLECTION_SITE_NAME
 }
 
 class StampsAdminSite(AdminSite):
@@ -99,12 +101,13 @@ stamps_admin_site.register(Color)
 stamps_admin_site.register(Config)
 stamps_admin_site.register(Country)
 stamps_admin_site.register(Issue)
-stamps_admin_site.register(Location)
 stamps_admin_site.register(PaperType)
 stamps_admin_site.register(StampType)
 stamps_admin_site.register(Stamp)
 stamps_admin_site.register(Year)
 
 # Register collections database models
+stamps_admin_site.register(Location)
 stamps_admin_site.register(Collection)
 stamps_admin_site.register(CollectionItem)
+stamps_admin_site.register(ConditionType)
