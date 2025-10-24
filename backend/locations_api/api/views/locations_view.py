@@ -32,7 +32,7 @@ class LocationsView(Logger, APIView):
                 LocationResponseSerializer,
                 name="LocationsListForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )
@@ -69,7 +69,7 @@ class LocationsView(Logger, APIView):
                 LocationResponseSerializer,
                 name="LocationCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )

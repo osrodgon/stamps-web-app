@@ -2,6 +2,7 @@
 from email.policy import default
 from rest_framework import serializers
 from drf_spectacular.utils import inline_serializer, OpenApiResponse
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 class ItemList(serializers.Serializer):
     field = serializers.CharField()
@@ -62,3 +63,25 @@ def standardized_response(serializer_class, many=False, success = True, name=Non
         response=response_serializer,
         description=description or "Standardized API response"
         )
+
+class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
+    """
+    Defines the security scheme for the X-API-Key header in the OpenAPI specification.
+    """
+    # 🚨 CRITICAL: The target class must be your DRF Authentication class.
+    # This path MUST match the string in REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'].
+    target_class = 'common.core.authentication.CustomAPIKeyAuthentication' 
+    
+    # The name used to reference this scheme in the raw schema's SECURITY block.
+    name = 'X_API_Key' 
+
+    def get_security_definition(self, auto_schema):
+        """
+        Returns the OpenAPI 3.0 component definition for the security scheme.
+        """
+        return {
+            'type': 'apiKey',     # Specifies this is an API key scheme
+            'in': 'header',       # Specifies the key is passed in a header
+            'name': 'X-API-Key',  # 🚨 The EXACT header name required by your API
+            'description': 'API Key for authenticating requests.',
+        }

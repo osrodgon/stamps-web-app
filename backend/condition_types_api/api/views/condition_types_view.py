@@ -31,7 +31,7 @@ class ConditionTypesView(Logger, APIView):
                 ConditionTypeResponseSerializer,
                 name="ConditionTypesForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )
@@ -68,7 +68,7 @@ class ConditionTypesView(Logger, APIView):
                 ConditionTypeResponseSerializer,
                 name="ConditionTypeCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )

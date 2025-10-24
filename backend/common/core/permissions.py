@@ -21,9 +21,6 @@ class HasSpecificKeyName(HasAPIKey):
         if view.__class__.__name__ in USER_VIEWS:
             return True
         
-        
-        print(view.__class__.__name__)
-        print(USER_VIEWS)
         raise PermissionDenied(
             Messages.APIKey.invalid_user()
         )

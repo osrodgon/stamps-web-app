@@ -43,7 +43,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -91,7 +91,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -144,7 +144,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

@@ -33,7 +33,7 @@ class PaperTypesView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )
@@ -70,7 +70,7 @@ class PaperTypesView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypeCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )

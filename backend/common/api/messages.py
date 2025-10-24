@@ -132,7 +132,7 @@ class Messages:
             return "Invalid or inactive API Key"
         
         def invalid_user():
-            return "API Key is valid but not authorized for any API resource."
+            return "API Key is valid only for Collection Management API."
         
         def not_a_user():
             return "API Key has not a valid associated collection user."
