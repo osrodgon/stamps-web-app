@@ -9,6 +9,6 @@ class CollectionRequestSerializer(GenericSerializer, serializers.ModelSerializer
     
     class Meta:
         model = Collection
-        fields = ['user', 'name','api_key_name']
+        fields = ['user', 'name']
         read_only_fields = ['user']
         
