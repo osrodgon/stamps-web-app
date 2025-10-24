@@ -5,5 +5,5 @@ from collection_items_api.models import CollectionItem
 class CollectionItemsRequestSerializer(GenericSerializer, serializers.ModelSerializer):
     class Meta:
         model = CollectionItem
-        fields = ['collection', 'stamp', 'location']
+        fields = ['collection', 'stamp', 'location', 'condition_type', 'price_paid', 'acquisition_date', 'note', 'quantity']
         

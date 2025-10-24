@@ -10,8 +10,8 @@ class UserCollection(models.Model):
     is_active = models.BooleanField(default=True)
     
     class Meta:
-        verbose_name = "Collection User"
-        verbose_name_plural = "Collection Users"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
     
     def __str__(self):
         return self.username

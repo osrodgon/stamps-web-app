@@ -33,11 +33,11 @@ CATEGORIES = {
     "StampType": STAMPS_SITE_NAME,
     "Stamp": STAMPS_SITE_NAME,
     "Year": STAMPS_SITE_NAME,
+    "UserCollection": STAMPS_SITE_NAME,
     "Location": COLLECTION_SITE_NAME,
     "Collection": COLLECTION_SITE_NAME,
     "CollectionItem": COLLECTION_SITE_NAME,
     "ConditionType": COLLECTION_SITE_NAME,
-    "UserCollection": COLLECTION_SITE_NAME
 }
 
 class StampsAdminSite(AdminSite):
@@ -107,10 +107,10 @@ stamps_admin_site.register(PaperType)
 stamps_admin_site.register(StampType)
 stamps_admin_site.register(Stamp)
 stamps_admin_site.register(Year)
+stamps_admin_site.register(UserCollection)
 
 # Register collections database models
 stamps_admin_site.register(Location)
 stamps_admin_site.register(Collection)
 stamps_admin_site.register(CollectionItem)
 stamps_admin_site.register(ConditionType)
-stamps_admin_site.register(UserCollection)

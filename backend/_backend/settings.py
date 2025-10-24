@@ -44,8 +44,6 @@ USER_VIEWS = [
     "CollectionsByIdView",
     "CollectionItemsView",
     "CollectionItemsByIdView",
-    "UsersView",
-    "UsersByIdView",
     "LocationsView",
     "LocationsByIdView",
 ]
