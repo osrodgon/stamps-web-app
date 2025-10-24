@@ -1,4 +1,4 @@
-name: Django + NiceGUI CI on Develop
+name: CI
 
 # Trigger the workflow on pushes and pull requests targeting 'develop'
 on:

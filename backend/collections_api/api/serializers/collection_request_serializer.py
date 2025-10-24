@@ -5,7 +5,6 @@ from users_api.models import UserCollection
 
 class CollectionRequestSerializer(GenericSerializer, serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=UserCollection.objects.all(), required=False)
-    api_key_name = serializers.CharField(required=False)
     
     class Meta:
         model = Collection
