@@ -7,4 +7,4 @@ class CollectionResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Collection
-        fields = ['id', 'user', 'api_key_name', 'name']
+        fields = ['id', 'user', 'name']

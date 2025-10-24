@@ -5,10 +5,9 @@ from users_api.models import UserCollection
 
 class CollectionRequestSerializer(GenericSerializer, serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=UserCollection.objects.all(), required=False)
-    api_key_name = serializers.CharField(required=False)
     
     class Meta:
         model = Collection
-        fields = ['user', 'name','api_key_name']
+        fields = ['user', 'name']
         read_only_fields = ['user']
         

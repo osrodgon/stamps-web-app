@@ -14,6 +14,7 @@ from common.test.collections_api_test_data import (
     collection_put_payload_ok,
 )
 from common.test.users_api_test_data import users_table
+from users_api.models import UserCollection
 
 
 
@@ -152,7 +153,7 @@ class TestCollectionsAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.Database.user_not_found("test_user")
+        assert response.json()['errors'][0]['message'] == Messages.Database.unknow_user()
         assert response.json()['errors'][0]['code'] == Messages.Code.other()   
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -369,12 +370,20 @@ class TestCollectionsAPI(AbstractApiUnitTest):
 
     def test_collection_model_str_representation(self):
         test_name = "My Test Collection"
-        collection = Collection.objects.create(
-            name=test_name,
-            api_key_name="test_user"
+        user = UserCollection.objects.create(
+            username="testuser1",
+            email="test1@example.com",
+            password_hash="fake_hash_xas1sasas",
+            first_name="Test",
+            last_name="UserOne"
         )
 
-        assert str(collection) == f"test_user - {test_name}"
+        collection = Collection.objects.create(
+            name=test_name,
+            user=user
+        )
+
+        assert str(collection) == f"{user.username} - {test_name}"
 
     def __get_url(self):
         return f"/{COLLECTIONS_URL_V1}"

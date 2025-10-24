@@ -70,6 +70,9 @@ class Messages:
         def connection_lost():
             return "Database connection lost."
         
+        def unknow_user():
+            return "Unknown user."
+        
     class Get:
         def retrieve_one(table_name, id):
             return f"Attempting to retrieve {table_name.lower()} for id: {id}."

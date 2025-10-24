@@ -79,13 +79,13 @@ class CollectionsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        api_key_name = self.api_key.get_name(request)
-        user = self.__get_user(api_key_name)
+        password_hash = request.META.get('HTTP_X_API_KEY')
+        user = self.__get_user(password_hash)
         self.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
         if user is None:
-            message = Messages.Database.user_not_found(api_key_name)
+            message = Messages.Database.unknow_user()
             self.warning(message) 
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
@@ -93,7 +93,7 @@ class CollectionsView(Logger, APIView):
             )
         
         if collection.is_valid():
-            instance = collection.save(api_key_name=api_key_name, user=user)
+            instance = collection.save(user=user)
             self.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
@@ -106,9 +106,9 @@ class CollectionsView(Logger, APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-    def __get_user(self, username):
+    def __get_user(self, password_hash):
         try:
-            return UserCollection.objects.get(username=username)
+            return UserCollection.objects.get(password_hash=password_hash)
         except UserCollection.DoesNotExist:
             return None
 

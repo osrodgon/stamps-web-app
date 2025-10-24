@@ -9,9 +9,9 @@ def collections_table(db, users_table):
     test_user = "test_user"
     
     collections = [
-        Collection.objects.create(name="My Stamp Collection", api_key_name=test_user, user=users_table[0]),
-        Collection.objects.create(name="European Stamps", api_key_name=test_user, user=users_table[1]),
-        Collection.objects.create(name="19th Century Stamps", api_key_name=test_user, user=users_table[0]),
+        Collection.objects.create(name="My Stamp Collection", user=users_table[0]),
+        Collection.objects.create(name="European Stamps", user=users_table[1]),
+        Collection.objects.create(name="19th Century Stamps", user=users_table[0]),
     ]
     return collections
 

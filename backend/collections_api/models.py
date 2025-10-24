@@ -8,7 +8,6 @@ class Collection(models.Model):
         null=True, # Set to null=True to allow existing rows to be updated
         blank=True
     )
-    api_key_name = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     
     class Meta:
@@ -16,4 +15,4 @@ class Collection(models.Model):
         verbose_name_plural = "Collections"
         
     def __str__(self):
-        return f"{self.api_key_name} - {self.name}"
+        return f"{self.user} - {self.name}"
