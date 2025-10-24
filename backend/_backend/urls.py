@@ -1,10 +1,10 @@
-import os
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from rest_framework.permissions import AllowAny
 
 from _backend.settings import (
     ADMIN_URL,

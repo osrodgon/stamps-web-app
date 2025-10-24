@@ -32,7 +32,7 @@ class UsersView(Logger, APIView):
                 UserResponseSerializer,
                 name="UsersForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )
@@ -69,7 +69,7 @@ class UsersView(Logger, APIView):
                 UserResponseSerializer,
                 name="UserCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )

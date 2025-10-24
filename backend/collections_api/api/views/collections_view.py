@@ -37,7 +37,7 @@ class CollectionsView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionsRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )
@@ -74,7 +74,7 @@ class CollectionsView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )

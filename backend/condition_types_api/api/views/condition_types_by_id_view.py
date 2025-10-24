@@ -44,7 +44,7 @@ class ConditionTypesByIdView(Logger, APIView):
                 ConditionTypeResponseSerializer,
                 name="RetrieveConditionTypeForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )    
@@ -89,7 +89,7 @@ class ConditionTypesByIdView(Logger, APIView):
                 ConditionTypeResponseSerializer,
                 name="ConditionTypeUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 ),    
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -141,7 +141,7 @@ class ConditionTypesByIdView(Logger, APIView):
                 ConditionTypeResponseSerializer,
                 name="ConditionTypeDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 ),   
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

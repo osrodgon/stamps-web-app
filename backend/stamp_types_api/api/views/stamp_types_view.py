@@ -33,7 +33,7 @@ class StampTypesView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )
@@ -70,7 +70,7 @@ class StampTypesView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypeCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )

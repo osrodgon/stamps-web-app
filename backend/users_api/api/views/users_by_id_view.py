@@ -46,7 +46,7 @@ class UsersByIdView(Logger, APIView):
                 UserResponseSerializer,
                 name="RetrieveUserForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 )   
         }
     )    
@@ -91,7 +91,7 @@ class UsersByIdView(Logger, APIView):
                 UserResponseSerializer,
                 name="UserUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 ),    
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -150,7 +150,7 @@ class UsersByIdView(Logger, APIView):
                 UserResponseSerializer,
                 name="UserDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
                 ),   
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

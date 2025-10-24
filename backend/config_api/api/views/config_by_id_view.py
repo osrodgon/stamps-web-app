@@ -40,7 +40,7 @@ class ConfigByIdView(Logger, APIView):
                 ConfigResponseSerializer,
                 name="GetConfigEntryForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -90,7 +90,7 @@ class ConfigByIdView(Logger, APIView):
                 ConfigResponseSerializer,
                 name="UpdateConfigEntryForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -142,7 +142,7 @@ class ConfigByIdView(Logger, APIView):
                 ConfigResponseSerializer,
                 name="DeleteConfigEntryForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
