@@ -82,6 +82,6 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
         return {
             'type': 'apiKey',     # Specifies this is an API key scheme
             'in': 'header',       # Specifies the key is passed in a header
-            'name': 'X-API-Key',  # 🚨 The EXACT header name required by your API
+            'name': 'X-API-Key',  # The EXACT header name required by your API
             'description': 'API Key for authenticating requests.',
         }

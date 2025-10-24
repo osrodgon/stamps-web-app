@@ -129,7 +129,7 @@ class Messages:
         
     class APIKey:
         def invalid_key():
-            return "Invalid or inactive API Key"
+            return "Invalid API Key/Hash"
         
         def invalid_user():
             return "API Key is valid only for Collection Management API."

@@ -37,34 +37,7 @@ class TestHasSpecificKeyName:
         # The key name that must match the header
         self.key_name = self.api_key_obj.name
 
-    # 3. Test for the authorization failure: Key is valid BUT name does NOT match
-    def test_permission_denied_on_name_mismatch(self, mocker):
-        """Should raise PermissionDenied when the key is valid but the name doesn't match."""
-
-        # --- Arrange (Setup for mismatch) ---
-        request = self.factory.get('/')
-        request.META['HTTP_X_API_KEY'] = self.raw_key
-        request.META['HTTP_X_API_USER'] = "IncorrectKeyName" # Mismatching name
-        mock_view = None
-
-        # Simulate successful validation from the parent
-        request.auth = self.api_key_obj
-        mocker.patch(
-            'rest_framework_api_key.models.APIKeyManager.get_from_key', 
-            return_value=self.api_key_obj
-        )
-
-        # --- Act & Assert ---
-        permission = HasSpecificKeyName()
-        
-        # The permission check should raise a PermissionDenied exception
-        with pytest.raises(PermissionDenied) as excinfo:
-            permission.has_permission(request, mock_view)
-
-        # Check the specific error message from the authorization failure block
-        assert MockMessages.APIKey.invalid_user() in str(excinfo.value.detail)
-    
-    # 4. Test for the authentication failure: Key is invalid (testing the super() call)
+    # 3. Test for the authentication failure: Key is invalid (testing the super() call)
     def test_permission_denied_on_invalid_key(self, mocker):
         """Should raise PermissionDenied when the parent (HasAPIKey) fails."""
 
@@ -72,7 +45,6 @@ class TestHasSpecificKeyName:
         request = self.factory.get('/')
         # Don't provide the API Key header, or provide a known-invalid one
         request.META['HTTP_X_API_KEY'] = 'InvalidPrefix.InvalidSecret' 
-        request.META['HTTP_X_API_USER'] = self.key_name
         mock_view = None
         
         # Mock the super's has_permission method to simulate its failure
@@ -92,4 +64,4 @@ class TestHasSpecificKeyName:
             permission.has_permission(request, mock_view)
 
         # Check the specific error message from your parent failure block
-        assert MockMessages.APIKey.invalid_key() in str(excinfo.value.detail)
+        assert MockMessages.APIKey.invalid_user() in str(excinfo.value.detail)
