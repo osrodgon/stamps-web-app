@@ -19,7 +19,7 @@ class YearsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_years",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="List All Years",
         description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
         responses={
@@ -33,7 +33,7 @@ class YearsView(Logger, APIView):
                 YearResponseSerializer,
                 name="YearsRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )
@@ -50,7 +50,7 @@ class YearsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_year",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="Create a New Year",
         description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",
         request=YearRequestSerializer,
@@ -70,7 +70,7 @@ class YearsView(Logger, APIView):
                 YearResponseSerializer,
                 name="YearCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )

@@ -28,11 +28,9 @@ Represents a specific issue of stamps, often a series or set released at a parti
 | **name** | `VARCHAR` | | Name or description of the issue. |
 | **total_printed** | `INT` | | Total number of stamps printed for this issue. |
 | **market_value** | `FLOAT` | | Estimated market value of the issue as a set. |
-| **number_owned** | `INT` | | Number of stamps from this issue owned by the user. |
 | **stamp_type_id** | `INT` | FK | Type of stamp in this issue (links to `stamp_type.id`). |
 | **paper_type_id** | `INT` | FK | Type of paper used (links to `paper_type.id`). |
 | **description** | `VARCHAR` | | Detailed description of the issue. |
-| **location_id** | `INT` | FK | Associated location for the issue (links to `location.id`). |
 | **country_id** | `INT` | FK | Country of origin for the issue (links to `country.id`). |
 | **note** | `VARCHAR` | | Any additional notes for the issue. |
 | **perforation** | `VARCHAR` | | Perforation details (e.g., "13", "11.5x12"). |
@@ -73,6 +71,10 @@ A junction table linking individual stamps to user collections, essentially reco
 | **id** | `INT` | PK | Unique identifier for the collection item instance. |
 | **collection_id** | `INT` | FK | The collection this item belongs to (links to `collection.id`). |
 | **stamp_id** | `INT` | FK | The individual stamp included (links to `stamp.id`). |
+| **location_id** | `INT` | FK | Associated location for the issue (links to `location.id`). |
+| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
+| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
+
 
 ---
 
@@ -147,7 +149,7 @@ Stores application configuration settings as simple key-value pairs.
 | **`collection_item`** | Many-to-One (FK) | `stamp` | Every `collection_item` records the ownership of one specific `stamp`. |
 
 ### REST API Endpoints 
-For detailed information about all available REST endpoints, please refer to the [API Documentation](./api.md).
+For detailed information about all available REST endpoints, please refer to the [API Documentation](./backend/readme_api.md).
 
 ## Frontend
 TBD.

@@ -27,7 +27,7 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Retrieve a Stamp Type by ID",
         description="Fetches the details of a specific stamp type entry by its unique identifier.",
         responses={
@@ -40,7 +40,7 @@ class StampTypesByIdView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypeRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -71,7 +71,7 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Update a Stamp Type",
         description="Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.",
         request=StampTypeRequestSerializer,
@@ -85,7 +85,7 @@ class StampTypesByIdView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypeUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -129,7 +129,7 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Delete a Stamp Type",
         description="Deletes a stamp type entry from the database using its ID.",
         responses={
@@ -143,7 +143,7 @@ class StampTypesByIdView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypeDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

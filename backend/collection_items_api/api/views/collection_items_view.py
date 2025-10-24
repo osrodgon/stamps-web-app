@@ -20,7 +20,7 @@ class CollectionItemsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_collection_items",
-        tags=['Collection Items'],
+        tags=['Collection Management'],
         summary="List All Collection Items",
         description="Retrieves a list of all collection item entries currently stored in the database. The response will contain an array of collection item objects.",
         responses={
@@ -34,7 +34,7 @@ class CollectionItemsView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemsRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )
@@ -51,7 +51,7 @@ class CollectionItemsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_collection_item",
-        tags=['Collection Items'],
+        tags=['Collection Management'],
         summary="Create a New Collection Item",
         description="Adds a new collection item entry to the database. The request body must contain the collection item data. A successful creation returns the newly created collection item object with a 201 status code.",
         request=CollectionItemsRequestSerializer,
@@ -71,7 +71,7 @@ class CollectionItemsView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             )
         }
     )

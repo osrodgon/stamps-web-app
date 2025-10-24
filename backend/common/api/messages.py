@@ -51,6 +51,9 @@ class Messages:
         def permission_denied():
             return "permission_denied"
         
+        def user_not_found():
+            return "user_not_found"
+        
     class Database:
         def querying(table_name, id):
             return f"Querying database for {table_name.lower()} with id: {id}."
@@ -61,8 +64,14 @@ class Messages:
         def error(table_name, id, error_message):
             return f"An unexpected error occurred while fetching {table_name.lower()} with id {id}: {error_message}."
         
+        def user_not_found(username):
+            return f"User {username} not found in the database."
+        
         def connection_lost():
             return "Database connection lost."
+        
+        def unknow_user():
+            return "Unknown user."
         
     class Get:
         def retrieve_one(table_name, id):
@@ -123,10 +132,10 @@ class Messages:
         
     class APIKey:
         def invalid_key():
-            return "Invalid or inactive API Key"
+            return "Invalid API Key/Hash"
         
         def invalid_user():
-            return "API Key is valid but not authorized for any API resource."
+            return "API Key is valid only for Collection Management API."
         
         def not_a_user():
             return "API Key has not a valid associated collection user."

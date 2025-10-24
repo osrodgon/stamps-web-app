@@ -30,7 +30,7 @@ class CollectionsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="get_collection_by_id",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="Get Collection by ID",
         description="Retrieves a single collection entry by its unique ID. A 404 Not Found response is returned if the collection does not exist.",
         responses={
@@ -43,7 +43,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -71,7 +71,7 @@ class CollectionsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="update_collection",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="Update a Collection",
         description="Updates an existing collection entry identified by its ID. The request body must contain the updated collection data. A successful update returns the modified collection object.",
         request=CollectionRequestSerializer,
@@ -91,7 +91,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -130,7 +130,7 @@ class CollectionsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="delete_collection",
-        tags=['Collections'],
+        tags=['Collection Management'],
         summary="Delete a Collection",
         description="Deletes a collection entry by its unique ID. A successful deletion returns a 204 No Content response.",
         responses={
@@ -144,7 +144,7 @@ class CollectionsByIdView(Logger, APIView):
                 CollectionResponseSerializer,
                 name="CollectionDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

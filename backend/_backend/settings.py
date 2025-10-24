@@ -43,7 +43,9 @@ USER_VIEWS = [
     "CollectionsView",
     "CollectionsByIdView",
     "CollectionItemsView",
-    "CollectionItemsByIdView"
+    "CollectionItemsByIdView",
+    "LocationsView",
+    "LocationsByIdView",
 ]
 
 # API endpoints
@@ -58,6 +60,8 @@ STAMPS_ENDPOINT="stamps/"
 YEARS_ENDPOINT="years/"
 COLLECTIONS_ENDPOINT="collections/"
 COLLECTION_ITEMS_ENDPOINT="collection_items/"
+CONDITION_TYPES_ENDPOINT="condition_types/"
+USERS_ENDPOINT = "users/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -79,7 +83,8 @@ STAMPS_URL_V1=f"{SERVER_URL_V1}{STAMPS_ENDPOINT}"
 YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
 COLLECTIONS_URL_V1=f"{SERVER_URL_V1}{COLLECTIONS_ENDPOINT}"
 COLLECTION_ITEMS_URL_V1=f"{SERVER_URL_V1}{COLLECTION_ITEMS_ENDPOINT}"
-
+CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
+USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 
 # Application definition
 
@@ -103,7 +108,9 @@ INSTALLED_APPS = [
     "issues_api",           # All APIs for the table issue
     "years_api",            # All APIs for the table year
     "collections_api",      # All APIs for the table collection
-    "collection_items_api"  # All APIs for the table collection item
+    "collection_items_api", # All APIs for the table collection item
+    "condition_types_api",  # All APIs for the table condition type
+    "users_api"             # All APIs for the table user
 ]
 
 REST_FRAMEWORK = {
@@ -113,9 +120,13 @@ REST_FRAMEWORK = {
     ),
     "EXCEPTION_HANDLER": "common.core.exceptions.custom_exception_handler",
     # This sets the default permission for ALL DRF views
-    'DEFAULT_AUTHENTICATION_CLASSES': [ ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'common.core.authentication.CustomAPIKeyAuthentication',
+        #'rest_framework_api_key.permissionsHasSpecificKeyName'    
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
-        #'rest_framework_api_key.permissions.HasAPIKey',
+        # 'rest_framework_api_key.permissions.HasAPIKey',
+        # 'rest_framework.permissions.AllowAny'
         'common.core.permissions.HasSpecificKeyName'
     ]
 }
@@ -128,72 +139,22 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
-    "SECURITY": [
-        {
-            'APIKeyHeader': [], 
-            'APINameHeader': []
-        }
-    ],
-    "COMPONENTS": {
-        'securitySchemes': {
-            'APIKeyHeader': { 
-                'type': 'apiKey',          # Must be 'apiKey' for header keys
-                'in': 'header',            # Location in the request
-                'name': 'X-API-Key',       # The RAW header name 
-                'description': 'Custom API Key required for authentication.',
-            },
-            'APINameHeader': { 
-                'type': 'apiKey',          # Must be 'apiKey' for header keys
-                'in': 'header',            # Location in the request
-                'name': 'X-API-User',      # The RAW header name 
-                'description': 'API Key name associated the the API Key.',
-            }
-        }
-    },
     "TAGS": [
         {
-            "name": "Collections",
-            "description": "Endpoints for managing collection entries. Header 'X-API-Key' required."
+            "name": "Database Management",
+            "description": "APIs for accessing static, foundational data like years, published issues, and the master catalog of stamps."
         },
         {
-            "name": "Collection Items",
-            "description": "Endpoints for managing collection item entries. Header 'X-API-Key' required."
+            "name": "Collection Management",
+            "description": "APIs for managing collections."
         },
         {
-            "name": "Colors",
-            "description": "Endpoints for managing color entries. Header 'X-API-Key' required."
+            "name": "Config Management",
+            "description": "Endpoints for managing system configuration settings."
         },
         {
-            "name": "Config",
-            "description": "Endpoints for managing system configuration settings. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Countries",
-            "description": "Endpoints for managing country entries. ."
-        },
-        {
-            "name": "Issues",
-            "description": "Endpoints for managing issue entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Locations",
-            "description": "Endpoints for managing location entries. Header 'X-API-Key' required."   
-        },
-        {
-            "name": "Paper Types",
-            "description": "Endpoints for managing paper types entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Stamp Types",
-            "description": "Endpoints for managing stamp type entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Stamps",
-            "description": "Endpoints for managing stamp entries. Header 'X-API-Key' required."
-        },
-        {
-            "name": "Years",
-            "description": "Endpoints for managing year entries. Header 'X-API-Key' required."
+            "name": "User Management",
+            "description": "APIs for managing users."  
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API

@@ -21,6 +21,8 @@ from common.test.paper_types_api_test_data import paper_types_table
 from common.test.locations_api_test_data import locations_table
 from common.test.year_api_test_data import years_table
 from common.test.colors_api_test_data import colors_table
+from common.test.users_api_test_data import users_table
+from common.test.condition_types_api_test_data import condition_types_table
 
 @pytest.mark.django_db
 class TestCollectionItemsAPI(AbstractApiUnitTest):
@@ -84,13 +86,15 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    def test_post_collection_item_returns_201_created(self, api_client, collections_table, stamps_table, collection_item_post_payload_ok):
+    def test_post_collection_item_returns_201_created(self, api_client, collections_table, stamps_table, locations_table, collection_item_post_payload_ok):
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), collection_item_post_payload_ok, format='json')
 
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.created_successfully()
         assert response.json()['errors'] == None
+        assert response.json()['data']['location'] is not None
+        assert response.json()['data']['location']['id'] == collection_item_post_payload_ok['location']
         assert response.json()['data']['collection']['id'] == collection_item_post_payload_ok['collection']
         assert response.json()['data']['stamp']['id'] == collection_item_post_payload_ok['stamp']
         assert response.status_code == status.HTTP_201_CREATED
@@ -226,6 +230,8 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] == None
         assert response.json()['data']['collection']['id'] == collection_items_table[0].collection.id
+        assert response.json()['data']['price_paid'] == collection_item_put_payload_ok['price_paid']
+        assert response.json()['data']['note'] == collection_item_put_payload_ok['note']
         assert response.status_code == status.HTTP_200_OK
 
     def test_put_collection_item_returns_400_invalid_field(self, api_client, collection_items_table, collection_item_put_payload_ok):

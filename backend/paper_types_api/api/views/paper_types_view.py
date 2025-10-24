@@ -19,7 +19,7 @@ class PaperTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_paper_types",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="List All Paper Types",
         description="Retrieves a list of all paper type entries currently stored in the database.",
         responses={
@@ -33,7 +33,7 @@ class PaperTypesView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )
@@ -50,7 +50,7 @@ class PaperTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Create a New Paper Type",
         description="Adds a new paper type entry to the database. A successful creation returns the newly created paper type object with a 201 Created status code.",
         request=PaperTypeRequestSerializer,
@@ -70,7 +70,7 @@ class PaperTypesView(Logger, APIView):
                 PaperTypeResponseSerializer,
                 name="PaperTypeCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )

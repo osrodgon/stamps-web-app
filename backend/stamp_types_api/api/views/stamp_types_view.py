@@ -19,7 +19,7 @@ class StampTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_stamp_types",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="List All Stamp Types",
         description="Retrieves a list of all stamp type entries currently stored in the database.",
         responses={
@@ -33,7 +33,7 @@ class StampTypesView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypesRetrieveForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )
@@ -50,7 +50,7 @@ class StampTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Create a New Stamp Type",
         description="Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a 201 Created status code.",
         request=StampTypeRequestSerializer,
@@ -70,7 +70,7 @@ class StampTypesView(Logger, APIView):
                 StampTypeResponseSerializer,
                 name="StampTypeCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
             )
         }
     )

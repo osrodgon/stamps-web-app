@@ -28,7 +28,7 @@ class CollectionItemsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="get_collection_item_by_id",
-        tags=['Collection Items'],
+        tags=['Collection Management'],
         summary="Get Collection Item by ID",
         description="Retrieves a single collection item entry by its unique ID. A 404 Not Found response is returned if the item does not exist.",
         responses={
@@ -66,7 +66,7 @@ class CollectionItemsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="update_collection_item",
-        tags=['Collection Items'],
+        tags=['Collection Management'],
         summary="Update a Collection Item",
         description="Updates an existing collection item entry identified by its ID. The request body can contain a partial update. A successful update returns the modified collection item object.",
         request=CollectionItemsRequestSerializer,
@@ -86,7 +86,7 @@ class CollectionItemsByIdView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemUpdateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
@@ -116,7 +116,7 @@ class CollectionItemsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="delete_collection_item",
-        tags=['Collection Items'],
+        tags=['Collection Management'],
         summary="Delete a Collection Item",
         description="Deletes a collection item entry by its unique ID. A successful deletion returns a 204 No Content response.",
         responses={
@@ -129,7 +129,7 @@ class CollectionItemsByIdView(Logger, APIView):
                 CollectionItemsResponseSerializer,
                 name="CollectionItemDeleteForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key header."
+                description="Permission denied."
             ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,

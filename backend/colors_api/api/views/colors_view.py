@@ -18,7 +18,7 @@ class ColorsView(Logger, APIView):
     
     @extend_schema(
         operation_id="list_colors",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="List All Colors",
         description="Retrieves a list of all color entries currently stored in the database.",
         responses={
@@ -32,7 +32,7 @@ class ColorsView(Logger, APIView):
                 ColorResponseSerializer,
                 name="ColorsForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
                 )   
         }
     )
@@ -49,7 +49,7 @@ class ColorsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Create a New Color",
         description="Adds a new color entry to the database. A successful creation returns the newly created color object with a 201 Created status code.",
         request=ColorRequestSerializer,
@@ -69,7 +69,7 @@ class ColorsView(Logger, APIView):
                 ColorResponseSerializer,
                 name="ColorCreateForbidden",
                 success=False,
-                description="Permission denied. You're likely missing X-API-Key or X-API-User headers."
+                description="Permission denied."
                 )   
         }
     )
