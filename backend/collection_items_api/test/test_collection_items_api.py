@@ -22,7 +22,7 @@ from common.test.locations_api_test_data import locations_table
 from common.test.year_api_test_data import years_table
 from common.test.colors_api_test_data import colors_table
 from common.test.users_api_test_data import users_table
-
+from common.test.condition_types_api_test_data import condition_types_table
 
 @pytest.mark.django_db
 class TestCollectionItemsAPI(AbstractApiUnitTest):
@@ -230,8 +230,8 @@ class TestCollectionItemsAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.updated_successfully()
         assert response.json()['errors'] == None
         assert response.json()['data']['collection']['id'] == collection_items_table[0].collection.id
-        assert response.json()['data']['stamp']['id'] == collection_item_put_payload_ok['stamp']
-        assert response.json()['data']['location']['id'] == collection_items_table[0].location.id
+        assert response.json()['data']['price_paid'] == collection_item_put_payload_ok['price_paid']
+        assert response.json()['data']['note'] == collection_item_put_payload_ok['note']
         assert response.status_code == status.HTTP_200_OK
 
     def test_put_collection_item_returns_400_invalid_field(self, api_client, collection_items_table, collection_item_put_payload_ok):

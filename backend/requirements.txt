@@ -31,3 +31,4 @@ typing_extensions==4.15.0
 uritemplate==4.2.0
 pytest-mock==3.15.1
 djangorestframework-api-key==3.1.0
+Faker==37.11.0
