@@ -29,8 +29,8 @@ class Messages:
     def field_not_allowed():
         return "This field is not allowed."
     
-    def field_invalid():
-        return "This field is invalid."
+    # def field_invalid():
+    #     return "This field is invalid."
     
     class Code:
         def required():
@@ -51,8 +51,11 @@ class Messages:
         def permission_denied():
             return "permission_denied"
         
-        def user_not_found():
-            return "user_not_found"
+        def authentication_failed():
+            return "authentication_failed"
+        
+        # def user_not_found():
+        #     return "user_not_found"
         
     class Database:
         def querying(table_name, id):
@@ -61,11 +64,11 @@ class Messages:
         def not_found(table_name, id):
             return f"{table_name.title()} with id: {id} not found in the database."
         
-        def error(table_name, id, error_message):
-            return f"An unexpected error occurred while fetching {table_name.lower()} with id {id}: {error_message}."
+        # def error(table_name, id, error_message):
+        #     return f"An unexpected error occurred while fetching {table_name.lower()} with id {id}: {error_message}."
         
-        def user_not_found(username):
-            return f"User {username} not found in the database."
+        # def user_not_found(username):
+        #     return f"User {username} not found in the database."
         
         def connection_lost():
             return "Database connection lost."
@@ -130,12 +133,27 @@ class Messages:
         def deleted_one(table_name, id):
             return f"Successfully deleted {table_name.lower()} with id: {id}."
         
-    class APIKey:
-        def invalid_key():
-            return "Invalid API Key/Hash"
+    class Auth:
+        # def invalid_type():
+        #     return "Invalid authentication type."
         
-        def invalid_user():
-            return "API Key is valid only for Collection Management API."
+        def invalid_api_key():
+            return "Invalid api key."
         
-        def not_a_user():
-            return "API Key has not a valid associated collection user."
+        def invalid_format():
+            return "Header content has an invalid format."
+        
+        def not_supported():
+            return "Auth type not supported."
+        
+        def user_or_password_invalid():
+            return "User/Password combination is invalid."
+        
+        def not_enough_rights():
+            return "User has no rights to perform this action."
+        
+        def user_not_found():
+            return "User not found."
+        
+        def header_missing():
+            return "Auth header is missing."
