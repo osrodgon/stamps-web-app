@@ -73,7 +73,7 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
     target_class = 'common.core.authentication.CustomAPIKeyAuthentication' 
     
     # The name used to reference this scheme in the raw schema's SECURITY block.
-    name = 'X_API_Key' 
+    name = 'Auhorization' 
 
     def get_security_definition(self, auto_schema):
         """
@@ -82,6 +82,6 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
         return {
             'type': 'apiKey',     # Specifies this is an API key scheme
             'in': 'header',       # Specifies the key is passed in a header
-            'name': 'X-API-Key',  # The EXACT header name required by your API
-            'description': 'API Key for authenticating requests.',
+            'name': 'Authorization',  # The EXACT header name required by your API
+            'description': 'Use prefix API-Key|JWT|Basic <key|token|base64(user:hash)> to authenticate.',
         }

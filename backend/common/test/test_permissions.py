@@ -14,11 +14,11 @@ class MockMessages:
     class APIKey:
         @staticmethod
         def invalid_key():
-            return Messages.APIKey.invalid_key()
+            return Messages.Auth.invalid_api_key()
 
         @staticmethod
         def invalid_user():
-            return Messages.APIKey.invalid_user()
+            return Messages.Auth.not_enough_rights()
 
 # Replace the actual Messages class with the mock for testing
 HasSpecificKeyName.Messages = MockMessages 
@@ -44,7 +44,7 @@ class TestHasSpecificKeyName:
         # --- Arrange (Setup for parent failure) ---
         request = self.factory.get('/')
         # Don't provide the API Key header, or provide a known-invalid one
-        request.META['HTTP_X_API_KEY'] = 'InvalidPrefix.InvalidSecret' 
+        request.META['HTTP_AUTHORIZATION'] = 'API-Key abcdesdsdsdssdsds' 
         mock_view = None
         
         # Mock the super's has_permission method to simulate its failure
@@ -64,4 +64,4 @@ class TestHasSpecificKeyName:
             permission.has_permission(request, mock_view)
 
         # Check the specific error message from your parent failure block
-        assert MockMessages.APIKey.invalid_user() in str(excinfo.value.detail)
+        assert MockMessages.APIKey.invalid_key() in str(excinfo.value.detail)

@@ -20,12 +20,18 @@ class AbstractApiUnitTest:
         self.__permission_class = 'common.core.permissions.HasSpecificKeyName'
         self.__api_key_utils_class = 'common.core.api_key_utils.ApiKeyUtils'
         self.__user_collection_class = 'users_api.models.UserCollection'
+        self.__authentication_class = 'common.core.authentication.CustomAPIKeyAuthentication'
         
     def permission(self, granted: bool, message: str = None):
         if granted:
+            self.header("test_key")
             self.__mocker.patch(f"{self.__permission_class}.has_permission", return_value=True)
         else:
+            self.header("test_key")
             self.__mocker.patch(f"{self.__permission_class}.has_permission", side_effect=PermissionDenied(message))
+            
+    def header(self, key: str):
+        self.__mocker.patch(f"{self.__authentication_class}.authenticate", return_value=(None, key)) 
             
     def class_path(self, cls: object) -> str:
         return f"{cls.__module__}.{cls.__name__}.objects.get"
