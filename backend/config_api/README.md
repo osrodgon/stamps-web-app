@@ -23,6 +23,7 @@ The `Config` model represents a single configuration setting.
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `id` | Integer | The unique identifier for the configuration entry. |
+| `user` | Foreign Key | A reference to the `UserConfig` who owns this configuration entry. |
 | `property` | String | The name of the configuration property (the key). This must be unique. |
 | `value` | String | The value associated with the property. |
 
@@ -41,11 +42,13 @@ Retrieves a list of all configuration key-value pairs.
     [
       {
         "id": 1,
+        "user": 2,
         "property": "site_name",
         "value": "Stamps Web App"
       },
       {
         "id": 2,
+        "user": 1,
         "property": "maintenance_mode",
         "value": "false"
       }
@@ -63,6 +66,7 @@ Creates a new configuration key-value pair.
     A JSON object representing the new configuration entry.
     ```json
     {
+      "user": 1,
       "property": "theme",
       "value": "dark"
     }
@@ -72,6 +76,7 @@ Creates a new configuration key-value pair.
     ```json
     {
       "id": 3,
+      "user": 1,
       "property": "theme",
       "value": "dark"
     }
@@ -109,6 +114,7 @@ Updates an existing configuration entry. This method supports partial updates.
     A JSON object containing the fields to be updated. You can update the `property`, the `value`, or both.
     ```json
     {
+      "user": 1,
       "value": "light"
     }
     ```
@@ -117,6 +123,7 @@ Updates an existing configuration entry. This method supports partial updates.
     ```json
     {
         "id": 3,
+        "user": 1,
         "property": "theme",
         "value": "light"
     }

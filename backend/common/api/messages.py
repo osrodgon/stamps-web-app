@@ -157,3 +157,16 @@ class Messages:
         
         def header_missing():
             return "Auth header is missing."
+        
+    class Health:
+        def ok():
+            return "OK"
+        
+        def error():
+            return "Error"
+        
+        def error_with_message(message):
+            return f"Error: {message}"
+        
+        def running():
+            return "Running"

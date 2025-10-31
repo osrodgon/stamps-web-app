@@ -13,13 +13,14 @@ from common.test.config_api_test_data import (
     config_post_payload_ok,
     config_put_payload_ok
 )
+from common.test.users_api_test_data import users_table
 from config_api.api.serializers.config_response_serializer import ConfigResponseSerializer
 from config_api.models import Config
 
 
 @pytest.mark.django_db
 class TestConfigAPI(AbstractApiUnitTest):
-    def test_get_all_config_returns_200_ok_data(self, api_client, config_table):
+    def test_get_all_config_returns_200_ok_data(self, api_client, config_table, users_table):
         self.permission(granted=True)
         response = api_client.get(self.__get_url())
         
@@ -125,7 +126,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_all_config_returns_500_database_error_connection_lost(self, api_client, config_table):
+    def test_get_all_config_returns_500_database_error_connection_lost(self, api_client, config_table, users_table):
         self.permission(granted=True)
         self.connection_lost(Config, self.GET_ALL)
         response = api_client.get(self.__get_url())
@@ -138,7 +139,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    def test_post_config_returns_201_created(self, api_client, config_post_payload_ok):
+    def test_post_config_returns_201_created(self, api_client, config_post_payload_ok, users_table):
         self.permission(granted=True)
         response = api_client.post(self.__get_url(), config_post_payload_ok)
         
@@ -149,7 +150,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_201_CREATED
         
-    def test_post_config_returns_400_bad_request_missing_property(self, api_client, config_post_payload_ok):
+    def test_post_config_returns_400_bad_request_missing_property(self, api_client, config_post_payload_ok, users_table):
         self.permission(granted=True)
         del config_post_payload_ok["property"]
         response = api_client.post(self.__get_url(), config_post_payload_ok)
@@ -162,7 +163,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
-    def test_post_config_returns_400_bad_request_missing_value(self, api_client, config_post_payload_ok):
+    def test_post_config_returns_400_bad_request_missing_value(self, api_client, config_post_payload_ok, users_table):
         self.permission(granted=True)
         del config_post_payload_ok["value"]
         response = api_client.post(self.__get_url(), config_post_payload_ok)
@@ -175,7 +176,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
-    def test_post_config_returns_400_bad_request_invalid_field(self, api_client, config_post_payload_ok):
+    def test_post_config_returns_400_bad_request_invalid_field(self, api_client, config_post_payload_ok, users_table):
         self.permission(granted=True)
         config_post_payload_ok['new_field'] = 'new_value'
         response = api_client.post(self.__get_url(), config_post_payload_ok)
@@ -271,7 +272,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_post_config_returns_500_database_error_connection_lost(self, api_client, config_table, config_post_payload_ok):
+    def test_post_config_returns_500_database_error_connection_lost(self, api_client, config_table, config_post_payload_ok, users_table):
         self.permission(granted=True)
         self.connection_lost(Config, self.POST)
         response = api_client.post(self.__get_url(), config_post_payload_ok)
@@ -284,7 +285,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
-    def test_get_one_config_returns_200_ok_data(self, api_client, config_table):
+    def test_get_one_config_returns_200_ok_data(self, api_client, config_table, users_table):
         self.permission(granted=True)
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -299,7 +300,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
-    def test_get_one_config_returns_403_header_missing(self, api_client, config_table):
+    def test_get_one_config_returns_403_header_missing(self, api_client, config_table, users_table):
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
         
@@ -311,7 +312,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_invalid_format(self, api_client, config_table):
+    def test_get_one_config_returns_403_invalid_format(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_format())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -324,7 +325,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_auth_type_not_supported(self, api_client, config_table):
+    def test_get_one_config_returns_403_auth_type_not_supported(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.not_supported())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -337,7 +338,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_invalid_api_key(self, api_client, config_table):
+    def test_get_one_config_returns_403_invalid_api_key(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_api_key())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -350,7 +351,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_not_enough_rights(self, api_client, config_table):
+    def test_get_one_config_returns_403_not_enough_rights(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.not_enough_rights())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -363,7 +364,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table):
+    def test_get_one_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -376,7 +377,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_get_one_config_returns_403_basic_auth_user_not_found(self, api_client, config_table):
+    def test_get_one_config_returns_403_basic_auth_user_not_found(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_not_found())
         id = str(config_table[1].id)
         response = api_client.get(self.__get_url() + id)
@@ -401,7 +402,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
-    def test_get_one_config_returns_500_database_error_connection_lost(self, api_client, config_table):
+    def test_get_one_config_returns_500_database_error_connection_lost(self, api_client, config_table, users_table):
         self.permission(granted=True)
         self.connection_lost(Config, self.GET_ONE)
         id = str(config_table[1].id)
@@ -415,7 +416,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
-    def test_put_config_returns_200_ok(self, api_client, config_table, config_put_payload_ok):
+    def test_put_config_returns_200_ok(self, api_client, config_table, config_put_payload_ok, users_table):
         self.permission(granted=True)
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id, config_put_payload_ok)
@@ -426,7 +427,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
-    def test_put_config_returns_400_bad_request_invalid_field(self, api_client, config_table, config_put_payload_ok):
+    def test_put_config_returns_400_bad_request_invalid_field(self, api_client, config_table, config_put_payload_ok, users_table):
         self.permission(granted=True)
         config_put_payload_ok["new_field"] = "new_value"
         response = api_client.put(self.__get_url() + "1", config_put_payload_ok)
@@ -439,7 +440,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
-    def test_put_config_returns_403_header_missing(self, api_client, config_table):
+    def test_put_config_returns_403_header_missing(self, api_client, config_table, users_table):
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id)
         
@@ -451,7 +452,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_invalid_format(self, api_client, config_table):
+    def test_put_config_returns_403_invalid_format(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_format())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id)
@@ -464,7 +465,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_auth_type_not_supported(self, api_client, config_table):
+    def test_put_config_returns_403_auth_type_not_supported(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.not_supported())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id)
@@ -477,7 +478,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_invalid_api_key(self, api_client, config_table, config_put_payload_ok):
+    def test_put_config_returns_403_invalid_api_key(self, api_client, config_table, config_put_payload_ok, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_api_key())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id, config_put_payload_ok)
@@ -490,7 +491,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_not_enough_rights(self, api_client, config_table, config_put_payload_ok):
+    def test_put_config_returns_403_not_enough_rights(self, api_client, config_table, config_put_payload_ok, users_table):
         self.permission(granted=False, message=Messages.Auth.not_enough_rights())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id, config_put_payload_ok)
@@ -503,7 +504,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table):
+    def test_put_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id)
@@ -516,7 +517,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_put_config_returns_403_basic_auth_user_not_found(self, api_client, config_table):
+    def test_put_config_returns_403_basic_auth_user_not_found(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_not_found())
         id = str(config_table[1].id)
         response = api_client.put(self.__get_url() + id)
@@ -541,7 +542,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == "other"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
-    def test_put_config_returns_500_database_error_connection_lost(self, api_client, config_table, config_put_payload_ok):
+    def test_put_config_returns_500_database_error_connection_lost(self, api_client, config_table, config_put_payload_ok, users_table):
         self.permission(granted=True)
         self.connection_lost(Config, self.PUT)
         id = str(config_table[1].id)
@@ -555,7 +556,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         
-    def test_delete_config_returns_200_ok(self, api_client, config_table):
+    def test_delete_config_returns_200_ok(self, api_client, config_table, users_table):
         self.permission(granted=True)
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -566,7 +567,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
         
-    def test_delete_config_returns_403_header_missing(self, api_client, config_table):
+    def test_delete_config_returns_403_header_missing(self, api_client, config_table, users_table):
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
         
@@ -578,7 +579,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_delete_config_returns_403_invalid_format(self, api_client, config_table):
+    def test_delete_config_returns_403_invalid_format(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_format())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -591,7 +592,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_delete_config_returns_403_auth_type_not_supported(self, api_client, config_table):
+    def test_delete_config_returns_403_auth_type_not_supported(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.not_supported())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -604,7 +605,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_delete_config_returns_403_invalid_api_key(self, api_client, config_table):
+    def test_delete_config_returns_403_invalid_api_key(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.invalid_api_key())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -617,7 +618,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_delete_config_returns_403_not_enough_rights(self, api_client, config_table):
+    def test_delete_config_returns_403_not_enough_rights(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.not_enough_rights())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -630,7 +631,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_delete_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table):
+    def test_delete_config_returns_403_basic_auth_user_or_password_invalid(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -643,7 +644,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
-    def test_delete_config_returns_403_basic_auth_user_not_found(self, api_client, config_table):
+    def test_delete_config_returns_403_basic_auth_user_not_found(self, api_client, config_table, users_table):
         self.permission(granted=False, message=Messages.Auth.user_not_found())
         id = str(config_table[1].id)
         response = api_client.delete(self.__get_url() + id)
@@ -668,7 +669,7 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_404_NOT_FOUND
         
-    def test_delete_config_returns_500_database_error_connection_lost(self, api_client, config_table):
+    def test_delete_config_returns_500_database_error_connection_lost(self, api_client, config_table, users_table):
         self.permission(granted=True)
         self.connection_lost(Config, self.DELETE)
         id = str(config_table[1].id)
