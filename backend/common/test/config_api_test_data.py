@@ -2,13 +2,15 @@ import pytest
 from config_api.models import Config
 
 @pytest.fixture
-def config_table() -> list[Config]:
+def config_table(db, users_table) -> list[Config]:
     return[
         Config.objects.create(
+            user=users_table[0],
             property="app.theme",
             value="dark"
         ),
         Config.objects.create(
+            user=users_table[1],
             property="app.language",
             value="en"
         )
@@ -17,6 +19,7 @@ def config_table() -> list[Config]:
 @pytest.fixture
 def config_post_payload_ok() -> dict:
     return{
+        "user": 1,
         "property": "app.version",
         "value": "1.0.0"
     }

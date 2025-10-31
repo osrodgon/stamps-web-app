@@ -59,7 +59,8 @@ class StandardJSONRenderer(JSONRenderer):
             if status_code >= status.HTTP_400_BAD_REQUEST:
                 if (
                     status_code == status.HTTP_403_FORBIDDEN or
-                    status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                    status_code == status.HTTP_500_INTERNAL_SERVER_ERROR or
+                    status_code == status.HTTP_503_SERVICE_UNAVAILABLE
                 ):
                     success = data['success']
                     message = data['message']

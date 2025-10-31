@@ -64,6 +64,7 @@ COLLECTIONS_ENDPOINT="collections/"
 COLLECTION_ITEMS_ENDPOINT="collection_items/"
 CONDITION_TYPES_ENDPOINT="condition_types/"
 USERS_ENDPOINT = "users/"
+HEALTH_ENDPOINT = "health/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -112,7 +113,8 @@ INSTALLED_APPS = [
     "collections_api",      # All APIs for the table collection
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
-    "users_api"             # All APIs for the table user
+    "users_api",            # All APIs for the table user
+    "health_api"            # All APIs for checking the system health
 ]
 
 REST_FRAMEWORK = {

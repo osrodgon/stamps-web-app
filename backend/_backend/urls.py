@@ -4,7 +4,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
-from rest_framework.permissions import AllowAny
 
 from _backend.settings import (
     ADMIN_URL,
@@ -14,6 +13,7 @@ from _backend.settings import (
     CONDITION_TYPES_ENDPOINT,
     CONFIG_ENDPOINT,
     COUNTRIES_ENDPOINT,
+    HEALTH_ENDPOINT,
     ISSUES_ENDPOINT,
     LOCATIONS_ENDPOINT,
     PAPER_TYPES_ENDPOINT,
@@ -27,6 +27,7 @@ from _backend.settings import (
     YEARS_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
+from health_api.api.views.health_view import HealthView
 
 urlpatterns = [
     path(ADMIN_URL, stamps_admin_site.urls),
@@ -45,6 +46,8 @@ urlpatterns = [
             path(COLLECTION_ITEMS_ENDPOINT, include('collection_items_api.urls')),
             path(CONDITION_TYPES_ENDPOINT, include('condition_types_api.urls')),
             path(USERS_ENDPOINT, include('users_api.urls')),
+            # Health
+            path(HEALTH_ENDPOINT, HealthView.as_view(), name="health"),
             # Documentations
             path(SCHEMA_ENDPOINT, SpectacularAPIView.as_view(), name="schema"),
             path(SWAGGER_ENDPOINT, SpectacularSwaggerView.as_view(), name="swagger"),

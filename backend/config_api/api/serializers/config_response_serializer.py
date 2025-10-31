@@ -6,4 +6,4 @@ from config_api.models import Config
 class ConfigResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Config
-        fields = ['id', 'property', 'value']
+        fields = ['id', 'user', 'property', 'value']
