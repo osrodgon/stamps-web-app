@@ -1,6 +1,13 @@
 from django.db import models
 
 class Config(models.Model):
+    user = models.ForeignKey(
+        'users_api.UserCollection',
+        on_delete=models.CASCADE,
+        related_name='config',
+        null=True, # Set to null=True to allow existing rows to be updated
+        blank=True
+    )
     property = models.CharField(
         unique=True, 
         max_length=255, 

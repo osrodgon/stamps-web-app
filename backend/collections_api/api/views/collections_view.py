@@ -1,11 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
-from common import api
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.core.api_key_utils import ApiKeyUtils
@@ -25,6 +23,15 @@ class CollectionsView(Logger, APIView):
         operation_id="list_collections",
         tags=['Collection Management'],
         summary="List All Collections",
+        parameters=[
+            OpenApiParameter(
+                name='username',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter collections by username.",
+                required=False
+            )
+        ],
         description="Retrieves a list of all collection entries currently stored in the database. The response will contain an array of collection objects.",
         responses={
             status.HTTP_200_OK: standardized_response(
@@ -43,6 +50,8 @@ class CollectionsView(Logger, APIView):
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
         self.debug(Messages.Get.retrieve_all("collections"))
+        username = request.query_params.get('username')
+
         collections = Collection.objects.all()
         self.debug(Messages.Get.retrieved_all("collections", len(collections)))
         response = CollectionResponseSerializer(collections, many=True)

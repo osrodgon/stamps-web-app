@@ -3,11 +3,11 @@
     "model": "users_api.usercollection",
     "pk": 1,
     "fields": {
-        "username": "user1",
-        "email": "user1@example.com",
-        "password_hash": "pbkdf2_sha256$390000$salt$hash",
-        "first_name": "Test",
-        "last_name": "User1",
+        "username": "master",
+        "email": "master@noemail.com",
+        "password_hash": "master",
+        "first_name": "master",
+        "last_name": "master",
         "registration_date": "2024-01-01T12:00:00Z",
         "is_active": true
     }
@@ -132,52 +132,52 @@
   {
     "model": "config_api.config",
     "pk": 1,
-    "fields": { "property": "site_name", "value": "Stamps Web App" }
+    "fields": { "user": 1, "property": "site_name", "value": "Stamps Web App" }
   },
   {
     "model": "config_api.config",
     "pk": 2,
-    "fields": { "property": "maintenance_mode", "value": "false" }
+    "fields": { "user": 1, "property": "maintenance_mode", "value": "false" }
   },
   {
     "model": "config_api.config",
     "pk": 3,
-    "fields": { "property": "default_currency", "value": "USD" }
+    "fields": { "user": 1, "property": "default_currency", "value": "USD" }
   },
   {
     "model": "config_api.config",
     "pk": 4,
-    "fields": { "property": "items_per_page", "value": "25" }
+    "fields": { "user": 1,  "property": "items_per_page", "value": "25" }
   },
   {
     "model": "config_api.config",
     "pk": 5,
-    "fields": { "property": "api_version", "value": "v1.0.0" }
+    "fields": {"user": 1,  "property": "api_version", "value": "v1.0.0" }
   },
   {
     "model": "config_api.config",
     "pk": 6,
-    "fields": { "property": "last_backup_date", "value": "2023-01-01" }
+    "fields": { "user": 1, "property": "last_backup_date", "value": "2023-01-01" }
   },
   {
     "model": "config_api.config",
     "pk": 7,
-    "fields": { "property": "allow_registration", "value": "true" }
+    "fields": { "user": 1, "property": "allow_registration", "value": "true" }
   },
   {
     "model": "config_api.config",
     "pk": 8,
-    "fields": { "property": "admin_email", "value": "admin@stamps.com" }
+    "fields": { "user": 1, "property": "admin_email", "value": "admin@stamps.com" }
   },
   {
     "model": "config_api.config",
     "pk": 9,
-    "fields": { "property": "catalog_source", "value": "Internal" }
+    "fields": { "user": 1, "property": "catalog_source", "value": "Internal" }
   },
   {
     "model": "config_api.config",
     "pk": 10,
-    "fields": { "property": "theme", "value": "dark" }
+    "fields": { "user": 3, "property": "theme", "value": "dark" }
   },
   { "model": "years_api.year", "pk": 1, "fields": { "year": 2010 } },
   { "model": "years_api.year", "pk": 2, "fields": { "year": 2011 } },
