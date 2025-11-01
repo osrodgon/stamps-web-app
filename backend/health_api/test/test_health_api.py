@@ -6,6 +6,7 @@ from _backend.settings import HEALTH_ENDPOINT, SERVER_URL_V1
 from common.api.messages import Messages
 from common.test.api_client import api_client
 from common.test.abstract_api_unit_test import AbstractApiUnitTest
+from health_api.api.serializers.health_response_serializer import HealthResponseSerializer
 
 @pytest.mark.django_db
 class TestHealthAPI(AbstractApiUnitTest):
@@ -22,7 +23,7 @@ class TestHealthAPI(AbstractApiUnitTest):
         assert response.status_code == status.HTTP_200_OK
 
 
-    def test_get_health_returns_200_ok_database_operational_error(self, api_client, mocker):
+    def test_get_health_returns_200_ok_database_operational_error(self, api_client):
         self.cursor_error(OperationalError)
         response = api_client.get(self.__get_url())
 
@@ -34,7 +35,7 @@ class TestHealthAPI(AbstractApiUnitTest):
         assert response.json()['data']['backend'] == Messages.Health.running()
         assert response.status_code == status.HTTP_200_OK
 
-    def test_get_health_returns_200_ok_database_generic_error(self, api_client, mocker):
+    def test_get_health_returns_200_ok_database_generic_error(self, api_client):
         self.cursor_error(Exception)
         response = api_client.get(self.__get_url())
 
@@ -47,18 +48,18 @@ class TestHealthAPI(AbstractApiUnitTest):
         assert response.json()['data']['backend'] == Messages.Health.error_with_message("Exception")
         assert response.status_code == status.HTTP_200_OK
 
-    # Does not work. Needs to be fixed.
-    # def test_get_health_returns_503_serializer_invalid(self, api_client, mocker):
-    #     mocker.patch(
-    #         'health_api.api.serializers.health_response_serializer.HealthResponseSerializer.is_valid', 
-    #         return_value=False
-    #     )
-    #     response = api_client.get(self.__get_url())
+    def test_get_health_returns_503_serializer_invalid(self, api_client):
+        self.create_serializer_object(
+            "health_api.api.views.health_view.HealthResponseSerializer",
+            HealthResponseSerializer, 
+            None
+        )
+        response = api_client.get(self.__get_url())
 
-    #     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-    #     assert response.json()['success'] == False
-    #     assert response.json()['message'] == Messages.failed()
-    #     assert response.json()['data'] == None
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     def __get_url(self):
         return f"/{SERVER_URL_V1}{HEALTH_ENDPOINT}"

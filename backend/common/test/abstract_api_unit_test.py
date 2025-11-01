@@ -22,7 +22,7 @@ class AbstractApiUnitTest:
         self.__user_collection_class = 'users_api.models.UserCollection'
         self.__authentication_class = 'common.core.authentication.CustomAPIKeyAuthentication'
         self.__backend_cursor = 'django.db.backends.utils.CursorWrapper.execute'
-          
+        
     def permission(self, granted: bool, message: str = None):
         if granted:
             self.header("test_key")
@@ -59,4 +59,10 @@ class AbstractApiUnitTest:
         
     def cursor_error(self, exception):
         self.__mocker.patch(self.__backend_cursor, side_effect=exception)
-            
+        
+    def create_serializer_object(self, path, cls, data):
+        self.__mocker.patch(
+            f"{path}",
+            return_value=cls(data=data)
+        )
+        
