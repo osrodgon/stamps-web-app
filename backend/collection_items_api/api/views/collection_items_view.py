@@ -16,6 +16,15 @@ from collection_items_api.api.serializers.collection_items_request_serializer im
 
 
 class CollectionItemsView(Logger, APIView):
+    """Manages bulk API operations for CollectionItem instances.
+
+    This view handles the retrieval of all collection items (GET) and the
+    creation of a new collection item (POST).
+
+    It uses `CollectionItemsRequestSerializer` for validating incoming data on
+    creation and `CollectionItemsResponseSerializer` for formatting the outgoing
+    response for both GET and POST requests.
+    """
     serializer_class = CollectionItemsResponseSerializer
     
     @extend_schema(
@@ -38,7 +47,16 @@ class CollectionItemsView(Logger, APIView):
             )
         }
     )
-    def get(self, request:Request, *args, **kwargs) -> Response:
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve all collection items.
+
+        Args:
+            request (Request): The incoming HTTP request.
+
+        Returns:
+            Response:   A DRF Response object containing a list of all serialized
+                        collection item objects and a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("collection items"))
         collection_items = CollectionItem.objects.all()
         self.debug(Messages.Get.retrieved_all("collection items", len(collection_items)))
@@ -75,7 +93,17 @@ class CollectionItemsView(Logger, APIView):
             )
         }
     )
-    def post(self, request:Request, *args, **kwargs) -> Response:
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        """Handles POST requests to create a new collection item.
+
+        Args:
+            request (Request):  The incoming HTTP request containing the data for
+                                the new collection item.
+
+        Returns:
+            Response:   A DRF Response with the newly created item's data and a
+                        201 Created status, or a 400 Bad Request on validation error.
+        """
         self.debug(Messages.Post.create_one("collection item", request.data))
         collection_item = CollectionItemsRequestSerializer(data = request.data)
         

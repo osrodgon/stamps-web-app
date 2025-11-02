@@ -14,6 +14,13 @@ from drf_spectacular.utils import extend_schema
 from health_api.api.serializers.health_response_serializer import HealthResponseSerializer
 
 class HealthView(Logger, APIView):
+    """
+    API view to check and report the health of the system.
+
+    This view provides an endpoint to monitor the status of critical
+    components of the application, such as the database connection.
+    It is designed to be used by automated monitoring services.
+    """
     authentication_classes = []
     permission_classes = []
     
@@ -38,6 +45,25 @@ class HealthView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to perform a system health check.
+
+        Checks the database connectivity by executing a simple query.
+        Constructs a response detailing the status of the backend and
+        the database.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the health status.
+            -   Returns HTTP 200 OK with health details, even if the database
+                check fails, to provide a detailed status report.
+            -   Returns HTTP 503 Service Unavailable if the response payload
+                itself cannot be serialized, indicating a deeper application issue.
+        """
         self.debug("Attempting to retrieve system health")
         db_status = Messages.Health.ok()
         backend_status = Messages.Health.running()

@@ -14,8 +14,22 @@ from condition_types_api.api.serializers.condition_type_request_serializer impor
 
 
 class ConditionTypesByIdView(Logger, APIView):
+    """Manages API operations for a single ConditionType instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `ConditionType` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = ConditionTypeResponseSerializer
     def __get_condition_type(self, pk: int) -> ConditionType:
+        """Retrieves a ConditionType instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the condition type to retrieve.
+
+        Returns:
+            ConditionType: The found condition type instance, or None if it does not exist.
+        """
         try:
             self.debug(Messages.Database.querying("condition type", pk))
             return ConditionType.objects.get(pk=pk)
@@ -49,6 +63,16 @@ class ConditionTypesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single condition type.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the condition type to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized condition type
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("condition type", pk))
         condition_type = self.__get_condition_type(pk)
         
@@ -100,6 +124,16 @@ class ConditionTypesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing condition type.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the condition type to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("condition type", pk, request.data))
         condition_type = self.__get_condition_type(pk)
         if condition_type is None:
@@ -152,6 +186,16 @@ class ConditionTypesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a condition type.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the condition type to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("condition type", pk))
         condition_type = self.__get_condition_type(pk)
         if condition_type is None:
