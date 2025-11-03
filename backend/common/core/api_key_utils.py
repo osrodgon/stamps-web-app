@@ -7,6 +7,7 @@ import re
 from common.api.messages import Messages
 from common.log.logger import Logger
 
+# TODO. This class is not needed anymore. File can be removed.
 class ApiKeyUtils(Logger, BaseAuthentication):
     AUTH_SCHEME = os.getenv("AUTH_TOKEN", "Key").lower()
     REGEX_PATTERN = r'^user\d{3}$'

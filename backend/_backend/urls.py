@@ -24,10 +24,14 @@ from _backend.settings import (
     STAMPS_ENDPOINT,
     SWAGGER_ENDPOINT,
     USERS_ENDPOINT,
-    YEARS_ENDPOINT
+    YEARS_ENDPOINT,
+    LOGIN_ENDPOINT,
+    LOGOFF_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
 from health_api.api.views.health_view import HealthView
+from users_api.api.views.login_view import LoginView
+from users_api.api.views.logoff_view import LogoffView
 
 urlpatterns = [
     path(ADMIN_URL, stamps_admin_site.urls),
@@ -46,6 +50,9 @@ urlpatterns = [
             path(COLLECTION_ITEMS_ENDPOINT, include('collection_items_api.urls')),
             path(CONDITION_TYPES_ENDPOINT, include('condition_types_api.urls')),
             path(USERS_ENDPOINT, include('users_api.urls')),
+            # Login/Logoff
+            path(LOGIN_ENDPOINT, LoginView.as_view(), name="login"),
+            path(LOGOFF_ENDPOINT, LogoffView.as_view(), name="logoff"),
             # Health
             path(HEALTH_ENDPOINT, HealthView.as_view(), name="health"),
             # Documentations

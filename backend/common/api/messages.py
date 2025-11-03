@@ -104,7 +104,10 @@ class Messages:
         
         def already_exists(table_name, name):
             return f"{table_name.title()} with this {name} already exists."
-
+        
+        def login_failed():
+            return "Login failed username and/or password do not match."
+        
 
     class Put:
         def update_one(table_name, id, payload):
