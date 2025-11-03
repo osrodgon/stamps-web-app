@@ -9,7 +9,6 @@ from drf_spectacular.utils import extend_schema
 from common import api
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
-from common.core.api_key_utils import ApiKeyUtils
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from collections_api.models import Collection

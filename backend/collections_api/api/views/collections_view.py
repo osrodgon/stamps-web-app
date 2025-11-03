@@ -6,7 +6,6 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
-from common.core.api_key_utils import ApiKeyUtils
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from collections_api.models import Collection
@@ -17,7 +16,6 @@ from users_api.models import UserCollection
 
 class CollectionsView(Logger, APIView):
     serializer_class = CollectionResponseSerializer
-    api_key = ApiKeyUtils()
     
     @extend_schema(
         operation_id="list_collections",
@@ -88,6 +86,7 @@ class CollectionsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        # TODO. This need to be fixed. User is not in the API-KEY
         password_hash = request.META.get('HTTP_X_API_KEY')
         user = self.__get_user(password_hash)
         self.debug(Messages.Post.create_one("collection", request.data))
