@@ -28,29 +28,6 @@ class HasSpecificKeyName(Logger, HasAPIKey):
             Messages.Auth.not_supported()
         )
         
-    def __check_basic_is_valid(self, key):
-        try:
-            username, hash = base64.b64decode(key).decode("utf-8").split(":")
-        except Exception:
-            self.error("Wrong format for Basic authentication.")
-            raise PermissionDenied(
-                Messages.Auth.invalid_format()
-            )
-        
-        try:
-            user = UserCollection.objects.get(username=username)
-            if user.password_hash != hash.strip():
-                self.error("User authentication failed. User or password is invalid.")
-                raise PermissionDenied(
-                    Messages.Auth.user_or_password_invalid()
-                )
-        except UserCollection.DoesNotExist:
-            self.error("User authentication failed. User not found.")
-            raise PermissionDenied(
-                Messages.Auth.user_not_found()
-            )
-        self.debug("User authenticated with Basic.")
-        
     def __apply_permissions(self, view, key):
         if key == getenv("X_API_MASTER_KEY"):
             self.debug("User authenticated with master key.")
@@ -80,8 +57,6 @@ class HasSpecificKeyName(Logger, HasAPIKey):
                 self.__check_api_key_is_valid(key)        
             case "JWT":
                 self.__check_jwt_is_valid(key)
-            case "BASIC":
-                self.__check_basic_is_valid(key)
             case _:
                 self.error("Invalid authentication type.")
                 raise PermissionDenied(
