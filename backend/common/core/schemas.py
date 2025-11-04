@@ -23,20 +23,20 @@ def standardized_response(serializer_class, many=False, success = True, name=Non
 
     Args:
         serializer_class: The DRF serializer class for the main payload.
-        many (bool): Set to True if the 'data' field should be an array
-                     of serialized objects. Defaults to False.
+        many (bool):    Set to True if the 'data' field should be an array
+                        of serialized objects. Defaults to False.
         success (bool): Determines the schema type. True for success responses
                         (data is serialized), False for error responses
                         (errors are serialized). Defaults to True.
-        name (str, optional): A custom name for the generated inline
-                              serializer in the OpenAPI schema. If None, a
-                              name is auto-generated. Defaults to None.
-        description (str, optional): A description for the `OpenApiResponse`.
-                                     Defaults to a generic message.
+        name (str, optional):   A custom name for the generated inline
+                                serializer in the OpenAPI schema. If None, a
+                                name is auto-generated. Defaults to None.
+        description (str, optional):    A description for the `OpenApiResponse`.
+                                        Defaults to a generic message.
 
     Returns:
-        OpenApiResponse: A drf-spectacular response object configured with
-                         the standardized schema.
+        OpenApiResponse:    A drf-spectacular response object configured with
+                            the standardized schema.
     """
     wrapper_name = name or f"{serializer_class.__name__}StandardResponse_{'List' if many else 'Single'}"
     if success:
@@ -83,5 +83,5 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
             'type': 'apiKey',     # Specifies this is an API key scheme
             'in': 'header',       # Specifies the key is passed in a header
             'name': 'Authorization',  # The EXACT header name required by your API
-            'description': 'Use prefix API-Key|JWT|Basic <key|token|base64(user:hash)> to authenticate.',
+            'description': 'Use prefix API-Key|JWT <key|token> to authenticate.',
         }

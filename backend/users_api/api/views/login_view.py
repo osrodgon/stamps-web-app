@@ -1,28 +1,44 @@
 import datetime
-from math import e
-import re
+import token
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
-from django.contrib.auth.hashers import make_password, check_password
-from datetime import datetime, timedelta, timezone
-import jwt
+from django.contrib.auth.hashers import check_password
 
-from _backend.settings import JWT_ALGORITHM, JWT_SECRET
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
+from common.core.schemas import standardized_response
 from common.log.logger import Logger
+from common.core.jwt_token import JwtToken
+from users_api.api.serializers.login_request_serializer import LoginRequestSerializer
+from users_api.api.serializers.login_response_serializer import LoginResponseSerializer
 from users_api.models import UserCollection
 
-
 class LoginView(Logger, APIView):
+    """
+    API view for handling user authentication and login.
+
+    This view provides a public endpoint (`/login`) for users to authenticate
+    by submitting their credentials (username and password). Upon successful
+    authentication, it generates and returns a JWT (JSON Web Token).
+    """
     authentication_classes = []
     permission_classes = []
     
     def __get_user(self, username: str, password: str) -> UserCollection:
-        self.debug("Getting user...")
+        """
+        Retrieves and validates a user from the database.
+
+        Args:
+            username: The username of the user to retrieve.
+            password: The password to validate against the stored hash.
+
+        Returns:
+            The UserCollection instance if the user exists and the password is
+            correct, otherwise None.
+        """
         try:
             self.debug("Querying database for user...")
             user = UserCollection.objects.get(username=username)
@@ -37,7 +53,47 @@ class LoginView(Logger, APIView):
         self.debug("User validation failed")
         return None
     
+    @extend_schema(
+        operation_id="login_users",
+        tags=['User Management'],
+        summary="Logs a user into the system",
+        description="Returs token information to be used in future requests.",
+        request=LoginRequestSerializer,
+        responses={
+            200: standardized_response(
+                LoginResponseSerializer, 
+                name="LoginSuccessful",
+                description="The user was logged in successfully.",
+                many=True
+                ),
+            403: standardized_response(
+                LoginResponseSerializer,
+                name="LoginForbidden",
+                success=False,
+                description="The user was not logged in."
+                ),
+            500: standardized_response(
+                LoginResponseSerializer,
+                name="LoginFailed",
+                success=False,
+                description="An error occurred while logging in."
+                )
+        }
+    )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to authenticate a user and provide a JWT.
+
+        Args:
+            request: The incoming HTTP request containing 'username' and 'password'.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a JWT and a 200 OK status on successful login.
+            Returns a 401 Unauthorized status if credentials are invalid.
+            Returns a 500 Internal Server Error if token creation fails.
+        """
         self.debug("Logging in...")
         user = self.__get_user(request.data['username'], request.data['password'])
         
@@ -50,27 +106,15 @@ class LoginView(Logger, APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
-        current_time_utc = datetime.now(timezone.utc)
+        token_data = JwtToken().create(user)
+        if token_data is None:
+            self.debug("JWT token creation failed")
+            message = Messages.Post.login_failed()
+            self.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
-        jtw_payload = {
-            'user_id': user.id,
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'exp': current_time_utc + timedelta(days=1),
-            'iat': current_time_utc
-        }
-        
-        token = jwt.encode(
-            jtw_payload,
-            JWT_SECRET,
-            algorithm=JWT_ALGORITHM
-        )
-        
-        data = {
-            'token': token,
-            'payload': jtw_payload,
-        }
-        
-        
-        return Response(status=status.HTTP_200_OK, data=data)
+        self.debug("User logged in.")
+        return Response(status=status.HTTP_200_OK, data=token_data)

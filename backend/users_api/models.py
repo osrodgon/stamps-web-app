@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 
 class UserCollection(models.Model):
@@ -28,4 +29,22 @@ class UserCollection(models.Model):
     
     def __str__(self):
         return self.username
+    
+class UserToken(models.Model):
+    """
+    Represents a JWT token associated with a user.
+
+    Attributes:
+        user (OneToOneField): A one-to-one relationship to the UserCollection model.
+        jti  (UUIDField):     A unique identifier for the token.
+    """
+    user = models.OneToOneField(UserCollection, on_delete=models.CASCADE, related_name='token')
+    jti = models.UUIDField(unique=True, default=uuid.uuid4)
+    
+    class Meta:
+        verbose_name = "User Token"
+        verbose_name_plural = "User Tokens"
+
+    def __str__(self):
+        return f"Token for {self.user.username}"
     

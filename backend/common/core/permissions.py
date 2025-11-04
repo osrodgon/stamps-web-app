@@ -7,13 +7,12 @@ from rest_framework.exceptions import PermissionDenied
 from _backend.settings import USER_VIEWS
 from common.api.messages import Messages
 from common.log.logger import Logger
-from users_api.models import UserCollection
-
-import base64
+from common.core.jwt_token import JwtToken
 
 class HasSpecificKeyName(Logger, HasAPIKey):
     def __check_api_key_is_valid(self, key):
         try:
+            self.debug("Checking API Key...")
             APIKey.objects.get_from_key(key)
         except APIKey.DoesNotExist:
             self.error("API Key not found.")
@@ -23,10 +22,11 @@ class HasSpecificKeyName(Logger, HasAPIKey):
         self.debug("User authenticated with API Key.")
         
     def __check_jwt_is_valid(self, key):
-        self.error("JWT not supported.")
-        raise PermissionDenied(
-            Messages.Auth.not_supported()
-        )
+        if (JwtToken().validate(key) is None):
+            self.error("JWT not valid.")
+            raise PermissionDenied(
+                Messages.Auth.invalid_jwt()
+            )
         
     def __apply_permissions(self, view, key):
         if key == getenv("X_API_MASTER_KEY"):
@@ -34,7 +34,7 @@ class HasSpecificKeyName(Logger, HasAPIKey):
             return True
         
         if view.__class__.__name__ in USER_VIEWS:
-            self.debug("User authenticated with user key/hash.")
+            self.debug("User authenticated with user token.")
             return True
         
         self.error("User authenticated, but not authorized.")

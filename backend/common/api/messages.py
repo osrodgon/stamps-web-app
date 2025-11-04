@@ -108,6 +108,8 @@ class Messages:
         def login_failed():
             return "Login failed username and/or password do not match."
         
+        def logoff():
+            return "Logoff successful."
 
     class Put:
         def update_one(table_name, id, payload):
@@ -136,12 +138,12 @@ class Messages:
         def deleted_one(table_name, id):
             return f"Successfully deleted {table_name.lower()} with id: {id}."
         
-    class Auth:
-        # def invalid_type():
-        #     return "Invalid authentication type."
-        
+    class Auth:      
         def invalid_api_key():
             return "Invalid api key."
+        
+        def invalid_jwt():
+            return "Invalid jwt token."
         
         def invalid_format():
             return "Header content has an invalid format."

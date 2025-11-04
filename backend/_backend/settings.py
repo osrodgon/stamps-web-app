@@ -52,6 +52,7 @@ USER_VIEWS = [
     "ConditionTypesByIdView",
     "LocationsView",
     "LocationsByIdView",
+    "LogoffView"
 ]
 
 # API endpoints
