@@ -1,6 +1,17 @@
 from django.db import models
 
 class Config(models.Model):
+    """Represents a configuration setting in the application.
+
+    This model stores key-value pairs for application settings. Settings can be
+    global or user-specific, linked via the `user` ForeignKey.
+
+    Attributes:
+        user (ForeignKey):  An optional link to a `UserCollection` instance for
+                            user-specific settings.
+        property (CharField): The unique name of the configuration property (key).
+        value (CharField): The value of the configuration property.
+    """
     user = models.ForeignKey(
         'users_api.UserCollection',
         on_delete=models.CASCADE,

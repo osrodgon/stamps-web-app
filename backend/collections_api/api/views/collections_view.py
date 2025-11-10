@@ -15,6 +15,12 @@ from users_api.models import UserCollection
 
 
 class CollectionsView(Logger, APIView):
+    """Manages bulk API operations for Collection instances.
+
+    This view handles the retrieval of all collections (GET) and the
+    creation of a new collection (POST). It filters collections based on the
+    authenticated user.
+    """
     serializer_class = CollectionResponseSerializer
     
     @extend_schema(
@@ -46,7 +52,17 @@ class CollectionsView(Logger, APIView):
             )
         }
     )
-    def get(self, request:Request, *args, **kwargs) -> Response:
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve all collections for the authenticated user.
+
+        Optionally filters collections by a `username` query parameter.
+
+        Args:
+            request (Request): The incoming HTTP request.
+
+        Returns:
+            Response: A DRF Response object containing a list of serialized collections.
+        """
         self.debug(Messages.Get.retrieve_all("collections"))
         username = request.query_params.get('username')
 
@@ -85,8 +101,8 @@ class CollectionsView(Logger, APIView):
             )
         }
     )
-    def post(self, request:Request, *args, **kwargs) -> Response:
         # TODO. This need to be fixed. User is not in the API-KEY
+    def post(self, request:Request, *args, **kwargs) -> Response:
         password_hash = request.META.get('HTTP_X_API_KEY')
         user = self.__get_user(password_hash)
         self.debug(Messages.Post.create_one("collection", request.data))
@@ -114,9 +130,16 @@ class CollectionsView(Logger, APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-    def __get_user(self, password_hash):
+    def __get_user(self, password_hash: str) -> UserCollection:
+        """Retrieves a user by their API key (password_hash).
+
+        Args:
+            password_hash (str): The API key from the request header.
+
+        Returns:
+            UserCollection: The user instance if found, otherwise None.
+        """
         try:
             return UserCollection.objects.get(password_hash=password_hash)
         except UserCollection.DoesNotExist:
             return None
-

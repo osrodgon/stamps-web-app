@@ -16,9 +16,23 @@ from collections_api.api.serializers.collection_response_serializer import Colle
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
 
 class CollectionsByIdView(Logger, APIView):
+    """Manages API operations for a single Collection instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Collection` object, identified by its primary key (`pk`)
+    provided in the URL. Access is restricted to the owner of the collection.
+    """
     serializer_class = CollectionResponseSerializer
 
-    def _get_object(self, pk: int) -> Collection:
+    def __get_object(self, pk: int) -> Collection:
+        """Retrieves a Collection instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the collection to retrieve.
+
+        Returns:
+            Collection: The found collection instance, or None if it does not exist.
+        """
         try:
             self.debug(Messages.Database.querying("collection", pk))
             return Collection.objects.get(pk=pk)
@@ -53,8 +67,18 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single collection.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the collection to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized collection
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("collection", pk))
-        collection = self._get_object(pk)
+        collection = self.__get_object(pk)
         
         if collection is None:
             message = Messages.Get.not_found("collection", pk)
@@ -101,8 +125,18 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing collection.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the collection to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("collection", pk, request.data))
-        collection = self._get_object(pk)
+        collection = self.__get_object(pk)
         if collection is None:
             message = Messages.Put.not_found("collection", pk)
             self.warning(message)
@@ -154,8 +188,18 @@ class CollectionsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a collection.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the collection to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("collection", pk))
-        collection = self._get_object(pk)
+        collection = self.__get_object(pk)
         if collection is None:
             message = Messages.Delete.not_found("collection", pk)
             self.warning(message)

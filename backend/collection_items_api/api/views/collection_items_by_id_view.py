@@ -2,7 +2,6 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema
 
 from common.api.messages import Messages
@@ -15,9 +14,27 @@ from collection_items_api.api.serializers.collection_items_request_serializer im
 
 
 class CollectionItemsByIdView(Logger, APIView):
+    """Manages API operations for a single CollectionItem instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `CollectionItem` object, identified by its primary key (`pk`)
+    provided in the URL.
+
+    It uses `CollectionItemsRequestSerializer` for validating incoming data on
+    updates and `CollectionItemsResponseSerializer` for formatting the outgoing
+    response.
+    """
     serializer_class = CollectionItemsResponseSerializer
 
-    def _get_object(self, pk: int) -> CollectionItem:
+    def __get_object(self, pk: int) -> CollectionItem:
+        """Retrieves a CollectionItem instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the collection item to retrieve.
+
+        Returns:
+            CollectionItem: The found collection item instance, or None if it does not exist.
+        """
         try:
             self.debug(Messages.Database.querying("collection item", pk))
             return CollectionItem.objects.get(pk=pk)
@@ -51,8 +68,18 @@ class CollectionItemsByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single collection item.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the collection item to retrieve.
+
+        Returns:
+            Response:   A DRF Response object containing the serialized collection
+                        item data and a 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("collection item", pk))
-        collection_item = self._get_object(pk)
+        collection_item = self.__get_object(pk)
 
         if collection_item is None:
             message = Messages.Get.not_found("collection item", pk)
@@ -96,8 +123,20 @@ class CollectionItemsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing collection item.
+
+        This method allows for partial updates (`partial=True`).
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the collection item to update.
+
+        Returns:
+            Response:   A DRF Response with the updated item data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("collection item", pk, request.data))
-        collection_item = self._get_object(pk)
+        collection_item = self.__get_object(pk)
 
         if collection_item is None:
             message = Messages.Put.not_found("collection item", pk)
@@ -139,8 +178,18 @@ class CollectionItemsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a collection item.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the collection item to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("collection item", pk))
-        collection_item = self._get_object(pk)
+        collection_item = self.__get_object(pk)
         if collection_item is None:
             message = Messages.Delete.not_found("collection item", pk)
             self.warning(message)

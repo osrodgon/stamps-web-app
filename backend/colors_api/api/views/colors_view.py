@@ -14,6 +14,11 @@ from colors_api.api.serializers.color_response_serializer import ColorResponseSe
 from colors_api.api.serializers.color_request_serializer import ColorRequestSerializer
 
 class ColorsView(Logger, APIView):
+    """Manages bulk API operations for Color instances.
+
+    This view handles the retrieval of all colors (GET) and the creation
+    of a new color (POST).
+    """
     serializer_class = ColorResponseSerializer
     
     @extend_schema(
@@ -37,6 +42,15 @@ class ColorsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve all colors.
+
+        Args:
+            request (Request): The incoming HTTP request.
+
+        Returns:
+            Response:   A DRF Response object containing a list of all serialized
+                        color objects and a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("colors"))
         colors = Color.objects.all()
         self.debug(Messages.Get.retrieved_all("colors", colors.count()))
@@ -74,6 +88,16 @@ class ColorsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """Handles POST requests to create a new color.
+
+        Args:
+            request (Request):  The incoming HTTP request containing the data for
+                                the new color.
+
+        Returns:
+            Response:   A DRF Response with the newly created color's data and a
+                        201 Created status, or a 400 Bad Request on validation error.
+        """
         self.debug(Messages.Post.create_one("color", request.data))
         color = ColorRequestSerializer(data = request.data)
         

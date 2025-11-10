@@ -14,9 +14,24 @@ from years_api.api.serializers.year_request_serializer import YearRequestSeriali
 
 
 class YearsByIdView(Logger, APIView):
+    """
+    API view for handling individual Year instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    year identified by its primary key.
+    """
     serializer_class = YearResponseSerializer
     
     def __get_year__(self, pk: int) -> Year:
+        """
+        Helper method to retrieve a Year object by its primary key.
+
+        Args:
+            pk: The primary key of the year to retrieve.
+
+        Returns:
+            The Year instance if found, otherwise None.
+        """
         try:
             Messages.Database.querying("year", pk)
             return Year.objects.get(pk=pk)
@@ -50,6 +65,19 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single year by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the year to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized year data with a
+            200 OK status, or a 404 Not Found if the year does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("year", pk))
         year = self.__get_year__(pk)
         
@@ -101,6 +129,20 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing year.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the year to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated year data and a 200 OK status
+            if successful. Returns a 404 Not Found if the year does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("year", pk, request.data))
         year = self.__get_year__(pk)
         if year is None:
@@ -153,6 +195,19 @@ class YearsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a year.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the year to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the year does not exist.
+        """
         self.debug(Messages.Delete.delete_one("year", pk))
         year = self.__get_year__(pk)
         if year is None:
