@@ -1,3 +1,4 @@
+from email import message
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -5,6 +6,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
 from common.api.messages import Messages
+from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 from common.core.jwt_token import JwtToken
 from common.core.schemas import standardized_response
 from common.log.logger import Logger
@@ -22,11 +24,14 @@ class LogoffView(Logger, APIView):
     deleting the associated token record from the database, preventing
     its further use for authentication.
     """
+    authentication_classes = []
+    permission_classes = []
+    
     @extend_schema(
         operation_id="logoff_users",
         tags=['User Management'],
         summary="Logoff a user from the system",
-        description="Logoff a user from the system.",
+        description="Logoff a user from the system. A valid Authoriztion header must be provided.",
         request=LogoffRequestSerializer,
         responses={
             200: standardized_response(
@@ -35,17 +40,23 @@ class LogoffView(Logger, APIView):
                 description="The user was logged off successfully.",
                 many=True
                 ),
+            400: standardized_response(
+                LogoffResponseSerializer,
+                name="LogoffBadRequest",
+                success=False,
+                description="The user was not logged off. Header missing or invalid format."
+                ),
             401: standardized_response(
                 LogoffResponseSerializer,
                 name="LogoffUnauthorized",
                 success=False,
-                description="The user was not logged off. Token is invalid or already invalidated."
+                description="The user was not logged off. Token is invalid or already invalidated or user does not exist."
                 ),
-            403: standardized_response(
+            500: standardized_response(
                 LogoffResponseSerializer,
-                name="LogoffForbidden",
+                name="LogoffInternalServerError",
                 success=False,
-                description="The user was not logged off. Permission denied."
+                description="The user was not logged off. An error occurred while logging off."
                 )
         }
     )
@@ -59,7 +70,7 @@ class LogoffView(Logger, APIView):
 
         Args:
             request:    The incoming HTTP request, which should contain the
-                        Authorization header with a bearer JWT.
+                        Authorization header with a jwt Token.
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
 
@@ -68,13 +79,58 @@ class LogoffView(Logger, APIView):
             the logoff was successful. Returns a 401 Unauthorized status if
             the token is invalid or already invalidated.
         """
-        token = request.headers.get('Authorization').split(' ')[1]
+        self.debug("Logging off...")
+        
+        header = request.headers.get('Authorization')
+        if header is None:
+            message = Messages.Auth.header_missing()
+            self.debug(message)
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data=GenericResponseSerializer(GenericResponse(message)).data
+            )
+        
+        try: 
+            jwt, token = header.split(' ')
+            if jwt.lower() != "jwt":
+                message = Messages.Auth.not_supported()
+                self.debug(message)
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    data=GenericResponseSerializer(GenericResponse(message)).data
+                )
+        except Exception as e:
+            message = Messages.Auth.invalid_format()
+            self.debug(message)
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data=GenericResponseSerializer(GenericResponse(message)).data
+            )
+        
         token_data = JwtToken().validate(token)
         
+        if token_data is None:
+            message = Messages.Auth.invalid_jwt()
+            self.debug(message)
+            return Response(
+                status=status.HTTP_401_UNAUTHORIZED, 
+                data=GenericResponseSerializer(GenericResponse(message)).data
+            )
+        
         try:
-            UserToken.objects.get(user=token_data['user_id'], jti=token_data['jti']).delete()
-            return Response(status=status.HTTP_200_OK, data=Messages.Post.logoff())
+            user_token = UserToken.objects.get(user=token_data['user_id'], jti=token_data['jti'])
+            user_token.delete()
+            self.debug("User logged off.")
+            return Response(
+                status=status.HTTP_200_OK, 
+                data=Messages.Post.logoff()
+            )
         
         except UserToken.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED, data=Messages.Auth.invalid_jwt())
+            message = Messages.Auth.user_not_found()
+            self.debug(message)
+            return Response(
+                status=status.HTTP_401_UNAUTHORIZED, 
+                data=GenericResponseSerializer(GenericResponse(message)).data
+            )
         

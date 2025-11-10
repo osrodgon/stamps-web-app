@@ -39,14 +39,14 @@ class LoginView(Logger, APIView):
             The UserCollection instance if the user exists and the password is
             correct, otherwise None.
         """
-        try:
+        try: 
             self.debug("Querying database for user...")
             user = UserCollection.objects.get(username=username)
-        except UserCollection.DoesNotExist:
+        except UserCollection.DoesNotExist: ## Check this
             self.debug("User not found")
             return None
         
-        if check_password(password, user.password_hash):
+        if check_password(password, user.password_hash): ## Check this
             self.debug("User found and validated.")
             return user
         
@@ -57,7 +57,7 @@ class LoginView(Logger, APIView):
         operation_id="login_users",
         tags=['User Management'],
         summary="Logs a user into the system",
-        description="Returs token information to be used in future requests.",
+        description="Returns token information to be used in future requests.",
         request=LoginRequestSerializer,
         responses={
             200: standardized_response(
@@ -66,7 +66,13 @@ class LoginView(Logger, APIView):
                 description="The user was logged in successfully.",
                 many=True
                 ),
-            403: standardized_response(
+            400: standardized_response(
+                LoginResponseSerializer,
+                name="LoginForbiddenBadRequest",
+                success=False,
+                description="The payload is not valid."
+                ),
+            401: standardized_response(
                 LoginResponseSerializer,
                 name="LoginForbidden",
                 success=False,
@@ -76,7 +82,7 @@ class LoginView(Logger, APIView):
                 LoginResponseSerializer,
                 name="LoginFailed",
                 success=False,
-                description="An error occurred while logging in."
+                description="The user was not logged in. An error occurred while logging in."
                 )
         }
     )
@@ -95,26 +101,37 @@ class LoginView(Logger, APIView):
             Returns a 500 Internal Server Error if token creation fails.
         """
         self.debug("Logging in...")
-        user = self.__get_user(request.data['username'], request.data['password'])
         
-        if user is None:
-            self.debug("User not found")
-            message = Messages.Post.login_failed()
-            self.warning(message)
+        serializer = LoginRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            user = self.__get_user(request.data['username'], request.data['password'])
+        
+            if user is None:
+                self.debug("User not found")
+                message = Messages.Post.login_failed()
+                self.warning(message)
+                return Response(
+                    data=GenericResponseSerializer(GenericResponse(message)).data,
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            token_data = JwtToken().create(user)
+            if token_data is None:
+                self.debug("JWT token creation failed")
+                message = Messages.Post.login_failed()
+                return Response(
+                    status=status.HTTP_401_UNAUTHORIZED,
+                    data=GenericResponseSerializer(GenericResponse(message)).data
+                )
+            
+            self.debug("User logged in.")
             return Response(
-                data=GenericResponseSerializer(GenericResponse(message)).data,
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_200_OK, 
+                data=token_data
             )
-        
-        token_data = JwtToken().create(user)
-        if token_data is None:
-            self.debug("JWT token creation failed")
-            message = Messages.Post.login_failed()
-            self.warning(message)
+        else:
+            self.debug("Invalid payload")
             return Response(
-                data=GenericResponseSerializer(GenericResponse(message)).data,
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_400_BAD_REQUEST,
+                data = GenericResponseSerializer(GenericResponse(serializer.errors)).data
             )
-        
-        self.debug("User logged in.")
-        return Response(status=status.HTTP_200_OK, data=token_data)

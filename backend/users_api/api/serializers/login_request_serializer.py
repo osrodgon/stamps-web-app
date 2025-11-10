@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-class LoginRequestSerializer(serializers.Serializer):
+from common.api.serializers.generic_serializer import GenericSerializer
+
+class LoginRequestSerializer(GenericSerializer, serializers.Serializer):
     """
     Serializer for handling user login requests.
 
