@@ -4,6 +4,12 @@ from issues_api.models import Issue
 
 
 class IssueRequestSerializer(GenericSerializer, serializers.ModelSerializer):
+    """
+    Serializer for creating and updating Issue instances.
+
+    This serializer handles the validation and deserialization of incoming
+    data for creating or updating an issue.
+    """
     class Meta:
         model = Issue
         fields = [

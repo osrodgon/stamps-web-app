@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -25,6 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
+
+JWT_SECRET = SECRET_KEY 
+JWT_ALGORITHM = 'HS256'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,8 +48,11 @@ USER_VIEWS = [
     "CollectionsByIdView",
     "CollectionItemsView",
     "CollectionItemsByIdView",
+    "ConditionTypesView",
+    "ConditionTypesByIdView",
     "LocationsView",
     "LocationsByIdView",
+    "LogoffView"
 ]
 
 # API endpoints
@@ -62,6 +69,9 @@ COLLECTIONS_ENDPOINT="collections/"
 COLLECTION_ITEMS_ENDPOINT="collection_items/"
 CONDITION_TYPES_ENDPOINT="condition_types/"
 USERS_ENDPOINT = "users/"
+HEALTH_ENDPOINT = "health/"
+LOGIN_ENDPOINT = "login/"
+LOGOFF_ENDPOINT = "logoff/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -85,6 +95,8 @@ COLLECTIONS_URL_V1=f"{SERVER_URL_V1}{COLLECTIONS_ENDPOINT}"
 COLLECTION_ITEMS_URL_V1=f"{SERVER_URL_V1}{COLLECTION_ITEMS_ENDPOINT}"
 CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
+LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
+LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
 
 # Application definition
 
@@ -110,7 +122,8 @@ INSTALLED_APPS = [
     "collections_api",      # All APIs for the table collection
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
-    "users_api"             # All APIs for the table user
+    "users_api",            # All APIs for the table user
+    "health_api"            # All APIs for checking the system health
 ]
 
 REST_FRAMEWORK = {

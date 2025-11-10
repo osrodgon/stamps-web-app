@@ -49,27 +49,86 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
         
-    def test_get_all_issues_returns_403_invalid_key(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+    def test_get_all_issues_returns_403_header_missing(self, api_client):
         response = api_client.get(self.__get_url())
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.header_missing()
+        assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_all_issues_returns_403_invalid_format(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.invalid_format())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_format()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        
-    def test_get_all_issues_returns_403_invalid_user(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+
+    def test_get_all_issues_returns_403_auth_type_not_supported(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.not_supported())
         response = api_client.get(self.__get_url())
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_supported()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_all_issues_returns_403_invalid_api_key(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.invalid_api_key())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_api_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_all_issues_returns_403_not_enough_rights(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.not_enough_rights())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_enough_rights()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_all_issues_returns_403_basic_auth_user_or_password_invalid(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_or_password_invalid()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_all_issues_returns_403_basic_auth_user_not_found(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.user_not_found())
+        response = api_client.get(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_not_found()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
@@ -119,27 +178,87 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['field'] == 'new_field'
         assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-    def test_post_issue_returns_403_invalid_key(self, api_client, issue_post_payload_ok):
-        self.permission(granted=False, message=Messages.APIKey.invalid_key())
-        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+    def test_post_issue_returns_403_header_missing(self, api_client):
+        response = api_client.post(self.__get_url())
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.header_missing()
+        assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_post_issue_returns_403_invalid_format(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.invalid_format())
+        response = api_client.post(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_format()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        
-    def test_post_issue_returns_403_invalid_user(self, api_client, issue_post_payload_ok):
-        self.permission(granted=False, message=Messages.APIKey.invalid_user())
-        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+    def test_post_issue_returns_403_auth_type_not_supported(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.not_supported())
+        response = api_client.post(self.__get_url())
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_supported()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_post_issue_returns_403_invalid_api_key(self, api_client, issue_post_payload_ok):
+        self.permission(granted=False, message=Messages.Auth.invalid_api_key())
+        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_api_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_post_issue_returns_403_not_enough_rights(self, api_client, issue_post_payload_ok):
+        self.permission(granted=False, message=Messages.Auth.not_enough_rights())
+        response = api_client.post(self.__get_url(), issue_post_payload_ok, format='json')
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_enough_rights()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_post_issue_returns_403_basic_auth_user_or_password_invalid(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
+        response = api_client.post(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_or_password_invalid()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_post_issue_returns_403_basic_auth_user_not_found(self, api_client):
+        self.permission(granted=False, message=Messages.Auth.user_not_found())
+        response = api_client.post(self.__get_url())
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_not_found()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN 
         
@@ -167,8 +286,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['data']['name'] == issues_table[0].name
         assert response.status_code == status.HTTP_200_OK
         
-    def test_get_one_issue_returns_403_invalid_key(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+    def test_get_one_issue_returns_403_header_missing(self, api_client, issues_table):
         issue_id = issues_table[0].id
         response = api_client.get(f"{self.__get_url()}{issue_id}/")
 
@@ -176,12 +294,25 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.header_missing()
+        assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_one_issue_returns_403_invalid_format(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.invalid_format())
+        issue_id = issues_table[0].id
+        response = api_client.get(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_format()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        
-    def test_get_one_issue_returns_403_invalid_user(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+
+    def test_get_one_issue_returns_403_auth_type_not_supported(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.not_supported())
         issue_id = issues_table[0].id
         response = api_client.get(f"{self.__get_url()}{issue_id}/")
 
@@ -189,7 +320,59 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_supported()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_one_issue_returns_403_invalid_api_key(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.invalid_api_key())
+        issue_id = issues_table[0].id
+        response = api_client.get(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_api_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_one_issue_returns_403_not_enough_rights(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.not_enough_rights())
+        issue_id = issues_table[0].id
+        response = api_client.get(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_enough_rights()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_one_issue_returns_403_basic_auth_user_or_password_invalid(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
+        issue_id = issues_table[0].id
+        response = api_client.get(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_or_password_invalid()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_one_issue_returns_403_basic_auth_user_not_found(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_not_found())
+        issue_id = issues_table[0].id
+        response = api_client.get(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_not_found()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
     
@@ -241,30 +424,94 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.field_not_allowed()
         assert response.json()['errors'][0]['code'] == Messages.Code.invalid()
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        
-    def test_put_issue_returns_403_invalid_key(self, api_client, issues_table, issue_put_payload_ok):
-        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+
+    def test_put_issue_returns_403_header_missing(self, api_client, issues_table):
         issue_id = issues_table[0].id
-        response = api_client.put(f"{self.__get_url()}{issue_id}/", issue_put_payload_ok)
-        
+        response = api_client.put(f"{self.__get_url()}{issue_id}/")
+
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.header_missing()
+        assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_issue_returns_403_invalid_format(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.invalid_format())
+        issue_id = issues_table[0].id
+        response = api_client.put(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_format()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        
-    def test_put_issue_returns_403_invalid_user(self, api_client, issues_table, issue_put_payload_ok):
-        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+
+    def test_put_issue_returns_403_auth_type_not_supported(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.not_supported())
         issue_id = issues_table[0].id
-        response = api_client.put(f"{self.__get_url()}{issue_id}/", issue_put_payload_ok)
-        
+        response = api_client.put(f"{self.__get_url()}{issue_id}/")
+
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_supported()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_issue_returns_403_invalid_api_key(self, api_client, issues_table, issue_put_payload_ok):
+        self.permission(granted=False, message=Messages.Auth.invalid_api_key())
+        issue_id = issues_table[0].id
+        response = api_client.put(f"{self.__get_url()}{issue_id}/", issue_put_payload_ok)
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_api_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_issue_returns_403_not_enough_rights(self, api_client, issues_table, issue_put_payload_ok):
+        self.permission(granted=False, message=Messages.Auth.not_enough_rights())
+        issue_id = issues_table[0].id
+        response = api_client.put(f"{self.__get_url()}{issue_id}/", issue_put_payload_ok)
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_enough_rights()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_issue_returns_403_basic_auth_user_or_password_invalid(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
+        issue_id = issues_table[0].id
+        response = api_client.put(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_or_password_invalid()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_issue_returns_403_basic_auth_user_not_found(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_not_found())
+        issue_id = issues_table[0].id
+        response = api_client.put(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_not_found()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         
@@ -305,29 +552,93 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['data']['message'] == Messages.Delete.deleted_one("issue", issue_id)
         assert response.status_code == status.HTTP_200_OK
         
-    def test_delete_issue_returns_403_invalid_key(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_key())
+    def test_delete_issue_returns_403_header_missing(self, api_client, issues_table):
         issue_id = issues_table[0].id
         response = api_client.delete(f"{self.__get_url()}{issue_id}/")
-        
+
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_key()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.header_missing()
+        assert response.json()['errors'][0]['code'] == Messages.Code.authentication_failed()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_issue_returns_403_invalid_format(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.invalid_format())
+        issue_id = issues_table[0].id
+        response = api_client.delete(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_format()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        
-    def test_delete_issue_returns_403_invalid_user(self, api_client, issues_table):
-        self.permission(granted=False, message=Messages.APIKey.invalid_user())
+
+    def test_delete_issue_returns_403_auth_type_not_supported(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.not_supported())
         issue_id = issues_table[0].id
         response = api_client.delete(f"{self.__get_url()}{issue_id}/")
-        
+
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] == 'detail'
-        assert response.json()['errors'][0]['message'] == Messages.APIKey.invalid_user()
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_supported()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_issue_returns_403_invalid_api_key(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.invalid_api_key())
+        issue_id = issues_table[0].id
+        response = api_client.delete(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.invalid_api_key()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_issue_returns_403_not_enough_rights(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.not_enough_rights())
+        issue_id = issues_table[0].id
+        response = api_client.delete(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == "detail"
+        assert response.json()['errors'][0]['message'] == Messages.Auth.not_enough_rights()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_issue_returns_403_basic_auth_user_or_password_invalid(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_or_password_invalid())
+        issue_id = issues_table[0].id
+        response = api_client.delete(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_or_password_invalid()
+        assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_issue_returns_403_basic_auth_user_not_found(self, api_client, issues_table):
+        self.permission(granted=False, message=Messages.Auth.user_not_found())
+        issue_id = issues_table[0].id
+        response = api_client.delete(f"{self.__get_url()}{issue_id}/")
+
+        assert response.json()['success'] == False
+        assert response.json()['message'] == Messages.failed()
+        assert response.json()['data'] == None
+        assert response.json()['errors'][0]['field'] == 'detail'
+        assert response.json()['errors'][0]['message'] == Messages.Auth.user_not_found()
         assert response.json()['errors'][0]['code'] == Messages.Code.permission_denied()
         assert response.status_code == status.HTTP_403_FORBIDDEN
         

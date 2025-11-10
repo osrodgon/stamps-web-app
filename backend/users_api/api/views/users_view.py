@@ -14,6 +14,11 @@ from users_api.api.serializers.user_response_serializer import UserResponseSeria
 from users_api.api.serializers.user_request_serializer import UserRequestSerializer
 
 class UsersView(Logger, APIView):
+    """
+    API view for handling collections of UserCollection instances.
+
+    This view provides GET (list) and POST (create) operations for users.
+    """
     serializer_class = UserResponseSerializer
     
     @extend_schema(
@@ -37,6 +42,18 @@ class UsersView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all users.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized users
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("collection users"))
         users = UserCollection.objects.all()
         self.debug(Messages.Get.retrieved_all("collection users", users.count()))
@@ -74,6 +91,20 @@ class UsersView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new user.
+
+        The user's password is automatically hashed before saving.
+
+        Args:
+            request: The incoming HTTP request containing the new user data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created user data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Post.create_one("collection user", request.data))
         serializer = UserRequestSerializer(data=request.data)
         if serializer.is_valid():

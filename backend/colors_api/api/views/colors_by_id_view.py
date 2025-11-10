@@ -15,8 +15,22 @@ from colors_api.api.serializers.color_request_serializer import ColorRequestSeri
 
 
 class ColorsByIdView(Logger, APIView):
+    """Manages API operations for a single Color instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Color` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = ColorResponseSerializer
     def __get_color(self, pk: int) -> Color:
+        """Retrieves a Color instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the color to retrieve.
+
+        Returns:
+            Color: The found color instance, or None if it does not exist.
+        """
         try:
             self.debug(Messages.Database.querying("color", pk))
             return Color.objects.get(pk=pk)
@@ -50,6 +64,16 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single color.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the color to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized color
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("color", pk))
         color = self.__get_color(pk)
         
@@ -101,6 +125,16 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing color.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the color to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("color", pk, request.data))
         color = self.__get_color(pk)
         if color is None:
@@ -153,6 +187,16 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a color.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the color to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("color", pk))
         color = self.__get_color(pk)
         if color is None:

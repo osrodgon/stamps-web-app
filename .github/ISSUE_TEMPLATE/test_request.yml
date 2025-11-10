@@ -3,21 +3,12 @@ description: Add unit test
 title: "[Test]: "
 labels: ["unit test"]
 assignees: []
-projects: [osrodgon/1]
 
 body:
   - type: markdown
     attributes:
       value: |
         Please complete the following information to describe your proposal
-
-  - type: input
-    id: test_title
-    attributes:
-      label: Unit Test title
-      placeholder: Brief description of test or tests
-    validations:
-      required: true
 
   - type: textarea
     id: test_description
@@ -27,14 +18,4 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      options:
-        - High
-        - Medium
-        - Low
-    validations:
-      required: true
 

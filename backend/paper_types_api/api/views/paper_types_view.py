@@ -15,6 +15,11 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 
 
 class PaperTypesView(Logger, APIView):
+    """
+    API view for handling collections of PaperType instances.
+
+    This view provides GET (list) and POST (create) operations for paper types.
+    """
     serializer_class = PaperTypeResponseSerializer
     
     @extend_schema(
@@ -38,6 +43,18 @@ class PaperTypesView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all paper types.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized paper types
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("paper types"))
         paper_types = PaperType.objects.all()
         self.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
@@ -75,6 +92,19 @@ class PaperTypesView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new paper type.
+
+        Args:
+            request: The incoming HTTP request containing the new paper type data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created paper type data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("paper type", request.data))
         paper_type = PaperTypeRequestSerializer(data = request.data)
         

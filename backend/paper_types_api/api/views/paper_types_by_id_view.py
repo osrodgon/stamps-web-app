@@ -15,9 +15,24 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 
 
 class PaperTypesByIdView(Logger, APIView):
+    """
+    API view for handling individual PaperType instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    paper type identified by its primary key.
+    """
     serializer_class = PaperTypeResponseSerializer
     
     def __get_paper_type(self, pk: int) -> PaperType:
+        """
+        Helper method to retrieve a PaperType object by its primary key.
+
+        Args:
+            pk: The primary key of the paper type to retrieve.
+
+        Returns:
+            The PaperType instance if found, otherwise None.
+        """
         try:
             Messages.Database.querying("PaperType", pk)
             return PaperType.objects.get(pk=pk)
@@ -51,6 +66,19 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single paper type by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the paper type to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized paper type data with a
+            200 OK status, or a 404 Not Found if the paper type does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("paper type", pk))
         paper_type = self.__get_paper_type(pk)
         
@@ -102,6 +130,20 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing paper type.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the paper type to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated paper type data and a 200 OK status
+            if successful. Returns a 404 Not Found if the paper type does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("paper type", pk, request.data))
         paper_type = self.__get_paper_type(pk)
         if paper_type is None:
@@ -154,6 +196,19 @@ class PaperTypesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a paper type.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the paper type to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the paper type does not exist.
+        """
         self.debug(Messages.Delete.delete_one("paper type", pk))
         paper_type = self.__get_paper_type(pk)
         if paper_type is None:

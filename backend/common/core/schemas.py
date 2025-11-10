@@ -23,20 +23,20 @@ def standardized_response(serializer_class, many=False, success = True, name=Non
 
     Args:
         serializer_class: The DRF serializer class for the main payload.
-        many (bool): Set to True if the 'data' field should be an array
-                     of serialized objects. Defaults to False.
+        many (bool):    Set to True if the 'data' field should be an array
+                        of serialized objects. Defaults to False.
         success (bool): Determines the schema type. True for success responses
                         (data is serialized), False for error responses
                         (errors are serialized). Defaults to True.
-        name (str, optional): A custom name for the generated inline
-                              serializer in the OpenAPI schema. If None, a
-                              name is auto-generated. Defaults to None.
-        description (str, optional): A description for the `OpenApiResponse`.
-                                     Defaults to a generic message.
+        name (str, optional):   A custom name for the generated inline
+                                serializer in the OpenAPI schema. If None, a
+                                name is auto-generated. Defaults to None.
+        description (str, optional):    A description for the `OpenApiResponse`.
+                                        Defaults to a generic message.
 
     Returns:
-        OpenApiResponse: A drf-spectacular response object configured with
-                         the standardized schema.
+        OpenApiResponse:    A drf-spectacular response object configured with
+                            the standardized schema.
     """
     wrapper_name = name or f"{serializer_class.__name__}StandardResponse_{'List' if many else 'Single'}"
     if success:
@@ -73,7 +73,7 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
     target_class = 'common.core.authentication.CustomAPIKeyAuthentication' 
     
     # The name used to reference this scheme in the raw schema's SECURITY block.
-    name = 'X_API_Key' 
+    name = 'Auhorization' 
 
     def get_security_definition(self, auto_schema):
         """
@@ -82,6 +82,6 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
         return {
             'type': 'apiKey',     # Specifies this is an API key scheme
             'in': 'header',       # Specifies the key is passed in a header
-            'name': 'X-API-Key',  # The EXACT header name required by your API
-            'description': 'API Key for authenticating requests.',
+            'name': 'Authorization',  # The EXACT header name required by your API
+            'description': 'Use prefix API-Key|JWT <key|token> to authenticate.',
         }

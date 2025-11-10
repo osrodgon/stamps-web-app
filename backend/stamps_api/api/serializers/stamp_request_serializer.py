@@ -4,6 +4,12 @@ from stamps_api.models import Stamp
 
 
 class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
+    """
+    Serializer for creating and updating Stamp instances.
+
+    This serializer handles the validation and deserialization of incoming
+    data for creating or updating a stamp.
+    """
     class Meta:
         model = Stamp
         fields = [

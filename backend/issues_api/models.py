@@ -1,6 +1,26 @@
 from django.db import models
 
 class Issue(models.Model):
+    """
+    Represents a stamp issue.
+
+    An issue is a specific set of one or more stamps released together,
+    often on a particular date to commemorate an event or as part of a
+    definitive series.
+
+    Attributes:
+        year (ForeignKey): The year the issue was released.
+        date (DateField): The specific date of the issue.
+        name (CharField): The name or title of the issue.
+        total_printed (IntegerField): The number of stamps printed for this issue.
+        market_value (DecimalField): The estimated market value.
+        stamp_type (ForeignKey): The type of stamp (e.g., definitive, commemorative).
+        paper_type (ForeignKey): The type of paper used.
+        description (TextField): A detailed description of the issue.
+        country (ForeignKey): The country that released the issue.
+        note (TextField): Additional notes or comments.
+        perforation (CharField): The perforation measurement of the stamps.
+    """
     year = models.ForeignKey(
         'years_api.Year', 
         on_delete=models.CASCADE,

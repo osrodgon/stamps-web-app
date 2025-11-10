@@ -14,6 +14,11 @@ from locations_api.api.serializers.location_request_serializer import LocationRe
 
 
 class LocationsView(Logger, APIView):
+    """
+    API view for handling collections of Location instances.
+
+    This view provides GET (list) and POST (create) operations for locations.
+    """
     serializer_class = LocationResponseSerializer
     
     @extend_schema(
@@ -37,6 +42,18 @@ class LocationsView(Logger, APIView):
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all locations.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized locations
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("locations"))
         locations = Location.objects.all()
         self.debug(Messages.Get.retrieved_all("locations", len(locations)))
@@ -74,6 +91,19 @@ class LocationsView(Logger, APIView):
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new location.
+
+        Args:
+            request: The incoming HTTP request containing the new location data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created location data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("location", request.data))
         location = LocationRequestSerializer(data = request.data)
         

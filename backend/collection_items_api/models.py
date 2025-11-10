@@ -3,6 +3,23 @@
 from django.db import models
 
 class CollectionItem(models.Model):
+    """Represents an individual stamp instance within a user's collection.
+
+    This model acts as a junction table between the `Collection` and `Stamp`
+    models, signifying that a user owns a particular stamp. It also stores
+    metadata specific to the owned item, such as its condition, storage
+    location, acquisition date, and purchase price.
+
+    Attributes:
+        collection (ForeignKey): A reference to the `Collection` this item belongs to.
+        stamp (ForeignKey): A reference to the specific `Stamp` being collected.
+        location (ForeignKey): The physical or logical location where the stamp is stored.
+        condition_type (ForeignKey): The condition of the stamp (e.g., Mint, Used).
+        price_paid (DecimalField): The amount paid for the stamp.
+        acquisition_date (DateField): The date the stamp was acquired.
+        note (TextField): Any personal notes about this specific collection item.
+        quantity (IntegerField): The number of identical stamps owned.
+    """
     collection = models.ForeignKey(
         'collections_api.Collection', 
         on_delete=models.CASCADE,

@@ -15,9 +15,23 @@ from config_api.models import Config
 
 
 class ConfigByIdView(Logger, APIView):
+    """Manages API operations for a single Config instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Config` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = ConfigResponseSerializer
     
     def __get_config(self, pk: int) -> Config:
+        """Retrieves a Config instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the configuration entry to retrieve.
+
+        Returns:
+            Config: The found configuration entry instance, or None if it does not exist.
+        """
         try:
             Messages.Database.querying("config", pk)
             return Config.objects.get(pk=pk)
@@ -51,6 +65,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the configuration entry to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized entry
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("config entry", pk))
         config = self.__get_config(pk)
         if config is None:
@@ -101,6 +125,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the configuration entry to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("config entry", pk, request.data))
         config = self.__get_config(pk)
         
@@ -153,6 +187,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the configuration entry to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(f"Attempting to delete config entry for id: {pk}")
         config = self.__get_config(pk)
         

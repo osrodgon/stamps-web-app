@@ -34,6 +34,16 @@ The `UserCollection` model represents a user of the application.
 
 ---
 
+The `UserToken` model stores a reference to a user's active JSON Web Token.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Integer | The unique identifier for the token entry. |
+| `user` | One-to-One | A reference to the `UserCollection` this token belongs to. |
+| `jti` | UUID | The 'JWT ID', a unique identifier for the token. |
+
+---
+
 ## API Endpoints
 
 ### `GET /users/`
@@ -171,3 +181,53 @@ Permanently deletes a user.
 *   **Error Responses:**
     *   **403 Forbidden:** If the API key is invalid or missing.
     *   **404 Not Found:** If no user with the given ID exists.
+
+---
+
+## Authentication Endpoints
+
+### `POST /users/login/`
+
+Authenticates a user with their username and password and returns a JSON Web Token (JWT) for subsequent authenticated requests.
+
+*   **Summary:** User Login
+*   **Request Body:**
+    A JSON object containing the user's credentials.
+    ```json
+    {
+      "username": "testuser",
+      "password": "a_strong_password"
+    }
+    ```
+*   **Success Response (200 OK):**
+    A JSON object containing the JWT and basic user information.
+    ```json
+    {
+      "token": "generated.jwt.token",
+      "user": {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com"
+      }
+    }
+    ```
+*   **Error Responses:**
+    *   **400 Bad Request:** If credentials are not provided or are invalid.
+    *   **404 Not Found:** If the user does not exist.
+
+### `POST /users/logoff/`
+
+Logs a user out by invalidating their current JSON Web Token. The token must be included in the `Authorization` header.
+
+*   **Summary:** User Logoff
+*   **Headers:**
+    *   `Authorization: jwt <your_jwt_token>`
+*   **Success Response (200 OK):**
+    A confirmation message indicating successful logoff.
+    ```json
+    {
+        "message": "User logged off successfully."
+    }
+    ```
+*   **Error Responses:**
+    *   **401 Unauthorized:** If the JWT is missing, invalid, or expired.

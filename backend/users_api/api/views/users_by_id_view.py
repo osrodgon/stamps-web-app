@@ -15,9 +15,24 @@ from users_api.api.serializers.user_request_serializer import UserRequestSeriali
 
 
 class UsersByIdView(Logger, APIView):
+    """
+    API view for handling individual UserCollection instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    user identified by their primary key.
+    """
     serializer_class = UserResponseSerializer
     
     def __get_user(self, pk: int) -> UserCollection:
+        """
+        Helper method to retrieve a UserCollection object by its primary key.
+
+        Args:
+            pk: The primary key of the user to retrieve.
+
+        Returns:
+            The UserCollection instance if found, otherwise None.
+        """
         try:
             self.debug(Messages.Database.querying("collection user", pk))
             return UserCollection.objects.get(pk=pk)
@@ -51,6 +66,19 @@ class UsersByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single user by their ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the user to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized user data with a
+            200 OK status, or a 404 Not Found if the user does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("collection user", pk))
         user = self.__get_user(pk)
         
@@ -102,6 +130,23 @@ class UsersByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing user.
+
+        If a new password is provided in the request, it will be hashed
+        before the user is updated.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the user to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated user data and a 200 OK status
+            if successful. Returns a 404 Not Found if the user does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("collection user", pk, request.data))
         user = self.__get_user(pk)
         if user is None:
@@ -161,6 +206,19 @@ class UsersByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a user.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the user to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the user does not exist.
+        """
         self.debug(Messages.Delete.delete_one("collection user", pk))
         user = self.__get_user(pk)
         if user is None:
