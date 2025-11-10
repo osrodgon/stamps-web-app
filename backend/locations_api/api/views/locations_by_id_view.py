@@ -14,9 +14,24 @@ from locations_api.api.serializers.location_request_serializer import LocationRe
 
 
 class LocationsByIdView(Logger, APIView):
+    """
+    API view for handling individual Location instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    location identified by its primary key.
+    """
     serializer_class = LocationResponseSerializer
     
     def __get_location(self, pk: int) -> Location:
+        """
+        Helper method to retrieve a Location object by its primary key.
+
+        Args:
+            pk: The primary key of the location to retrieve.
+
+        Returns:
+            The Location instance if found, otherwise None.
+        """
         try:
             Messages.Database.querying("location", pk)
             return Location.objects.get(pk=pk)
@@ -26,16 +41,22 @@ class LocationsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_location",
-        tags=['Locations'],
+        tags=['Collection Management'],
         summary="Retrieve a Location by ID",
         description="Fetches the details of a specific location entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 LocationResponseSerializer,
                 name="LocationRetrieved",
                 description="The requested location's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveLocationNotFound",
                 success=False,
@@ -44,6 +65,19 @@ class LocationsByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single location by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the location to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized location data with a
+            200 OK status, or a 404 Not Found if the location does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("location", pk))
         location = self.__get_location(pk)
         
@@ -64,31 +98,51 @@ class LocationsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_location",
-        tags=['Locations'],
+        tags=['Collection Management'],
         summary="Update a Location",
         description="Updates an existing location entry identified by its ID. A complete payload with all required fields is expected.",
         request=LocationRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 LocationResponseSerializer,
                 name="LocationUpdated",
                 description="The location was updated successfully."
                 ),
-            404: standardized_response(
-                GenericResponseSerializer,
-                name="LocationUpdateNotFound",
-                success=False,
-                description="The location with the specified ID was not found."
-                ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="LocationUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
-                )   
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationUpdateForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="LocationUpdateNotFound",
+                success=False,
+                description="The location with the specified ID was not found."
+            )   
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing location.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the location to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated location data and a 200 OK status
+            if successful. Returns a 404 Not Found if the location does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("location", pk, request.data))
         location = self.__get_location(pk)
         if location is None:
@@ -116,17 +170,23 @@ class LocationsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_location",
-        tags=['Locations'],
+        tags=['Collection Management'],
         summary="Delete a Location",
         description="Deletes a location entry from the. database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="LocationDeleted",
                 success=True,
                 description="The location was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                LocationResponseSerializer,
+                name="LocationDeleteForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="LocationDeleteNotFound",
                 success=False,
@@ -135,6 +195,19 @@ class LocationsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a location.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the location to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the location does not exist.
+        """
         self.debug(Messages.Delete.delete_one("location", pk))
         location = self.__get_location(pk)
         if location is None:

@@ -14,8 +14,13 @@ from issues_api.api.serializers.issue_request_serializer import IssueRequestSeri
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 
 
-@extend_schema(tags=["Issues"])
+@extend_schema(tags=['Database Management'])
 class IssuesView(Logger, APIView):
+    """
+    API view for handling collections of Issue instances.
+
+    This view provides GET (list) and POST (create) operations for issues.
+    """
     serializer_class = IssueResponseSerializer
     
     @extend_schema(
@@ -28,10 +33,28 @@ class IssuesView(Logger, APIView):
                 name="IssuesRetrieved",
                 description="A list of issues was successfully retrieved.",
                 many=True
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssuesListForbidden",
+                success=False,
+                description="Permission denied."
             )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all issues.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized issues
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("issues"))
         issues = Issue.objects.all()
         self.debug(Messages.Get.retrieved_all("issues", issues.count()))
@@ -55,10 +78,29 @@ class IssuesView(Logger, APIView):
                 name="IssueCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueCreateForbidden",
+                success=False,
+                description="Permission denied."
             )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new issue.
+
+        Args:
+            request: The incoming HTTP request containing the new issue data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created issue data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("issue", request.data))
         issue = IssueRequestSerializer(data = request.data)
         

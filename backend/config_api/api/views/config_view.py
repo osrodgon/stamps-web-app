@@ -13,11 +13,16 @@ from config_api.api.serializers.config_response_serializer import ConfigResponse
 from config_api.models import Config
 
 class ConfigView(Logger, APIView):
+    """Manages bulk API operations for Config instances.
+
+    This view handles the retrieval of all configuration entries (GET) and the
+    creation of a new configuration entry (POST).
+    """
     serializer_class = ConfigResponseSerializer
     
     @extend_schema(
         operation_id="list_config_entries",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="List All Configuration Entries",
         description="Retrieves a comprehensive list of all configuration key-value pairs stored in the system. This is useful for a complete overview of all settings.",
         responses={
@@ -26,10 +31,25 @@ class ConfigView(Logger, APIView):
                 name="GetAllConfigEntriesSuccess",
                 many=True, 
                 description="A list of all configuration entries was successfully retrieved."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="GetAllConfigEntriesForbidden",
+                success=False,
+                description="Permission denied."
             )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve all configuration entries.
+
+        Args:
+            request (Request): The incoming HTTP request.
+
+        Returns:
+            Response:   A DRF Response object containing a list of all serialized
+                        configuration entries and a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("config entries"))
         config = Config.objects.all()
         self.debug(Messages.Get.retrieved_all("config entries", config.count()))
@@ -42,7 +62,7 @@ class ConfigView(Logger, APIView):
         
     @extend_schema(
         operation_id="create_config_entry",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="Create a Configuration Entry",
         description="Adds a new configuration key-value pair to the database. The request body must contain the 'property' and 'value' for the new setting.",
         request=ConfigRequestSerializer,
@@ -57,10 +77,26 @@ class ConfigView(Logger, APIView):
                 name="CreateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid or missing required fields."
+            ),
+            403: standardized_response(
+                ConfigResponseSerializer,
+                name="CreateConfigEntryForbidden",
+                success=False,
+                description="Permission denied."
             )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """Handles POST requests to create a new configuration entry.
+
+        Args:
+            request (Request):  The incoming HTTP request containing the data for
+                                the new configuration entry.
+
+        Returns:
+            Response:   A DRF Response with the newly created entry's data and a
+                        201 Created status, or a 400 Bad Request on validation error.
+        """
         self.debug(Messages.Post.create_one("config entry", request.data))
         config = ConfigRequestSerializer(data = request.data)
         

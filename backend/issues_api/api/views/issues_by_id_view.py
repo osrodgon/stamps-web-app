@@ -14,9 +14,24 @@ from common.core.schemas import standardized_response
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
 
 
-@extend_schema(tags=["Issues"])
+@extend_schema(tags=['Database Management'])
 class IssuesByIdView(Logger, APIView):
+    """
+    API view for handling individual Issue instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    issue identified by its primary key.
+    """
     def __get_object(self, pk):
+        """
+        Helper method to retrieve an Issue object by its primary key.
+
+        Args:
+            pk: The primary key of the issue to retrieve.
+
+        Returns:
+            The Issue instance if found, otherwise None.
+        """
         try:
             Messages.Database.querying("issue", pk) 
             return Issue.objects.get(pk=pk)
@@ -34,6 +49,12 @@ class IssuesByIdView(Logger, APIView):
                 name="IssueRetrieved",
                 description="The requested issue's data was retrieved successfully."
             ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveIssueNotFound",
@@ -43,6 +64,19 @@ class IssuesByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single issue by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the issue to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized issue data with a
+            200 OK status, or a 404 Not Found if the issue does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("issue", pk))
         issue = self.__get_object(pk)
         if issue is None:
@@ -71,6 +105,12 @@ class IssuesByIdView(Logger, APIView):
                 success=False,
                 description="The request payload was invalid."
             ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueUpdateForbidden",
+                success=False,
+                description="Permission denied."
+            ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="IssueUpdateNotFound",
@@ -80,6 +120,20 @@ class IssuesByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing issue.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the issue to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated issue data and a 200 OK status
+            if successful. Returns a 404 Not Found if the issue does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("issue", pk, request.data))
         issue = self.__get_object(pk)
         if issue is None:
@@ -116,6 +170,12 @@ class IssuesByIdView(Logger, APIView):
                 name="IssueDeleted",
                 description="The issue was deleted successfully."
             ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                IssueResponseSerializer,
+                name="IssueDeleteForbidden",
+                success=False,
+                description="Permission denied."
+            ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="IssueDeleteNotFound",
@@ -124,6 +184,19 @@ class IssuesByIdView(Logger, APIView):
             ),
         })
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove an issue.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the issue to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the issue does not exist.
+        """
         self.debug(Messages.Delete.delete_one("issue", pk))
         issue = self.__get_object(pk)
         if issue is None:

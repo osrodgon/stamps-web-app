@@ -1,0 +1,2 @@
+reflex==0.8.16
+reflex-hosting-cli==0.1.57

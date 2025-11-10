@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,23 +15,46 @@ from years_api.api.serializers.year_request_serializer import YearRequestSeriali
 
 
 class YearsView(Logger, APIView):
+    """
+    API view for handling collections of Year instances.
+
+    This view provides GET (list) and POST (create) operations for years.
+    """
     serializer_class = YearResponseSerializer
     
     @extend_schema(
         operation_id="list_years",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="List All Years",
         description="Retrieves a list of all year entries currently stored in the database. The response will contain an array of year objects.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 YearResponseSerializer, 
                 name="YearsRetrieved",
                 description="A list of years was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearsRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all years.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized years
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("years"))
         years = Year.objects.all()
         self.debug(Messages.Get.retrieved_all("years", len(years)))
@@ -43,25 +67,44 @@ class YearsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_year",
-        tags=['Years'],
+        tags=['Database Management'],
         summary="Create a New Year",
         description="Adds a new year entry to the database. The request body must contain the year data. A successful creation returns the newly created year object with a 201 status code.",
         request=YearRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 YearResponseSerializer,
                 name="YearCreated",
                 description="The year was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="YearCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid.",
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                YearResponseSerializer,
+                name="YearCreateForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new year.
+
+        Args:
+            request: The incoming HTTP request containing the new year data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created year data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("year", request.data))
         year = YearRequestSerializer(data = request.data)
         

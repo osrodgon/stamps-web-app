@@ -1,6 +1,6 @@
-import ast
 import re
 from rest_framework.renderers import JSONRenderer
+from rest_framework import status
 from common.api.messages import Messages
 
 class StandardJSONRenderer(JSONRenderer):
@@ -33,7 +33,7 @@ class StandardJSONRenderer(JSONRenderer):
                 {
                     "field": None,
                     "message": errors,
-                    "code": "other"
+                    "code": Messages.Code.other()
                 }
             )
 
@@ -56,18 +56,27 @@ class StandardJSONRenderer(JSONRenderer):
             status_code = response.status_code
             
             # 🔹 Handle errors
-            if status_code >= 400:
-                success = False
-                message = Messages.failed()
-                errors = self.errors_to_list(data['message'])
-                data = None
+            if status_code >= status.HTTP_400_BAD_REQUEST:
+                if (
+                    status_code == status.HTTP_403_FORBIDDEN or
+                    status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                ):
+                    success = data['success']
+                    message = data['message']
+                    errors = self.errors_to_list(f"'internal_server_error': {data['errors']}")
+                    data = data['data']
+                else:
+                    success = False
+                    message = Messages.failed()
+                    errors = self.errors_to_list(data['message'])
+                    data = None
             else:
                 # 🔹 Dynamic success messages
                 if request:
                     method = request.method.upper()
                     match method:
                         case "POST":
-                            if status_code == 201:
+                            if status_code == status.HTTP_201_CREATED:
                                 message = Messages.created_successfully()
                         case "PUT":
                             message = Messages.updated_successfully()

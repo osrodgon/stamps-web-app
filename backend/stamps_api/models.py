@@ -3,6 +3,21 @@ from django.db import models
 # Create your models here.
 
 class Stamp(models.Model):
+    """
+    Represents an individual stamp, which is part of a larger issue.
+
+    Attributes:
+        issue (ForeignKey): The issue this stamp belongs to.
+        edifil_code (CharField): The Edifil catalog code for the stamp.
+        face_value (CharField): The denominated value printed on the stamp.
+        name (CharField):   The specific name or title of the stamp, if different
+                            from the issue name.
+        others_code (CharField): Any other relevant catalog code (e.g., Scott, Yvert).
+        image (ImageField): An uploaded image of the stamp.
+        colors (ManyToManyField): The colors present on the stamp.
+        market_value (DecimalField):    The estimated market value of this specific
+                                        stamp.
+    """
     issue = models.ForeignKey(
         'issues_api.Issue', 
         on_delete=models.CASCADE,
@@ -20,7 +35,7 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     
-    market_value = models.FloatField(null=True, blank=True)
+    market_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     
     class Meta:
         verbose_name = "Stamp"

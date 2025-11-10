@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,13 +13,17 @@ from colors_api.models import Color
 from colors_api.api.serializers.color_response_serializer import ColorResponseSerializer
 from colors_api.api.serializers.color_request_serializer import ColorRequestSerializer
 
-
 class ColorsView(Logger, APIView):
+    """Manages bulk API operations for Color instances.
+
+    This view handles the retrieval of all colors (GET) and the creation
+    of a new color (POST).
+    """
     serializer_class = ColorResponseSerializer
     
     @extend_schema(
         operation_id="list_colors",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="List All Colors",
         description="Retrieves a list of all color entries currently stored in the database.",
         responses={
@@ -27,10 +32,25 @@ class ColorsView(Logger, APIView):
                 name="ColorsRetrieved",
                 description="A list of colors was successfully retrieved.",
                 many=True
-                )
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="ColorsForbidden",
+                success=False,
+                description="Permission denied."
+                )   
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve all colors.
+
+        Args:
+            request (Request): The incoming HTTP request.
+
+        Returns:
+            Response:   A DRF Response object containing a list of all serialized
+                        color objects and a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("colors"))
         colors = Color.objects.all()
         self.debug(Messages.Get.retrieved_all("colors", colors.count()))
@@ -43,25 +63,41 @@ class ColorsView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Create a New Color",
         description="Adds a new color entry to the database. A successful creation returns the newly created color object with a 201 Created status code.",
         request=ColorRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 ColorResponseSerializer,
                 name="ColorCreated",
                 description="The color was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="ColorCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ColorResponseSerializer,
+                name="ColorCreateForbidden",
+                success=False,
+                description="Permission denied."
+                )   
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """Handles POST requests to create a new color.
+
+        Args:
+            request (Request):  The incoming HTTP request containing the data for
+                                the new color.
+
+        Returns:
+            Response:   A DRF Response with the newly created color's data and a
+                        201 Created status, or a 400 Bad Request on validation error.
+        """
         self.debug(Messages.Post.create_one("color", request.data))
         color = ColorRequestSerializer(data = request.data)
         

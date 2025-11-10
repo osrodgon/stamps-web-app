@@ -15,18 +15,32 @@ from colors_api.api.serializers.color_request_serializer import ColorRequestSeri
 
 
 class ColorsByIdView(Logger, APIView):
+    """Manages API operations for a single Color instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Color` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = ColorResponseSerializer
     def __get_color(self, pk: int) -> Color:
+        """Retrieves a Color instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the color to retrieve.
+
+        Returns:
+            Color: The found color instance, or None if it does not exist.
+        """
         try:
-            Messages.Database.querying("color", pk)
+            self.debug(Messages.Database.querying("color", pk))
             return Color.objects.get(pk=pk)
         except Color.DoesNotExist:
-            Messages.Database.not_found("color", pk)
+            self.debug(Messages.Database.not_found("color", pk))
             return None
     
     @extend_schema(
         operation_id="retrieve_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Retrieve a Color by ID",
         description="Fetches the details of a specific color entry by its unique identifier.",
         responses={
@@ -40,10 +54,26 @@ class ColorsByIdView(Logger, APIView):
                 name="RetrieveColorNotFound",
                 success=False,
                 description="No color was found for the provided ID."
-                ) 
+                ),
+            403: standardized_response(
+                ColorResponseSerializer,
+                name="RetrieveColorForbidden",
+                success=False,
+                description="Permission denied."
+                )   
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single color.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the color to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized color
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("color", pk))
         color = self.__get_color(pk)
         
@@ -64,31 +94,47 @@ class ColorsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Update a Color",
         description="Updates an existing color entry identified by its ID. A complete payload with all required fields is expected.",
         request=ColorRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 ColorResponseSerializer,
                 name="ColorUpdated",
                 description="The color was updated successfully."
                 ),
-            404: standardized_response(
-                GenericResponseSerializer,
-                name="ColorUpdateNotFound",
-                success=False,
-                description="The color with the specified ID was not found."
-                ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="ColorUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
-                )   
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ColorResponseSerializer,
+                name="ColorUpdateForbidden",
+                success=False,
+                description="Permission denied."
+                ),    
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="ColorUpdateNotFound",
+                success=False,
+                description="The color with the specified ID was not found."
+                )
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing color.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the color to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("color", pk, request.data))
         color = self.__get_color(pk)
         if color is None:
@@ -116,17 +162,23 @@ class ColorsByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_color",
-        tags=['Colors'],
+        tags=['Database Management'],
         summary="Delete a Color",
         description="Deletes a color entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="ColorDeleted",
                 success=True,
                 description="The color was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ColorResponseSerializer,
+                name="ColorDeleteForbidden",
+                success=False,
+                description="Permission denied."
+                ),   
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="ColorDeleteNotFound",
                 success=False,
@@ -135,6 +187,16 @@ class ColorsByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a color.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the color to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("color", pk))
         color = self.__get_color(pk)
         if color is None:

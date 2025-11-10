@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -26,11 +27,76 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
 
+JWT_SECRET = SECRET_KEY 
+JWT_ALGORITHM = 'HS256'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Application configuration
+LOG_LEVEL="DEBUG"
+LOG_FILE_NAME="backend.log"
+
+# API Key header
+API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
+
+# User views
+USER_VIEWS = [
+    "CollectionsView",
+    "CollectionsByIdView",
+    "CollectionItemsView",
+    "CollectionItemsByIdView",
+    "ConditionTypesView",
+    "ConditionTypesByIdView",
+    "LocationsView",
+    "LocationsByIdView",
+    "LogoffView"
+]
+
+# API endpoints
+COLORS_ENDPOINT="colors/"
+CONFIG_ENDPOINT="config/"
+COUNTRIES_ENDPOINT="countries/"
+ISSUES_ENDPOINT="issues/"
+LOCATIONS_ENDPOINT="locations/"
+PAPER_TYPES_ENDPOINT="paper_types/"
+STAMP_TYPES_ENDPOINT="stamps_type/"
+STAMPS_ENDPOINT="stamps/"
+YEARS_ENDPOINT="years/"
+COLLECTIONS_ENDPOINT="collections/"
+COLLECTION_ITEMS_ENDPOINT="collection_items/"
+CONDITION_TYPES_ENDPOINT="condition_types/"
+USERS_ENDPOINT = "users/"
+HEALTH_ENDPOINT = "health/"
+LOGIN_ENDPOINT = "login/"
+LOGOFF_ENDPOINT = "logoff/"
+
+# Documentations end points
+SWAGGER_ENDPOINT="swagger/"
+REDOC_ENDPOINT="redoc/"
+SCHEMA_ENDPOINT="schema/"
+
+# URLs
+ADMIN_URL="admin/"
+SERVER_URL_V1="stamps_server/api/v1/"
+
+COLORS_URL_V1=f"{SERVER_URL_V1}{COLORS_ENDPOINT}"
+CONFIG_URL_V1=f"{SERVER_URL_V1}{CONFIG_ENDPOINT}"
+COUNTRIES_URL_V1=f"{SERVER_URL_V1}{COUNTRIES_ENDPOINT}"
+ISSUES_URL_V1=f"{SERVER_URL_V1}{ISSUES_ENDPOINT}"
+LOCATIONS_URL_V1=f"{SERVER_URL_V1}{LOCATIONS_ENDPOINT}"
+PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
+STAMP_TYPES_URL_V1=f"{SERVER_URL_V1}{STAMP_TYPES_ENDPOINT}"
+STAMPS_URL_V1=f"{SERVER_URL_V1}{STAMPS_ENDPOINT}"
+YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
+COLLECTIONS_URL_V1=f"{SERVER_URL_V1}{COLLECTIONS_ENDPOINT}"
+COLLECTION_ITEMS_URL_V1=f"{SERVER_URL_V1}{COLLECTION_ITEMS_ENDPOINT}"
+CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
+USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
+LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
+LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
 
 # Application definition
 
@@ -42,6 +108,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
+    'rest_framework_api_key',
     'drf_spectacular',      # For Swagger documentation
     "config_api",           # All APIs for the config table
     "stamp_types_api",      # All APIs for the stamp type table
@@ -51,7 +118,12 @@ INSTALLED_APPS = [
     "colors_api",           # All APIs for the color table
     "stamps_api",           # All APIs for the stamp table
     "issues_api",           # All APIs for the table issue
-    "years_api"             # All APIs for the table year
+    "years_api",            # All APIs for the table year
+    "collections_api",      # All APIs for the table collection
+    "collection_items_api", # All APIs for the table collection item
+    "condition_types_api",  # All APIs for the table condition type
+    "users_api",            # All APIs for the table user
+    "health_api"            # All APIs for checking the system health
 ]
 
 REST_FRAMEWORK = {
@@ -60,6 +132,16 @@ REST_FRAMEWORK = {
         "common.core.renderers.StandardJSONRenderer",
     ),
     "EXCEPTION_HANDLER": "common.core.exceptions.custom_exception_handler",
+    # This sets the default permission for ALL DRF views
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'common.core.authentication.CustomAPIKeyAuthentication',
+        #'rest_framework_api_key.permissionsHasSpecificKeyName'    
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework_api_key.permissions.HasAPIKey',
+        # 'rest_framework.permissions.AllowAny'
+        'common.core.permissions.HasSpecificKeyName'
+    ]
 }
 
 SPECTACULAR_SETTINGS = {
@@ -72,45 +154,27 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
     "TAGS": [
         {
-            "name": "Colors",
-            "description": "Endpoints for managing color entries."
+            "name": "Database Management",
+            "description": "APIs for accessing static, foundational data like years, published issues, and the master catalog of stamps."
         },
         {
-            "name": "Config",
+            "name": "Collection Management",
+            "description": "APIs for managing collections."
+        },
+        {
+            "name": "Config Management",
             "description": "Endpoints for managing system configuration settings."
         },
         {
-            "name": "Countries",
-            "description": "Endpoints for managing country entries."
-        },
-        {
-            "name": "Issues",
-            "description": "Endpoints for managing issue entries."
-        },
-        {
-            "name": "Locations",
-            "description": "Endpoints for managing location entries."   
-        },
-        {
-            "name": "Paper Types",
-            "description": "Endpoints for managing paper types entries."
-        },
-        {
-            "name": "Stamp Types",
-            "description": "Endpoints for managing stamp type entries."
-        },
-        {
-            "name": "Stamps",
-            "description": "Endpoints for managing stamp entries."
-        },
-        {
-            "name": "Years",
-            "description": "Endpoints for managing year entries."
+            "name": "User Management",
+            "description": "APIs for managing users."  
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
     "SWAGGER_UI_SETTINGS": {
         "defaultModelsExpandDepth": -1,
+        'deepLinking': True,
+        'persistAuthorization': True,
     },
 }
 

@@ -1,4 +1,5 @@
 from functools import partial
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,9 +15,24 @@ from stamps_api.api.serializers.stamp_response_serializer import StampResponseSe
 from stamps_api.api.serializers.stamp_request_serializer import StampRequestSerializer
 
 class StampsByIdView(Logger, APIView):
+    """
+    API view for handling individual Stamp instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    stamp identified by its primary key.
+    """
     serializer_class = StampResponseSerializer
 
     def __get_object(self, id):
+        """
+        Helper method to retrieve a Stamp object by its primary key.
+
+        Args:
+            id: The primary key of the stamp to retrieve.
+
+        Returns:
+            The Stamp instance if found, otherwise None.
+        """
         try:
             return Stamp.objects.get(pk=id)
         except Stamp.DoesNotExist:
@@ -24,16 +40,22 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="retrieve_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Retrieve a Stamp by ID",
         description="Retrieves a single stamp entry by its unique ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampResponseSerializer,
                 name="StampRetrieved",
                 description="The stamp was retrieved successfully."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampResponseSerializer,
+                name="StampRetrievePermissionDenied",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampNotFound",
                 success=False,
@@ -42,6 +64,19 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, id: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single stamp by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            id: The primary key of the stamp to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized stamp data with a
+            200 OK status, or a 404 Not Found if the stamp does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("stamp", id))
         stamp = self.__get_object(id)
         
@@ -59,23 +94,29 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="update_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Update a Stamp",
         description="Updates an existing stamp entry by its ID. The request body should contain the fields to be updated.",
         request=StampRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampResponseSerializer,
                 name="StampUpdated",
                 description="The stamp was updated successfully."
             ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="StampUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampResponseSerializer,
+                name="StampUpdatePermissionDenied",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampUpdateNotFound",
                 success=False,
@@ -84,6 +125,20 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, id: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing stamp.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            id: The primary key of the stamp to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated stamp data and a 200 OK status
+            if successful. Returns a 404 Not Found if the stamp does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("stamp", id, request.data))
         stamp = self.__get_object(id)
         if stamp is None:
@@ -111,16 +166,22 @@ class StampsByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="delete_stamp",
-        tags=['Stamps'],
+        tags=['Database Management'],
         summary="Delete a Stamp",
         description="Deletes a stamp entry by its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="StampDeleted",
                 description="The stamp was deleted successfully."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampResponseSerializer,
+                name="StampDeletePermissionDenied",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampDeleteNotFound",
                 success=False,
@@ -129,6 +190,19 @@ class StampsByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, id: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a stamp.
+
+        Args:
+            request: The incoming HTTP request.
+            id: The primary key of the stamp to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the stamp does not exist.
+        """
         self.debug(Messages.Delete.delete_one("stamp", id))
         stamp = self.__get_object(id)
         if stamp is None:

@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,8 +15,22 @@ from countries_api.api.serializers.country_request_serializer import CountryRequ
 
 
 class CountriesByIdView(Logger, APIView):
+    """Manages API operations for a single Country instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Country` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = CountryResponseSerializer
     def __get_country(self, pk: int) -> Country:
+        """Retrieves a Country instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the country to retrieve.
+
+        Returns:
+            Country: The found country instance, or None if it does not exist.
+        """
         try:
             Messages.Database.querying("country", pk)
             return Country.objects.get(pk=pk)
@@ -25,16 +40,22 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Retrieve a Country by ID",
         description="Fetches the details of a specific country entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CountryResponseSerializer,
                 name="CountryRetrieved",
                 description="The requested country's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CountryResponseSerializer,
+                name="CountryRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveCountryNotFound",
                 success=False,
@@ -43,6 +64,16 @@ class CountriesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single country.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the country to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized country
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("country", pk))
         country = self.__get_country(pk)
         
@@ -63,31 +94,47 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Update a Country",
         description="Updates an existing country entry identified by its ID. A complete payload with all required fields is expected.",
         request=CountryRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CountryResponseSerializer,
                 name="CountryUpdated",
                 description="The country was updated successfully."
                 ),
-            404: standardized_response(
-                GenericResponseSerializer,
-                name="CountryUpdateNotFound",
-                success=False,
-                description="The country with the specified ID was not found."
-                ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="CountryUpdateInvalidPayload",
                 success=False,
                 description="The request payload was invalid."
-                )   
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CountryResponseSerializer,
+                name="CountryUpdateForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CountryUpdateNotFound",
+                success=False,
+                description="The country with the specified ID was not found."
+                )
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing country.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the country to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("country", pk, request.data))
         country = self.__get_country(pk)
         if country is None:
@@ -115,17 +162,23 @@ class CountriesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_country",
-        tags=['Countries'],
+        tags=['Database Management'],
         summary="Delete a Country",
         description="Deletes a country entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="CountryDeleted",
                 success=True,
                 description="The country was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                CountryResponseSerializer,
+                name="CountryDeleteForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="CountryDeleteNotFound",
                 success=False,
@@ -134,6 +187,16 @@ class CountriesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a country.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the country to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(Messages.Delete.delete_one("country", pk))
         country = self.__get_country(pk)
         if country is None:

@@ -15,9 +15,23 @@ from config_api.models import Config
 
 
 class ConfigByIdView(Logger, APIView):
+    """Manages API operations for a single Config instance.
+
+    This view handles the retrieval (GET), update (PUT), and deletion (DELETE)
+    of a specific `Config` object, identified by its primary key (`pk`)
+    provided in the URL.
+    """
     serializer_class = ConfigResponseSerializer
     
     def __get_config(self, pk: int) -> Config:
+        """Retrieves a Config instance by its primary key.
+
+        Args:
+            pk (int): The primary key of the configuration entry to retrieve.
+
+        Returns:
+            Config: The found configuration entry instance, or None if it does not exist.
+        """
         try:
             Messages.Database.querying("config", pk)
             return Config.objects.get(pk=pk)
@@ -27,16 +41,22 @@ class ConfigByIdView(Logger, APIView):
         
     @extend_schema(
         operation_id="retrieve_config_entry",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="Retrieve a Configuration Entry by ID",
         description="Fetches a specific configuration entry using its unique ID. Returns the entry's details if found.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 ConfigResponseSerializer,
                 name="GetConfigEntrySuccess",
                 description="The configuration entry was retrieved successfully."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ConfigResponseSerializer,
+                name="GetConfigEntryForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="GetConfigEntryNotFound",
                 success=False,
@@ -45,6 +65,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles GET requests to retrieve a single configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the configuration entry to retrieve.
+
+        Returns:
+            Response:   A DRF Response object with the serialized entry
+                        data and 200 OK status, or a 404 Not Found response.
+        """
         self.debug(Messages.Get.retrieve_one("config entry", pk))
         config = self.__get_config(pk)
         if config is None:
@@ -64,23 +94,29 @@ class ConfigByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_config_entry",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="Update a Configuration Entry",
         description="Updates an existing configuration entry identified by its ID. The request body can contain a partial or full update of the entry's fields.",
         request=ConfigRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 ConfigResponseSerializer,
                 name="UpdateConfigEntrySuccess",
                 description="The configuration entry was updated successfully."
             ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="UpdateConfigEntryBadRequest",
                 success=False,
                 description="The request payload was invalid."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ConfigResponseSerializer,
+                name="UpdateConfigEntryForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="UpdateConfigEntryNotFound",
                 success=False,
@@ -89,6 +125,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles PUT requests to update an existing configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request containing update data.
+            pk (int): The primary key of the configuration entry to update.
+
+        Returns:
+            Response:   A DRF Response with updated data and 200 OK status,
+                        a 404 if not found, or a 400 on validation error.
+        """
         self.debug(Messages.Put.update_one("config entry", pk, request.data))
         config = self.__get_config(pk)
         
@@ -117,16 +163,22 @@ class ConfigByIdView(Logger, APIView):
 
     @extend_schema(
         operation_id="delete_config_entry",
-        tags=['Config'],
+        tags=['Config Management'],
         summary="Delete a Configuration Entry",
         description="Permanently removes a configuration entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="DeleteConfigEntrySuccess", 
                 description="The configuration entry was deleted successfully."
             ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                ConfigResponseSerializer,
+                name="DeleteConfigEntryForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="DeleteConfigEntryNotFound",
                 success=False,
@@ -135,6 +187,16 @@ class ConfigByIdView(Logger, APIView):
         }
     )
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """Handles DELETE requests to remove a configuration entry.
+
+        Args:
+            request (Request): The incoming HTTP request.
+            pk (int): The primary key of the configuration entry to delete.
+
+        Returns:
+            Response:   A DRF Response with a success message and 200 OK status,
+                        or a 404 Not Found response if the item does not exist.
+        """
         self.debug(f"Attempting to delete config entry for id: {pk}")
         config = self.__get_config(pk)
         

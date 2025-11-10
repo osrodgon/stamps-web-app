@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,23 +15,46 @@ from paper_types_api.api.serializers.paper_type_request_serializer import PaperT
 
 
 class PaperTypesView(Logger, APIView):
+    """
+    API view for handling collections of PaperType instances.
+
+    This view provides GET (list) and POST (create) operations for paper types.
+    """
     serializer_class = PaperTypeResponseSerializer
     
     @extend_schema(
         operation_id="list_paper_types",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="List All Paper Types",
         description="Retrieves a list of all paper type entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 PaperTypeResponseSerializer, 
                 name="PaperTypesRetrieved",
                 description="A list of paper types was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypesRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all paper types.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized paper types
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("paper types"))
         paper_types = PaperType.objects.all()
         self.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
@@ -43,25 +67,44 @@ class PaperTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_paper_type",
-        tags=['Paper Types'],
+        tags=['Database Management'],
         summary="Create a New Paper Type",
         description="Adds a new paper type entry to the database. A successful creation returns the newly created paper type object with a 201 Created status code.",
         request=PaperTypeRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 PaperTypeResponseSerializer,
                 name="PaperTypeCreated",
                 description="The paper type was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                PaperTypeResponseSerializer,
+                name="PaperTypeCreateForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new paper type.
+
+        Args:
+            request: The incoming HTTP request containing the new paper type data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created paper type data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("paper type", request.data))
         paper_type = PaperTypeRequestSerializer(data = request.data)
         

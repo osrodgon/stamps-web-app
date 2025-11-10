@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,23 +15,46 @@ from stamp_types_api.api.serializers.stamp_type_request_serializer import StampT
 
 
 class StampTypesView(Logger, APIView):
+    """
+    API view for handling collections of StampType instances.
+
+    This view provides GET (list) and POST (create) operations for stamp types.
+    """
     serializer_class = StampTypeResponseSerializer
     
     @extend_schema(
         operation_id="list_stamp_types",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="List All Stamp Types",
         description="Retrieves a list of all stamp type entries currently stored in the database.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer, 
                 name="StampTypesRetrieved",
                 description="A list of stamp types was successfully retrieved.",
                 many=True
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypesRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a list of all stamp types.
+
+        Args:
+            request: The incoming HTTP request.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing a list of all serialized stamp types
+            with a 200 OK status.
+        """
         self.debug(Messages.Get.retrieve_all("StampType"))
         stamp_types = StampType.objects.all()
         self.debug(Messages.Get.retrieved_all("StampType", len(stamp_types)))
@@ -43,25 +67,44 @@ class StampTypesView(Logger, APIView):
     
     @extend_schema(
         operation_id="create_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Create a New Stamp Type",
         description="Adds a new stamp type entry to the database. A successful creation returns the newly created stamp type object with a 201 Created status code.",
         request=StampTypeRequestSerializer,
         responses={
-            201: standardized_response(
+            status.HTTP_201_CREATED: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeCreated",
                 description="The stamp type was created successfully."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeCreateInvalidPayload",
                 success=False,
                 description="The request payload was invalid (e.g., missing a required field)."
-                )
+                ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeCreateForbidden",
+                success=False,
+                description="Permission denied."
+            )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
+        """
+        Handles POST requests to create a new stamp type.
+
+        Args:
+            request: The incoming HTTP request containing the new stamp type data.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the newly created stamp type data and a 201 Created
+            status if successful. Returns a 400 Bad Request if the provided
+            data is invalid.
+        """
         self.debug(Messages.Post.create_one("StampType", request.data))
         stamp_type = StampTypeRequestSerializer(data = request.data)
         

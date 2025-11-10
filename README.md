@@ -13,81 +13,143 @@ This document provides a detailed description of the database schema for the Sta
 
 The overall database structure is illustrated below:
 
-![alt text](stamps_api_server/resources/stamps-db-model.png)
+![alt text](backend/resources/stamps-db-model.png)
 
-### Table Definitions
+#### 1. Core Entities
 
-#### 1. `Year` Table
-This table provides a chronological framework for organizing stamp issues.
-- **id (int, PK):** Unique identifier for each year entry.
-- **year (int):** The calendar year associated with stamp issues.
+#### `issue`
+Represents a specific issue of stamps, often a series or set released at a particular time. This is the central entity linking various lookup tables.
 
-#### 2. `Issue` Table
-The `issue` table serves as the central hub of the schema, connecting most related entities. It represents a set of stamps released for a specific theme or purpose.
-- **id (int, PK):** Unique identifier for each issue.
-- **year_id (int, FK):** References the `Year` table, linking an issue to a specific year.
-- **date (date):** The exact release date of the issue.
-- **country_id (int, FK):** References the `Country` table, linking an issue to a specific country.
-- **name (varchar):** The official name or title of the issue.
-- **number_issued (int):** Total number of issues released for this theme.
-- **value (float):** The total face value of the entire issue.
-- **number_owned (int):** The quantity of this issue owned by the collector.
-- **number_stamps (int):** The total number of distinct stamps included in this issue.
-- **stamp_type (int, FK):** References the `Stamp_Type` table to categorize the issue.
-- **paper_type (int, FK):** References the `Paper_Type` table to specify the paper used.
-- **total_value (float):** The cumulative value of stamps owned from this issue.
-- **description (varchar):** A descriptive text about the issue.
-- **located_in (int, FK):** References the `Location` table to specify where the issue is stored.
-- **note (varchar):** Additional notes or remarks.
-- **perforated (varchar):** Details about the stamp perforation.
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier for the issue. |
+| **year_id** | `INT` | FK | The year of the issue (links to `year.id`). |
+| **date** | `DATE` | | Release date of the issue. |
+| **name** | `VARCHAR` | | Name or description of the issue. |
+| **total_printed** | `INT` | | Total number of stamps printed for this issue. |
+| **market_value** | `FLOAT` | | Estimated market value of the issue as a set. |
+| **stamp_type_id** | `INT` | FK | Type of stamp in this issue (links to `stamp_type.id`). |
+| **paper_type_id** | `INT` | FK | Type of paper used (links to `paper_type.id`). |
+| **description** | `VARCHAR` | | Detailed description of the issue. |
+| **country_id** | `INT` | FK | Country of origin for the issue (links to `country.id`). |
+| **note** | `VARCHAR` | | Any additional notes for the issue. |
+| **perforation** | `VARCHAR` | | Perforation details (e.g., "13", "11.5x12"). |
 
-#### 3. `Stamp` Table
-This table details individual stamps within a given issue, including catalog and physical attributes.
-- **id (int, PK):** Unique identifier for each stamp.
-- **issue_id (int, FK):** References the `Issue` table, linking the stamp to its parent issue.
-- **edifil_code (varchar):** Catalog code from the Edifil cataloging system.
-- **face_value (varchar):** The nominal printed value on the stamp.
-- **name (varchar):** The name or description of the individual stamp.
-- **others_code (varchar):** Additional catalog codes from other systems.
-- **image (varchar):** Path or reference to an image representing the stamp.
-- **color (varchar):** The primary color of the stamp.
+#### `stamp`
+Represents an individual stamp within an `issue`.
 
-#### 4. `Stamp_Type` Table
-This table defines classification categories for stamp issues.
-- **id (int, PK):** Unique identifier for each stamp type.
-- **name (varchar):** The name of the stamp type (e.g., "Commemorative", "Definitive", "Airmail").
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier for the stamp. |
+| **issue_id** | `INT` | FK | The issue this stamp belongs to (links to `issue.id`). |
+| **edifil_code** | `VARCHAR` | | Edifil catalog code for the stamp. |
+| **face_value** | `VARCHAR` | | Denominative face value (e.g., "10c", "1€"). |
+| **name** | `VARCHAR` | | Name or description of the individual stamp. |
+| **others_code** | `VARCHAR` | | Other catalog codes for the stamp. |
+| **image** | `VARCHAR` | | Path or URL to the image of the stamp. |
+| **color_id** | `INT` | FK | The main color of the stamp (links to `color.id`). |
+| **market_value** | `FLOAT` | | Estimated market value of the individual stamp. |
 
-#### 5. `Location` Table
-This table tracks the physical or logical storage location of stamp issues.
-- **id (int, PK):** Unique identifier for each storage location.
-- **name (varchar):** Describes the storage location (e.g., "Main Album", "Folder B", "Box 1").
+---
 
-#### 6. `Country` Table
-This table lists the countries of origin for the stamp issues.
-- **id (int, PK):** Unique identifier for each country.
-- **name (varchar):** The name of the country.
+#### 2. Collection Management
 
-#### 7. `Paper_Type` Table
-This table defines the types of paper used for stamp issues.
-- **id (int, PK):** Unique identifier for each paper type.
-- **name (varchar):** The name of the paper type (e.g., "Coated", "Uncoated", "Granite").
+#### `collection`
+Represents a user's personal stamp collection.
 
-#### 8. `Config` Table
-This table provides a key-value store for system-level configuration settings or customizable application metadata.
-- **property (varchar, PK):** The name of the configuration property.
-- **value (varchar):** The value assigned to the property.
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier for the collection. |
+| **user** | `VARCHAR` | | Identifier for the user who owns the collection. |
+| **name** | `VARCHAR` | | Name of the collection. |
 
-### Relationships
-The primary relationships between the tables are as follows:
-- **One-to-Many:** A `Year` can have multiple `Issues`.
-- **One-to-Many:** A `Country` can have multiple `Issues`.
-- **One-to-Many:** An `Issue` can contain multiple `Stamps`.
-- **Many-to-One:** Each `Issue` is associated with one `Stamp_Type`.
-- **Many-to-One:** Each `Issue` is associated with one `Paper_Type`.
-- **Many-to-One:** Each `Issue` is stored in one `Location`.
+#### `collection_item`
+A junction table linking individual stamps to user collections, essentially recording ownership.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier for the collection item instance. |
+| **collection_id** | `INT` | FK | The collection this item belongs to (links to `collection.id`). |
+| **stamp_id** | `INT` | FK | The individual stamp included (links to `stamp.id`). |
+| **location_id** | `INT` | FK | Associated location for the issue (links to `location.id`). |
+| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
+| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
+
+
+---
+
+#### 3. Lookup Tables (Reference Data)
+
+#### `year`
+Stores the unique years associated with stamp issues.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **year** | `INT` | | The specific year value. |
+
+#### `stamp_type`
+Categorizes the different types of stamps.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **name** | `VARCHAR` | | Name of the stamp type (e.g., "Commemorative", "Definitive"). |
+
+#### `paper_type`
+Defines the types of paper used for stamps.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **name** | `VARCHAR` | | Name of the paper type. |
+
+#### `location`
+Stores geographical locations relevant to stamp issues (e.g., cities, regions).
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **name** | `VARCHAR` | | Name of the location. |
+
+#### `country`
+Lists countries associated with stamp issues.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **name** | `VARCHAR` | | Name of the country. |
+
+#### `color`
+Defines available colors for stamps.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **id** | `INT` | PK | Unique identifier. |
+| **name** | `VARCHAR` | | Name of the color (e.g., "Red", "Blue"). |
+
+#### 4. Configuration
+
+#### `config`
+Stores application configuration settings as simple key-value pairs.
+
+| Column Name | Data Type | Key Type | Description |
+| :--- | :--- | :--- | :--- |
+| **property** | `VARCHAR` | PK | Name of the configuration property (key). |
+| **value** | `VARCHAR` | | Value of the configuration property. |
+
+#### 5. Relationships Summary
+
+| Source Table | Relationship | Target Table | Description |
+| :--- | :--- | :--- | :--- |
+| **`issue`** | Many-to-One (FKs) | `year`, `stamp_type`, `paper_type`, `location`, `country` | An `issue` is categorized by a single entry from each of these reference tables. |
+| **`stamp`** | Many-to-One (FK) | `issue` | Every `stamp` belongs to one specific `issue`. |
+| **`stamp`** | Many-to-One (FK) | `color` | Every `stamp` is associated with one primary `color`. |
+| **`collection_item`** | Many-to-One (FK) | `collection` | Every `collection_item` belongs to one `collection`. |
+| **`collection_item`** | Many-to-One (FK) | `stamp` | Every `collection_item` records the ownership of one specific `stamp`. |
 
 ### REST API Endpoints 
-For detailed information about all available REST endpoints, please refer to the [API Documentation](./api.md).
+For detailed information about all available REST endpoints, please refer to the [API Documentation](./backend/readme_api.md).
 
 ## Frontend
 TBD.
@@ -97,3 +159,4 @@ TBD.
 - https://justpy.io/ for Frontend
 - https://github.com/reactive-python/reactpy for Frontend
 - https://www.gradio.app/ for Frontend
+- https://reflex.dev/ for Frontend

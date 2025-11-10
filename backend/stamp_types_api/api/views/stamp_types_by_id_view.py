@@ -1,3 +1,4 @@
+import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,9 +15,24 @@ from stamp_types_api.api.serializers.stamp_type_request_serializer import StampT
 
 
 class StampTypesByIdView(Logger, APIView):
+    """
+    API view for handling individual StampType instances.
+
+    This view provides GET, PUT, and DELETE operations for a specific
+    stamp type identified by its primary key.
+    """
     serializer_class = StampTypeResponseSerializer
     
     def __get_stamp_type(self, pk: int) -> StampType:
+        """
+        Helper method to retrieve a StampType object by its primary key.
+
+        Args:
+            pk: The primary key of the stamp type to retrieve.
+
+        Returns:
+            The StampType instance if found, otherwise None.
+        """
         try:
             Messages.Database.querying("StampType", pk)
             return StampType.objects.get(pk=pk)
@@ -26,16 +42,22 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="retrieve_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Retrieve a Stamp Type by ID",
         description="Fetches the details of a specific stamp type entry by its unique identifier.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeRetrieved",
                 description="The requested stamp type's data was retrieved successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeRetrieveForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="RetrieveStampTypeNotFound",
                 success=False,
@@ -44,6 +66,19 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles GET requests to retrieve a single stamp type by its ID.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the stamp type to retrieve.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object containing the serialized stamp type data with a
+            200 OK status, or a 404 Not Found if the stamp type does not exist.
+        """
         self.debug(Messages.Get.retrieve_one("StampType", pk))
         stamp_type = self.__get_stamp_type(pk)
         
@@ -64,23 +99,29 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="update_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Update a Stamp Type",
         description="Updates an existing stamp type entry identified by its ID. A complete payload with all required fields is expected.",
         request=StampTypeRequestSerializer,
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 StampTypeResponseSerializer,
                 name="StampTypeUpdated",
                 description="The stamp type was updated successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeUpdateForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeUpdateNotFound",
                 success=False,
                 description="The stamp type with the specified ID was not found."
                 ),
-            400: standardized_response(
+            status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeUpdateInvalidPayload",
                 success=False,
@@ -89,6 +130,20 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def put(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles PUT requests to update an existing stamp type.
+
+        Args:
+            request: The incoming HTTP request containing the update data.
+            pk: The primary key of the stamp type to update.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with the updated stamp type data and a 200 OK status
+            if successful. Returns a 404 Not Found if the stamp type does not exist,
+            or a 400 Bad Request if the provided data is invalid.
+        """
         self.debug(Messages.Put.update_one("StampType", pk, request.data))
         stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
@@ -116,17 +171,23 @@ class StampTypesByIdView(Logger, APIView):
     
     @extend_schema(
         operation_id="delete_stamp_type",
-        tags=['Stamp Types'],
+        tags=['Database Management'],
         summary="Delete a Stamp Type",
         description="Deletes a stamp type entry from the database using its ID.",
         responses={
-            200: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeDeleted",
                 success=True,
                 description="The stamp type was deleted successfully."
                 ),
-            404: standardized_response(
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                StampTypeResponseSerializer,
+                name="StampTypeDeleteForbidden",
+                success=False,
+                description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="StampTypeDeleteNotFound",
                 success=False,
@@ -135,6 +196,19 @@ class StampTypesByIdView(Logger, APIView):
         }
     )    
     def delete(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        """
+        Handles DELETE requests to remove a stamp type.
+
+        Args:
+            request: The incoming HTTP request.
+            pk: The primary key of the stamp type to delete.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            A Response object with a success message and a 200 OK status if
+            the deletion was successful, or a 404 Not Found if the stamp type does not exist.
+        """
         self.debug(Messages.Delete.delete_one("StampType", pk))
         stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
