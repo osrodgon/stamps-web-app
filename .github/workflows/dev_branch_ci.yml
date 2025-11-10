@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-html-coverage-report
-          path: ./backend/htmlcov/
+          path: backend/htmlcov/
           
   # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
   frontend_ci:
@@ -90,4 +90,3 @@ jobs:
         run: pip install -r requirements.txt
         
       # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
-
