@@ -1,2 +1,4 @@
 
-reflex==0.8.14
+reflex==0.8.17
+uvicorn
+httpx
