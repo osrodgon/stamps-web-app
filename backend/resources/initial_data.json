@@ -199,16 +199,25 @@
   { "model": "countries_api.country", "pk": 8, "fields": { "name": "Japan" } },
   { "model": "countries_api.country", "pk": 9, "fields": { "name": "China" } },
   { "model": "countries_api.country", "pk": 10, "fields": { "name": "Brazil" } },
-  { "model": "stamp_types_api.stamptype", "pk": 1, "fields": { "name": "Definitive" } },
-  { "model": "stamp_types_api.stamptype", "pk": 2, "fields": { "name": "Commemorative" } },
-  { "model": "stamp_types_api.stamptype", "pk": 3, "fields": { "name": "Airmail" } },
-  { "model": "stamp_types_api.stamptype", "pk": 4, "fields": { "name": "Postage due" } },
-  { "model": "stamp_types_api.stamptype", "pk": 5, "fields": { "name": "Official" } },
-  { "model": "stamp_types_api.stamptype", "pk": 6, "fields": { "name": "Revenue" } },
-  { "model": "stamp_types_api.stamptype", "pk": 7, "fields": { "name": "Telegraph" } },
-  { "model": "stamp_types_api.stamptype", "pk": 8, "fields": { "name": "War tax" } },
-  { "model": "stamp_types_api.stamptype", "pk": 9, "fields": { "name": "Booklet" } },
-  { "model": "stamp_types_api.stamptype", "pk": 10, "fields": { "name": "Coil" } },
+
+    {"model": "stamp_types_api.stamptype", "pk": 1, "fields": { "name": "Básico" } },
+    {"model": "stamp_types_api.stamptype", "pk": 2, "fields": { "name": "Conmemorativo" } },
+    {"model": "stamp_types_api.stamptype", "pk": 3, "fields": { "name": "Hoja Bloque" } },
+    {"model": "stamp_types_api.stamptype", "pk": 4, "fields": { "name": "Autoadhesivo" } },
+    {"model": "stamp_types_api.stamptype", "pk": 5, "fields": { "name": "Minipliego" } },
+    {"model": "stamp_types_api.stamptype", "pk": 6, "fields": { "name": "Carnet" } },
+    {"model": "stamp_types_api.stamptype", "pk": 7, "fields": { "name": "Entero Postal" } },
+    {"model": "stamp_types_api.stamptype", "pk": 8, "fields": { "name": "Uso oficial" } },
+    {"model": "stamp_types_api.stamptype", "pk": 9, "fields": { "name": "Tasa" } },
+    {"model": "stamp_types_api.stamptype", "pk": 10, "fields": { "name": "Telégrafos" } },
+    {"model": "stamp_types_api.stamptype", "pk": 11, "fields": { "name": "Beneficiencia" } },
+    {"model": "stamp_types_api.stamptype", "pk": 12, "fields": { "name": "Impuestos" } },
+    {"model": "stamp_types_api.stamptype", "pk": 13, "fields": { "name": "Sobrecarga" } },
+    {"model": "stamp_types_api.stamptype", "pk": 14, "fields": { "name": "Control de Correos" } },
+    {"model": "stamp_types_api.stamptype", "pk": 15, "fields": { "name": "Prueba de Lujo" } },
+    {"model": "stamp_types_api.stamptype", "pk": 16, "fields": { "name": "Prueba de Artista" } },
+    {"model": "stamp_types_api.stamptype", "pk": 17, "fields": { "name": "Prueba, Muestra y Ensayo" } },
+
   { "model": "paper_types_api.papertype", "pk": 1, "fields": { "name": "Wove" } },
   { "model": "paper_types_api.papertype", "pk": 2, "fields": { "name": "Laid" } },
   { "model": "paper_types_api.papertype", "pk": 3, "fields": { "name": "Granite" } },
@@ -239,16 +248,1197 @@
   { "model": "condition_types_api.conditiontype", "pk": 8, "fields": { "name": "Canceled to Order (CTO)" } },
   { "model": "condition_types_api.conditiontype", "pk": 9, "fields": { "name": "Damaged" } },
   { "model": "condition_types_api.conditiontype", "pk": 10, "fields": { "name": "Spacefiller" } },
-  { "model": "colors_api.color", "pk": 1, "fields": { "name": "Red" } },
-  { "model": "colors_api.color", "pk": 2, "fields": { "name": "Blue" } },
-  { "model": "colors_api.color", "pk": 3, "fields": { "name": "Green" } },
-  { "model": "colors_api.color", "pk": 4, "fields": { "name": "Yellow" } },
-  { "model": "colors_api.color", "pk": 5, "fields": { "name": "Brown" } },
-  { "model": "colors_api.color", "pk": 6, "fields": { "name": "Orange" } },
-  { "model": "colors_api.color", "pk": 7, "fields": { "name": "Purple" } },
-  { "model": "colors_api.color", "pk": 8, "fields": { "name": "Black" } },
-  { "model": "colors_api.color", "pk": 9, "fields": { "name": "Gray" } },
-  { "model": "colors_api.color", "pk": 10, "fields": { "name": "Multicolor" } },
+  
+    {
+        "model": "colors_api.color",
+        "pk": 170,
+        "fields": {
+            "name": "Aciano"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 95,
+        "fields": {
+            "name": "Amarillento"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 36,
+        "fields": {
+            "name": "Amarillo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 77,
+        "fields": {
+            "name": "Amarillo dorado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 49,
+        "fields": {
+            "name": "Amarillo naranja"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 78,
+        "fields": {
+            "name": "Amarillo parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 96,
+        "fields": {
+            "name": "Apagado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 4,
+        "fields": {
+            "name": "Azul"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 175,
+        "fields": {
+            "name": "Azul cian"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 80,
+        "fields": {
+            "name": "Azul cielo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 59,
+        "fields": {
+            "name": "Azul cobalto"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 101,
+        "fields": {
+            "name": "Azul gris\u00e1ceo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 24,
+        "fields": {
+            "name": "Azul intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 140,
+        "fields": {
+            "name": "Azul lechoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 68,
+        "fields": {
+            "name": "Azul marino"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 34,
+        "fields": {
+            "name": "Azul mate"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 136,
+        "fields": {
+            "name": "Azul negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 20,
+        "fields": {
+            "name": "Azul oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 85,
+        "fields": {
+            "name": "Azul pizarra"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 39,
+        "fields": {
+            "name": "Azul p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 21,
+        "fields": {
+            "name": "Azul suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 30,
+        "fields": {
+            "name": "Azul verdoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 112,
+        "fields": {
+            "name": "Azulado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 84,
+        "fields": {
+            "name": "A\u00f1il"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 165,
+        "fields": {
+            "name": "Beige"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 17,
+        "fields": {
+            "name": "Bermell\u00f3n"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 18,
+        "fields": {
+            "name": "Bronce"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 100,
+        "fields": {
+            "name": "Burdeos"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 145,
+        "fields": {
+            "name": "Burdeos oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 192,
+        "fields": {
+            "name": "Calc\u00e1reo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 113,
+        "fields": {
+            "name": "Carmes\u00ed"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 10,
+        "fields": {
+            "name": "Carm\u00edn"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 22,
+        "fields": {
+            "name": "Carm\u00edn intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 48,
+        "fields": {
+            "name": "Carm\u00edn oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 166,
+        "fields": {
+            "name": "Carm\u00edn parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 102,
+        "fields": {
+            "name": "Carm\u00edn rosado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 144,
+        "fields": {
+            "name": "Carm\u00edn suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 44,
+        "fields": {
+            "name": "Carne"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 61,
+        "fields": {
+            "name": "Casta\u00f1o"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 43,
+        "fields": {
+            "name": "Casta\u00f1o suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 167,
+        "fields": {
+            "name": "Cian"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 132,
+        "fields": {
+            "name": "Cielo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 142,
+        "fields": {
+            "name": "Cobalto"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 162,
+        "fields": {
+            "name": "Crema"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 155,
+        "fields": {
+            "name": "Dorado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 108,
+        "fields": {
+            "name": "Escarlata"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 138,
+        "fields": {
+            "name": "Esmeralda"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 137,
+        "fields": {
+            "name": "Granate"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 33,
+        "fields": {
+            "name": "Gris"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 178,
+        "fields": {
+            "name": "Gris azulado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 182,
+        "fields": {
+            "name": "Gris negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 150,
+        "fields": {
+            "name": "Gris oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 180,
+        "fields": {
+            "name": "Gris pizarra"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 177,
+        "fields": {
+            "name": "Gris suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 110,
+        "fields": {
+            "name": "Gris verdoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 141,
+        "fields": {
+            "name": "Gris\u00e1ceo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 163,
+        "fields": {
+            "name": "Ladrillo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 152,
+        "fields": {
+            "name": "Lago"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 125,
+        "fields": {
+            "name": "Lago profundo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 2,
+        "fields": {
+            "name": "Lila"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 51,
+        "fields": {
+            "name": "Lila oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 66,
+        "fields": {
+            "name": "Lila parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 6,
+        "fields": {
+            "name": "Lila p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 158,
+        "fields": {
+            "name": "Lila p\u00farpura"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 107,
+        "fields": {
+            "name": "Lila rosa"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 117,
+        "fields": {
+            "name": "Lila rosado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 151,
+        "fields": {
+            "name": "Lila violeta"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 121,
+        "fields": {
+            "name": "Magenta"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 46,
+        "fields": {
+            "name": "Malva"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 58,
+        "fields": {
+            "name": "Malva brillante"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 98,
+        "fields": {
+            "name": "Malva profundo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 74,
+        "fields": {
+            "name": "Marino"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 25,
+        "fields": {
+            "name": "Marr\u00f3n"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 111,
+        "fields": {
+            "name": "Marr\u00f3n amarillento"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 193,
+        "fields": {
+            "name": "Marr\u00f3n brillante"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 69,
+        "fields": {
+            "name": "Marr\u00f3n intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 86,
+        "fields": {
+            "name": "Marr\u00f3n lago"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 73,
+        "fields": {
+            "name": "Marr\u00f3n negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 63,
+        "fields": {
+            "name": "Marr\u00f3n oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 64,
+        "fields": {
+            "name": "Marr\u00f3n p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 60,
+        "fields": {
+            "name": "Marr\u00f3n rojizo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 147,
+        "fields": {
+            "name": "Marr\u00f3n rosado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 87,
+        "fields": {
+            "name": "Marr\u00f3n suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 81,
+        "fields": {
+            "name": "Marr\u00f3n violeta"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 130,
+        "fields": {
+            "name": "Multicolor"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 7,
+        "fields": {
+            "name": "Naranja"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 38,
+        "fields": {
+            "name": "Naranja oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 11,
+        "fields": {
+            "name": "Naranja p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 128,
+        "fields": {
+            "name": "Naranja rojizo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 1,
+        "fields": {
+            "name": "Negro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 181,
+        "fields": {
+            "name": "Negro parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 79,
+        "fields": {
+            "name": "Negro profundo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 88,
+        "fields": {
+            "name": "Negro verdoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 116,
+        "fields": {
+            "name": "Negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 94,
+        "fields": {
+            "name": "Ocre"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 153,
+        "fields": {
+            "name": "Ocre oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 139,
+        "fields": {
+            "name": "Ocre suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 76,
+        "fields": {
+            "name": "Oliva"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 174,
+        "fields": {
+            "name": "Oliva amarillo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 156,
+        "fields": {
+            "name": "Oliva oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 173,
+        "fields": {
+            "name": "Oliva parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 114,
+        "fields": {
+            "name": "Oliva suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 187,
+        "fields": {
+            "name": "Oro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 53,
+        "fields": {
+            "name": "Pardo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 135,
+        "fields": {
+            "name": "Parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 109,
+        "fields": {
+            "name": "Pizarra"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 189,
+        "fields": {
+            "name": "Pizarra azulado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 126,
+        "fields": {
+            "name": "Pizarra oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 129,
+        "fields": {
+            "name": "Pizarra verdoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 188,
+        "fields": {
+            "name": "Plata"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 32,
+        "fields": {
+            "name": "P\u00farpura"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 19,
+        "fields": {
+            "name": "P\u00farpura intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 37,
+        "fields": {
+            "name": "P\u00farpura mate"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 124,
+        "fields": {
+            "name": "P\u00farpura rojizo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 176,
+        "fields": {
+            "name": "P\u00farpura suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 42,
+        "fields": {
+            "name": "Rojizo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 191,
+        "fields": {
+            "name": "Rojizo/casta\u00f1o"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 3,
+        "fields": {
+            "name": "Rojo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 194,
+        "fields": {
+            "name": "Rojo anilina"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 149,
+        "fields": {
+            "name": "Rojo intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 8,
+        "fields": {
+            "name": "Rojo marr\u00f3n"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 119,
+        "fields": {
+            "name": "Rojo oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 131,
+        "fields": {
+            "name": "Rojo parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 106,
+        "fields": {
+            "name": "Rojo rosado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 93,
+        "fields": {
+            "name": "Rojo suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 97,
+        "fields": {
+            "name": "Rojo veneciano"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 15,
+        "fields": {
+            "name": "Rosa"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 13,
+        "fields": {
+            "name": "Rosa apagado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 104,
+        "fields": {
+            "name": "Rosa carm\u00edn"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 50,
+        "fields": {
+            "name": "Rosa intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 70,
+        "fields": {
+            "name": "Rosa lila"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 123,
+        "fields": {
+            "name": "Rosa oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 45,
+        "fields": {
+            "name": "Rosa p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 14,
+        "fields": {
+            "name": "Rosa rojo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 9,
+        "fields": {
+            "name": "Rosado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 82,
+        "fields": {
+            "name": "Rosado carm\u00edn"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 115,
+        "fields": {
+            "name": "Rosado lila"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 35,
+        "fields": {
+            "name": "Rosado oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 105,
+        "fields": {
+            "name": "Rosado salm\u00f3n"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 29,
+        "fields": {
+            "name": "Salm\u00f3n"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 118,
+        "fields": {
+            "name": "Salm\u00f3n suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 56,
+        "fields": {
+            "name": "Sepia"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 75,
+        "fields": {
+            "name": "Sepia oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 160,
+        "fields": {
+            "name": "Siena"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 159,
+        "fields": {
+            "name": "Siena oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 120,
+        "fields": {
+            "name": "Turquesa"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 179,
+        "fields": {
+            "name": "Ultramarino"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 5,
+        "fields": {
+            "name": "Verde"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 62,
+        "fields": {
+            "name": "Verde amarillento"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 52,
+        "fields": {
+            "name": "Verde azulado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 157,
+        "fields": {
+            "name": "Verde d\u00e9bil"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 71,
+        "fields": {
+            "name": "Verde esmeralda"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 23,
+        "fields": {
+            "name": "Verde intenso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 54,
+        "fields": {
+            "name": "Verde mirto"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 134,
+        "fields": {
+            "name": "Verde negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 41,
+        "fields": {
+            "name": "Verde oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 65,
+        "fields": {
+            "name": "Verde p\u00e1lido"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 12,
+        "fields": {
+            "name": "Verde suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 27,
+        "fields": {
+            "name": "Verdoso"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 133,
+        "fields": {
+            "name": "Vino tinto"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 16,
+        "fields": {
+            "name": "Violeta"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 146,
+        "fields": {
+            "name": "Violeta azulado"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 148,
+        "fields": {
+            "name": "Violeta brillante"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 67,
+        "fields": {
+            "name": "Violeta gris\u00e1ceo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 92,
+        "fields": {
+            "name": "Violeta negruzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 31,
+        "fields": {
+            "name": "Violeta oscuro"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 55,
+        "fields": {
+            "name": "Violeta parduzco"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 183,
+        "fields": {
+            "name": "Violeta rojizo"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 57,
+        "fields": {
+            "name": "Violeta suave"
+        }
+    },
+    {
+        "model": "colors_api.color",
+        "pk": 185,
+        "fields": {
+            "name": "\u00d3palo"
+        }
+    },
   {
     "model": "issues_api.issue",
     "pk": 1,
