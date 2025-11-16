@@ -1,13 +1,17 @@
-from nicegui import ui
+import os
+from nicegui import ui, app
 from nicegui.page import page
 from pages.login_page import LoginPage
+
+from settings import RESOURCES, BACKGROUND_IMG
 
 class App:
     """
     The main NiceGUI application configuration.
     """
     def __init__(self):
-        # Initialize other pages (e.g., a simple dashboard for redirection)
+        self.__set_static_folder()
+        
         @page('/dashboard')
         def dashboard_page():
             ui.label('Welcome to the Dashboard!').classes('text-3xl font-bold p-10')
@@ -15,10 +19,36 @@ class App:
             
         @page('/login')
         def login_page():
+            self.__set_background_image(BACKGROUND_IMG)
             LoginPage()
+            
+        @page('/')
+        def main_page():
+            ui.navigate.to('/login')
+            
 
         # Start the UI
         ui.run()
+        
+    def __set_static_folder(self):
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the local folder containing your images
+        STATIC_FOLDER_NAME = 'static'
+        STATIC_DIR = os.path.join(SCRIPT_DIR, STATIC_FOLDER_NAME)
+        
+        app.add_static_files(RESOURCES, STATIC_DIR)
+        
+    def __set_background_image(self, image: str):
+        ui.query('body').style(
+                f'background-image: url("{image}");'
+                'background-size: cover;' # Makes the image cover the entire background
+                'background-position: center;' # Centers the image
+                'background-repeat: no-repeat;' # Prevents image tiling
+                'height: 100vh;'            # Ensures the body is exactly the height of the viewport
+                'overflow: hidden;'
+            )
+        
 
 # Run the application
 # if __name__ == '__main__':
