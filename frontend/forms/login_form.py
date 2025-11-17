@@ -25,32 +25,36 @@ class LoginForm(AbstractForm):
         self.password = ''
         self.login_success_handler = login_success_handler
         
-        with self.classes('w-full max-w-sm p-6'):
+        with self.classes('w-96 p-6 shadow-xl rounded-lg'):
+            ui.label('Sign In') \
+                .classes('text-2xl font-semibold')
+                
+            ui.label('Enter your username and password to access your account') \
+                .classes('text-gray-600')
+            
             ui.input(
                 'Username', 
                 on_change=lambda e: self._set_username(e.value)
-            ).bind_value(self, 'username').props('autofocus').classes('mt-4 w-full')
+            ) \
+                .bind_value(self, 'username') \
+                .props('outline dense')\
+                .classes('w-full')
             
             ui.input(
                 'Password', 
                 password_toggle_button=True,
                 on_change=lambda e: self._set_password(e.value)
-            ).bind_value(self, 'password').props('type=password').classes('mt-4 w-full')
-
-            with ui.row().classes('mt-4 w-full justify-between'):
-                # Sign In button
-                ui.button(
+            ).bind_value(self, 'password').props('outline dense type=password').classes('w-full')
+            
+            ui.button(
                     'Sign In', 
                     on_click=self.login
-                ).classes('w-2/5')
+                ).classes('w-full')
+
                 
-                # Sign Up button (Calls the new handler)
-                ui.button(
-                    'Sign Up', 
-                    # on_click=self.navigate_to_signup_handler, # <-- CHANGED THIS LINE
-                    color='secondary'
-                ).classes('w-2/5')
-        
+            with ui.row().classes('w-full justify-center'):
+                ui.label("Don't have an account?").classes('text-sm text-gray-600')
+                ui.link('Sign up', '/signup').classes('text-blue-600 hover:text-blue-800 text-sm')
 
     def _set_username(self, value):
         """

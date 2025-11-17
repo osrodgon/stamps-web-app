@@ -20,7 +20,7 @@ class AbstractForm(ui.card, Logger):
         """Initializes the abstract form, setting up the card and logger."""
         super().__init__()
         self.error_message = ''
-        with self.classes('w-full max-w-sm p-6'):
+        with self.classes('w-full max-w-lg p-6'):
             self._build_form_content()
 
     def _build_form_content(self):

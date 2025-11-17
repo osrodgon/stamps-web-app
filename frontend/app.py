@@ -52,4 +52,4 @@ class App:
 
 # Run the application
 # if __name__ == '__main__':
-App()
+app = App()
