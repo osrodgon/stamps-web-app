@@ -79,19 +79,19 @@ class StampTypesByIdView(Logger, APIView):
             A Response object containing the serialized stamp type data with a
             200 OK status, or a 404 Not Found if the stamp type does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("StampType", pk))
+        self.log.debug(Messages.Get.retrieve_one("StampType", pk))
         stamp_type = self.__get_stamp_type(pk)
         
         if stamp_type is None:
             message = Messages.Get.not_found("StampType", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = StampTypeResponseSerializer(stamp_type)
-        self.info(Messages.Get.retrieved_one("StampType", pk))
+        self.log.info(Messages.Get.retrieved_one("StampType", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -144,11 +144,11 @@ class StampTypesByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the stamp type does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("StampType", pk, request.data))
+        self.log.debug(Messages.Put.update_one("StampType", pk, request.data))
         stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
             message = Messages.Put.not_found("StampType", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -157,13 +157,13 @@ class StampTypesByIdView(Logger, APIView):
         updated_stamp_type = StampTypeRequestSerializer(data=request.data, instance=stamp_type, partial=False)
         if updated_stamp_type.is_valid():
             instance=updated_stamp_type.save()
-            self.info(Messages.Put.updated_one("StampType", instance.id))
+            self.log.info(Messages.Put.updated_one("StampType", instance.id))
             return Response(
                 data=StampTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("StampType", pk, updated_stamp_type.errors))
+        self.log.warning(Messages.Put.validation_failed("StampType", pk, updated_stamp_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_stamp_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -209,11 +209,11 @@ class StampTypesByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the stamp type does not exist.
         """
-        self.debug(Messages.Delete.delete_one("StampType", pk))
+        self.log.debug(Messages.Delete.delete_one("StampType", pk))
         stamp_type = self.__get_stamp_type(pk)
         if stamp_type is None:
             message=Messages.Delete.not_found("StampType", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -221,7 +221,7 @@ class StampTypesByIdView(Logger, APIView):
         
         stamp_type.delete()
         message = Messages.Delete.deleted_one("StampType", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

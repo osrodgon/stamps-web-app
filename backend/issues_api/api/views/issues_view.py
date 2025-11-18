@@ -55,9 +55,9 @@ class IssuesView(Logger, APIView):
             A Response object containing a list of all serialized issues
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("issues"))
+        self.log.debug(Messages.Get.retrieve_all("issues"))
         issues = Issue.objects.all()
-        self.debug(Messages.Get.retrieved_all("issues", issues.count()))
+        self.log.debug(Messages.Get.retrieved_all("issues", issues.count()))
         response = IssueResponseSerializer(issues, many=True)
         
         return Response(data=response.data, status=status.HTTP_200_OK)
@@ -101,18 +101,18 @@ class IssuesView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("issue", request.data))
+        self.log.debug(Messages.Post.create_one("issue", request.data))
         issue = IssueRequestSerializer(data = request.data)
         
         if issue.is_valid():
             instance = issue.save()
-            self.info(Messages.Post.created_one("issue", instance.id))
+            self.log.info(Messages.Post.created_one("issue", instance.id))
             return Response(
                 data=IssueResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
             )
         
-        self.warning(Messages.Post.validation_failed("issue", issue.errors))
+        self.log.warning(Messages.Post.validation_failed("issue", issue.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(issue.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

@@ -63,11 +63,11 @@ class CollectionsView(Logger, APIView):
         Returns:
             Response: A DRF Response object containing a list of serialized collections.
         """
-        self.debug(Messages.Get.retrieve_all("collections"))
+        self.log.debug(Messages.Get.retrieve_all("collections"))
         username = request.query_params.get('username')
 
         collections = Collection.objects.all()
-        self.debug(Messages.Get.retrieved_all("collections", len(collections)))
+        self.log.debug(Messages.Get.retrieved_all("collections", len(collections)))
         response = CollectionResponseSerializer(collections, many=True)
         
         return Response(
@@ -105,12 +105,12 @@ class CollectionsView(Logger, APIView):
     def post(self, request:Request, *args, **kwargs) -> Response:
         password_hash = request.META.get('HTTP_X_API_KEY')
         user = self.__get_user(password_hash)
-        self.debug(Messages.Post.create_one("collection", request.data))
+        self.log.debug(Messages.Post.create_one("collection", request.data))
         collection = CollectionRequestSerializer(data = request.data)
         
         if user is None:
             message = Messages.Database.unknow_user()
-            self.warning(message) 
+            self.log.warning(message) 
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
                 status=status.HTTP_404_NOT_FOUND
@@ -118,13 +118,13 @@ class CollectionsView(Logger, APIView):
         
         if collection.is_valid():
             instance = collection.save(user=user)
-            self.info(Messages.Post.created_one("collection", instance.id))
+            self.log.info(Messages.Post.created_one("collection", instance.id))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
             )
         
-        self.warning(Messages.Post.validation_failed("collection", collection.errors))
+        self.log.warning(Messages.Post.validation_failed("collection", collection.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(collection.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

@@ -50,9 +50,9 @@ class ConditionTypesView(Logger, APIView):
             Response:   A DRF Response object containing a list of all serialized
                         condition type objects and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("condition types"))
+        self.log.debug(Messages.Get.retrieve_all("condition types"))
         condition_types = ConditionType.objects.all()
-        self.debug(Messages.Get.retrieved_all("condition types", condition_types.count()))
+        self.log.debug(Messages.Get.retrieved_all("condition types", condition_types.count()))
         response = ConditionTypeResponseSerializer(condition_types, many=True)
         
         return Response(
@@ -97,18 +97,18 @@ class ConditionTypesView(Logger, APIView):
             Response:   A DRF Response with the newly created condition type's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("condition type", request.data))
+        self.log.debug(Messages.Post.create_one("condition type", request.data))
         condition_type = ConditionTypeRequestSerializer(data = request.data)
         
         if condition_type.is_valid():
             instance = condition_type.save()
-            self.info(Messages.Post.created_one("condition type", instance.id))
+            self.log.info(Messages.Post.created_one("condition type", instance.id))
             return Response(
                 data=ConditionTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("condition type", condition_type.errors))
+        self.log.warning(Messages.Post.validation_failed("condition type", condition_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(condition_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

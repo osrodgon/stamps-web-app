@@ -20,11 +20,11 @@ class ApiKeyUtils(Logger, BaseAuthentication):
         return api_key.name
     
     def authenticate(self, request):
-        self.warning("Trying to authenticate user...")
+        self.log.warning("Trying to authenticate user...")
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         
         if not auth_header:
-            self.error("No auth header found.")
+            self.log.error("No auth header found.")
             raise AuthenticationFailed(
                 Messages.Auth.invalid_api_key()
             )
@@ -32,11 +32,11 @@ class ApiKeyUtils(Logger, BaseAuthentication):
         try:
             scheme, key = auth_header.split(' ', 1)
         except ValueError:
-            self.error("Invalid auth header format.")
+            self.log.error("Invalid auth header format.")
             raise AuthenticationFailed(Messages.Auth.invalid_api_key())
             
         if scheme.lower() != os.getenv("AUTH_TOKEN", "user"):
-            self.error("Invalid auth scheme.")
+            self.log.error("Invalid auth scheme.")
             raise AuthenticationFailed(Messages.Auth.invalid_api_key())
             
         try:
@@ -44,14 +44,14 @@ class ApiKeyUtils(Logger, BaseAuthentication):
             user = api_key.name
                         
             if not re.fullmatch(self.REGEX_PATTERN, user):
-                self.error("Invalid user name.")
+                self.log.error("Invalid user name.")
                 raise AuthenticationFailed(Messages.Auth.user_not_found())
-            self.warning("User authenticated.")
+            self.log.warning("User authenticated.")
             return (user, api_key)
             
         except APIKey.DoesNotExist:
-            self.error("API key does not exist.")
+            self.log.error("API key does not exist.")
             raise AuthenticationFailed(Messages.Auth.invalid_api_key())
         except Exception:
-            self.error("An error occurred during authentication.")
+            self.log.error("An error occurred during authentication.")
             raise AuthenticationFailed(Messages.Auth.invalid_api_key())

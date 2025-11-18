@@ -51,9 +51,9 @@ class ColorsView(Logger, APIView):
             Response:   A DRF Response object containing a list of all serialized
                         color objects and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("colors"))
+        self.log.debug(Messages.Get.retrieve_all("colors"))
         colors = Color.objects.all()
-        self.debug(Messages.Get.retrieved_all("colors", colors.count()))
+        self.log.debug(Messages.Get.retrieved_all("colors", colors.count()))
         response = ColorResponseSerializer(colors, many=True)
         
         return Response(
@@ -98,18 +98,18 @@ class ColorsView(Logger, APIView):
             Response:   A DRF Response with the newly created color's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("color", request.data))
+        self.log.debug(Messages.Post.create_one("color", request.data))
         color = ColorRequestSerializer(data = request.data)
         
         if color.is_valid():
             instance = color.save()
-            self.info(Messages.Post.created_one("color", instance.id))
+            self.log.info(Messages.Post.created_one("color", instance.id))
             return Response(
                 data=ColorResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("color", color.errors))
+        self.log.warning(Messages.Post.validation_failed("color", color.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(color.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

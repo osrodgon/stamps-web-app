@@ -32,10 +32,10 @@ class ColorsByIdView(Logger, APIView):
             Color: The found color instance, or None if it does not exist.
         """
         try:
-            self.debug(Messages.Database.querying("color", pk))
+            self.log.debug(Messages.Database.querying("color", pk))
             return Color.objects.get(pk=pk)
         except Color.DoesNotExist:
-            self.debug(Messages.Database.not_found("color", pk))
+            self.log.warning(Messages.Database.not_found("color", pk))
             return None
     
     @extend_schema(
@@ -74,19 +74,19 @@ class ColorsByIdView(Logger, APIView):
             Response:   A DRF Response object with the serialized color
                         data and 200 OK status, or a 404 Not Found response.
         """
-        self.debug(Messages.Get.retrieve_one("color", pk))
+        self.log.debug(Messages.Get.retrieve_one("color", pk))
         color = self.__get_color(pk)
         
         if color is None:
             message = Messages.Get.not_found("color", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = ColorResponseSerializer(color)
-        self.info(Messages.Get.retrieved_one("color", pk))
+        self.log.info(Messages.Get.retrieved_one("color", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -135,11 +135,11 @@ class ColorsByIdView(Logger, APIView):
             Response:   A DRF Response with updated data and 200 OK status,
                         a 404 if not found, or a 400 on validation error.
         """
-        self.debug(Messages.Put.update_one("color", pk, request.data))
+        self.log.debug(Messages.Put.update_one("color", pk, request.data))
         color = self.__get_color(pk)
         if color is None:
             message = Messages.Put.not_found("color", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -148,13 +148,13 @@ class ColorsByIdView(Logger, APIView):
         updated_color = ColorRequestSerializer(data=request.data, instance=color, partial=False)
         if updated_color.is_valid():
             instance = updated_color.save()
-            self.info(Messages.Put.updated_one("color", instance.id))
+            self.log.info(Messages.Put.updated_one("color", instance.id))
             return Response(
                 data=ColorResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("color", pk, updated_color.errors))
+        self.log.warning(Messages.Put.validation_failed("color", pk, updated_color.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_color.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -197,11 +197,11 @@ class ColorsByIdView(Logger, APIView):
             Response:   A DRF Response with a success message and 200 OK status,
                         or a 404 Not Found response if the item does not exist.
         """
-        self.debug(Messages.Delete.delete_one("color", pk))
+        self.log.debug(Messages.Delete.delete_one("color", pk))
         color = self.__get_color(pk)
         if color is None:
             message = Messages.Delete.not_found("color", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -209,7 +209,7 @@ class ColorsByIdView(Logger, APIView):
         
         color.delete()
         message = Messages.Delete.deleted_one("color", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK
