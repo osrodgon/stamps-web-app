@@ -29,7 +29,7 @@ class LoginPage(Logger):
         """
         # Store the token (assuming Django returns one like 'token' or 'key')
         self.token = data.get('token', 'TOKEN_NOT_FOUND')
-        self.debug(f"Token: {self.token}")
+        self.log.debug(f"Token: {self.token}")
         
         # Clear the page content
         self.form.delete()

@@ -1,6 +1,7 @@
 # Application configuration
 LOG_LEVEL="DEBUG"
 LOG_FILE_NAME="frontend.log"
+LOG_BASE_DIR="logs"
 
 # Frontend
 ASSETS_DIR="/assets"

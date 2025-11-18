@@ -9,6 +9,7 @@ attrs==25.4.0
 bidict==0.23.1
 certifi==2025.11.12
 click==8.3.1
+colorlog==6.10.1
 docutils==0.22.3
 fastapi==0.121.2
 frozenlist==1.8.0

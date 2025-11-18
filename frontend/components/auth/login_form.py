@@ -80,7 +80,7 @@ class LoginForm(AbstractCardForm):
         """
         Handles the login attempt by sending credentials to the backend API.
         """
-        self.debug('Login button clicked. Trying to login')
+        self.log.debug('Login button clicked. Trying to login')
         if not self.username or not self.password:
             self._set_error_message ('Username and password are required.')
             return
@@ -94,13 +94,13 @@ class LoginForm(AbstractCardForm):
                 data = response.json()['data']
                 
                 self.login_success_handler(data)
-                self.debug('Login successful')
+                self.log.debug('Login successful')
                 self._set_error_message('')
             else:
                 error_data = response.json()
                 error_msg = error_data['errors'][0]['message']
-                self.error(f'Login failed: {error_msg}')
+                self.log.error(f'Login failed: {error_msg}')
                 self._set_error_message(f'Error: {error_msg}', 'negative')
         except requests.exceptions.RequestException as e:
-            self.error(f'Network error: {e}')
+            self.log.error(f'Network error: {e}')
             self._set_error_message(f'Network Error: Could not connect to API.', 'negative')

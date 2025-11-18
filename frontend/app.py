@@ -1,7 +1,10 @@
+from math import log
 import os
 from nicegui import ui, app
 from nicegui.page import page
 from pages.auth.login_page import LoginPage
+from utils.log_setup import log_setup
+
 
 from settings import ASSETS_DIR, BACKGROUND_IMG
 
@@ -11,6 +14,7 @@ class App:
     """
     def __init__(self):
         self.__set_assets_folder()
+        log_setup()
         
         @page('/dashboard')
         def dashboard_page():
