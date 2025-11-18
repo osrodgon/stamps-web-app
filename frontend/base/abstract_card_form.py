@@ -2,10 +2,9 @@ from nicegui import ui
 import asyncio
 import requests
 
+from utils.logger import Logger
 
-from common.logger import Logger
-
-class AbstractForm(ui.card, Logger):
+class AbstractCardForm(ui.card, Logger):
     """
     An abstract base class for creating form components with a consistent look and feel.
 

@@ -1,16 +1,16 @@
 import os
 from nicegui import ui, app
 from nicegui.page import page
-from pages.login_page import LoginPage
+from pages.auth.login_page import LoginPage
 
-from settings import RESOURCES, BACKGROUND_IMG
+from settings import ASSETS_DIR, BACKGROUND_IMG
 
 class App:
     """
     The main NiceGUI application configuration.
     """
     def __init__(self):
-        self.__set_static_folder()
+        self.__set_assets_folder()
         
         @page('/dashboard')
         def dashboard_page():
@@ -30,14 +30,14 @@ class App:
         # Start the UI
         ui.run()
         
-    def __set_static_folder(self):
+    def __set_assets_folder(self):
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
         # Define the local folder containing your images
-        STATIC_FOLDER_NAME = 'static'
-        STATIC_DIR = os.path.join(SCRIPT_DIR, STATIC_FOLDER_NAME)
+        ASSETS_FOLDER_NAME = 'assets'
+        ASSETS = os.path.join(SCRIPT_DIR, ASSETS_FOLDER_NAME)
         
-        app.add_static_files(RESOURCES, STATIC_DIR)
+        app.add_static_files(ASSETS_DIR, ASSETS)
         
     def __set_background_image(self, image: str):
         ui.query('body').style(

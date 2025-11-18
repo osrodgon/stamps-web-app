@@ -1,11 +1,11 @@
 from nicegui import ui
 import requests
 
-from common.abstract_form import AbstractForm
+from base.abstract_card_form import AbstractCardForm
 from settings import BACKEND_URL
 
 
-class LoginForm(AbstractForm):
+class LoginForm(AbstractCardForm):
     """
     A form for user authentication.
 

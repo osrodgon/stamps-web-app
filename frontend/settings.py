@@ -3,8 +3,8 @@ LOG_LEVEL="DEBUG"
 LOG_FILE_NAME="frontend.log"
 
 # Frontend
-RESOURCES="/resources"
-BACKGROUND_IMG=f"{RESOURCES}/background.png"
+ASSETS_DIR="/assets"
+BACKGROUND_IMG=f"{ASSETS_DIR}/background.png"
 
 # Backend
 BACKEND_URL="http://localhost:8000/stamps_server/api/v1"

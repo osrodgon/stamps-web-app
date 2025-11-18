@@ -1,6 +1,6 @@
 from nicegui import ui
-from forms.login_form import LoginForm
-from common.logger import Logger
+from components.auth.login_form import LoginForm
+from utils.logger import Logger
 
 class LoginPage(Logger):
     """
@@ -21,13 +21,7 @@ class LoginPage(Logger):
                 with ui.row().classes('items-center justify-end'):
                     ui.separator().classes('w-12 bg-gray-400 h-[2px]')
                     ui.label('Your World of Stamps').classes('text-xl text-gray-700 font-normal mx-4')
-                    ui.separator().classes('w-12 bg-gray-400 h-[2px]')
-
-        # with ui.column().classes('w-full h-screen justify-center items-center'):
-        #     # The LoginForm is initialized here, passing a method to handle success
-        #     self.form = LoginForm(login_success_handler=self.handle_login_success)
-            
-        
+                    ui.separator().classes('w-12 bg-gray-400 h-[2px]')        
 
     def handle_login_success(self, data: dict):
         """
