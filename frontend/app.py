@@ -66,12 +66,12 @@ class StampsApp():
         """
         Registers all application routes using NiceGUI's `@page` decorator.
         """
-        @page('/dashboard')
-        def dashboard_page():
+        @page('/collections')
+        def collections_page():
             """
-            Displays the dashboard page.
+            Displays the collections page.
             """
-            ui.label('Welcome to the Dashboard!').classes('text-3xl font-bold p-10')
+            ui.label('Welcome to the Collections!').classes('text-3xl font-bold p-10')
             ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
             ui.button('Logout', on_click=lambda: ui.navigate.to('/logout'))
             
@@ -83,7 +83,6 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
-            StampsApp.set_background_image(BACKGROUND_IMG)
             LoginPage()
         
         @page('/logout')    
@@ -107,7 +106,7 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             if StampsApp.check_authentication(request): 
-                ui.navigate.to('/dashboard')
+                ui.navigate.to('/collections')
             else:
                 ui.navigate.to('/login')
     
