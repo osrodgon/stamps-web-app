@@ -50,9 +50,9 @@ class ConfigView(Logger, APIView):
             Response:   A DRF Response object containing a list of all serialized
                         configuration entries and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("config entries"))
+        self.log.debug(Messages.Get.retrieve_all("config entries"))
         config = Config.objects.all()
-        self.debug(Messages.Get.retrieved_all("config entries", config.count()))
+        self.log.debug(Messages.Get.retrieved_all("config entries", config.count()))
         response = ConfigResponseSerializer(config, many=True)
         
         return Response(
@@ -97,18 +97,18 @@ class ConfigView(Logger, APIView):
             Response:   A DRF Response with the newly created entry's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("config entry", request.data))
+        self.log.debug(Messages.Post.create_one("config entry", request.data))
         config = ConfigRequestSerializer(data = request.data)
         
         if config.is_valid():
             instance = config.save()
-            self.debug(Messages.Post.created_one("config entry", instance.id))
+            self.log.debug(Messages.Post.created_one("config entry", instance.id))
             return Response(
                 data=ConfigResponseSerializer(instance).data,
                 status=status.HTTP_201_CREATED
                 )
 
-        self.warning(Messages.Post.validation_failed("config entry", config.errors))
+        self.log.warning(Messages.Post.validation_failed("config entry", config.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(config.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

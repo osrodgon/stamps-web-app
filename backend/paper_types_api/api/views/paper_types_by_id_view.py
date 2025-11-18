@@ -79,19 +79,19 @@ class PaperTypesByIdView(Logger, APIView):
             A Response object containing the serialized paper type data with a
             200 OK status, or a 404 Not Found if the paper type does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("paper type", pk))
+        self.log.debug(Messages.Get.retrieve_one("paper type", pk))
         paper_type = self.__get_paper_type(pk)
         
         if paper_type is None:
             message = Messages.Get.not_found("paper type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = PaperTypeResponseSerializer(paper_type)
-        self.info(Messages.Get.retrieved_one("paper type", pk))
+        self.log.info(Messages.Get.retrieved_one("paper type", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -144,11 +144,11 @@ class PaperTypesByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the paper type does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("paper type", pk, request.data))
+        self.log.debug(Messages.Put.update_one("paper type", pk, request.data))
         paper_type = self.__get_paper_type(pk)
         if paper_type is None:
             message = Messages.Put.not_found("paper type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -157,13 +157,13 @@ class PaperTypesByIdView(Logger, APIView):
         updated_paper_type = PaperTypeRequestSerializer(data=request.data, instance=paper_type, partial=False)
         if updated_paper_type.is_valid():
             instance = updated_paper_type.save()
-            self.info(Messages.Put.updated_one("paper type", instance.id))
+            self.log.info(Messages.Put.updated_one("paper type", instance.id))
             return Response(
                 data=PaperTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("paper type", pk, updated_paper_type.errors))
+        self.log.warning(Messages.Put.validation_failed("paper type", pk, updated_paper_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_paper_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -209,11 +209,11 @@ class PaperTypesByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the paper type does not exist.
         """
-        self.debug(Messages.Delete.delete_one("paper type", pk))
+        self.log.debug(Messages.Delete.delete_one("paper type", pk))
         paper_type = self.__get_paper_type(pk)
         if paper_type is None:
             message=Messages.Delete.not_found("paper type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -221,7 +221,7 @@ class PaperTypesByIdView(Logger, APIView):
         
         paper_type.delete()
         message = Messages.Delete.deleted_one("paper type", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

@@ -77,18 +77,18 @@ class StampsByIdView(Logger, APIView):
             A Response object containing the serialized stamp data with a
             200 OK status, or a 404 Not Found if the stamp does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("stamp", id))
+        self.log.debug(Messages.Get.retrieve_one("stamp", id))
         stamp = self.__get_object(id)
         
         if stamp is None:
             message=Messages.Get.not_found("stamp", id)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        self.debug(Messages.Get.retrieved_one("stamp", id))
+        self.log.debug(Messages.Get.retrieved_one("stamp", id))
         serializer = StampResponseSerializer(stamp)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -139,11 +139,11 @@ class StampsByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the stamp does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("stamp", id, request.data))
+        self.log.debug(Messages.Put.update_one("stamp", id, request.data))
         stamp = self.__get_object(id)
         if stamp is None:
             message = Messages.Put.not_found("stamp", id)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -152,13 +152,13 @@ class StampsByIdView(Logger, APIView):
         serializer = StampRequestSerializer(stamp, data=request.data, partial=True)
         if serializer.is_valid():
             instance = serializer.save()
-            self.info(Messages.Put.updated_one("stamp", instance.id))
+            self.log.info(Messages.Put.updated_one("stamp", instance.id))
             return Response(
                 data=StampResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
             )
         
-        self.warning(Messages.Put.validation_failed("stamp", id, serializer.errors))
+        self.log.warning(Messages.Put.validation_failed("stamp", id, serializer.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -203,11 +203,11 @@ class StampsByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the stamp does not exist.
         """
-        self.debug(Messages.Delete.delete_one("stamp", id))
+        self.log.debug(Messages.Delete.delete_one("stamp", id))
         stamp = self.__get_object(id)
         if stamp is None:
             message = Messages.Delete.not_found("stamp", id)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -215,7 +215,7 @@ class StampsByIdView(Logger, APIView):
 
         stamp.delete()
         message = Messages.Delete.deleted_one("stamp", id)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

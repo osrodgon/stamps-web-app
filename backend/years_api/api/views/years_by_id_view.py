@@ -78,19 +78,19 @@ class YearsByIdView(Logger, APIView):
             A Response object containing the serialized year data with a
             200 OK status, or a 404 Not Found if the year does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("year", pk))
+        self.log.debug(Messages.Get.retrieve_one("year", pk))
         year = self.__get_year__(pk)
         
         if year is None:
             message = Messages.Get.not_found("year", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = YearResponseSerializer(year)
-        self.info(Messages.Get.retrieved_one("year", pk))
+        self.log.info(Messages.Get.retrieved_one("year", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -143,11 +143,11 @@ class YearsByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the year does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("year", pk, request.data))
+        self.log.debug(Messages.Put.update_one("year", pk, request.data))
         year = self.__get_year__(pk)
         if year is None:
             message = Messages.Put.not_found("year", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -156,13 +156,13 @@ class YearsByIdView(Logger, APIView):
         updated_year = YearRequestSerializer(data=request.data, instance=year, partial=False)
         if updated_year.is_valid():
             instance=updated_year.save()
-            self.info(Messages.Put.updated_one("year", instance.id))
+            self.log.info(Messages.Put.updated_one("year", instance.id))
             return Response(
                 data=YearResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(f"Payload validation failed for year update (id: {pk}): {updated_year.errors}")
+        self.log.warning(f"Payload validation failed for year update (id: {pk}): {updated_year.errors}")
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -208,11 +208,11 @@ class YearsByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the year does not exist.
         """
-        self.debug(Messages.Delete.delete_one("year", pk))
+        self.log.debug(Messages.Delete.delete_one("year", pk))
         year = self.__get_year__(pk)
         if year is None:
             message=Messages.Delete.not_found("year", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -220,7 +220,7 @@ class YearsByIdView(Logger, APIView):
         
         year.delete()
         message = Messages.Delete.deleted_one("year", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

@@ -34,10 +34,10 @@ class CollectionsByIdView(Logger, APIView):
             Collection: The found collection instance, or None if it does not exist.
         """
         try:
-            self.debug(Messages.Database.querying("collection", pk))
+            self.log.debug(Messages.Database.querying("collection", pk))
             return Collection.objects.get(pk=pk)
         except Collection.DoesNotExist:
-            self.warning(Messages.Database.not_found("collection", pk))
+            self.log.warning(Messages.Database.not_found("collection", pk))
             return None
 
 
@@ -77,19 +77,19 @@ class CollectionsByIdView(Logger, APIView):
             Response:   A DRF Response object with the serialized collection
                         data and 200 OK status, or a 404 Not Found response.
         """
-        self.debug(Messages.Get.retrieve_one("collection", pk))
+        self.log.debug(Messages.Get.retrieve_one("collection", pk))
         collection = self.__get_object(pk)
         
         if collection is None:
             message = Messages.Get.not_found("collection", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
                 status=status.HTTP_404_NOT_FOUND
             )
         
         response = CollectionResponseSerializer(collection)
-        self.debug(Messages.Get.retrieved_one("collection", pk))
+        self.log.debug(Messages.Get.retrieved_one("collection", pk))
         return Response(data=response.data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -135,11 +135,11 @@ class CollectionsByIdView(Logger, APIView):
             Response:   A DRF Response with updated data and 200 OK status,
                         a 404 if not found, or a 400 on validation error.
         """
-        self.debug(Messages.Put.update_one("collection", pk, request.data))
+        self.log.debug(Messages.Put.update_one("collection", pk, request.data))
         collection = self.__get_object(pk)
         if collection is None:
             message = Messages.Put.not_found("collection", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -149,13 +149,13 @@ class CollectionsByIdView(Logger, APIView):
 
         if updated_collection.is_valid():
             instance = updated_collection.save()
-            self.info(Messages.Put.updated_one("collection", pk))
+            self.log.info(Messages.Put.updated_one("collection", pk))
             return Response(
                 data=CollectionResponseSerializer(instance).data, 
                 status=status.HTTP_200_OK
             )
 
-        self.warning(Messages.Put.validation_failed("collection", pk, updated_collection.errors))
+        self.log.warning(Messages.Put.validation_failed("collection", pk, updated_collection.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_collection.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST
@@ -198,11 +198,11 @@ class CollectionsByIdView(Logger, APIView):
             Response:   A DRF Response with a success message and 200 OK status,
                         or a 404 Not Found response if the item does not exist.
         """
-        self.debug(Messages.Delete.delete_one("collection", pk))
+        self.log.debug(Messages.Delete.delete_one("collection", pk))
         collection = self.__get_object(pk)
         if collection is None:
             message = Messages.Delete.not_found("collection", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -210,7 +210,7 @@ class CollectionsByIdView(Logger, APIView):
             
         collection.delete()
         message = Messages.Delete.deleted_one("collection", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

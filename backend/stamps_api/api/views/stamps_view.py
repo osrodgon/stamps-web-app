@@ -55,9 +55,9 @@ class StampsView(Logger, APIView):
             A Response object containing a list of all serialized stamps
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("stamps"))
+        self.log.debug(Messages.Get.retrieve_all("stamps"))
         stamps = Stamp.objects.all()
-        self.debug(Messages.Get.retrieved_all("stamps", len(stamps)))
+        self.log.debug(Messages.Get.retrieved_all("stamps", len(stamps)))
         response = StampResponseSerializer(stamps, many=True)
         
         return Response(
@@ -105,18 +105,18 @@ class StampsView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("stamp", request.data))
+        self.log.debug(Messages.Post.create_one("stamp", request.data))
         stamp = StampRequestSerializer(data = request.data)
         
         if stamp.is_valid():
             instance = stamp.save()
-            self.info(Messages.Post.created_one("stamp", instance.id))
+            self.log.info(Messages.Post.created_one("stamp", instance.id))
             return Response(
                 data=StampResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("stamp", stamp.errors))
+        self.log.warning(Messages.Post.validation_failed("stamp", stamp.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(stamp.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

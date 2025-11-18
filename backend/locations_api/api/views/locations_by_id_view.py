@@ -78,19 +78,19 @@ class LocationsByIdView(Logger, APIView):
             A Response object containing the serialized location data with a
             200 OK status, or a 404 Not Found if the location does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("location", pk))
+        self.log.debug(Messages.Get.retrieve_one("location", pk))
         location = self.__get_location(pk)
         
         if location is None:
             message = Messages.Get.not_found("location", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = LocationResponseSerializer(location)
-        self.info(Messages.Get.retrieved_one("location", pk))
+        self.log.info(Messages.Get.retrieved_one("location", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -143,11 +143,11 @@ class LocationsByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the location does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("location", pk, request.data))
+        self.log.debug(Messages.Put.update_one("location", pk, request.data))
         location = self.__get_location(pk)
         if location is None:
             message = Messages.Put.not_found("location", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -156,13 +156,13 @@ class LocationsByIdView(Logger, APIView):
         updated_location = LocationRequestSerializer(data=request.data, instance=location, partial=False)
         if updated_location.is_valid():
             instance = updated_location.save()
-            self.info(Messages.Put.updated_one("location", instance.id))
+            self.log.info(Messages.Put.updated_one("location", instance.id))
             return Response(
                 data=LocationResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("location", pk, updated_location.errors))
+        self.log.warning(Messages.Put.validation_failed("location", pk, updated_location.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -208,11 +208,11 @@ class LocationsByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the location does not exist.
         """
-        self.debug(Messages.Delete.delete_one("location", pk))
+        self.log.debug(Messages.Delete.delete_one("location", pk))
         location = self.__get_location(pk)
         if location is None:
             message=Messages.Delete.not_found("location", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -220,7 +220,7 @@ class LocationsByIdView(Logger, APIView):
         
         location.delete()
         message = Messages.Delete.deleted_one("location", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

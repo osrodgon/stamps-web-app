@@ -51,9 +51,9 @@ class CountriesView(Logger, APIView):
             Response:   A DRF Response object containing a list of all serialized
                         country objects and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("countries"))
+        self.log.debug(Messages.Get.retrieve_all("countries"))
         countries = Country.objects.all()
-        self.debug(Messages.Get.retrieved_all("countries", len(countries)))
+        self.log.debug(Messages.Get.retrieved_all("countries", len(countries)))
         response = CountryResponseSerializer(countries, many=True)
         
         return Response(
@@ -98,18 +98,18 @@ class CountriesView(Logger, APIView):
             Response:   A DRF Response with the newly created country's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("country", request.data))
+        self.log.debug(Messages.Post.create_one("country", request.data))
         country = CountryRequestSerializer(data = request.data)
         
         if country.is_valid():
             instance = country.save()
-            self.info(Messages.Post.created_one("country", instance.id))
+            self.log.info(Messages.Post.created_one("country", instance.id))
             return Response(
                 data=CountryResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("country", country.errors))
+        self.log.warning(Messages.Post.validation_failed("country", country.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(country.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
