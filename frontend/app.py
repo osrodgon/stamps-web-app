@@ -74,7 +74,7 @@ class StampsApp():
             """
             ui.label('Welcome to the Dashboard!').classes('text-3xl font-bold p-10')
             ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
-            ui.button('Logout', on_click=lambda: logout(None))
+            ui.button('Logout', on_click=lambda: ui.navigate.to('/logout'))
             
         @page('/login')
         def login_page(request: Request):
