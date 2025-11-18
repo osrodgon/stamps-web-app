@@ -55,9 +55,9 @@ class PaperTypesView(Logger, APIView):
             A Response object containing a list of all serialized paper types
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("paper types"))
+        self.log.debug(Messages.Get.retrieve_all("paper types"))
         paper_types = PaperType.objects.all()
-        self.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
+        self.log.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
         response = PaperTypeResponseSerializer(paper_types, many=True)
         
         return Response(
@@ -105,18 +105,18 @@ class PaperTypesView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("paper type", request.data))
+        self.log.debug(Messages.Post.create_one("paper type", request.data))
         paper_type = PaperTypeRequestSerializer(data = request.data)
         
         if paper_type.is_valid():
             instance = paper_type.save()
-            self.info(Messages.Post.created_one("paper type", instance.id))
+            self.log.info(Messages.Post.created_one("paper type", instance.id))
             return Response(
                 data=PaperTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("paper type", paper_type.errors))
+        self.log.warning(Messages.Post.validation_failed("paper type", paper_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(paper_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

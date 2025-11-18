@@ -40,17 +40,17 @@ class LoginView(Logger, APIView):
             correct, otherwise None.
         """
         try: 
-            self.debug("Querying database for user...")
+            self.log.debug("Querying database for user...")
             user = UserCollection.objects.get(username=username)
         except UserCollection.DoesNotExist: ## Check this
-            self.debug("User not found")
+            self.log.debug("User not found")
             return None
         
         if check_password(password, user.password_hash): ## Check this
-            self.debug("User found and validated.")
+            self.log.debug("User found and validated.")
             return user
         
-        self.debug("User validation failed")
+        self.log.debug("User validation failed")
         return None
     
     @extend_schema(
@@ -100,16 +100,16 @@ class LoginView(Logger, APIView):
             Returns a 401 Unauthorized status if credentials are invalid.
             Returns a 500 Internal Server Error if token creation fails.
         """
-        self.debug("Logging in...")
+        self.log.debug("Logging in...")
         
         serializer = LoginRequestSerializer(data=request.data)
         if serializer.is_valid():
             user = self.__get_user(request.data['username'], request.data['password'])
         
             if user is None:
-                self.debug("User not found")
+                self.log.debug("User not found")
                 message = Messages.Post.login_failed()
-                self.warning(message)
+                self.log.warning(message)
                 return Response(
                     data=GenericResponseSerializer(GenericResponse(message)).data,
                     status=status.HTTP_401_UNAUTHORIZED
@@ -117,20 +117,20 @@ class LoginView(Logger, APIView):
             
             token_data = JwtToken().create(user)
             if token_data is None:
-                self.debug("JWT token creation failed")
+                self.log.debug("JWT token creation failed")
                 message = Messages.Post.login_failed()
                 return Response(
                     status=status.HTTP_401_UNAUTHORIZED,
                     data=GenericResponseSerializer(GenericResponse(message)).data
                 )
             
-            self.debug("User logged in.")
+            self.log.debug("User logged in.")
             return Response(
                 status=status.HTTP_200_OK, 
                 data=token_data
             )
         else:
-            self.debug("Invalid payload")
+            self.log.debug("Invalid payload")
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data = GenericResponseSerializer(GenericResponse(serializer.errors)).data

@@ -34,10 +34,10 @@ class UsersByIdView(Logger, APIView):
             The UserCollection instance if found, otherwise None.
         """
         try:
-            self.debug(Messages.Database.querying("collection user", pk))
+            self.log.debug(Messages.Database.querying("collection user", pk))
             return UserCollection.objects.get(pk=pk)
         except UserCollection.DoesNotExist:
-            self.debug(Messages.Database.not_found("collection user", pk))
+            self.log.debug(Messages.Database.not_found("collection user", pk))
             return None
     
     @extend_schema(
@@ -79,19 +79,19 @@ class UsersByIdView(Logger, APIView):
             A Response object containing the serialized user data with a
             200 OK status, or a 404 Not Found if the user does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("collection user", pk))
+        self.log.debug(Messages.Get.retrieve_one("collection user", pk))
         user = self.__get_user(pk)
         
         if user is None:
             message = Messages.Get.not_found("collection user", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = UserResponseSerializer(user)
-        self.info(Messages.Get.retrieved_one("collection user", pk))
+        self.log.info(Messages.Get.retrieved_one("collection user", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -147,11 +147,11 @@ class UsersByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the user does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("collection user", pk, request.data))
+        self.log.debug(Messages.Put.update_one("collection user", pk, request.data))
         user = self.__get_user(pk)
         if user is None:
             message = Messages.Put.not_found("collection user", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -167,13 +167,13 @@ class UsersByIdView(Logger, APIView):
                 setattr(user, attr, value)
             user.save()
 
-            self.info(Messages.Put.updated_one("collection user", user.id))
+            self.log.info(Messages.Put.updated_one("collection user", user.id))
             return Response(
                 data=UserResponseSerializer(user).data, 
                 status=status.HTTP_200_OK
             )
         
-        self.warning(Messages.Put.validation_failed("collection user", pk, serializer.errors))
+        self.log.warning(Messages.Put.validation_failed("collection user", pk, serializer.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST
@@ -219,11 +219,11 @@ class UsersByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the user does not exist.
         """
-        self.debug(Messages.Delete.delete_one("collection user", pk))
+        self.log.debug(Messages.Delete.delete_one("collection user", pk))
         user = self.__get_user(pk)
         if user is None:
             message = Messages.Delete.not_found("collection user", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -231,7 +231,7 @@ class UsersByIdView(Logger, APIView):
         
         user.delete()
         message = Messages.Delete.deleted_one("collection user", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

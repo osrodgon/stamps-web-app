@@ -9,7 +9,7 @@ from users_api.models import UserCollection, UserToken
 
 class JwtToken(Logger):
     def validate(self, token: str):
-        self.debug("Validating JWT token...")
+        self.log.debug("Validating JWT token...")
         try:
             jwt_payload = jwt.decode(
                 token,
@@ -19,21 +19,21 @@ class JwtToken(Logger):
             try:
                 UserToken.objects.get(user=jwt_payload['user_id'], jti=jwt_payload['jti'])
             except UserToken.DoesNotExist:
-                self.error("The token is not associated with a valid user.")
+                self.log.error("The token is not associated with a valid user.")
                 return None
                 
-            self.debug("JWT token validated.")
+            self.log.debug("JWT token validated.")
             return jwt_payload
     
         except jwt.ExpiredSignatureError:
-            self.error("JWT token has expired.")
+            self.log.error("JWT token has expired.")
             return None
         except jwt.InvalidTokenError as e:
-            self.error(f"JWT token validation failed: {e}")
+            self.log.error(f"JWT token validation failed: {e}")
             return None
     
     def create(self, user: UserCollection) -> str:
-        self.debug("Creating JWT token...")
+        self.log.debug("Creating JWT token...")
         current_time_utc = datetime.now(timezone.utc)
         
         jwt_payload = {
@@ -52,16 +52,16 @@ class JwtToken(Logger):
                 algorithm=JWT_ALGORITHM
             )
         except TypeError:
-            self.error("JWT token creation failed: payload is invalid.")
+            self.log.error("JWT token creation failed: payload is invalid.")
             return None
         except jwt.InvalidAlgorithmError:
-            self.error("JWT token creation failed: invalid algorithm.")
+            self.log.error("JWT token creation failed: invalid algorithm.")
             return None
         except jwt.InvalidTokenError:
-            self.error("JWT token creation failed: invalid token.")
+            self.log.error("JWT token creation failed: invalid token.")
             return None
         
-        self.debug("JWT token created.")
+        self.log.debug("JWT token created.")
         UserToken.objects.update_or_create(user=user, defaults={'jti': jwt_payload['jti']})    
         return {
             'token': token,

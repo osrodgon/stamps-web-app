@@ -54,9 +54,9 @@ class UsersView(Logger, APIView):
             A Response object containing a list of all serialized users
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("collection users"))
+        self.log.debug(Messages.Get.retrieve_all("collection users"))
         users = UserCollection.objects.all()
-        self.debug(Messages.Get.retrieved_all("collection users", users.count()))
+        self.log.debug(Messages.Get.retrieved_all("collection users", users.count()))
         response = UserResponseSerializer(users, many=True)
         
         return Response(
@@ -105,19 +105,19 @@ class UsersView(Logger, APIView):
             A Response object with the newly created user data and a 201 Created
             status if successful. Returns a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Post.create_one("collection user", request.data))
+        self.log.debug(Messages.Post.create_one("collection user", request.data))
         serializer = UserRequestSerializer(data=request.data)
         if serializer.is_valid():
             validated_data = serializer.validated_data
             validated_data['password_hash'] = make_password(validated_data.pop('password'))
             instance = UserCollection.objects.create(**validated_data)
-            self.info(Messages.Post.created_one("collection user", instance.id))
+            self.log.info(Messages.Post.created_one("collection user", instance.id))
             return Response(
                 data=UserResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
             )
         
-        self.warning(Messages.Post.validation_failed("collection user", serializer.errors))
+        self.log.warning(Messages.Post.validation_failed("collection user", serializer.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(serializer.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

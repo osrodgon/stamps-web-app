@@ -56,9 +56,9 @@ class CollectionItemsView(Logger, APIView):
             Response:   A DRF Response object containing a list of all serialized
                         collection item objects and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("collection items"))
+        self.log.debug(Messages.Get.retrieve_all("collection items"))
         collection_items = CollectionItem.objects.all()
-        self.debug(Messages.Get.retrieved_all("collection items", len(collection_items)))
+        self.log.debug(Messages.Get.retrieved_all("collection items", len(collection_items)))
         response = CollectionItemsResponseSerializer(collection_items, many=True)
         
         return Response(
@@ -103,18 +103,18 @@ class CollectionItemsView(Logger, APIView):
             Response:   A DRF Response with the newly created item's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("collection item", request.data))
+        self.log.debug(Messages.Post.create_one("collection item", request.data))
         collection_item = CollectionItemsRequestSerializer(data = request.data)
         
         if collection_item.is_valid():
             instance = collection_item.save()
-            self.info(Messages.Post.created_one("collection item", instance.id))
+            self.log.info(Messages.Post.created_one("collection item", instance.id))
             return Response(
                 data=CollectionItemsResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
             )
         
-        self.warning(Messages.Post.validation_failed("collection item", collection_item.errors))
+        self.log.warning(Messages.Post.validation_failed("collection item", collection_item.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(collection_item.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

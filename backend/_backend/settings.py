@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -38,6 +37,7 @@ ALLOWED_HOSTS = []
 # Application configuration
 LOG_LEVEL="DEBUG"
 LOG_FILE_NAME="backend.log"
+LOG_BASE_DIR="logs"
 
 # API Key header
 API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"

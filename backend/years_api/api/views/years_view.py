@@ -55,9 +55,9 @@ class YearsView(Logger, APIView):
             A Response object containing a list of all serialized years
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("years"))
+        self.log.debug(Messages.Get.retrieve_all("years"))
         years = Year.objects.all()
-        self.debug(Messages.Get.retrieved_all("years", len(years)))
+        self.log.debug(Messages.Get.retrieved_all("years", len(years)))
         response = YearResponseSerializer(years, many=True)
         
         return Response(
@@ -105,18 +105,18 @@ class YearsView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("year", request.data))
+        self.log.debug(Messages.Post.create_one("year", request.data))
         year = YearRequestSerializer(data = request.data)
         
         if year.is_valid():
             instance = year.save()
-            self.info(Messages.Post.created_one("year", instance.id))
+            self.log.info(Messages.Post.created_one("year", instance.id))
             return Response(
                 data=YearResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("year", year.errors))
+        self.log.warning(Messages.Post.validation_failed("year", year.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(year.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
