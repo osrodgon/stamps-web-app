@@ -37,7 +37,7 @@ class UsersByIdView(Logger, APIView):
             self.log.debug(Messages.Database.querying("collection user", pk))
             return UserCollection.objects.get(pk=pk)
         except UserCollection.DoesNotExist:
-            self.log.debug(Messages.Database.not_found("collection user", pk))
+            self.log.warning(Messages.Database.not_found("collection user", pk))
             return None
     
     @extend_schema(
