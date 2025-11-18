@@ -18,8 +18,6 @@ class CustomAPIKeyAuthentication(Logger, BaseAuthentication):
     def authenticate(self, request):
         self.log.debug("Checking header...")
         
-        print(request.path)
-        
         if request.path in self.EXEMPT_PATHS:
             return None
         
