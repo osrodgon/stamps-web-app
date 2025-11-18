@@ -9,7 +9,7 @@ class AbstractCardForm(ui.card, Logger):
     An abstract base class for creating form components with a consistent look and feel.
 
     This class provides a basic structure for forms, including error handling and
-    notifications. It inherits from `nicegui.ui.card` for styling and `common.logger.Logger`
+    notifications. It inherits from `nicegui.ui.card` for styling and `utils.logger.Logger`
     for logging capabilities.
 
     Subclasses are expected to implement the `_build_form_content` method to define
