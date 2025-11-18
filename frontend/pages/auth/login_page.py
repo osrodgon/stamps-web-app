@@ -1,4 +1,4 @@
-from nicegui import ui
+from nicegui import ui, app
 from components.auth.login_form import LoginForm
 from utils.logger import Logger
 
@@ -9,7 +9,6 @@ class LoginPage(Logger):
     """
     def __init__(self):
         super().__init__()
-        self.token = None # To store the auth token or session info
         
         with ui.column().classes('w-full h-screen p-4'):
             with ui.column().classes('w-full flex-grow justify-center items-center'):
@@ -28,8 +27,13 @@ class LoginPage(Logger):
         Callback function executed on successful API login.
         """
         # Store the token (assuming Django returns one like 'token' or 'key')
-        self.token = data.get('token', 'TOKEN_NOT_FOUND')
-        self.log.debug(f"Token: {self.token}")
+        token = data.get('token', None)
+        if token is None:
+            self.log.error("Could not obtain token from login response.")
+            return
+        
+        app.storage.user['jwt_token'] = token
+        self.log.debug(f"Token: {token[:10]}...")
         
         # Clear the page content
         self.form.delete()
