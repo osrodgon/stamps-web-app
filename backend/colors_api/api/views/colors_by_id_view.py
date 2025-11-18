@@ -35,7 +35,7 @@ class ColorsByIdView(Logger, APIView):
             self.log.debug(Messages.Database.querying("color", pk))
             return Color.objects.get(pk=pk)
         except Color.DoesNotExist:
-            self.log.debug(Messages.Database.not_found("color", pk))
+            self.log.warning(Messages.Database.not_found("color", pk))
             return None
     
     @extend_schema(
