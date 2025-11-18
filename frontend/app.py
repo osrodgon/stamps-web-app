@@ -1,7 +1,10 @@
+from ast import main
 import os
 from fastapi import Request
 from nicegui import ui, app
 from nicegui.page import page
+from dotenv import load_dotenv
+
 from pages.auth.login_page import LoginPage
 from utils.log_setup import log_setup
 
@@ -57,8 +60,7 @@ class StampsApp():
         Returns:
             bool: True if authenticated, False otherwise.
         """
-        #return 'auth_token' in request.session
-        return False
+        return app.storage.user.get('jwt_token') is not None
     
     @staticmethod
     def register_routes():
@@ -72,6 +74,7 @@ class StampsApp():
             """
             ui.label('Welcome to the Dashboard!').classes('text-3xl font-bold p-10')
             ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
+            ui.button('Logout', on_click=lambda: logout(None))
             
         @page('/login')
         def login_page(request: Request):
@@ -83,6 +86,17 @@ class StampsApp():
             """
             StampsApp.set_background_image(BACKGROUND_IMG)
             LoginPage()
+        
+        @page('/logout')    
+        async def logout(request: Request):
+            """
+            Logs out the user and redirects to the login page.
+
+            Args:
+                request (Request): The FastAPI request object.
+            """
+            app.storage.user.clear()
+            await main_page(None)
             
         @page('/')
         async def main_page(request: Request):
@@ -99,11 +113,11 @@ class StampsApp():
                 ui.navigate.to('/login')
     
     @staticmethod            
-    def run():
+    def run(storage_secret: str):
         """
         Runs the NiceGUI application with a specified title.
         """
-        ui.run(title=APP_NAME)
+        ui.run(title=APP_NAME, storage_secret=storage_secret)
                 
 if __name__ in {"__main__", "__mp_main__"}:
     """
@@ -111,6 +125,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     Initializes the application, sets up static files, logging, and routes,
     then creates an instance of the App and runs it.
     """
+    load_dotenv()
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
-    StampsApp.run()
+    StampsApp.run(os.getenv("APP_STORAGE_SECRET"))
