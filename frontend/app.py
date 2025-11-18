@@ -1,32 +1,28 @@
 import os
-from turtle import st
 from fastapi import Request
 from nicegui import ui, app
 from nicegui.page import page
 from pages.auth.login_page import LoginPage
 from utils.log_setup import log_setup
-from utils.logger import Logger
-
 
 from settings import (
     APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, BACKGROUND_IMG
 )
 
-class StampsApp(Logger):
+class StampsApp():
     """
     Main application class for the Stamps web application.
     Handles static file setup, logging, route registration, and authentication.
     """
 
     @staticmethod
-    def __set_background_image(image_url: str):
+    def set_background_image(image_url: str):
         """
         Applies a background image to the NiceGUI page body.
 
         Args:
             image_url (str): The URL of the image to be used as the background.
         """
-        stamps_frontend.log.debug(f"Setting background image to {image_url}...")
         ui.query('body').style(
                 f'background-image: url("{image_url}");'
                 'background-size: cover;'
@@ -35,6 +31,7 @@ class StampsApp(Logger):
                 'height: 100vh;'
                 'overflow: hidden;'
             )
+        
     @staticmethod
     def setup_static_logging_and_routes(root_dir: str):
         """
@@ -60,7 +57,6 @@ class StampsApp(Logger):
         Returns:
             bool: True if authenticated, False otherwise.
         """
-        stamps_frontend.log.debug("Checking authentication...")
         #return 'auth_token' in request.session
         return False
     
@@ -85,7 +81,7 @@ class StampsApp(Logger):
             Args:
                 request (Request): The FastAPI request object.
             """
-            StampsApp.__set_background_image(BACKGROUND_IMG)
+            StampsApp.set_background_image(BACKGROUND_IMG)
             LoginPage()
             
         @page('/')
@@ -97,13 +93,13 @@ class StampsApp(Logger):
             Args:
                 request (Request): The FastAPI request object.
             """
-            stamps_frontend.log.debug("Loading main page...")
             if StampsApp.check_authentication(request): 
                 ui.navigate.to('/dashboard')
             else:
                 ui.navigate.to('/login')
-                
-    def run(self):
+    
+    @staticmethod            
+    def run():
         """
         Runs the NiceGUI application with a specified title.
         """
@@ -117,6 +113,4 @@ if __name__ in {"__main__", "__mp_main__"}:
     """
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
-        
-    stamps_frontend = StampsApp()
-    stamps_frontend.run()
+    StampsApp.run()
