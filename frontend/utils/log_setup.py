@@ -8,7 +8,7 @@ def log_setup():
     # Ensure the log directory exists
     log_path = Path(LOG_FILE_NAME)
     if not log_path.is_absolute():
-        log_path = LOG_BASE_DIR / log_path
+        log_path = Path(LOG_BASE_DIR) / log_path
         
     log_path.parent.mkdir(parents=True, exist_ok=True)
     
