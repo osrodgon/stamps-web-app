@@ -1,4 +1,3 @@
-from math import log
 import os
 from nicegui import ui, app
 from nicegui.page import page
@@ -29,10 +28,6 @@ class App:
         @page('/')
         def main_page():
             ui.navigate.to('/login')
-            
-
-        # Start the UI
-        ui.run()
         
     def __set_assets_folder(self):
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -52,8 +47,8 @@ class App:
                 'height: 100vh;'            # Ensures the body is exactly the height of the viewport
                 'overflow: hidden;'
             )
-        
 
 # Run the application
-# if __name__ == '__main__':
-app = App()
+if __name__ in {"__main__", "__mp_main__"}:
+    app = App()
+    ui.run()
