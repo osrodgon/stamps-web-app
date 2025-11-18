@@ -1,54 +1,122 @@
 import os
+from turtle import st
+from fastapi import Request
 from nicegui import ui, app
 from nicegui.page import page
 from pages.auth.login_page import LoginPage
 from utils.log_setup import log_setup
+from utils.logger import Logger
 
 
-from settings import ASSETS_DIR, BACKGROUND_IMG
+from settings import (
+    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, BACKGROUND_IMG
+)
 
-class App:
+class StampsApp(Logger):
     """
-    The main NiceGUI application configuration.
+    Main application class for the Stamps web application.
+    Handles static file setup, logging, route registration, and authentication.
     """
-    def __init__(self):
-        self.__set_assets_folder()
-        log_setup()
+
+    @staticmethod
+    def __set_background_image(image_url: str):
+        """
+        Applies a background image to the NiceGUI page body.
+
+        Args:
+            image_url (str): The URL of the image to be used as the background.
+        """
+        stamps_frontend.log.debug(f"Setting background image to {image_url}...")
+        ui.query('body').style(
+                f'background-image: url("{image_url}");'
+                'background-size: cover;'
+                'background-position: center;'
+                'background-repeat: no-repeat;'
+                'height: 100vh;'
+                'overflow: hidden;'
+            )
+    @staticmethod
+    def setup_static_logging_and_routes(root_dir: str):
+        """
+        Sets up logging, static files, and routes for the NiceGUI application.
+
+        Args:
+            root_dir (str): The root directory of the application, used to locate assets.
+        """
+        assets_path = os.path.join(root_dir, ASSETS_FOLDER_NAME)
         
+        app.add_static_files(ASSETS_DIR, assets_path)
+        log_setup()
+        StampsApp.register_routes()
+        
+    @staticmethod
+    def check_authentication(request: Request) -> bool:
+        """
+        Checks if the current request is authenticated.
+
+        Args:
+            request (Request): The FastAPI request object containing session information.
+
+        Returns:
+            bool: True if authenticated, False otherwise.
+        """
+        stamps_frontend.log.debug("Checking authentication...")
+        #return 'auth_token' in request.session
+        return False
+    
+    @staticmethod
+    def register_routes():
+        """
+        Registers all application routes using NiceGUI's `@page` decorator.
+        """
         @page('/dashboard')
         def dashboard_page():
+            """
+            Displays the dashboard page.
+            """
             ui.label('Welcome to the Dashboard!').classes('text-3xl font-bold p-10')
             ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
             
         @page('/login')
-        def login_page():
-            self.__set_background_image(BACKGROUND_IMG)
+        def login_page(request: Request):
+            """
+            Displays the login page.
+
+            Args:
+                request (Request): The FastAPI request object.
+            """
+            StampsApp.__set_background_image(BACKGROUND_IMG)
             LoginPage()
             
         @page('/')
-        def main_page():
-            ui.navigate.to('/login')
-        
-    def __set_assets_folder(self):
-        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        async def main_page(request: Request):
+            """
+            The main entry point of the application.
+            Redirects to dashboard if authenticated, otherwise to login.
 
-        # Define the local folder containing your images
-        ASSETS_FOLDER_NAME = 'assets'
-        ASSETS = os.path.join(SCRIPT_DIR, ASSETS_FOLDER_NAME)
-        
-        app.add_static_files(ASSETS_DIR, ASSETS)
-        
-    def __set_background_image(self, image: str):
-        ui.query('body').style(
-                f'background-image: url("{image}");'
-                'background-size: cover;' # Makes the image cover the entire background
-                'background-position: center;' # Centers the image
-                'background-repeat: no-repeat;' # Prevents image tiling
-                'height: 100vh;'            # Ensures the body is exactly the height of the viewport
-                'overflow: hidden;'
-            )
-
-# Run the application
+            Args:
+                request (Request): The FastAPI request object.
+            """
+            stamps_frontend.log.debug("Loading main page...")
+            if StampsApp.check_authentication(request): 
+                ui.navigate.to('/dashboard')
+            else:
+                ui.navigate.to('/login')
+                
+    def run(self):
+        """
+        Runs the NiceGUI application with a specified title.
+        """
+        ui.run(title=APP_NAME)
+                
 if __name__ in {"__main__", "__mp_main__"}:
-    app = App()
-    ui.run()
+    """
+    Entry point for the Stamps frontend application.
+    Initializes the application, sets up static files, logging, and routes,
+    then creates an instance of the App and runs it.
+    """
+    APP_DIR = os.path.dirname(os.path.abspath(__file__))
+    StampsApp.setup_static_logging_and_routes(APP_DIR)
+        
+    stamps_frontend = StampsApp()
+    stamps_frontend.run()
