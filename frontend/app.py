@@ -1,4 +1,3 @@
-from ast import main
 import os
 from fastapi import Request
 from nicegui import ui, app
@@ -88,7 +87,7 @@ class StampsApp():
             LoginPage()
         
         @page('/logout')    
-        async def logout(request: Request):
+        def logout(request: Request):
             """
             Logs out the user and redirects to the login page.
 
@@ -96,7 +95,7 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             app.storage.user.clear()
-            await main_page(None)
+            ui.navigate.to('/login')
             
         @page('/')
         async def main_page(request: Request):
