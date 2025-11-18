@@ -9,7 +9,7 @@ from settings import BACKGROUND_IMG, BACKEND_URL
 class LoginPage(ui.column, BasePage, BaseRest):
     """A page component for the user login screen."""
     login_card: LoginCard = None
-    footer: FooterBranding = None
+    footer_branding: FooterBranding = None
     
     def __init__(self):
         """Initializes the LoginPage, setting up the background, login card, and footer."""
