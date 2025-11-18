@@ -34,7 +34,7 @@ class ConditionTypesByIdView(Logger, APIView):
             self.log.debug(Messages.Database.querying("condition type", pk))
             return ConditionType.objects.get(pk=pk)
         except ConditionType.DoesNotExist:
-            self.log.debug(Messages.Database.not_found("condition type", pk))
+            self.log.warning(Messages.Database.not_found("condition type", pk))
             return None
     
     @extend_schema(
