@@ -1,0 +1,17 @@
+services:
+  client:
+    # Use the 'prod' stage for the smallest, cleanest final image
+    build:
+      context: ./frontend
+      target: prod
+      
+    # Expose port 8080 for web access (typically mapped via an Nginx/load balancer outside Docker)
+    ports:
+      - "8080:8080"
+      
+    # Set the restart policy to ensure the service stays up
+    restart: always
+    
+    # Set environment to production (optional, but good practice)
+    environment:
+      - NICEGUI_ENV=production

@@ -1,0 +1,25 @@
+services:
+  web:
+    # 1. Builds the 'dev' stage of the Dockerfile
+    build:
+      context: ./backend
+      target: dev
+
+    env_file:
+      - .env
+    
+    # 2. Mounts the code volume locally (hot-reloading)
+    volumes:
+      - ./backend:/usr/src/app:delegated
+      
+    # 3. Port mapping for access from the host
+    ports:
+      - "8000:8000"
+      
+    # 4. Uses the runserver command
+    command: python manage.py runserver 0.0.0.0:8000
+
+    # 5. Development environment variables
+    environment:
+      - DJANGO_SETTINGS_MODULE=_backend.settings
+      - DEBUG=True

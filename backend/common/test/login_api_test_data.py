@@ -1,6 +1,6 @@
 import pytest
 
-from backend.common.test.users_api_test_data import users_table
+from common.test.users_api_test_data import users_table
 
 
 @pytest.fixture

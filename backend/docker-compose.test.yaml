@@ -1,0 +1,15 @@
+services:
+  web:
+    # 1. Builds the 'test' stage
+    build:
+      context: ./backend
+      target: test
+      
+    # 2. Test environment variables
+    environment:
+      - DJANGO_SETTINGS_MODULE=_backend.settings
+      
+    # 3. Overrides the command to run tests and exit
+    command: pytest -q --tb=no --disable-warnings
+    
+    # No need to mount volumes or map ports
