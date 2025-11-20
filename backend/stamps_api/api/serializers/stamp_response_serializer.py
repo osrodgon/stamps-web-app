@@ -1,4 +1,3 @@
-from turtle import color
 from rest_framework import serializers
 from stamps_api.models import Stamp
 

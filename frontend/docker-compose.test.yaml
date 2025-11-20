@@ -1,0 +1,14 @@
+services:
+  client:
+    # Use the 'dev' stage as it contains all necessary code and dependencies
+    build:
+      context: ./frontend
+      target: dev
+      
+    # Overrides the default CMD to run tests and exit
+    command: pytest 
+        
+    # Set the working directory to the project root for testing
+    working_dir: /usr/src/app
+    
+    # We use 'run --rm' in the management script, so volumes/ports are unnecessary

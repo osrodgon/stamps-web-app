@@ -1,0 +1,26 @@
+services:
+  web:
+    # 1. Builds the 'prod' stage
+    build:
+      context: ./backend
+      target: prod
+    
+    # 2. Disables volume mounts (code baked into the image)
+    volumes: [] 
+    
+    # 3. Port mapping for production (behind a proxy)
+    ports:
+      - "80:8000"
+      
+    # 4. Production environment variables
+    environment:
+      - DJANGO_SETTINGS_MODULE=_backend.settings.prod
+      - DEBUG=False
+      - SECRET_KEY=YOUR_SECURE_PROD_KEY
+      
+    # 5. Automatic restart on failure
+    restart: always
+
+    # 6. Uses Gunicorn (the default CMD for the prod stage)
+    # command: gunicorn --bind 0.0.0.0:8000 your_project.wsgi:application
+    # (This command is already in the Dockerfile, it is not necessary to redefine it)

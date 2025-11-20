@@ -1,0 +1,39 @@
+services:
+  web:
+    # 'build' and 'target' instructions will be defined in the overrides
+    # to use the dev, test, or prod stages of the Dockerfile
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    
+    # Base image name (will be tagged by the overrides)
+    image: django-api:base
+    
+    # Common dependencies (the database is always necessary)
+    depends_on:
+      - db
+    
+    # Internal networks
+    networks:
+      - stamps-server-net
+
+  db:
+    image: postgres:14-alpine
+    container_name: db_postgres
+    environment:
+      # Passwords will be managed separately in each environment
+      - POSTGRES_DB=base_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      # Volume to persist DB data
+      - db_data:/var/lib/postgresql/data/
+    networks:
+      - stamps-server-net
+
+volumes:
+  db_data:
+
+networks:
+  stamps-server-net:
+    driver: bridge

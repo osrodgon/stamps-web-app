@@ -12,4 +12,4 @@ ASSETS_FOLDER_NAME="assets"
 BACKGROUND_IMG=f"{ASSETS_DIR}/background.png"
 
 # Backend
-BACKEND_URL=os.getenv("BACKEND_URL", "http://localhost:8000/stamps_server/api/v1")
+BACKEND_URL=os.getenv("BACKEND_URL", "http://web:8000/stamps_server/api/v1")

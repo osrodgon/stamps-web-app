@@ -1,0 +1,19 @@
+services:
+  # --- Frontend Client Service ---
+  client:
+    container_name: nicegui_client
+    # CRITICAL: Build context is relative to the directory containing THIS file (frontend/)
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+      # Target is set in the dev/prod overrides
+
+    image: nicegui-frontend:base
+
+    networks:
+      - stamps-server-net # Use a separate network or a shared one if needed
+
+# Networks local to the frontend
+networks:
+  stamps-server-net:
+    driver: bridge
