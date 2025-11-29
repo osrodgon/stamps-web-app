@@ -16,4 +16,4 @@ def print_type_post_payload_ok():
 
 @pytest.fixture
 def print_type_put_payload_ok():
-    return {"name": "Updated print Type"}
+    return {"name": "Updated Print Type"}
