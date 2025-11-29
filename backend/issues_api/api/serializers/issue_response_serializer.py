@@ -13,7 +13,7 @@ class IssueResponseSerializer(serializers.ModelSerializer):
     year = serializers.StringRelatedField()
     location = serializers.StringRelatedField(allow_null=True)
     stamp_type = serializers.StringRelatedField(allow_null=True)
-    paper_type = serializers.StringRelatedField(allow_null=True)
+    print_type = serializers.StringRelatedField(allow_null=True)
 
     class Meta:
         model = Issue

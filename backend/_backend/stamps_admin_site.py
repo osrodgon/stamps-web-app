@@ -8,7 +8,7 @@ from config_api.models import Config
 from countries_api.models import Country
 from issues_api.models import Issue
 from locations_api.models import Location
-from paper_types_api.models import PaperType
+from print_types_api.models import PrintType
 from stamp_types_api.models import StampType
 from stamps_api.models import Stamp
 from users_api.models import UserCollection, UserToken
@@ -29,7 +29,7 @@ CATEGORIES = {
     "Config": STAMPS_SITE_NAME,
     "Country": STAMPS_SITE_NAME,
     "Issue": STAMPS_SITE_NAME,
-    "PaperType": STAMPS_SITE_NAME,
+    "PrintType": STAMPS_SITE_NAME,
     "StampType": STAMPS_SITE_NAME,
     "Stamp": STAMPS_SITE_NAME,
     "Year": STAMPS_SITE_NAME,
@@ -104,7 +104,7 @@ stamps_admin_site.register(Color)
 stamps_admin_site.register(Config)
 stamps_admin_site.register(Country)
 stamps_admin_site.register(Issue)
-stamps_admin_site.register(PaperType)
+stamps_admin_site.register(PrintType)
 stamps_admin_site.register(StampType)
 stamps_admin_site.register(Stamp)
 stamps_admin_site.register(Year)

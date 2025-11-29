@@ -15,7 +15,7 @@ class Issue(models.Model):
         total_printed (IntegerField): The number of stamps printed for this issue.
         market_value (DecimalField): The estimated market value.
         stamp_type (ForeignKey): The type of stamp (e.g., definitive, commemorative).
-        paper_type (ForeignKey): The type of paper used.
+        print_type (ForeignKey): The type of print used.
         description (TextField): A detailed description of the issue.
         country (ForeignKey): The country that released the issue.
         note (TextField): Additional notes or comments.
@@ -36,8 +36,8 @@ class Issue(models.Model):
         null=True, blank=True,
         related_name='issues'
     )
-    paper_type = models.ForeignKey(
-        'paper_types_api.PaperType', 
+    print_type = models.ForeignKey(
+        'print_types_api.PrintType', 
         on_delete=models.SET_NULL, 
         null=True, blank=True,
         related_name='issues'

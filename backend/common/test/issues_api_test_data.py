@@ -2,7 +2,7 @@ import pytest
 from issues_api.models import Issue
 
 @pytest.fixture
-def issues_table(db, years_table, countries_table, stamp_types_table, paper_types_table):
+def issues_table(db, years_table, countries_table, stamp_types_table, print_types_table):
     """Pytest fixture for a table with two issues."""
     issue1 = Issue.objects.create(
         year=years_table[0],
@@ -12,7 +12,7 @@ def issues_table(db, years_table, countries_table, stamp_types_table, paper_type
         total_printed=1000000,
         market_value=5.75,
         stamp_type=stamp_types_table[0],
-        paper_type=paper_types_table[0],
+        print_type=print_types_table[0],
         country=countries_table[0],
         note="Primera emisión del año",
         perforation="12.5"
@@ -26,7 +26,7 @@ def issues_table(db, years_table, countries_table, stamp_types_table, paper_type
         total_printed=2500000,
         market_value=8.50,
         stamp_type=stamp_types_table[1],
-        paper_type=paper_types_table[1],
+        print_type=print_types_table[1],
         country=countries_table[1],
         note="Serie completa de 4 sellos",
         perforation="13"
@@ -34,7 +34,7 @@ def issues_table(db, years_table, countries_table, stamp_types_table, paper_type
     return [issue1, issue2]
 
 @pytest.fixture
-def issue_post_payload_ok(years_table, countries_table, stamp_types_table, paper_types_table):
+def issue_post_payload_ok(years_table, countries_table, stamp_types_table, print_types_table):
     """Pytest fixture for a valid issue post payload."""
     return {
         'date': '2024-01-01',
@@ -42,7 +42,7 @@ def issue_post_payload_ok(years_table, countries_table, stamp_types_table, paper
         'year': years_table[0].id,
         'country': countries_table[0].id,
         'stamp_type': stamp_types_table[0].id,
-        'paper_type': paper_types_table[0].id,
+        'print_type': print_types_table[0].id,
     }
 
 @pytest.fixture

@@ -61,7 +61,7 @@ CONFIG_ENDPOINT="config/"
 COUNTRIES_ENDPOINT="countries/"
 ISSUES_ENDPOINT="issues/"
 LOCATIONS_ENDPOINT="locations/"
-PAPER_TYPES_ENDPOINT="paper_types/"
+PRINT_TYPES_ENDPOINT="print_types/"
 STAMP_TYPES_ENDPOINT="stamps_type/"
 STAMPS_ENDPOINT="stamps/"
 YEARS_ENDPOINT="years/"
@@ -87,7 +87,7 @@ CONFIG_URL_V1=f"{SERVER_URL_V1}{CONFIG_ENDPOINT}"
 COUNTRIES_URL_V1=f"{SERVER_URL_V1}{COUNTRIES_ENDPOINT}"
 ISSUES_URL_V1=f"{SERVER_URL_V1}{ISSUES_ENDPOINT}"
 LOCATIONS_URL_V1=f"{SERVER_URL_V1}{LOCATIONS_ENDPOINT}"
-PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
+PRINT_TYPES_URL_V1=f"{SERVER_URL_V1}{PRINT_TYPES_ENDPOINT}"
 STAMP_TYPES_URL_V1=f"{SERVER_URL_V1}{STAMP_TYPES_ENDPOINT}"
 STAMPS_URL_V1=f"{SERVER_URL_V1}{STAMPS_ENDPOINT}"
 YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
@@ -113,7 +113,7 @@ INSTALLED_APPS = [
     "config_api",           # All APIs for the config table
     "stamp_types_api",      # All APIs for the stamp type table
     "locations_api",        # All APIs for the location table
-    "paper_types_api",      # All APIs for the paper type table
+    "print_types_api",      # All APIs for the print type table
     "countries_api",        # All APIs for the country table
     "colors_api",           # All APIs for the color table
     "stamps_api",           # All APIs for the stamp table
