@@ -13,7 +13,7 @@ from common.test.stamps_api_test_data import (
 from common.test.year_api_test_data import years_table
 from common.test.countries_api_test_data import countries_table
 from common.test.stamp_types_api_test_data import stamp_types_table
-from common.test.paper_types_api_test_data import paper_types_table
+from common.test.print_types_api_test_data import print_types_table
 from common.test.locations_api_test_data import locations_table
 from common.test.issues_api_test_data import issues_table
 from common.test.colors_api_test_data import colors_table

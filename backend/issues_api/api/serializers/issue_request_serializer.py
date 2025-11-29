@@ -20,7 +20,7 @@ class IssueRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'total_printed',
             'market_value',
             'stamp_type',
-            'paper_type',
+            'print_type',
             'description',
             'note',
             'perforation'
