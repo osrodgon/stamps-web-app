@@ -1,0 +1,51 @@
+# -----------------------------------------------------------------
+# BUILD ARTIFACTS AND LOCAL ENVIRONMENT
+# -----------------------------------------------------------------
+# Python temporary/runtime files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.nicegui
+
+# Dependencies/virtual environments (managed by pip)
+venv
+.venv
+node_modules
+dist/
+
+# Local configuration files that should not be in the image
+.env.local
+config.json
+*.log
+tmp/
+logs/
+
+# -----------------------------------------------------------------
+# SOURCE CONTROL & IDEs
+# -----------------------------------------------------------------
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# -----------------------------------------------------------------
+# DOCKER-SPECIFIC FILES
+# -----------------------------------------------------------------
+# You don't need to copy the files that define the build process
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+.dockerignore
+
+# -----------------------------------------------------------------
+# PROJECT SPECIFIC FILES
+# -----------------------------------------------------------------
+# If you used the "dedicated directory" solution, but had other files
+# in the root you didn't move, you might ignore them here.
+.env
+.env.example
+.coverage
+coverage.xml

@@ -1,0 +1,22 @@
+# Use a slim Python image
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+
+# Create the working directory
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copy only the needed files
+COPY . .
+
+# Expose the NiceGUI default port
+EXPOSE 8080
+
+# Default command: run NiceGUI with reload enabled (overridden by compose)
+CMD ["python", "app.py"]

@@ -83,5 +83,5 @@ class CustomHeaderApiKeyScheme(OpenApiAuthenticationExtension):
             'type': 'apiKey',     # Specifies this is an API key scheme
             'in': 'header',       # Specifies the key is passed in a header
             'name': 'Authorization',  # The EXACT header name required by your API
-            'description': 'Use prefix API-Key|JWT <key|token> to authenticate.',
+            'description': 'Use prefix [API-Key \<api key\>|JWT \<jwt token\>] to authenticate.',
         }

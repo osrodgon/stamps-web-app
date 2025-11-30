@@ -1,0 +1,15 @@
+services:
+  stamps-frontend:
+    build:
+      dockerfile: Dockerfile.prod
+    # Expose externally via the host port 80 (standard HTTP)
+    ports:
+      - "80:8080"
+    # Simple production run command
+    command: python app.py --port 8080
+    networks:
+      - stamps-network
+
+networks:
+  stamps-network:
+    external: true

@@ -1,0 +1,23 @@
+services:
+  stamps-backend:
+    build:
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    # Mount the code for live reloading (volume mount takes precedence over COPY)
+    ports:
+      - "8000:8000"
+
+    # volumes:
+    #   - ./backend:/usr/src/app:delegated
+    # Use the Django dev server
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_DEBUG: 'True'
+    networks:
+      - stamps-network
+
+networks:
+  stamps-network:
+    external: true
+

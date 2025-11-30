@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+ENV NICEGUI_ENV production # Optional, good practice
+
+# Create the working directory
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy only the needed files
+COPY . .
+
+# Expose the NiceGUI default port
+EXPOSE 8080
+
+# Production command: run NiceGUI without reload/debug options
+CMD ["python", "app.py"]
