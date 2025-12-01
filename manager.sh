@@ -5,6 +5,12 @@
 
 NETWORK="stamps-network"
 
+# Get current path and script path
+CURRENT_PATH=$(pwd)
+SCRIPT_PATH=$(dirname $(readlink -f $0))
+
+echo $SCRIPT_PATH
+
 # Backend Configuration
 BACKEND_DIR="backend"
 BACKEND_BASE_COMPOSE_FILE="backend/docker-compose.yml"
@@ -62,7 +68,7 @@ get_compose_files() {
             compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_DEV_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_DEV_COMPOSE_FILE"
             ;;
         test)
-            # Backend only for unit tests
+            # Backend & frontend as separated parameters for unit tests
             compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE"
             ;;
         prod)
@@ -81,7 +87,7 @@ get_compose_files() {
 
 # Function to execute the start command
 start_env() {
-    local compose_files=$1
+    local back_compose_files=$1
     local env=$2
     
     echo "Starting $env environment..."
@@ -223,6 +229,9 @@ fi
 ACTION=$2
 ENVIRONMENT=$1
 
+# Change to dir where the script is located before doing anything.
+cd $SCRIPT_PATH
+
 # Check if the requested action is valid for the test environment
 if [ "$ENVIRONMENT" == "test" ] && ([ "$ACTION" == "stop" ] || [ "$ACTION" == "log" ]); then
     echo "❌   Action '$ACTION' is not typically used for the 'test' environment." >&2
@@ -252,5 +261,8 @@ case "$ACTION" in
         show_usage
         ;;
 esac
+
+# Change back to original dir
+cd $CURRENT_PATH
 
 exit 0

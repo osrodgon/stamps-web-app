@@ -1,4 +1,3 @@
-# from pickle import GET
 import pytest
 from pytest_mock import MockerFixture
 from rest_framework.exceptions import PermissionDenied
