@@ -32,7 +32,7 @@ JWT_ALGORITHM = 'HS256'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['web', 'localhost']
+ALLOWED_HOSTS = ['stamps-backend', 'localhost']
 
 # Application configuration
 LOG_LEVEL="DEBUG"

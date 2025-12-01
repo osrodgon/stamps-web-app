@@ -1,0 +1,45 @@
+# --- STAGE 1: Build Dependencies ---
+FROM python:3.11-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+# Install production dependencies
+COPY requirements.prod.txt .
+RUN pip install --upgrade pip
+RUN pip wheel -w /usr/src/app/wheels -r requirements.prod.txt 
+
+# --- STAGE 2: Final Production Image ---
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Create the working directory
+WORKDIR /usr/src/app
+
+# Install runtime dependencies (libpq-dev is needed for psycopg2)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy pre-compiled wheels and install them
+COPY --from=builder /usr/src/app/wheels /wheels
+RUN pip install --no-cache /wheels/*
+
+# Copy application code
+COPY . .
+
+# Set entry point script (for running collectstatic/migrations before gunicorn)
+# A separate entrypoint.sh script is highly recommended but omitted for brevity.
+# Default command (will be Gunicorn, overridden by compose files)
+EXPOSE 8000
+
+# Default command (will be Gunicorn, overridden by compose files)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "backend.wsgi:application"]

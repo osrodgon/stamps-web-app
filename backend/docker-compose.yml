@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:14-alpine
+    restart: always
+    container_name: stamps-db
+    environment:
+      POSTGRES_DB: backend_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - stamps-network
+
+  stamps-backend:
+    # Build context is the current directory (backend/)
+    build:
+      context: .
+    # Name the service
+    container_name: stamps-backend
+    # Always depends on the database
+    depends_on:
+      - db
+    # Common shared variables (can be overridden)
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/backend_db
+      # Set common variables, but environment-specific ones are in overrides
+      DJANGO_SETTINGS_MODULE: _backend.settings
+      SECRET_KEY: 'changeme_in_prod'
+    expose:
+      - 8000
+    networks:
+      - stamps-network
+
+volumes:
+  postgres_data:
+
+networks:
+  stamps-network:
+    external: true

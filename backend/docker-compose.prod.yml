@@ -1,0 +1,20 @@
+services:
+  stamps-backend:
+    build:
+      dockerfile: Dockerfile.prod
+    # Expose externally via the host port 80 (standard HTTP)
+    ports:
+      - "80:8000"
+    # Run Gunicorn
+    command: gunicorn --workers 4 --bind 0.0.0.0:8000 backend.wsgi:application
+    environment:
+      DJANGO_DEBUG: 'False'
+      # Production-specific environment variables (e.g., proper SECRET_KEY, Allowed Hosts)
+      SECRET_KEY: 'REPLACE_ME_WITH_A_LONG_SECURE_KEY'
+
+    networks:
+      - stamps-network
+
+networks:
+  stamps-network:
+    external: true

@@ -2,20 +2,24 @@
 
 # --- Configuration ---
 # Define file locations and service names
-# NOTE: Assumes your files are in subdirectories named 'backend' and 'frontend'
+
+NETWORK="stamps-network"
 
 # Backend Configuration
-BACKEND_BASE_COMPOSE_FILE="backend/docker-compose.yaml"
-BACKEND_DEV_COMPOSE_FILE="backend/docker-compose.dev.yaml"
-BACKEND_TEST_COMPOSE_FILE="backend/docker-compose.test.yaml"
-BACKEND_PROD_COMPOSE_FILE="backend/docker-compose.prod.yaml"
-BACKEND_SERVICE="web" # Main backend service name (Django)
+BACKEND_DIR="backend"
+BACKEND_BASE_COMPOSE_FILE="backend/docker-compose.yml"
+BACKEND_DEV_COMPOSE_FILE="backend/docker-compose.dev.yml"
+BACKEND_TEST_COMPOSE_FILE="backend/docker-compose.test.yml"
+BACKEND_PROD_COMPOSE_FILE="backend/docker-compose.prod.yml"
+BACKEND_SERVICE="stamps-backend" # Main backend service name (Django)
 
-# Frontend Configuration (Assumed)
-FRONTEND_BASE_COMPOSE_FILE="frontend/docker-compose.yaml" # Use base for common settings
-FRONTEND_DEV_COMPOSE_FILE="frontend/docker-compose.dev.yaml"
-FRONTEND_PROD_COMPOSE_FILE="frontend/docker-compose.prod.yaml"
-FRONTEND_SERVICE="client" # Main frontend service name (e.g., React/Vue container)
+# Frontend Configuration
+FRONTEND_DIR="frontend"
+FRONTEND_BASE_COMPOSE_FILE="frontend/docker-compose.yml"
+FRONTEND_DEV_COMPOSE_FILE="frontend/docker-compose.dev.yml"
+FRONTEND_TEST_COMPOSE_FILE="frontend/docker-compose.test.yml"
+FRONTEND_PROD_COMPOSE_FILE="frontend/docker-compose.prod.yml"
+FRONTEND_SERVICE="stamps-frontend" # Main frontend service name (e.g., React/Vue container)
 
 # --- Utility Functions ---
 
@@ -40,7 +44,7 @@ show_usage() {
 is_env_running() {
     local compose_files=$1
     # Check if 'docker compose ps' finds any running containers
-    if docker compose --project-directory . $compose_files ps -q | grep -q '.'; then
+    if docker compose $compose_files ps -q | grep -q '.'; then
         return 0 # Running
     else
         return 1 # Not running
@@ -63,8 +67,7 @@ get_compose_files() {
             ;;
         prod)
             # Backend + Frontend for production
-            # compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_PROD_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_PROD_COMPOSE_FILE"
-            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_PROD_COMPOSE_FILE"
+            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_PROD_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_PROD_COMPOSE_FILE"
             ;;
         *)
             echo "Error: Unknown environment '$env'." >&2
@@ -86,11 +89,11 @@ start_env() {
     if [ "$env" == "test" ]; then
         # TEST: Run tests, then remove containers
         echo "Running unit tests for backend..."
-        docker compose --project-directory . $compose_files run --rm -t $BACKEND_SERVICE
+        docker compose $compose_files run --build --rm -t $BACKEND_SERVICE
         TEST_RESULT=$?
         
         # Cleanup containers and networks immediately after test run
-        docker compose --project-directory . $compose_files down -v --remove-orphans > /dev/null 2>&1
+        docker compose $compose_files down -v --remove-orphans > /dev/null 2>&1
         
         if [ $TEST_RESULT -eq 0 ]; then
             echo "✅   Unit tests completed successfully."
@@ -100,7 +103,11 @@ start_env() {
         fi
     else
         # DEV/PROD: Start services in detached mode
-        docker compose --project-directory . $compose_files up -d --force-recreate
+        backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+        frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+        docker network create $NETWORK
+        docker compose $backend_compose_files up -d --force-recreate
+        docker compose $frontend_compose_files up -d --force-recreate
         if [ $? -eq 0 ]; then
             echo "✅   Environment '$env' started successfully."
         else
@@ -121,7 +128,11 @@ stop_env() {
     fi
     
     echo "Stopping and removing containers for $env environment..."
-    docker compose --project-directory . $compose_files down -v --remove-orphans
+    backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+    frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+    docker compose $backend_compose_files down -v --remove-orphans
+    docker compose $frontend_compose_files down -v --remove-orphans
+    docker network rm $NETWORK
     if [ $? -eq 0 ]; then
         echo "✅   Environment '$env' stopped and containers removed."
     else
@@ -139,7 +150,7 @@ rebuild_env() {
     stop_env "$compose_files" "$env"
     
     echo "Forcing complete rebuild (no-cache) for '$env'..."
-    docker compose --project-directory . $compose_files build --no-cache --force-rm
+    docker compose $compose_files build --no-cache --force-rm
     
     if [ $? -eq 0 ]; then
         echo "✅   Images for '$env' rebuilt successfully. Starting now..."
@@ -155,6 +166,9 @@ show_log() {
     local compose_files=$1
     local env=$2
 
+    backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+    frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+
     # CRITICAL: Test environment is a one-off run and doesn't need 'log'
     if [ "$env" == "test" ]; then
         echo "❌   Logs are not available for the 'test' environment (it's a single run)."
@@ -168,12 +182,28 @@ show_log() {
     
     echo "Opening GNOME Terminal tabs for '$env' logs (Backend + Frontend)..."
     
-    # 1. LOGS FOR THE BACKEND SERVICE (web)
-    backend_cmd="docker compose --project-directory . ${compose_files} logs -f ${BACKEND_SERVICE}; exit"
+    # 1. LOGS FOR THE BACKEND SERVICE
+    backend_cmd_array=(
+        docker
+        compose
+        ${backend_compose_files}
+        logs
+        -f
+        ${BACKEND_SERVICE}
+    )
+    backend_cmd=""${backend_cmd_array[*]}""
     gnome-terminal --tab --title="${env} Logs (${BACKEND_SERVICE})" -- /bin/bash -c "${backend_cmd}" &
 
-    # 2. LOGS FOR THE FRONTEND SERVICE (client)
-    frontend_cmd="docker compose --project-directory . ${compose_files} logs -f ${FRONTEND_SERVICE}; exit"
+    # 2. LOGS FOR THE FRONTEND SERVICE
+    frontend_cmd_array=(
+        docker
+        compose
+        ${frontend_compose_files}
+        logs
+        -f
+        ${FRONTEND_SERVICE}
+    )
+    frontend_cmd=""${frontend_cmd_array[*]}""
     gnome-terminal --tab --title="${env} Logs (${FRONTEND_SERVICE})" -- /bin/bash -c "${frontend_cmd}" &
 
     if [ $? -eq 0 ]; then
