@@ -130,8 +130,8 @@ stop_env() {
     echo "Stopping and removing containers for $env environment..."
     backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
     frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
-    docker compose $backend_compose_files down
-    docker compose $frontend_compose_files down
+    docker compose $backend_compose_files down -v --remove-orphans
+    docker compose $frontend_compose_files down -v --remove-orphans
     docker network rm $NETWORK
     if [ $? -eq 0 ]; then
         echo "✅   Environment '$env' stopped and containers removed."
