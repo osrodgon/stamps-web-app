@@ -123,7 +123,13 @@ if __name__ in {"__main__", "__mp_main__"}:
     Initializes the application, sets up static files, logging, and routes,
     then creates an instance of the App and runs it.
     """
-    load_dotenv()
+    try:
+        from dotenv import load_dotenv
+        
+        # Load variables from environment
+        load_dotenv()
+    except ImportError:
+        pass
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
     StampsApp.run(os.getenv("APP_STORAGE_SECRET"))

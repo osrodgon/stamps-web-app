@@ -69,8 +69,7 @@ get_compose_files() {
             ;;
         test)
             # Backend & frontend as separated parameters for unit tests
-            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE"
-            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_TEST_COMPOSE_FILE"
+            compose_files="-f $BACKEND_TEST_COMPOSE_FILE -f $FRONTEND_TEST_COMPOSE_FILE"
             ;;
         prod)
             # Backend + Frontend for production
@@ -98,8 +97,10 @@ start_env() {
         echo "Running unit tests..."
         backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
         frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
-        # docker compose $backend_compose_files run --build --rm -t $BACKEND_SERVICE
-        docker compose $frontend_compose_files run --build --rm -t $FRONTEND_SERVICE
+        docker compose $backend_compose_files run --rm -t $BACKEND_SERVICE
+        docker compose $frontend_compose_files run --rm -t $FRONTEND_SERVICE
+        docker network rm backend_default
+        docker network rm frontend_default
         TEST_RESULT=$?
         
         # Cleanup containers and networks immediately after test run

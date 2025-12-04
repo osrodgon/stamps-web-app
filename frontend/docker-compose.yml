@@ -1,11 +1,11 @@
 services:
   stamps-frontend:
+    build:
+      context: .
     # Name the service
     container_name: stamps-frontend
     expose:
       - 8080
-    # Common command runs the app (overridden by environment-specific files)
-    command: python app.py
     networks:
       - stamps-network
 
