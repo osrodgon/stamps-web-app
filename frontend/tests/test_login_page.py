@@ -20,21 +20,27 @@ class TestLoginPage(AbstractUnitTest):
         caplog.set_level(logging.CRITICAL)
         self._AbstractUnitTest__mocker = mocker
         
-    
-    async def test_login_success_200(self, user: User, mocker):
-        # Open login page
+    @pytest.fixture
+    async def login_page_components(self, user: User):
+        """Fixture to open login page and get main components."""
         login_object = await user.open('/login')
-        
-        # Get components
         login_card = self.get_component(login_object, LoginCard)
         login_page = self.get_component(login_object, LoginPage)
+        
+        assert login_card is not None
+        assert login_page is not None
+        yield login_page, login_card
+        
+    
+    async def test_login_success_200(self, user: User, login_page_components, mocker):
+        # Get components
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
         login_card.password.value = 'testpassword'
         
         # Set mocks
-        # self.set_card_valid(card=login_card.__class__, valid=True)
         self.set_backend_response(
             class_object=login_page.__class__, 
             json_data=LOGIN_RESPONSE_200_SUCCESS, 
@@ -55,13 +61,9 @@ class TestLoginPage(AbstractUnitTest):
         assert response.json() == LOGIN_RESPONSE_200_SUCCESS
         assert user_storage['jwt_token'] == LOGIN_RESPONSE_200_SUCCESS['data']['token']
         
-    async def test_login_success_200_missing_token(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_success_200_missing_token(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
@@ -73,6 +75,7 @@ class TestLoginPage(AbstractUnitTest):
             json_data=LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN, 
             status_code=200
         )
+        self.skip_notify(class_object=login_page.__class__)
         self.skip_notify(class_object=login_card.__class__)
         
         # Assert components
@@ -83,15 +86,11 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == "Login failed."
+        assert response == "Login failed due to a server response issue."
         
-    async def test_login_fail_no_response(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_fail_no_response(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
@@ -116,13 +115,9 @@ class TestLoginPage(AbstractUnitTest):
         # Assert response
         assert response == "Login request failed, no response from server."
     
-    async def test_login_fail_bad_request_400(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_fail_bad_request_400(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
@@ -147,13 +142,9 @@ class TestLoginPage(AbstractUnitTest):
         assert response.status_code == 400
         assert response.json() == LOGIN_RESPONSE_400_BAD_REQUEST
     
-    async def test_login_fail_unauthorized_401(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_fail_unauthorized_401(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
@@ -178,13 +169,9 @@ class TestLoginPage(AbstractUnitTest):
         assert response.status_code == 401
         assert response.json() == LOGIN_RESPONSE_401_UNAUTHORIZED
     
-    async def test_login_fail_server_error_500(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_fail_server_error_500(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set username and password
         login_card.username.value = 'testuser'
@@ -209,13 +196,9 @@ class TestLoginPage(AbstractUnitTest):
         assert response.status_code == 500
         assert response.json() == LOGIN_RESPONSE_500_SERVER_ERROR
     
-    async def test_login_fail_validation_fails(self, user: User):
-        # Open login page
-        login_object = await user.open('/login')
-        
+    async def test_login_fail_validation_fails(self, user: User, login_page_components):
         # Get components
-        login_card = self.get_component(login_object, LoginCard)
-        login_page = self.get_component(login_object, LoginPage)
+        login_page, login_card = login_page_components
         
         # Set mocks
         self.skip_notify(class_object=login_card.__class__)
