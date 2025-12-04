@@ -10,8 +10,7 @@ from frontend.utils.log_setup import log_setup
 
 class AbstractUnitTest:
     """Abstract base class for unit tests, providing helper methods for mocking and component interaction."""
-    __mocker = None
-    __mocker_instance = None
+    _mocker = None
     
     # @pytest.fixture(scope="session", autouse=True)
     # def setup_logging_for_test(self):
