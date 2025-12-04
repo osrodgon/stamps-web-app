@@ -5,6 +5,12 @@
 
 NETWORK="stamps-network"
 
+# Get current path and script path
+CURRENT_PATH=$(pwd)
+SCRIPT_PATH=$(dirname $(readlink -f $0))
+
+echo $SCRIPT_PATH
+
 # Backend Configuration
 BACKEND_DIR="backend"
 BACKEND_BASE_COMPOSE_FILE="backend/docker-compose.yml"
@@ -62,8 +68,9 @@ get_compose_files() {
             compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_DEV_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_DEV_COMPOSE_FILE"
             ;;
         test)
-            # Backend only for unit tests
+            # Backend & frontend as separated parameters for unit tests
             compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE"
+            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_TEST_COMPOSE_FILE"
             ;;
         prod)
             # Backend + Frontend for production
@@ -88,8 +95,11 @@ start_env() {
     
     if [ "$env" == "test" ]; then
         # TEST: Run tests, then remove containers
-        echo "Running unit tests for backend..."
-        docker compose $compose_files run --build --rm -t $BACKEND_SERVICE
+        echo "Running unit tests..."
+        backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+        frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+        # docker compose $backend_compose_files run --build --rm -t $BACKEND_SERVICE
+        docker compose $frontend_compose_files run --build --rm -t $FRONTEND_SERVICE
         TEST_RESULT=$?
         
         # Cleanup containers and networks immediately after test run
@@ -223,6 +233,9 @@ fi
 ACTION=$2
 ENVIRONMENT=$1
 
+# Change to dir where the script is located before doing anything.
+cd $SCRIPT_PATH
+
 # Check if the requested action is valid for the test environment
 if [ "$ENVIRONMENT" == "test" ] && ([ "$ACTION" == "stop" ] || [ "$ACTION" == "log" ]); then
     echo "❌   Action '$ACTION' is not typically used for the 'test' environment." >&2
@@ -252,5 +265,8 @@ case "$ACTION" in
         show_usage
         ;;
 esac
+
+# Change back to original dir
+cd $CURRENT_PATH
 
 exit 0

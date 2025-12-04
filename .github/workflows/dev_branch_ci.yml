@@ -23,12 +23,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # Use your required Python version
+          python-version: '3.12' # Use your required Python version
           
       - name: Install Dependencies
         working-directory: ./backend
         # Install dependencies from requirements.txt, including pytest and coverage
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.dev.txt
 
       # ----------------------------------------------------
       # Code Formatting Check (Black)
@@ -87,6 +87,6 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         # Use pip to install NiceGUI and its dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.dev.txt
         
       # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
