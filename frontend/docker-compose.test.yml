@@ -2,11 +2,5 @@ services:
   stamps-frontend:
     build:
       dockerfile: Dockerfile.dev
-    # Mount the code for live reloading
-    volumes:
-      - .:/usr/src/app
-    ports:
-      # Map container port 8080 to host port 8080
-      - "8080:8080"
-    # Run NiceGUI with the --reload flag for automatic development updates
-    command: python app.py --reload --port 8080
+    # Run tests
+    command: pytest -q --tb=no --disable-warnings

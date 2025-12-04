@@ -48,14 +48,18 @@ class LoginPage(ui.column, BasePage, BaseRest):
                 
                 self.login_success(data)
                 self.log.debug('Login successful')
+                return response
             else:
                 data = response.json()
                 error_msg = data['errors'][0]['message']
                 self.log.error(f'Login failed: {error_msg}')
                 self.login_card.notify(f'Error: {error_msg}', 'negative')
+                return error_msg
         else:
+            error_msg = 'Username and password are required.'
             self.log.debug("Login data invalid. Showing error message...")
-            self.login_card.notify('Username and password are required.')
+            self.login_card.notify(error_msg, 'negative')
+            return error_msg
         
     def login_success(self, data: dict):
         """

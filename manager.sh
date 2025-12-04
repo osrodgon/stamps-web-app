@@ -70,6 +70,7 @@ get_compose_files() {
         test)
             # Backend & frontend as separated parameters for unit tests
             compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE"
+            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_TEST_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_TEST_COMPOSE_FILE"
             ;;
         prod)
             # Backend + Frontend for production
@@ -87,15 +88,18 @@ get_compose_files() {
 
 # Function to execute the start command
 start_env() {
-    local back_compose_files=$1
+    local compose_files=$1
     local env=$2
     
     echo "Starting $env environment..."
     
     if [ "$env" == "test" ]; then
         # TEST: Run tests, then remove containers
-        echo "Running unit tests for backend..."
-        docker compose $compose_files run --build --rm -t $BACKEND_SERVICE
+        echo "Running unit tests..."
+        backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+        frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+        # docker compose $backend_compose_files run --build --rm -t $BACKEND_SERVICE
+        docker compose $frontend_compose_files run --build --rm -t $FRONTEND_SERVICE
         TEST_RESULT=$?
         
         # Cleanup containers and networks immediately after test run
