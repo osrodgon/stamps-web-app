@@ -28,7 +28,7 @@ jobs:
       - name: Install Dependencies
         working-directory: ./backend
         # Install dependencies from requirements.txt, including pytest and coverage
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.dev.txt
 
       # ----------------------------------------------------
       # Code Formatting Check (Black)
@@ -87,6 +87,6 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         # Use pip to install NiceGUI and its dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.dev.txt
         
       # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
