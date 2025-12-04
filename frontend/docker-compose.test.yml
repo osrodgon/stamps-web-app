@@ -1,6 +1,6 @@
 services:
   stamps-frontend:
     build:
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.test
     # Run tests
-    command: pytest -q --tb=no --disable-warnings
+    command: pytest frontend

@@ -1,8 +1,7 @@
 services:
   stamps-backend:
     build:
-      dockerfile: Dockerfile.dev
-    container_name: backend-web
+      dockerfile: Dockerfile.test
     # The command runs tests and then exits
-    command: pytest -q --tb=no --disable-warnings
+    command: pytest 
     
