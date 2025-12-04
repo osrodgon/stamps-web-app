@@ -51,9 +51,11 @@ class LoginPage(ui.column, BasePage, BaseRest):
                     self.log.debug('Login successful')
                     return response
                 else:
-                    error_msg = "Login failed."
+                    error_msg = "Login failed due to a server response issue."
                     self.log.error(error_msg)
+                    self.notify(error_msg, 'negative')
                     return error_msg
+
             else:
                 data = response.json()
                 error_msg = data['errors'][0]['message']
