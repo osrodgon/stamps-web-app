@@ -29,19 +29,19 @@ class AbstractUnitTest:
         """
         return f"{cls.__module__}.{cls.__name__}"
     
-    def get_component(self, page, object):
+    def get_component(self, page, component_type):
         """
         Find a component of a specific type on a given page.
 
         Args:
             page: The page object containing elements to search through.
-            object: The class of the component to find.
+            component_type: The class of the component to find.
 
         Returns:
             The component instance if found, otherwise None.
         """
-        for key, component in page.elements.items():
-            if isinstance(component, object):
+        for _, component in page.elements.items():
+            if isinstance(component, component_type):
                 return component
         return None
     
