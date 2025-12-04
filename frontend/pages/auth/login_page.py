@@ -39,22 +39,29 @@ class LoginPage(ui.column, BasePage, BaseRest):
             response = await self._make_request(BaseRest.POST, f"{BACKEND_URL}/login/", payload)
             
             if response is None:
-                self.log.error("Login request failed, no response from server.")
-                self.notify("Login request failed, no response from server.", 'negative')
-                return
+                error_msg = "Login request failed, no response from server."
+                self.log.error(error_msg)
+                self.notify(error_msg, 'negative')
+                return error_msg
 
             if response.status_code == 200:
                 data = response.json()['data']
                 
-                self.login_success(data)
-                self.log.debug('Login successful')
-                return response
+                if self.login_success(data):
+                    self.log.debug('Login successful')
+                    return response
+                else:
+                    error_msg = "Login failed due to a server response issue."
+                    self.log.error(error_msg)
+                    self.notify(error_msg, 'negative')
+                    return error_msg
+
             else:
                 data = response.json()
                 error_msg = data['errors'][0]['message']
                 self.log.error(f'Login failed: {error_msg}')
                 self.login_card.notify(f'Error: {error_msg}', 'negative')
-                return error_msg
+                return response
         else:
             error_msg = 'Username and password are required.'
             self.log.debug("Login data invalid. Showing error message...")
@@ -73,8 +80,9 @@ class LoginPage(ui.column, BasePage, BaseRest):
         """
         token = data.get('token', None)
         if token is None:
-            self.log.error("Could not obtain token from login response.")
-            return
+            error_msg = "Could not obtain token from login response."
+            self.log.error(error_msg)
+            return False
         
         app.storage.user['jwt_token'] = token
         self.log.debug(f"Token: {token[:10]}...")
@@ -82,3 +90,4 @@ class LoginPage(ui.column, BasePage, BaseRest):
         self.delete()
         
         ui.navigate.to('/collections')
+        return True

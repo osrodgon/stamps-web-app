@@ -8,7 +8,7 @@ from pages.auth.login_page import LoginPage
 from utils.log_setup import log_setup
 
 from settings import (
-    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, BACKGROUND_IMG
+    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
 )
 
 class StampsApp():
