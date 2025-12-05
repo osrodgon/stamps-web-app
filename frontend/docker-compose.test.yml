@@ -2,5 +2,6 @@ services:
   stamps-frontend:
     build:
       dockerfile: Dockerfile.test
+    image: osrogon/test-stamps-frontend
     # Run tests
     command: pytest frontend

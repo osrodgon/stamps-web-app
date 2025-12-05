@@ -2,6 +2,7 @@ services:
   stamps-backend:
     build:
       dockerfile: Dockerfile.test
+    image: osrogon/test-stamps-backend
     # The command runs tests and then exits
     command: pytest 
     

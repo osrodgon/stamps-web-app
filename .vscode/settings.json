@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "frontend"
+        "backend"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -9,6 +9,7 @@
     "geminicodeassist.updateChannel": "Insiders",
     "python.analysis.extraPaths": [
         "stamps_api_server",
-        "./backend"
+        "./backend",
+        "./frontend"
     ]
 }
