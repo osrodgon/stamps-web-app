@@ -2,6 +2,7 @@ services:
   stamps-frontend:
     build:
       dockerfile: Dockerfile.prod
+    image: osrogon/stamps-frontend
     # Expose externally via the host port 80 (standard HTTP)
     ports:
       - "80:8080"

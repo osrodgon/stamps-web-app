@@ -2,6 +2,7 @@ services:
   stamps-backend:
     build:
       dockerfile: Dockerfile.dev
+    image: osrogon/dev-stamps-backend
     env_file:
       - .env
     # Mount the code for live reloading (volume mount takes precedence over COPY)

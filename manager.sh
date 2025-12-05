@@ -104,7 +104,7 @@ start_env() {
         TEST_RESULT=$?
         
         # Cleanup containers and networks immediately after test run
-        docker compose $compose_files down -v --remove-orphans > /dev/null 2>&1
+        docker compose $compose_files down --remove-orphans > /dev/null 2>&1
         
         if [ $TEST_RESULT -eq 0 ]; then
             echo "✅   Unit tests completed successfully."
@@ -141,9 +141,8 @@ stop_env() {
     echo "Stopping and removing containers for $env environment..."
     backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
     frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
-    docker compose $backend_compose_files down -v --remove-orphans
-    docker compose $frontend_compose_files down -v --remove-orphans
-    docker network rm $NETWORK
+    docker compose $backend_compose_files down --remove-orphans
+    docker compose $frontend_compose_files down --remove-orphans
     if [ $? -eq 0 ]; then
         echo "✅   Environment '$env' stopped and containers removed."
     else
@@ -161,7 +160,10 @@ rebuild_env() {
     stop_env "$compose_files" "$env"
     
     echo "Forcing complete rebuild (no-cache) for '$env'..."
-    docker compose $compose_files build --no-cache --force-rm
+    backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
+    frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
+    docker compose $backend_compose_files build --no-cache --force-rm
+    docker compose $frontend_compose_files build --no-cache --force-rm
     
     if [ $? -eq 0 ]; then
         echo "✅   Images for '$env' rebuilt successfully. Starting now..."
