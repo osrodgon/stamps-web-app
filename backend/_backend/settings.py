@@ -31,7 +31,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
+)
 
 JWT_SECRET = SECRET_KEY 
 JWT_ALGORITHM = 'HS256'
@@ -39,10 +42,11 @@ JWT_ALGORITHM = 'HS256'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['stamps-backend', 'localhost']
+hosts = os.getenv("ALLOWED_HOSTS", "localhost")
+ALLOWED_HOSTS = [host.strip() for host in hosts.split(',') if host.strip()]
 
 # Application configuration
-LOG_LEVEL="DEBUG"
+LOG_LEVEL= os.getenv("LOG_LEVEL", "DEBUG")
 LOG_FILE_NAME="backend.log"
 LOG_BASE_DIR="logs"
 
@@ -271,6 +275,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_collected')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
