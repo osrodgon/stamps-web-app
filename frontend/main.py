@@ -1,22 +1,23 @@
 import os
-from fastapi import Request
+from fastapi import Request, Response
 from nicegui import ui, app
 from nicegui.page import page
+from nicegui.client import Client
 from dotenv import load_dotenv
 
 from pages.auth.login_page import LoginPage
+from pages.not_found_page import NotFoundPage
 from utils.log_setup import log_setup
 
 from settings import (
     APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
 )
 
-class StampsApp():
+class StampsApp():    
     """
     Main application class for the Stamps web application.
     Handles static file setup, logging, route registration, and authentication.
     """
-
     @staticmethod
     def set_background_image(image_url: str):
         """
@@ -109,6 +110,13 @@ class StampsApp():
                 ui.navigate.to('/collections')
             else:
                 ui.navigate.to('/login')
+            
+        @app.exception_handler(404)
+        async def exception_handler_404(request: Request, exception: Exception) -> Response:
+            with Client(page('/'), request=request) as client:
+                NotFoundPage()
+
+            return client.build_response(request, 404)
     
     @staticmethod            
     def run(storage_secret: str):
