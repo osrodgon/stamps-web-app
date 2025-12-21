@@ -4,7 +4,6 @@ from base.base_ui import BaseUI
 from utils.translations import Translations
 from utils.urls import URLs
 
-@ui.refreshable
 class LoginCard(ui.card, BaseUI):
     """A UI component representing a login card with username and password fields."""
     username: ui.input = None
