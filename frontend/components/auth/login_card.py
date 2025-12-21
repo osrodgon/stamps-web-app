@@ -1,7 +1,10 @@
 from nicegui import ui
 
 from base.base_ui import BaseUI
+from utils.translations import Translations
+from utils.urls import URLs
 
+@ui.refreshable
 class LoginCard(ui.card, BaseUI):
     """A UI component representing a login card with username and password fields."""
     username: ui.input = None
@@ -18,19 +21,19 @@ class LoginCard(ui.card, BaseUI):
         super().__init__()
         self.log.debug('Initializing LoginCard...')
         with self.classes('w-auto p-6 shadow-xl rounded-lg'):
-            ui.label('Sign In').classes('text-2xl font-semibold')
+            ui.label(Translations.translate('L001')).classes('text-2xl font-semibold')
                 
-            ui.label('Enter your username and password to access your account').classes('text-gray-600')
+            ui.label(Translations.translate('L002')).classes('text-gray-600')
             
-            self.username = ui.input(label='Username').classes('w-full')
-            self.password = ui.input(label='Password', password=True, password_toggle_button=True).classes('w-full')
+            self.username = ui.input(label=Translations.translate('L003')).classes('w-full')
+            self.password = ui.input(label=Translations.translate('L004'), password=True, password_toggle_button=True).classes('w-full')
             
-            ui.button('Sign In', on_click=on_sign_in).classes('w-full')
+            ui.button(Translations.translate('L001'), on_click=on_sign_in).classes('w-full')
 
                 
             with ui.row().classes('w-full justify-center'):
-                ui.label("Don't have an account?").classes('text-sm text-gray-600')
-                ui.link('Sign up', '/signup').classes('text-blue-600 hover:text-blue-800 text-sm')
+                ui.label(Translations.translate('L005')).classes('text-sm text-gray-600')
+                ui.link(Translations.translate('L006'), URLs.Frontend.signup).classes('text-blue-600 hover:text-blue-800 text-sm')
                 
     def is_valid(self):
         """

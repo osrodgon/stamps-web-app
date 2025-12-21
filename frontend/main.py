@@ -107,6 +107,7 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
+            app.storage.user['language'] = 'es'
             if StampsApp.check_authentication(request): 
                 ui.navigate.to('/collections')
             else:
@@ -143,3 +144,4 @@ if __name__ in {"__main__", "__mp_main__"}:
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
     StampsApp.run(os.getenv("APP_STORAGE_SECRET"))
+    

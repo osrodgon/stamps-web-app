@@ -1,6 +1,8 @@
 from nicegui import ui
 
 from base.base_page import BasePage
+from utils.translations import Translations
+from utils.urls import URLs
 
 class NotFoundPage(ui.column, BasePage):
     PAGE_TITLE = "404 - Lost in the UI" 
@@ -15,14 +17,14 @@ class NotFoundPage(ui.column, BasePage):
                 .classes('text-[150px] font-extrabold') \
                 .style(f'color: {self.NICEGUI_COLOR}; line-height: 1.0;')
 
-            ui.label('Oops! You seem to be lost.') \
+            ui.label(Translations.translate('L009')) \
                 .classes('text-2xl font-semibold mt-[-20px] mb-4')
             
-            ui.markdown('The page you are looking for is **not found** on this server.') \
+            ui.markdown(Translations.translate('L010')) \
                 .classes('text-lg text-gray-600 mb-8')
 
-            ui.button('Take Me Home', 
-                    on_click=lambda: ui.navigate.to('/'),
+            ui.button(Translations.translate('L011'), 
+                    on_click=lambda: ui.navigate.to(URLs.Frontend.root),
                     icon='home') \
                     .props('size=md color=primary')
             
