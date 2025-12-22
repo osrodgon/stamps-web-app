@@ -9,14 +9,13 @@ NETWORK="stamps-network"
 CURRENT_PATH=$(pwd)
 SCRIPT_PATH=$(dirname $(readlink -f $0))
 
-echo $SCRIPT_PATH
-
 # Backend Configuration
 BACKEND_DIR="backend"
 BACKEND_BASE_COMPOSE_FILE="backend/docker-compose.yml"
 BACKEND_DEV_COMPOSE_FILE="backend/docker-compose.dev.yml"
 BACKEND_TEST_COMPOSE_FILE="backend/docker-compose.test.yml"
 BACKEND_PROD_COMPOSE_FILE="backend/docker-compose.prod.yml"
+BACKEND_PROD_DOCKER="Dockerfile.prod"
 BACKEND_SERVICE="stamps-backend" # Main backend service name (Django)
 
 # Frontend Configuration
@@ -25,19 +24,21 @@ FRONTEND_BASE_COMPOSE_FILE="frontend/docker-compose.yml"
 FRONTEND_DEV_COMPOSE_FILE="frontend/docker-compose.dev.yml"
 FRONTEND_TEST_COMPOSE_FILE="frontend/docker-compose.test.yml"
 FRONTEND_PROD_COMPOSE_FILE="frontend/docker-compose.prod.yml"
+FRONTEND_PROD_DOCKER="Dockerfile.prod"
 FRONTEND_SERVICE="stamps-frontend" # Main frontend service name (e.g., React/Vue container)
 
 # --- Utility Functions ---
 
 # Function to show usage instructions
 show_usage() {
-    echo "Usage: $0 [dev|test|prod] [start|stop|rebuild|log] "
+    echo "Usage: $0 [dev|test|prod] [start|stop|rebuild|log|push] "
     echo ""
     echo "Commands:"
     echo "  start     Starts the containers in detached mode (Backend + Frontend)."
     echo "  stop      Stops and removes containers, networks, and volumes."
     echo "  rebuild   Forces a complete image rebuild (no-cache) and restarts the environment."
     echo "  log       Shows the logs for Backend and Frontend in separate GNOME Terminal tabs."
+    echo "  push      Push the images for Backend and Frontend to Docker Hub."
     echo ""
     echo "Environments:"
     echo "  dev       (Backend + Frontend)"
@@ -72,8 +73,8 @@ get_compose_files() {
             compose_files="-f $BACKEND_TEST_COMPOSE_FILE -f $FRONTEND_TEST_COMPOSE_FILE"
             ;;
         prod)
-            # Backend + Frontend for production
-            compose_files="-f $BACKEND_BASE_COMPOSE_FILE -f $BACKEND_PROD_COMPOSE_FILE -f $FRONTEND_BASE_COMPOSE_FILE -f $FRONTEND_PROD_COMPOSE_FILE"
+            # Prod does not need compose files
+            compose_files=""
             ;;
         *)
             echo "Error: Unknown environment '$env'." >&2
@@ -226,6 +227,27 @@ show_log() {
     fi
 }
 
+push_images() {
+    platform="linux/amd64,linux/arm64"
+    backend_img="osrogon/stamps-backend:latest"
+    frontend_img="osrogon/stamps-frontend:latest"
+
+    # Create backend dir
+    cd $BACKEND_DIR
+    echo "Building stamps-backend image, please wait..."
+    echo ""
+    docker buildx build --platform "$platform" -f $BACKEND_PROD_DOCKER --tag "$backend_img" --no-cache --push .
+
+    cd ../$FRONTEND_DIR
+    echo "Building stamps-frontend image, please wait..."
+    echo ""
+    docker buildx build --platform "$platform" -f $FRONTEND_PROD_DOCKER --tag "$frontend_img" --no-cache --push .
+
+    cd ..
+    echo ""
+    echo "Images created."
+}
+
 # --- Main Logic ---
 
 # Check if the correct number of arguments is provided
@@ -240,9 +262,22 @@ ENVIRONMENT=$1
 cd $SCRIPT_PATH
 
 # Check if the requested action is valid for the test environment
-if [ "$ENVIRONMENT" == "test" ] && ([ "$ACTION" == "stop" ] || [ "$ACTION" == "log" ]); then
+if [ "$ENVIRONMENT" == "test" ] && ([ "$ACTION" == "stop" ] || [ "$ACTION" == "log" ] || [ "$ACTION" == "push" ]); then
     echo "❌   Action '$ACTION' is not typically used for the 'test' environment." >&2
     echo "     Use 'start test' to run tests." >&2
+    exit 1
+fi
+
+# Check if the requested action is valid for the dev environment
+if [ "$ENVIRONMENT" == "dev" ] && [ "$ACTION" == "push" ]; then
+    echo "❌   Action '$ACTION' is not typically used for the 'dev' environment." >&2
+    exit 1
+fi
+
+# Check if the requested action is valid for the prod environment
+if [ "$ENVIRONMENT" == "prod" ] && ([ "$ACTION" == "stop" ] || [ "$ACTION" == "log" ] || [ "$ACTION" == "start" ] || [ "$ACTION" == "rebuild" ]); then
+    echo "❌   Action '$ACTION' is not typically used for the 'prod' environment." >&2
+    echo "     Use 'push prod to push images to docker hub" >&2
     exit 1
 fi
 
@@ -262,6 +297,9 @@ case "$ACTION" in
         ;;
     log)
         show_log "$COMPOSE_FILES" "$ENVIRONMENT"
+        ;;
+    push)
+        push_images
         ;;
     *)
         echo "Error: Unknown action '$ACTION'." >&2

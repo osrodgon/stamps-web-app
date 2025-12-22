@@ -1,22 +1,24 @@
 import os
-from fastapi import Request
+from fastapi import Request, Response
 from nicegui import ui, app
 from nicegui.page import page
+from nicegui.client import Client
 from dotenv import load_dotenv
 
 from pages.auth.login_page import LoginPage
+from pages.not_found_page import NotFoundPage
 from utils.log_setup import log_setup
+from utils.urls import URLs
 
 from settings import (
     APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
 )
 
-class StampsApp():
+class StampsApp():    
     """
     Main application class for the Stamps web application.
     Handles static file setup, logging, route registration, and authentication.
     """
-
     @staticmethod
     def set_background_image(image_url: str):
         """
@@ -75,7 +77,7 @@ class StampsApp():
             ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
             ui.button('Logout', on_click=lambda: ui.navigate.to('/logout'))
             
-        @page('/login')
+        @page(URLs.Frontend.login)
         def login_page(request: Request):
             """
             Displays the login page.
@@ -85,7 +87,7 @@ class StampsApp():
             """
             LoginPage()
         
-        @page('/logout')    
+        @page(URLs.Frontend.logout)    
         def logout(request: Request):
             """
             Logs out the user and redirects to the login page.
@@ -94,9 +96,9 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             app.storage.user.clear()
-            ui.navigate.to('/login')
+            ui.navigate.to(URLs.Frontend.login)
             
-        @page('/')
+        @page(URLs.Frontend.root)
         async def main_page(request: Request):
             """
             The main entry point of the application.
@@ -105,10 +107,18 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
+            app.storage.user['language'] = 'es'
             if StampsApp.check_authentication(request): 
                 ui.navigate.to('/collections')
             else:
-                ui.navigate.to('/login')
+                ui.navigate.to(URLs.Frontend.login)
+            
+        @app.exception_handler(404)
+        async def exception_handler_404(request: Request, exception: Exception) -> Response:
+            with Client(page(URLs.Frontend.root), request=request) as client:
+                NotFoundPage()
+
+            return client.build_response(request, 404)
     
     @staticmethod            
     def run(storage_secret: str):
@@ -130,6 +140,8 @@ if __name__ in {"__main__", "__mp_main__"}:
         load_dotenv()
     except ImportError:
         pass
+    
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
     StampsApp.run(os.getenv("APP_STORAGE_SECRET"))
+    

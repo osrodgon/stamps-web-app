@@ -4,7 +4,9 @@ from components.auth.login_card import LoginCard
 from components.branding.footer_branding import FooterBranding
 from base.base_page import BasePage
 from base.base_rest import BaseRest
-from settings import BACKGROUND_IMG, BACKEND_URL
+from utils.urls import URLs
+from settings import BACKGROUND_IMG
+from utils.translations import _
 
 class LoginPage(ui.column, BasePage, BaseRest):
     """A page component for the user login screen."""
@@ -36,10 +38,10 @@ class LoginPage(ui.column, BasePage, BaseRest):
             self.log.debug("Login data valid. Attempting login...")
             payload = self.login_card.get_data()
             
-            response = await self._make_request(BaseRest.POST, f"{BACKEND_URL}/login/", payload)
+            response = await self._make_request(BaseRest.POST, URLs.Backend.login, payload)
             
             if response is None:
-                error_msg = "Login request failed, no response from server."
+                error_msg = _('no_response')
                 self.log.error(error_msg)
                 self.notify(error_msg, 'negative')
                 return error_msg
@@ -51,7 +53,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                     self.log.debug('Login successful')
                     return response
                 else:
-                    error_msg = "Login failed due to a server response issue."
+                    error_msg = _('response_issue')
                     self.log.error(error_msg)
                     self.notify(error_msg, 'negative')
                     return error_msg
@@ -63,7 +65,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                 self.login_card.notify(f'Error: {error_msg}', 'negative')
                 return response
         else:
-            error_msg = 'Username and password are required.'
+            error_msg = _('username_password_required')
             self.log.debug("Login data invalid. Showing error message...")
             self.login_card.notify(error_msg, 'negative')
             return error_msg
@@ -80,7 +82,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
         """
         token = data.get('token', None)
         if token is None:
-            error_msg = "Could not obtain token from login response."
+            error_msg = _('token_missing')
             self.log.error(error_msg)
             return False
         

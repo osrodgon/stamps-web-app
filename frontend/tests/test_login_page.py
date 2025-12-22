@@ -13,6 +13,8 @@ from frontend.tests.data.users_api_responses import (
     LOGIN_RESPONSE_500_SERVER_ERROR
 )
 
+from utils.urls import URLs
+
 @pytest.mark.asyncio
 class TestLoginPage(AbstractUnitTest):
     @pytest.fixture(autouse=True)
@@ -23,7 +25,7 @@ class TestLoginPage(AbstractUnitTest):
     @pytest.fixture
     async def login_page_components(self, user: User):
         """Fixture to open login page and get main components."""
-        login_object = await user.open('/login')
+        login_object = await user.open(URLs.Frontend.login)
         login_card = self.get_component(login_object, LoginCard)
         login_page = self.get_component(login_object, LoginPage)
         
