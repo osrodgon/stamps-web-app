@@ -5,9 +5,8 @@ from components.branding.footer_branding import FooterBranding
 from base.base_page import BasePage
 from base.base_rest import BaseRest
 from utils.urls import URLs
-from utils.messages import Messages
-from utils.translations import Translations
 from settings import BACKGROUND_IMG
+from utils.translations import _
 
 class LoginPage(ui.column, BasePage, BaseRest):
     """A page component for the user login screen."""
@@ -42,7 +41,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
             response = await self._make_request(BaseRest.POST, URLs.Backend.login, payload)
             
             if response is None:
-                error_msg = Translations.translate(Messages.Login.error_no_reponse_from_server)
+                error_msg = _('no_response')
                 self.log.error(error_msg)
                 self.notify(error_msg, 'negative')
                 return error_msg
@@ -54,7 +53,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                     self.log.debug('Login successful')
                     return response
                 else:
-                    error_msg = Translations.translate(Messages.Login.error_server_response_issue)
+                    error_msg = _('response_issue')
                     self.log.error(error_msg)
                     self.notify(error_msg, 'negative')
                     return error_msg
@@ -66,7 +65,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                 self.login_card.notify(f'Error: {error_msg}', 'negative')
                 return response
         else:
-            error_msg = Translations.translate(Messages.Login.error_username_password_required)
+            error_msg = _('username_password_required')
             self.log.debug("Login data invalid. Showing error message...")
             self.login_card.notify(error_msg, 'negative')
             return error_msg
@@ -83,7 +82,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
         """
         token = data.get('token', None)
         if token is None:
-            error_msg = Translations.translate(Messages.Login.error_token_not_found)
+            error_msg = _('token_missing')
             self.log.error(error_msg)
             return False
         
