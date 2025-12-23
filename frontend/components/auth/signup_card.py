@@ -35,7 +35,7 @@ class SignUpCard(ui.card, BaseUI):
                 placeholder='john@example.com',
                 validation={
                     _('required'): lambda v: len(v) > 0,
-                    _('invalid_email'): lambda v: bool(re.match(r"^[^@]+@[^@]+\.[^@]+$", v))
+                    _('invalid_email'): lambda v: bool(re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", v))
                 }
             ).classes('w-full') 
             
