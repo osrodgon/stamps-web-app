@@ -16,7 +16,7 @@ class BaseRest(BaseUI):
         self.log.debug("BaseRest initialized.")
         
     
-    async def _make_request(self, request_type: int, url: str, payload: dict) -> requests.Response:
+    async def _make_request(self, request_type: int, url: str, payload: dict, headers = None) -> requests.Response:
         """
         Makes an asynchronous HTTP request to the specified URL.
 
@@ -53,7 +53,8 @@ class BaseRest(BaseUI):
             response = await asyncio.to_thread(
                     rest_method, 
                     url, 
-                    json=payload, 
+                    json=payload,
+                    headers=headers,
                     timeout=5
                 )
             

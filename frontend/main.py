@@ -6,6 +6,7 @@ from nicegui.client import Client
 from dotenv import load_dotenv
 
 from pages.auth.login_page import LoginPage
+from pages.auth.signup_page import SignUpPage
 from pages.not_found_page import NotFoundPage
 from utils.log_setup import log_setup
 from utils.urls import URLs
@@ -86,6 +87,10 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             LoginPage()
+        
+        @page(URLs.Frontend.signup)
+        def signup_page(request: Request):
+            SignUpPage()
         
         @page(URLs.Frontend.logout)    
         def logout(request: Request):
