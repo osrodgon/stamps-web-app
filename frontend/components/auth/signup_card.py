@@ -74,12 +74,14 @@ class SignUpCard(ui.card, BaseUI):
             submit_button.bind_enabled_from(terms_checkbox, 'value')
             
     def is_valid(self):
-        valid = self.name_input.validate()
-        valid = self.last_name_input.validate()
-        valid = self.username_input.validate()
-        valid = self.email_input.validate()
-        valid = self.password_input.validate()
-        valid = self.confirm_password_input.validate()
+        valid = all([
+            self.name_input.validate(),
+            self.last_name_input.validate(),
+            self.username_input.validate(),
+            self.email_input.validate(),
+            self.password_input.validate(),
+            self.confirm_password_input.validate(),
+        ])
         
         self.log.debug(f"SignUp form validation result: {valid}")
         
