@@ -60,7 +60,7 @@ class SignUpPage(ui.column, BasePage, BaseRest):
                 data = response.json()
                 error_msg = data['errors'][0]['message']
                 self.log.error(f'Signup failed: {error_msg}')
-                self.login_card.notify(f'Error: {error_msg}', 'negative')
+                self.signup_card.notify(f'Error: {error_msg}', 'negative')
                 
                 return response
         else:
