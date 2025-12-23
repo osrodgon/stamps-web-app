@@ -1,6 +1,7 @@
 import logging
 import pytest
 from nicegui.testing import User
+import requests
 
 from components.auth.login_card import LoginCard
 from pages.auth.login_page import LoginPage
@@ -59,7 +60,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response.status_code == 200
+        assert response.status_code == requests.codes.ok
         assert response.json() == LOGIN_RESPONSE_200_SUCCESS
         assert user_storage['jwt_token'] == LOGIN_RESPONSE_200_SUCCESS['data']['token']
         

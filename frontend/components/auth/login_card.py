@@ -1,3 +1,4 @@
+import re
 from nicegui import ui
 
 from base.base_ui import BaseUI
@@ -24,8 +25,23 @@ class LoginCard(ui.card, BaseUI):
                 
             ui.label(_('username_and_password')).classes('text-gray-600')
             
-            self.username = ui.input(label=_('username')).classes('w-full')
-            self.password = ui.input(label=_('password'), password=True, password_toggle_button=True).classes('w-full')
+            self.username = ui.input(
+                label=_('username'),
+                # validation={_('required'): lambda v: len(v) > 0}
+            ).classes('w-full')
+            self.password = ui.input(
+                label=_('password'), 
+                password=True, 
+                password_toggle_button=True,
+                # validation={
+                #         _('required'): lambda v: len(v) > 0,
+                #         _('invalid_password'): lambda v: len(v) >= 8 and 
+                #             re.search(r"[A-Z]", v) and 
+                #             re.search(r"[a-z]", v) and 
+                #             re.search(r"\d", v) and 
+                #             re.search(r"[^a-zA-Z0-9]", v)
+                #     }
+            ).classes('w-full')
             
             ui.button(_('sign_in'), on_click=on_sign_in).classes('w-full')
 
@@ -41,7 +57,7 @@ class LoginCard(ui.card, BaseUI):
         Returns:
             bool: True if both fields have values, False otherwise.
         """
-        valid = bool(self.username.value and self.password.value)
+        valid = bool(self.username.value) and bool(self.password.value)
         self.log.debug(f"Login form validation result: {valid}")
         return valid
     

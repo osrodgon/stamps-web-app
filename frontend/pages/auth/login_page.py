@@ -1,4 +1,5 @@
 from nicegui import ui, app
+import requests
 
 from components.auth.login_card import LoginCard
 from components.branding.footer_branding import FooterBranding
@@ -38,7 +39,12 @@ class LoginPage(ui.column, BasePage, BaseRest):
             self.log.debug("Login data valid. Attempting login...")
             payload = self.login_card.get_data()
             
-            response = await self._make_request(BaseRest.POST, URLs.Backend.login, payload)
+            response = await self._make_request(
+                request_type=BaseRest.POST, 
+                url=URLs.Backend.login, 
+                payload=payload, 
+                headers=None
+            )
             
             if response is None:
                 error_msg = _('no_response')
@@ -46,7 +52,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                 self.notify(error_msg, 'negative')
                 return error_msg
 
-            if response.status_code == 200:
+            if response.status_code == requests.codes.ok:
                 data = response.json()['data']
                 
                 if self.login_success(data):

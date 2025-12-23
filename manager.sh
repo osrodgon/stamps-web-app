@@ -118,8 +118,8 @@ start_env() {
         backend_compose_files=$(echo "$compose_files" | grep -oE "\-f backend[^ ]*")
         frontend_compose_files=$(echo "$compose_files" | grep -oE "\-f frontend[^ ]*")
         docker network create $NETWORK
-        docker compose $backend_compose_files up -d --force-recreate
-        docker compose $frontend_compose_files up -d --force-recreate
+        docker compose $backend_compose_files up -d --build --force-recreate
+        docker compose $frontend_compose_files up -d --build --force-recreate
         if [ $? -eq 0 ]; then
             echo "✅   Environment '$env' started successfully."
         else
