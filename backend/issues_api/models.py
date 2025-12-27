@@ -12,7 +12,7 @@ class Issue(models.Model):
         year (ForeignKey): The year the issue was released.
         date (DateField): The specific date of the issue.
         name (CharField): The name or title of the issue.
-        total_printed (IntegerField): The number of stamps printed for this issue.
+        total_printed (BigIntegerField): The number of stamps printed for this issue.
         market_value (DecimalField): The estimated market value.
         stamp_type (ForeignKey): The type of stamp (e.g., definitive, commemorative).
         print_type (ForeignKey): The type of print used.
@@ -28,7 +28,7 @@ class Issue(models.Model):
     )
     date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
-    total_printed = models.IntegerField(null=True, blank=True)
+    total_printed = models.BigIntegerField(null=True, blank=True)
     market_value = models.DecimalField(max_digits=8, decimal_places=2,null=True, blank=True)
     stamp_type = models.ForeignKey(
         'stamp_types_api.StampType', 

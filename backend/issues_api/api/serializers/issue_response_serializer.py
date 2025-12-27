@@ -11,7 +11,6 @@ class IssueResponseSerializer(serializers.ModelSerializer):
     """
     country = serializers.StringRelatedField()
     year = serializers.StringRelatedField()
-    location = serializers.StringRelatedField(allow_null=True)
     stamp_type = serializers.StringRelatedField(allow_null=True)
     print_type = serializers.StringRelatedField(allow_null=True)
 
