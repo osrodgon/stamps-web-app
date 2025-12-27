@@ -31,7 +31,7 @@ FRONTEND_SERVICE="stamps-frontend" # Main frontend service name (e.g., React/Vue
 
 # Function to show usage instructions
 show_usage() {
-    echo "Usage: $0 [dev|test|prod] [start|stop|rebuild|log|push] "
+    echo "Usage: $0 [dev|test|prod] [start|stop|rebuild|log|push|dump] "
     echo ""
     echo "Commands:"
     echo "  start     Starts the containers in detached mode (Backend + Frontend)."
@@ -39,6 +39,7 @@ show_usage() {
     echo "  rebuild   Forces a complete image rebuild (no-cache) and restarts the environment."
     echo "  log       Shows the logs for Backend and Frontend in separate GNOME Terminal tabs."
     echo "  push      Push the images for Backend and Frontend to Docker Hub."
+    echo "  dump      Dumps the database in json format"
     echo ""
     echo "Environments:"
     echo "  dev       (Backend + Frontend)"
@@ -248,6 +249,13 @@ push_images() {
     echo "Images created."
 }
 
+dump_database() {
+    backup="sqldata.json"
+
+    echo "Dumping database into $backup. Assuming database backends containers are up and running."
+    docker exec -t $1 python manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission --indent 4 > $backup
+}
+
 # --- Main Logic ---
 
 # Check if the correct number of arguments is provided
@@ -300,6 +308,9 @@ case "$ACTION" in
         ;;
     push)
         push_images
+        ;;
+    dump)
+        dump_database "$BACKEND_SERVICE"
         ;;
     *)
         echo "Error: Unknown action '$ACTION'." >&2
