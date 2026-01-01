@@ -3,12 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from common.api.messages import Messages
+from years_api.models import Year
 from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
@@ -26,7 +28,23 @@ class IssuesView(Logger, APIView):
     @extend_schema(
         operation_id="list_issues",
         summary="List all issues",
-        description="Retrieves a list of all issue entries currently stored in the database.",
+        description="Retrieves a list of all issue entries. Can be filtered by year and name.",
+        parameters=[
+        OpenApiParameter(
+                name='year', 
+                type=OpenApiTypes.INT, 
+                location=OpenApiParameter.QUERY, 
+                description='Filter issues by year',
+                required=False
+            ),
+            OpenApiParameter(
+                name='name', 
+                type=OpenApiTypes.STR, 
+                location=OpenApiParameter.QUERY, 
+                description='Filter issues by name',
+                required=False
+            ),
+        ],
         responses={
             status.HTTP_200_OK: standardized_response(
                 IssueResponseSerializer, 
@@ -56,7 +74,22 @@ class IssuesView(Logger, APIView):
             with a 200 OK status.
         """
         self.log.debug(Messages.Get.retrieve_all("issues"))
-        issues = Issue.objects.all()
+        year = request.query_params.get('year', None)
+        issue_name = request.query_params.get('name', None)
+        
+        issues = Issue.objects.all().order_by('date')
+        if year:
+            try:
+                year_int = int(year)
+                self.log.debug(f"Filtering issues by year {year_int}")
+                issues = issues.filter(year__year=year_int)
+            except ValueError:
+                self.log.warning(f"Invalid value for 'year' filter provided: {year}")
+                issues = issues.none()
+        if issue_name:
+            self.log.debug(f"Filtering issues by issue name {issue_name}")
+            issues = issues.filter(name__icontains=issue_name)
+        
         self.log.debug(Messages.Get.retrieved_all("issues", issues.count()))
         response = IssueResponseSerializer(issues, many=True)
         
