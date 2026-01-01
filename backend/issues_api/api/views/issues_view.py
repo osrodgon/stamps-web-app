@@ -79,9 +79,13 @@ class IssuesView(Logger, APIView):
         
         issues = Issue.objects.all().order_by('date')
         if year:
-            self.log.debug(f"Filtering issues by year {year}")
-            year_id = Year.objects.all().filter(year=year).first().id
-            issues = issues.filter(year=year_id)
+            try:
+                year_int = int(year)
+                self.log.debug(f"Filtering issues by year {year_int}")
+                issues = issues.filter(year__year=year_int)
+            except ValueError:
+                self.log.warning(f"Invalid value for 'year' filter provided: {year}")
+                issues = issues.none()
         if issue_name:
             self.log.debug(f"Filtering issues by issue name {issue_name}")
             issues = issues.filter(name__icontains=issue_name)
