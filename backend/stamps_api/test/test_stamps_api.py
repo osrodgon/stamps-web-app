@@ -142,6 +142,36 @@ class TestStampsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+    def test_get_all_stamps_filtering_by_valid_issue_id_returns_200_ok_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=1")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 1
+        assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_all_stamps_filtering_by_valid_issue_id_returns_200_ok_no_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=999")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 0
+        assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_all_stamps_filtering_by_invalid_issue_id_returns_200_ok_no_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=issue")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 0
+        assert response.status_code == status.HTTP_200_OK
 
     def test_post_stamp_returns_201_created(self, api_client, stamp_post_payload_ok):
         self.permission(granted=True)
