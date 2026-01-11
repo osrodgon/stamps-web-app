@@ -3,7 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
@@ -27,6 +28,15 @@ class StampsView(Logger, APIView):
         tags=['Database Management'],
         summary="List All Stamps",
         description="Retrieves a list of all stamp entries currently stored in the database.",
+        parameters=[
+        OpenApiParameter(
+                name='issue_id', 
+                type=OpenApiTypes.INT, 
+                location=OpenApiParameter.QUERY, 
+                description='Filter stamps by issue_id',
+                required=False
+        )
+        ],
         responses={
             status.HTTP_200_OK: standardized_response(
                 StampResponseSerializer, 
@@ -56,7 +66,18 @@ class StampsView(Logger, APIView):
             with a 200 OK status.
         """
         self.log.debug(Messages.Get.retrieve_all("stamps"))
-        stamps = Stamp.objects.all()
+        issue_id = request.query_params.get('issue_id', None)
+        
+        stamps = Stamp.objects.all().order_by('edifil_code')
+        if issue_id:
+            try:
+                issue_id_int = int(issue_id)
+                self.log.debug(F"Filtering stamps by issue id {issue_id_int}")
+                stamps = stamps.filter(issue__id=issue_id_int)
+            except ValueError:
+                self.log.warning(f"Invalid value for 'issue_id' filter provided: {issue_id}")
+                stamps = stamps.none()
+        
         self.log.debug(Messages.Get.retrieved_all("stamps", len(stamps)))
         response = StampResponseSerializer(stamps, many=True)
         

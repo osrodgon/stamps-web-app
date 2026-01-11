@@ -10,7 +10,7 @@ from common.api.serializers.generic_response import GenericResponseSerializer, G
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from common.api.messages import Messages
-from years_api.models import Year
+
 from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
