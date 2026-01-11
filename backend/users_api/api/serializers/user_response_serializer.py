@@ -10,4 +10,4 @@ class UserResponseSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserCollection
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'registration_date', 'is_active', 'is_admin']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'registration_date', 'is_active']
