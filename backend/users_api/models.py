@@ -14,8 +14,7 @@ class UserCollection(models.Model):
         registration_date (DateTimeField): The date and time the user registered.
         is_active (BooleanField):   Designates whether this user should be treated as
                                     active.
-        is_admin (BooleanField):    Designates whether this user is an admin user. This
-                                    can be done only calling the API.
+        is_admin (BooleanField):    Designates whether this user is an admin user.
     """
     username = models.CharField(max_length=100, unique=True, blank=False, null=False)
     email = models.EmailField(max_length=100, unique=True, blank=False, null=False)

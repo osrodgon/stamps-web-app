@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
+from getpass import getpass
 
 from users_api.models import UserCollection
 
@@ -13,7 +14,7 @@ class Command(BaseCommand):
         email = input(f"Email ({username}@example.com): ")
         first_name = input(f"First name ({username.capitalize()}): ")
         last_name = input("Last name (User): ")
-        password = input("Password: ")
+        password = getpass("Password: ")
         
         
         if not email: email = "admin@example.com"
@@ -23,12 +24,16 @@ class Command(BaseCommand):
             print("\nPassword cannot be empty")
             return
         
-        UserCollection.objects.create(
-            username=username,
-            email = email,
-            first_name = first_name,
-            last_name = last_name,
-            password_hash = make_password(password),
-            is_admin = True
-        )
+        try:
+            UserCollection.objects.create(
+                username=username,
+                email = email,
+                first_name = first_name,
+                last_name = last_name,
+                password_hash = make_password(password),
+                is_admin = True
+            )
+            self.stdout.write(self.style.SUCCESS(f"Successfully created admin user '{username}'."))
+        except Exception:
+            self.stderr.write(self.style.ERROR("A user with this username or email already exists."))
         
