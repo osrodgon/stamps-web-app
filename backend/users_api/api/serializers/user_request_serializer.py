@@ -14,4 +14,4 @@ class UserRequestSerializer(GenericSerializer, serializers.ModelSerializer):
 
     class Meta:
         model = UserCollection
-        fields = ['username', 'email', 'password', 'first_name', 'last_name']
+        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'is_admin']
