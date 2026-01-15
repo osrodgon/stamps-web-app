@@ -14,7 +14,7 @@ from frontend.tests.data.users_api_responses import (
     LOGIN_RESPONSE_500_SERVER_ERROR
 )
 
-from utils.urls import URLs
+from core.urls import URLs
 
 @pytest.mark.asyncio
 class TestLoginPage(AbstractUnitTest):

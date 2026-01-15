@@ -1,9 +1,8 @@
-import re
 from nicegui import ui
 
 from base.base_ui import BaseUI
-from utils.translations import _
-from utils.urls import URLs
+from core.translations import _
+from core.urls import URLs
 
 class LoginCard(ui.card, BaseUI):
     """A UI component representing a login card with username and password fields."""

@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.not_found_page import NotFoundPage
-from utils.log_setup import log_setup
-from utils.urls import URLs
+from pages.admin.stamps_manager_page import StampsManagerPage
+from core.log_setup import log_setup
+from core.urls import URLs
 
 from settings import (
     APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
@@ -103,6 +104,10 @@ class StampsApp():
             app.storage.user.clear()
             ui.navigate.to(URLs.Frontend.login)
             
+        @page(URLs.Frontend.stamps_manager)
+        async def stamps_manager(request: Request):
+            StampsManagerPage()
+            
         @page(URLs.Frontend.root)
         async def main_page(request: Request):
             """
@@ -117,7 +122,7 @@ class StampsApp():
                 ui.navigate.to('/collections')
             else:
                 ui.navigate.to(URLs.Frontend.login)
-            
+                
         @app.exception_handler(404)
         async def exception_handler_404(request: Request, exception: Exception) -> Response:
             with Client(page(URLs.Frontend.root), request=request) as client:

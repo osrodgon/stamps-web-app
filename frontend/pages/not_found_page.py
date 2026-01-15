@@ -1,8 +1,8 @@
 from nicegui import ui
 
 from base.base_page import BasePage
-from utils.translations import _
-from utils.urls import URLs
+from core.translations import _
+from core.urls import URLs
 
 class NotFoundPage(ui.column, BasePage):
     PAGE_TITLE = "404 - Lost in the UI" 
