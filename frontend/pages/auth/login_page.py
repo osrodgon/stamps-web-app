@@ -5,9 +5,9 @@ from components.auth.login_card import LoginCard
 from components.branding.footer_branding import FooterBranding
 from base.base_page import BasePage
 from base.base_rest import BaseRest
-from utils.urls import URLs
+from core.urls import URLs
 from settings import BACKGROUND_IMG
-from utils.translations import _
+from core.translations import _
 
 class LoginPage(ui.column, BasePage, BaseRest):
     """A page component for the user login screen."""

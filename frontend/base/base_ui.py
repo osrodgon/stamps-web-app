@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from utils.logger import Logger
+from core.logger import Logger
 
 class BaseUI(Logger):
     """A base class for UI components, providing common functionalities like notifications."""

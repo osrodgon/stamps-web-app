@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from utils.logger import Logger
+from core.logger import Logger
 
 
 class BasePage(Logger):

@@ -6,8 +6,8 @@ from base.base_page import BasePage
 from base.base_rest import BaseRest
 from components.auth.signup_card import SignUpCard
 from components.branding.footer_branding import FooterBranding
-from utils.translations import _
-from utils.urls import URLs
+from core.translations import _
+from core.urls import URLs
 from settings import BACKGROUND_IMG, API_MASTER_KEY
 
 
