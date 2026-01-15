@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
+from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
 from pages.admin.stamps_manager_page import StampsManagerPage
 from core.log_setup import log_setup
@@ -70,14 +71,12 @@ class StampsApp():
         """
         Registers all application routes using NiceGUI's `@page` decorator.
         """
-        @page('/collections')
+        @page(URLs.Frontend.collections)
         def collections_page():
             """
-            Displays the collections page.
+            Displays the collections page
             """
-            ui.label('Welcome to the Collections!').classes('text-3xl font-bold p-10')
-            ui.button('Go back to Login', on_click=lambda: ui.navigate.to('/login'))
-            ui.button('Logout', on_click=lambda: ui.navigate.to('/logout'))
+            CollectionsPage()
             
         @page(URLs.Frontend.login)
         def login_page(request: Request):
@@ -91,6 +90,12 @@ class StampsApp():
         
         @page(URLs.Frontend.signup)
         def signup_page(request: Request):
+            """
+            Displays the signup page.
+
+            Args:
+                request (Request): _description_
+            """
             SignUpPage()
         
         @page(URLs.Frontend.logout)    
@@ -106,6 +111,12 @@ class StampsApp():
             
         @page(URLs.Frontend.stamps_manager)
         async def stamps_manager(request: Request):
+            """
+            Displays the stamp manager page
+
+            Args:
+                request (Request): _description_
+            """
             StampsManagerPage()
             
         @page(URLs.Frontend.root)
@@ -119,7 +130,10 @@ class StampsApp():
             """
             app.storage.user['language'] = 'es'
             if StampsApp.check_authentication(request): 
-                ui.navigate.to('/collections')
+                if app.storage.user['is_admin']:
+                    ui.navigate.to(URLs.Frontend.stamps_manager)
+                else:
+                    ui.navigate.to(URLs.Frontend.collections)
             else:
                 ui.navigate.to(URLs.Frontend.login)
                 

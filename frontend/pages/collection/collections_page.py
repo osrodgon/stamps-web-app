@@ -1,0 +1,16 @@
+from nicegui import ui
+
+from base.base_page import BasePage
+from base.base_rest import BaseRest
+from components.common.top_bar import TopBar
+from core.translations import _
+
+
+class CollectionsPage(ui.column, BasePage, BaseRest):
+    top_bar: TopBar = None
+    
+    def __init__(self):
+        super().__init__()
+        self.log.debug('Initializing CollectionsPage...')
+        
+        self.top_bar = TopBar(_('collections_tile'))
