@@ -88,11 +88,11 @@ class LoginPage(ui.column, BasePage, BaseRest):
             data (dict): The data dictionary from the API response, expected to contain a 'token'.
         """
         token = data.get('token', None)
-        is_admin = data.get('payload', False).get('is_admin', False)
-        username = data.get('payload', False).get('username', "Missig username")
-        first_name = data.get('payload', False).get('first_name', "No name")
-        last_name = data.get('payload', False).get('last_name', "No last name")
-        email = data.get('payload', False).get('email', "No email")
+        is_admin = data.get('payload', {}).get('is_admin', False)
+        username = data.get('payload', {}).get('username', "Missing username")
+        first_name = data.get('payload', {}).get('first_name', "No name")
+        last_name = data.get('payload', {}).get('last_name', "No last name")
+        email = data.get('payload', {}).get('email', "No email")
         
         if token is None:
             error_msg = _('token_missing')
