@@ -130,7 +130,7 @@ class StampsApp():
             """
             app.storage.user['language'] = 'es'
             if StampsApp.check_authentication(request): 
-                if app.storage.user['is_admin']:
+                if app.storage.user.get('is_admin', False):
                     ui.navigate.to(URLs.Frontend.stamps_manager)
                 else:
                     ui.navigate.to(URLs.Frontend.collections)
