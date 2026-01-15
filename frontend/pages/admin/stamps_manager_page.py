@@ -13,8 +13,8 @@ class StampsManagerPage(ui.column, BasePage, BaseRest):
     top_bar: TopBar = None
     
     def __init__(self):
-        self.log.debug('Initializing StampsManagerPage...')
         super().__init__()
+        self.log.debug('Initializing StampsManagerPage...')
         
         self.top_bar = TopBar(_('stamps_manager_title'))
         
