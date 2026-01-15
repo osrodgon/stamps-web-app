@@ -39,8 +39,10 @@ class JwtToken(Logger):
         jwt_payload = {
             'user_id': user.id,
             'username': user.username,
+            'is_admin': user.is_admin,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'email': user.email,
             'jti': str(uuid.uuid4()),
             'exp': current_time_utc + timedelta(days=1),
             'iat': current_time_utc

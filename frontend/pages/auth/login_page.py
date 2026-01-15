@@ -54,6 +54,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
 
             if response.status_code == requests.codes.ok:
                 data = response.json()['data']
+                self.log.debug(f"User Info: {data}")                
                 
                 if self.login_success(data):
                     self.log.debug('Login successful')
@@ -87,15 +88,31 @@ class LoginPage(ui.column, BasePage, BaseRest):
             data (dict): The data dictionary from the API response, expected to contain a 'token'.
         """
         token = data.get('token', None)
+        is_admin = data.get('payload', {}).get('is_admin', False)
+        username = data.get('payload', {}).get('username', "Missing username")
+        first_name = data.get('payload', {}).get('first_name', "No name")
+        last_name = data.get('payload', {}).get('last_name', "No last name")
+        email = data.get('payload', {}).get('email', "No email")
+        
         if token is None:
             error_msg = _('token_missing')
             self.log.error(error_msg)
             return False
         
         app.storage.user['jwt_token'] = token
+        app.storage.user['is_admin'] = is_admin
+        app.storage.user['username'] = username
+        app.storage.user['first_name'] = first_name
+        app.storage.user['last_name'] = last_name
+        app.storage.user['email'] = email
+        
         self.log.debug(f"Token: {token[:10]}...")
         
         self.delete()
         
-        ui.navigate.to('/collections')
+        if is_admin:
+            ui.navigate.to(URLs.Frontend.stamps_manager)
+        else:
+            ui.navigate.to(URLs.Frontend.collections)
+            
         return True
