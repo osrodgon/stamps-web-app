@@ -1,13 +1,12 @@
+import requests
 from base.base_page import BasePage
-from base.base_rest import BaseRest
 from components.common.top_bar import TopBar
 from core.translations import _
-from core.urls import URLs
 from nicegui import ui
-from settings import API_MASTER_KEY
+from services.stamps_service import StampsService
 
 
-class StampsManagerPage(ui.column, BasePage, BaseRest):
+class StampsManagerPage(ui.column, BasePage):
     """
     A page for managing stamps, displaying a year-based filter.
 
@@ -17,6 +16,7 @@ class StampsManagerPage(ui.column, BasePage, BaseRest):
     """
     top_bar: TopBar = None
     years_select = None
+    stamps_service: StampsService = None
     
     def __init__(self):
         """
@@ -28,12 +28,13 @@ class StampsManagerPage(ui.column, BasePage, BaseRest):
         """
         super().__init__()
         self.log.debug('Initializing StampsManagerPage...')
+        self.stamps_service = StampsService()
         
         self.top_bar = TopBar(_('stamps_manager_title'))
         
         with self:
             with self.top_bar.extra_controls:
-                self.years_select = ui.select([], label='Select Year', on_change=lambda e: ui.notify(e.value)).classes('w-48')
+                self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: ui.notify(e.value)).classes('w-48')
             
         ui.timer(0, self.get_years, once=True)
     
@@ -47,14 +48,7 @@ class StampsManagerPage(ui.column, BasePage, BaseRest):
         """
         self.log.debug('Getting years...')
         
-        headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
-        
-        response = await self._make_request(
-            request_type=BaseRest.GET, 
-            url=URLs.Backend.years, 
-            payload=None, 
-            headers=headers
-        )
+        response = await self.stamps_service.get_years()
         
         if response is None:
             error_msg = _('no_response')
@@ -62,7 +56,7 @@ class StampsManagerPage(ui.column, BasePage, BaseRest):
             self.notify(error_msg, 'negative')
             return None
 
-        if response.status_code == 200:
+        if response.status_code == requests.codes.ok:
             data = response.json()['data']
             years = [item['year'] for item in data]
             

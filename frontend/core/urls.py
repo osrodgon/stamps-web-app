@@ -4,6 +4,7 @@ class URLs:
     class Backend:
         login =             f"{BACKEND_URL}/login/"
         logout =            f"{BACKEND_URL}/logoff/"
+        issues =            f"{BACKEND_URL}/issues/"
         signup =            f"{BACKEND_URL}/users/"
         years =             f"{BACKEND_URL}/years/"
         

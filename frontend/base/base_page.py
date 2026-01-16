@@ -1,8 +1,8 @@
-from core.logger import Logger
+from base.base_ui import BaseUI
 from nicegui import ui
 
 
-class BasePage(Logger):
+class BasePage(BaseUI):
     """A base class for UI pages, providing common functionalities like logging."""
     def __init__(self):
         """Initializes the BasePage, setting up the logger."""

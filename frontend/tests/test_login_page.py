@@ -7,6 +7,7 @@ from core.translations import _
 from core.urls import URLs
 from nicegui.testing import User
 from pages.auth.login_page import LoginPage
+from services.auth_service import AuthService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
 from frontend.tests.data.users_api_responses import (
@@ -44,7 +45,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_200_SUCCESS, 
             status_code=200
         )
@@ -73,7 +74,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN, 
             status_code=200
         )
@@ -100,7 +101,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=None, 
             status_code=500
         )
@@ -127,7 +128,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_400_BAD_REQUEST, 
             status_code=400
         )
@@ -154,7 +155,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_401_UNAUTHORIZED, 
             status_code=401
         )
@@ -181,7 +182,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_500_SERVER_ERROR, 
             status_code=500
         )

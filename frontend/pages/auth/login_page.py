@@ -1,15 +1,15 @@
 import requests
 from base.base_page import BasePage
-from base.base_rest import BaseRest
 from components.auth.login_card import LoginCard
 from components.branding.footer_branding import FooterBranding
 from core.translations import _
 from core.urls import URLs
 from nicegui import app, ui
 from settings import BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER
+from services.auth_service import AuthService
 
 
-class LoginPage(ui.column, BasePage, BaseRest):
+class LoginPage(ui.column, BasePage):
     """
     Represents the user login page.
 
@@ -19,6 +19,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
     """
     login_card: LoginCard = None
     footer_branding: FooterBranding = None
+    auth_service: AuthService = None
     
     def __init__(self):
         """
@@ -30,6 +31,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
         """
         self.log.debug('Initializing LoginPage...')
         super().__init__()
+        self.auth_service = AuthService()
         
         with self.classes('w-full h-screen p-4'):
             self.set_background(BACKGROUND_IMG)
@@ -52,12 +54,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
             self.log.debug("Login data valid. Attempting login...")
             payload = self.login_card.get_data()
             
-            response = await self._make_request(
-                request_type=BaseRest.POST, 
-                url=URLs.Backend.login, 
-                payload=payload, 
-                headers=None
-            )
+            response = await self.auth_service.login(payload=payload)
             
             if response is None:
                 error_msg = _('no_response')
@@ -152,12 +149,7 @@ class LoginPage(ui.column, BasePage, BaseRest):
                 'password': MOCK_PASSWORD,
             }
             
-            response = await self._make_request(
-                request_type=BaseRest.POST, 
-                url=URLs.Backend.login, 
-                payload=payload, 
-                headers=None
-            )
+            response = await self.auth_service.login(payload=payload)
             
             if response and response.status_code == requests.codes.ok:
                 data = response.json()['data']

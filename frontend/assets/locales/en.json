@@ -25,6 +25,7 @@
     "response_issue": "Login failed due to a server response issue.",
     "response_mock_login": "Could not mock login. Review environment variables and ensure database is running.",
     "review_form_data": "Data invalid or missing. Please review the form and try again.",
+    "select_year": "Select Year",
     "settings": "Settings",
     "sign_in": "Sign In",
     "sign_up": "Sign up",

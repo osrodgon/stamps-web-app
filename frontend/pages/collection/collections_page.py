@@ -1,11 +1,11 @@
 from base.base_page import BasePage
-from base.base_rest import BaseRest
+
 from components.common.top_bar import TopBar
 from core.translations import _
 from nicegui import ui
 
 
-class CollectionsPage(ui.column, BasePage, BaseRest):
+class CollectionsPage(ui.column, BasePage):
     top_bar: TopBar = None
     
     def __init__(self):

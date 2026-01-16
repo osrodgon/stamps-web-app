@@ -25,6 +25,7 @@
     "response_issue": "Error al iniciar sesión debido a un problema con la respuesta del servidor.",
     "response_mock_login": "No se pudo simular el inicio de sesión. Revise las variables de entorno y asegúrese de que la base de datos esté funcionando.",
     "review_form_data": "Datos inválidos o faltantes. Por favor, revisa el formulario y inténtalo de nuevo.",
+    "select_year": "Seleccionar Año",
     "settings": "Ajustes",
     "sign_in": "Iniciar sesión",
     "sign_up": "Regístrate",

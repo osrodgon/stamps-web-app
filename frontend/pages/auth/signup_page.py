@@ -2,16 +2,16 @@ import asyncio
 
 import requests
 from base.base_page import BasePage
-from base.base_rest import BaseRest
 from components.auth.signup_card import SignUpCard
 from components.branding.footer_branding import FooterBranding
 from core.translations import _
 from core.urls import URLs
 from nicegui import ui
-from settings import API_MASTER_KEY, BACKGROUND_IMG
+from settings import BACKGROUND_IMG
+from services.auth_service import AuthService
 
 
-class SignUpPage(ui.column, BasePage, BaseRest):
+class SignUpPage(ui.column, BasePage):
     """
     Represents the user sign-up page.
 
@@ -21,6 +21,7 @@ class SignUpPage(ui.column, BasePage, BaseRest):
     """
     signup_card: SignUpCard = None
     footer_branding: FooterBranding = None
+    auth_service: AuthService = None
     
     def __init__(self):
         """
@@ -32,6 +33,7 @@ class SignUpPage(ui.column, BasePage, BaseRest):
         """
         self.log.debug('Initializing SignUpPage...')
         super().__init__()
+        self.auth_service = AuthService()
         
         with self.classes('w-full h-screen p-4'):
             self.set_background(BACKGROUND_IMG)
@@ -54,14 +56,7 @@ class SignUpPage(ui.column, BasePage, BaseRest):
         if self.signup_card.is_valid():
             self.log.debug("Signup data valid. Attempting to signup...")
             payload = self.signup_card.get_data()
-            headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
-            
-            response = await self._make_request(
-                request_type=BaseRest.POST, 
-                url=URLs.Backend.signup, 
-                payload=payload, 
-                headers=headers
-            )
+            response = await self.auth_service.signup(payload=payload)
             
             if response is None:
                 error_msg = _('no_response')
