@@ -1,14 +1,13 @@
-import os
-from nicegui import ui, app
 import requests
-
-from components.auth.login_card import LoginCard
-from components.branding.footer_branding import FooterBranding
 from base.base_page import BasePage
 from base.base_rest import BaseRest
-from core.urls import URLs
-from settings import BACKGROUND_IMG, MOCK_USER, MOCK_PASSWORD
+from components.auth.login_card import LoginCard
+from components.branding.footer_branding import FooterBranding
 from core.translations import _
+from core.urls import URLs
+from nicegui import app, ui
+from settings import BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER
+
 
 class LoginPage(ui.column, BasePage, BaseRest):
     """

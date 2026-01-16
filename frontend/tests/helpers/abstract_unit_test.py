@@ -1,12 +1,12 @@
-from io import BytesIO
 import json
-import sys
+from io import BytesIO
 from unittest.mock import MagicMock
+
 import nicegui
-import pytest
 import requests
 
 from frontend.core.log_setup import log_setup
+
 
 class AbstractUnitTest:
     """Abstract base class for unit tests, providing helper methods for mocking and component interaction."""

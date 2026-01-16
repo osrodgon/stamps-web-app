@@ -1,8 +1,9 @@
 import re
-from nicegui import ui
 
 from base.base_ui import BaseUI
 from core.translations import _
+from nicegui import ui
+
 
 class SignUpCard(ui.card, BaseUI):
     def __init__(self, on_sign_up: callable = None):

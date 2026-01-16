@@ -1,8 +1,8 @@
-from nicegui import ui
-
 from base.base_page import BasePage
 from core.translations import _
 from core.urls import URLs
+from nicegui import ui
+
 
 class NotFoundPage(ui.column, BasePage):
     """

@@ -1,5 +1,6 @@
 import logging
 
+
 class Logger:
     """
     A logger mixin class that configures and provides a logging instance for views.

@@ -1,20 +1,18 @@
 import os
-from fastapi import Request, Response
-from nicegui import ui, app
-from nicegui.page import page
-from nicegui.client import Client
 
+from core.log_setup import log_setup
+from core.urls import URLs
+from fastapi import Request, Response
+from nicegui import app, ui
+from nicegui.client import Client
+from nicegui.page import page
+from pages.admin.stamps_manager_page import StampsManagerPage
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
-from pages.admin.stamps_manager_page import StampsManagerPage
-from core.log_setup import log_setup
-from core.urls import URLs
+from settings import APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
 
-from settings import (
-    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
-)
 
 class StampsApp():    
     """

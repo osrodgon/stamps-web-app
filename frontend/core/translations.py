@@ -1,6 +1,8 @@
-from nicegui import app
 import json
 from pathlib import Path
+
+from nicegui import app
+
 
 def _(text: str, **kwargs):
     """

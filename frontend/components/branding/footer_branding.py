@@ -1,7 +1,6 @@
-from nicegui import ui
-
 from base.base_ui import BaseUI
 from core.translations import _
+from nicegui import ui
 
 
 class FooterBranding(ui.column, BaseUI):

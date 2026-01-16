@@ -2,7 +2,8 @@ import logging
 import logging.config
 from pathlib import Path
 
-from settings import LOG_FILE_NAME, LOG_LEVEL, LOG_BASE_DIR
+from settings import LOG_BASE_DIR, LOG_FILE_NAME, LOG_LEVEL
+
 
 def log_setup():
     # Ensure the log directory exists

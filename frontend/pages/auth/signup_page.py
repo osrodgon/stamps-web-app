@@ -1,14 +1,14 @@
 import asyncio
-from nicegui import ui
-import requests
 
+import requests
 from base.base_page import BasePage
 from base.base_rest import BaseRest
 from components.auth.signup_card import SignUpCard
 from components.branding.footer_branding import FooterBranding
 from core.translations import _
 from core.urls import URLs
-from settings import BACKGROUND_IMG, API_MASTER_KEY
+from nicegui import ui
+from settings import API_MASTER_KEY, BACKGROUND_IMG
 
 
 class SignUpPage(ui.column, BasePage, BaseRest):

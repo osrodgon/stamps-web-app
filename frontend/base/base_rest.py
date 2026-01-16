@@ -1,7 +1,8 @@
 import asyncio
-import requests
 
+import requests
 from base.base_ui import BaseUI
+
 
 class BaseRest(BaseUI):
     """A base class for handling RESTful API requests with common HTTP methods."""

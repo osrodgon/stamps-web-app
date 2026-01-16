@@ -1,12 +1,10 @@
-from nicegui import ui
-
 from base.base_page import BasePage
 from base.base_rest import BaseRest
 from components.common.top_bar import TopBar
-from settings import API_MASTER_KEY
-from core.urls import URLs
 from core.translations import _
-
+from core.urls import URLs
+from nicegui import ui
+from settings import API_MASTER_KEY
 
 
 class StampsManagerPage(ui.column, BasePage, BaseRest):

@@ -1,9 +1,8 @@
-from nicegui import ui, app
-
 from base.base_ui import BaseUI
-from components.auth.login_card import LoginCard
 from core.translations import _
 from core.urls import URLs
+from nicegui import app, ui
+
 
 class TopBar(ui.header, BaseUI):
     """

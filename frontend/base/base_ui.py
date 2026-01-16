@@ -1,6 +1,5 @@
-from nicegui import ui
-
 from core.logger import Logger
+from nicegui import ui
 
 
 class BaseUI(Logger):
