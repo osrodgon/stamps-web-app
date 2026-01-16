@@ -7,17 +7,24 @@ from core.urls import URLs
 
 class TopBar(ui.header, BaseUI):
     """
-    A UI component representing the top navigation bar of the application.
+    A UI component for the top navigation bar.
 
-    Inherits from `ui.header` and `BaseUI`. It displays the page title,
-    user information, and a toggleable right drawer for navigation and user actions.
+    This component inherits from `ui.header` and `BaseUI`. It features the page
+    title, user information, and a right drawer that can be toggled. The drawer
+    contains navigation links and user-specific actions like logging out.
     """
+    extra_controls = None
+    
     def __init__(self, name="Please assign a name to this page"):
         """
         Initializes the TopBar component.
 
+        This method sets up the header, including the page title and user-specific
+        elements like the user's full name, email, and the navigation drawer.
+
         Args:
-            name (str): The name/title of the current page to be displayed in the top bar.
+            name (str): The title of the page to be displayed in the top bar.
+                        Defaults to "Please assign a name to this page".
         """
         super().__init__()
         self.log.debug("Initializing TopBar...")
@@ -64,8 +71,10 @@ class TopBar(ui.header, BaseUI):
         # The top bar
         with self.classes('bg-white text-black items-center justify-between border-b px-6 py-2 shadow-none'):
             # Left Side
-            self.log.debug("Initializing left side...")
-            ui.label(name).classes('text-xl font-bold tracking-tight')
+            with ui.row().classes('items-center gap-10'):
+                self.log.debug("Initializing left side...")
+                ui.label(name).classes('text-xl font-bold tracking-tight')
+                self.extra_controls = ui.row()
             
             # Right Side
             self.log.debug("Initializing right side...")
@@ -75,12 +84,13 @@ class TopBar(ui.header, BaseUI):
                 
     def confirm_logout(self):
         """
-        Opens a confirmation dialog for the logout action.
+        Displays a confirmation dialog for logging out.
 
-        Displays a dialog asking the user to confirm if they want to log out.
+        This method opens a dialog box to confirm whether the user wants to
+        proceed with logging out. If confirmed, the `logout` method is called.
         """
         self.log.debug("Displaying the logout confirmation dialog...")
-        with ui.dialog() as dialog, ui.card().classes('w-auto p-6'):
+        with ui.dialog() as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
             ui.label(_('logout_confirm')).classes('text-lg font-bold mb-2')
             ui.label(_('logout_confirm_message')).classes('text-gray-600 mb-4')
             
@@ -92,9 +102,10 @@ class TopBar(ui.header, BaseUI):
         
     def logout(self):
         """
-        Performs the logout action.
+        Logs the user out and redirects to the logout page.
 
-        Navigates the user to the logout URL.
+        This method is called after the user confirms the logout action. It
+        navigates the user to the application's designated logout URL.
         """
         self.log.debug("Performing the logout action...")
         ui.navigate.to(URLs.Frontend.logout)

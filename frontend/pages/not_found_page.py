@@ -5,10 +5,24 @@ from core.translations import _
 from core.urls import URLs
 
 class NotFoundPage(ui.column, BasePage):
+    """
+    A '404 Not Found' page for the application.
+
+    This class creates a visually centered and informative page that is displayed
+    when a user navigates to a URL that does not exist. It includes a clear
+    404 message and a button to return to the application's home page.
+    """
     PAGE_TITLE = "404 - Lost in the UI" 
     NICEGUI_COLOR = '#1976D2'
     
     def __init__(self):
+        """
+        Initializes the NotFoundPage.
+
+        This constructor builds the user interface for the 404 error page,
+        setting the page title and arranging the '404' error message, a
+        descriptive text, and a navigation button to go back to the home page.
+        """
         super().__init__()
         
         ui.page_title = self.PAGE_TITLE

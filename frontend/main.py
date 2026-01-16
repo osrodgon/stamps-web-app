@@ -5,6 +5,7 @@ from nicegui.page import page
 from nicegui.client import Client
 from dotenv import load_dotenv
 
+from base.base_rest import BaseRest
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
@@ -86,6 +87,7 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
+            app.storage.user['language'] = 'es'
             LoginPage()
         
         @page(URLs.Frontend.signup)
@@ -128,14 +130,28 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
-            app.storage.user['language'] = 'es'
-            if StampsApp.check_authentication(request): 
-                if app.storage.user.get('is_admin', False):
-                    ui.navigate.to(URLs.Frontend.stamps_manager)
+            MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
+                
+            if MOCK_LOGIN:
+                """
+                This is just for testing and developing purposes.
+                
+                To avoid manual login, if test mode is enabled, it will autologin
+                using the test user name and password defined in the environment variables.
+                
+                THIS MUST BE ALWAYS DISABLED IN PRODUCTION.
+                """
+                test = LoginPage()
+                await test.mock_login()
+            else :
+                app.storage.user['language'] = 'es'
+                if StampsApp.check_authentication(request): 
+                    if app.storage.user.get('is_admin', False):
+                        ui.navigate.to(URLs.Frontend.stamps_manager)
+                    else:
+                        ui.navigate.to(URLs.Frontend.collections)
                 else:
-                    ui.navigate.to(URLs.Frontend.collections)
-            else:
-                ui.navigate.to(URLs.Frontend.login)
+                    ui.navigate.to(URLs.Frontend.login)
                 
         @app.exception_handler(404)
         async def exception_handler_404(request: Request, exception: Exception) -> Response:

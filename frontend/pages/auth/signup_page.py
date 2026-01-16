@@ -12,14 +12,28 @@ from settings import BACKGROUND_IMG, API_MASTER_KEY
 
 
 class SignUpPage(ui.column, BasePage, BaseRest):
+    """
+    Represents the user sign-up page.
+
+    This class constructs the user registration page, featuring a background
+    image, a central `SignUpCard` for user data entry, and footer branding.
+    It manages the sign-up process by communicating with the backend API.
+    """
     signup_card: SignUpCard = None
     footer_branding: FooterBranding = None
     
     def __init__(self):
+        """
+        Initializes the SignUpPage.
+
+        This constructor sets up the visual elements of the page, including
+        the background image, the centered `SignUpCard` component, and the
+        `FooterBranding`.
+        """
         self.log.debug('Initializing SignUpPage...')
         super().__init__()
         
-        with ui.column().classes('w-full h-screen p-4'):
+        with self.classes('w-full h-screen p-4'):
             self.set_background(BACKGROUND_IMG)
             
             with ui.column().classes('w-full flex-grow justify-center items-center'):
@@ -28,6 +42,14 @@ class SignUpPage(ui.column, BasePage, BaseRest):
             self.footer_branding = FooterBranding()
             
     async def call_rest_method(self):
+        """
+        Handles the user sign-up attempt by calling the backend API.
+
+        This method validates the data from the `SignUpCard`. If the data is
+        valid, it sends a request to the backend to create a new user. On a
+        successful registration, it displays a success message and redirects
+        to the login page. If registration fails, it shows an error message.
+        """
         self.log.debug('Handling signup attempt...')
         if self.signup_card.is_valid():
             self.log.debug("Signup data valid. Attempting to signup...")

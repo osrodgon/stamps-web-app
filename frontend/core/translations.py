@@ -2,28 +2,39 @@ from nicegui import app
 
 def _(text: str):
     """
-    Translates the given text key into the current user's language.
+    Translates a given text key using the application's translation service.
+
+    This is a convenience function that wraps `Translations.translate` to provide
+    a shorter, more common syntax for translation, often used as `_('key')`.
 
     Args:
-        text (str): The key to look up in the translation dictionary.
+        text (str): The key for the text to be translated.
 
     Returns:
-        str: The translated text, or the key itself if not found.
+        str:    The translated string for the user's current language, or the key
+                if no translation is found.
     """
     return Translations.translate(text)
 
 class Translations:
     """
-    A class to handle translations for the application.
+    Manages and provides translations for the application.
+
+    This class holds a dictionary of translations for various languages and
+    provides a static method to translate keys based on the user's selected
+    language, which is stored in the application's user storage.
 
     Attributes:
-        translations (dict): A dictionary containing translation keys and values for supported languages.
+        translations (dict):    A nested dictionary where the outer keys are
+                                language codes (e.g., 'en', 'es') and the inner
+                                dictionaries map translation keys to strings.
     """
     translations = {
         'en' : {
             'account_details':              'Enter your details to sign up for an account',
             'agree':                        'I agree to the <a class="text-primary" href="#">Terms of Service</a> and <a class="text-primary" href="#">Privacy Policy</a>',
             'cancel':                       'Cancel',
+            'close':                        'Close',
             'collectibles':                 'COLLECTIBLES',
             'collections_tile':             'Collections',
             'confirm_password':             'Confirm Password',
@@ -44,6 +55,7 @@ class Translations:
             'profile':                      'Profile',
             'required':                     'This field is required',
             'response_issue':               'Login failed due to a server response issue.',
+            'response_mock_login':          'Could not mock login. Review environment variables and ensure database is running.',
             'review_form_data':             'Data invalid or missing. Please review the form and try again.',
             'settings':                     'Settings',
             'sign_in':                      'Sign In',
@@ -62,6 +74,7 @@ class Translations:
             'account_details':              'Introduce tus datos para crear una cuenta',
             'agree':                        'Acepto los <a class="text-primary" href="#">Términos de servicio</a> y la <a class="text-primary" href="#">Política de privacidad</a>',
             'cancel':                       'Cancelar',
+            'close':                        'Cerrar',
             'collectibles':                 'COLECCIONABLES',
             'collections_tile':             'Colecciones',
             'confirm_password':             'Confirmar Contraseña',
@@ -82,6 +95,7 @@ class Translations:
             'profile':                      'Perfil',
             'required':                     'Este campo es obligatorio',
             'response_issue':               'Error al iniciar sesión debido a un problema con la respuesta del servidor.',
+            'response_mock_login':          'No se pudo simular el inicio de sesión. Revise las variables de entorno y asegúrese de que la base de datos esté funcionando.',
             'review_form_data':             'Datos inválidos o faltantes. Por favor, revisa el formulario y inténtalo de nuevo.',
             'settings':                     'Ajustes',
             'sign_in':                      'Iniciar sesión',
@@ -101,13 +115,18 @@ class Translations:
     @staticmethod
     def translate(key):
         """
-        Retrieves the translation for a specific key based on the current user's language.
+        Translates a key into the user's language.
+
+        This static method determines the user's language from `app.storage.user`,
+        with a default of 'en'. It then looks up the provided key in the
+        `translations` dictionary.
 
         Args:
-            key (str): The translation key.
+            key (str): The translation key to look up.
 
         Returns:
-            str: The translated string for the current language, or the key if translation is missing.
+            str:    The translated string. If the language or key is not found,
+                    it gracefully returns the original key.
         """
         current_language = app.storage.user.get('language', 'en')
         
