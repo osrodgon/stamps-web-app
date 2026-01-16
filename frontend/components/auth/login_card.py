@@ -26,20 +26,11 @@ class LoginCard(ui.card, BaseUI):
             
             self.username = ui.input(
                 label=_('username'),
-                # validation={_('required'): lambda v: len(v) > 0}
             ).classes('w-full')
             self.password = ui.input(
                 label=_('password'), 
                 password=True, 
-                password_toggle_button=True,
-                # validation={
-                #         _('required'): lambda v: len(v) > 0,
-                #         _('invalid_password'): lambda v: len(v) >= 8 and 
-                #             re.search(r"[A-Z]", v) and 
-                #             re.search(r"[a-z]", v) and 
-                #             re.search(r"\d", v) and 
-                #             re.search(r"[^a-zA-Z0-9]", v)
-                #     }
+                password_toggle_button=True
             ).classes('w-full')
             
             ui.button(_('sign_in'), on_click=on_sign_in).classes('w-full')

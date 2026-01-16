@@ -70,8 +70,6 @@ class SignUpPage(ui.column, BasePage, BaseRest):
                 return error_msg
 
             if response.status_code == requests.codes.created:
-                data = response.json()['data']
-                
                 self.log.debug('Signup successful')
                 self.notify(_('sign_up_sucess'), 'positive')
                 await asyncio.sleep(3)

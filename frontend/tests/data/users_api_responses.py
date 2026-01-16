@@ -1,3 +1,5 @@
+REQUEST_FAILED = "Request failed"
+
 LOGIN_RESPONSE_200_SUCCESS = {
     "data": {
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ",
@@ -36,7 +38,7 @@ LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN = {
 
 LOGIN_RESPONSE_400_BAD_REQUEST = {
     "success": False,
-    "message": "Request failed",
+    "message": REQUEST_FAILED,
     "errors": [
         {
         "field": "password",
@@ -49,7 +51,7 @@ LOGIN_RESPONSE_400_BAD_REQUEST = {
 
 LOGIN_RESPONSE_401_UNAUTHORIZED = {
     "success": False,
-    "message": "Request failed",
+    "message": REQUEST_FAILED,
     "errors": [
         {
         "field": None,
@@ -62,7 +64,7 @@ LOGIN_RESPONSE_401_UNAUTHORIZED = {
 
 LOGIN_RESPONSE_500_SERVER_ERROR = {
     "success": False,
-    "message": "Request failed",
+    "message": REQUEST_FAILED,
     "errors": [
         {
         "field": 'detail',
