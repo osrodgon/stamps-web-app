@@ -16,6 +16,7 @@ class StampsManagerPage(ui.column, BasePage):
     """
     top_bar: TopBar = None
     years_select = None
+    issues_label = None
     stamps_service: StampsService = None
     
     def __init__(self):
@@ -34,7 +35,9 @@ class StampsManagerPage(ui.column, BasePage):
         
         with self:
             with self.top_bar.extra_controls:
-                self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: ui.notify(e.value)).classes('w-48')
+                self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value)).classes('w-48')
+                
+            self.issues_label = ui.label(" My issues list").classes('whitespace-pre-wrap')
             
         ui.timer(0, self.get_years, once=True)
     
@@ -54,6 +57,7 @@ class StampsManagerPage(ui.column, BasePage):
             error_msg = _('no_response')
             self.log.error(error_msg)
             self.notify(error_msg, 'negative')
+            
             return None
 
         if response.status_code == requests.codes.ok:
@@ -66,4 +70,49 @@ class StampsManagerPage(ui.column, BasePage):
             error_msg = _('response_issue')
             self.log.error(error_msg)
             self.notify(error_msg, 'negative')
+            
+            return None
+        
+    async def get_issues(self, year):
+        """
+        Asynchronously fetches and displays issues for a selected year.
+    
+        This method is triggered when a year is selected from the dropdown. It calls
+        the backend to get all stamp issues for that year. On success, it formats
+        and displays the issue names and dates. If no issues are found, it
+        displays a corresponding message. In case of an error or no response,
+        it logs the problem and notifies the user.
+
+        Args:
+            year (str): The year for which to fetch the issues.
+        """
+        self.log.debug(f'Getting issues for year {year}...')
+        
+        response = await self.stamps_service.get_issues(year)
+        
+        if response is None:
+            error_msg = _('no_response')
+            self.log.error(error_msg)
+            self.notify(error_msg, 'negative')
+        
+            return None
+        
+        if response.status_code == requests.codes.ok:
+            data = response.json()['data']
+            
+            self.issues_label.text = data[0]['country']
+            
+            formatted_text = ""
+            for issue in data:
+                formatted_text += f"{issue['name']} ({issue['date']})\n"
+    
+            self.issues_label.set_text(formatted_text if formatted_text else "No issues found.")
+            
+            
+            self.issues_label.update()
+        else:
+            error_msg = _('response_issue')
+            self.log.error(error_msg)
+            self.notify(error_msg, 'negative')
+            
             return None

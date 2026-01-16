@@ -21,6 +21,17 @@ class StampsService(BaseService):
         )
 
     async def get_issues(self, year: int=0):
+        """
+        Fetches stamp issues, optionally filtered by year.
+
+        Args:
+            year (int, optional):   The year to filter issues by. If 0 or not provided,
+                                    it may fetch all issues depending on the API's behavior.
+                                    Defaults to 0.
+
+        Returns:
+            requests.Response | None: The response object on success, or None on error.
+        """
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
         if year == 0:
             url = URLs.Backend.issues
