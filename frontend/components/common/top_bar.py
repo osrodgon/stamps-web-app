@@ -29,8 +29,8 @@ class TopBar(ui.header, BaseUI):
         super().__init__()
         self.log.debug("Initializing TopBar...")
         
-        user_full_name = (app.storage.user.get('first_name', '').capitalize() + ' ' + app.storage.user.get('last_name', '').capitalize()).strip()
-        user_email = app.storage.user.get('email', '')
+        user_full_name = (app.storage.user.get('first_name', 'Unknown').capitalize() + ' ' + app.storage.user.get('last_name', 'Unknown').capitalize()).strip()
+        user_email = app.storage.user.get('email', 'Unknown')
                 
         # The drawer that will be used as menu
         with ui.right_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:

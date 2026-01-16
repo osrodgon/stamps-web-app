@@ -4,6 +4,7 @@ from nicegui.testing import User
 import requests
 
 from components.auth.login_card import LoginCard
+from core.translations import _
 from pages.auth.login_page import LoginPage
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 from frontend.tests.data.users_api_responses import (
@@ -89,7 +90,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == "Login failed due to a server response issue."
+        assert response == _('response_issue')
         
     async def test_login_fail_no_response(self, user: User, login_page_components):
         # Get components
@@ -116,7 +117,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == "Login request failed, no response from server."
+        assert response == _('no_response')
     
     async def test_login_fail_bad_request_400(self, user: User, login_page_components):
         # Get components
@@ -213,4 +214,4 @@ class TestLoginPage(AbstractUnitTest):
         # Simulates user hitting the submit button
         response = await login_page.call_rest_method()
         
-        assert response == "Username and password are required."
+        assert response == _('username_password_required')

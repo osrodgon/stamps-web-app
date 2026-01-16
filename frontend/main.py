@@ -3,9 +3,7 @@ from fastapi import Request, Response
 from nicegui import ui, app
 from nicegui.page import page
 from nicegui.client import Client
-from dotenv import load_dotenv
 
-from base.base_rest import BaseRest
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
@@ -15,7 +13,7 @@ from core.log_setup import log_setup
 from core.urls import URLs
 
 from settings import (
-    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
+    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
 )
 
 class StampsApp():    
@@ -130,7 +128,6 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
-            MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
             app.storage.user['language'] = 'es'
                 
             if MOCK_LOGIN:
@@ -173,14 +170,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     Initializes the application, sets up static files, logging, and routes,
     then creates an instance of the App and runs it.
     """
-    try:
-        from dotenv import load_dotenv
-        
-        # Load variables from environment
-        load_dotenv()
-    except ImportError:
-        pass
-    
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
     StampsApp.run(os.getenv("APP_STORAGE_SECRET"))

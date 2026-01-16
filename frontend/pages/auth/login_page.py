@@ -7,7 +7,7 @@ from components.branding.footer_branding import FooterBranding
 from base.base_page import BasePage
 from base.base_rest import BaseRest
 from core.urls import URLs
-from settings import BACKGROUND_IMG
+from settings import BACKGROUND_IMG, MOCK_USER, MOCK_PASSWORD
 from core.translations import _
 
 class LoginPage(ui.column, BasePage, BaseRest):
@@ -147,8 +147,6 @@ class LoginPage(ui.column, BasePage, BaseRest):
         """
         self.log.debug('Starting test mode...')
         
-        MOCK_USER = os.getenv("MOCK_LOGIN_USER")
-        MOCK_PASSWORD = os.getenv("MOCK_LOGIN_PASSWORD")
         if MOCK_USER and MOCK_PASSWORD:
             payload = {
                 'username': MOCK_USER,
