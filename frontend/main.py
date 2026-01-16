@@ -131,6 +131,7 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
+            app.storage.user['language'] = 'es'
                 
             if MOCK_LOGIN:
                 """
@@ -144,7 +145,6 @@ class StampsApp():
                 test = LoginPage()
                 await test.mock_login()
             else :
-                app.storage.user['language'] = 'es'
                 if StampsApp.check_authentication(request): 
                     if app.storage.user.get('is_admin', False):
                         ui.navigate.to(URLs.Frontend.stamps_manager)
