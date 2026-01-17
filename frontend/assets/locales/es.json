@@ -1,5 +1,6 @@
 {
     "account_details": "Introduce tus datos para crear una cuenta",
+    "api_error": "Se recibió una respuesta no válida del backend.",
     "agree": "Acepto los <a class=\"text-primary\" href=\"#\">Términos de servicio</a> y la <a class=\"text-primary\" href=\"#\">Política de privacidad</a>",
     "cancel": "Cancelar",
     "close": "Cerrar",

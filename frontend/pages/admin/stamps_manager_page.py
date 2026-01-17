@@ -1,4 +1,3 @@
-import requests
 from base.base_page import BasePage
 from components.common.top_bar import TopBar
 from core.translations import _
@@ -16,7 +15,7 @@ class StampsManagerPage(ui.column, BasePage):
     """
     top_bar: TopBar = None
     years_select = None
-    issues_label = None
+    grid = None
     stamps_service: StampsService = None
     
     def __init__(self):
@@ -31,13 +30,30 @@ class StampsManagerPage(ui.column, BasePage):
         self.log.debug('Initializing StampsManagerPage...')
         self.stamps_service = StampsService()
         
-        self.top_bar = TopBar(_('stamps_manager_title'))
+        ui.query('body').style('overflow: hidden')
         
-        with self:
+        self.top_bar = TopBar(_('stamps_manager_title'))
+        self.classes('w-full h-screen no-wrap p-0 m-0 overflow-hidden')
+        
+        with self.classes('w-full h-full p-4 gap-4 overflow-hidden'):
             with self.top_bar.extra_controls:
                 self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value)).classes('w-48')
                 
-            self.issues_label = ui.label(" My issues list").classes('whitespace-pre-wrap')
+            self.grid = ui.aggrid({
+                'columnDefs': [
+                    {'headerName': 'Id', 'field': 'id', 'editable': False, 'hide': True},
+                    {'headerName': 'Year', 'field': 'year', 'editable': False, 'hide': True},
+                    {'headerName': 'Date', 'field': 'date', 'editable': True},
+                    {'headerName': 'Name', 'field': 'name', 'editable': True},
+                    {'headerName': 'Type', 'field': 'stamp_type', 'editable': True},
+                    {'headerName': 'Print', 'field': 'print_type', 'editable': True},
+                    {'headerName': 'Printed', 'field': 'total_printed', 'editable': True},
+                    {'headerName': 'Perf', 'field': 'perforation', 'editable': True},
+                    {'headerName': 'Value', 'field': 'market_value', 'editable': True},
+                ],
+                'rowData': [],
+                'stopEditingWhenCellsLoseFocus': True,
+            }).classes('w-full h-[calc(100vh-130px)]')
             
         ui.timer(0, self.get_years, once=True)
     
@@ -53,26 +69,16 @@ class StampsManagerPage(ui.column, BasePage):
         
         response = await self.stamps_service.get_years()
         
-        if response is None:
-            error_msg = _('no_response')
-            self.log.error(error_msg)
-            self.notify(error_msg, 'negative')
-            
-            return None
-
-        if response.status_code == requests.codes.ok:
+        if self._is_valid_response(response):
             data = response.json()['data']
             years = [item['year'] for item in data]
             
             self.years_select.options = years
             self.years_select.update()
         else:
-            error_msg = _('response_issue')
-            self.log.error(error_msg)
-            self.notify(error_msg, 'negative')
+            self.log.error(_('api_error', _language='en'))
+            self.notify(_('api_error'), 'negative', timeout=0, close_button=_('close'))
             
-            return None
-        
     async def get_issues(self, year):
         """
         Asynchronously fetches and displays issues for a selected year.
@@ -90,29 +96,13 @@ class StampsManagerPage(ui.column, BasePage):
         
         response = await self.stamps_service.get_issues(year)
         
-        if response is None:
-            error_msg = _('no_response')
-            self.log.error(error_msg)
-            self.notify(error_msg, 'negative')
-        
-            return None
-        
-        if response.status_code == requests.codes.ok:
+        if self._is_valid_response(response):
             data = response.json()['data']
             
-            self.issues_label.text = data[0]['country']
-            
-            formatted_text = ""
-            for issue in data:
-                formatted_text += f"{issue['name']} ({issue['date']})\n"
-    
-            self.issues_label.set_text(formatted_text if formatted_text else "No issues found.")
-            
-            
-            self.issues_label.update()
+            self.grid.options['rowData'] = data
+            await ui.run_javascript('true')
+            self.grid.run_grid_method('autoSizeColumns', ['date'])
         else:
-            error_msg = _('response_issue')
-            self.log.error(error_msg)
-            self.notify(error_msg, 'negative')
-            
-            return None
+            self.log.error(_('api_error', _language='en'))
+            self.notify(_('api_error'), 'negative', timeout=0, close_button=_('close'))
+        

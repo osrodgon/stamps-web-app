@@ -1,3 +1,4 @@
+import requests
 from base.base_ui import BaseUI
 from nicegui import ui
 
@@ -25,3 +26,18 @@ class BasePage(BaseUI):
                 'height: 100vh;'
                 'overflow: hidden;'
             )
+        
+    def _is_valid_response(self, response) -> bool:
+        if response is None:
+            self.log.error("API request failed, no response from server.")
+            return False
+        
+        if response.status_code != requests.codes.ok:
+            self.log.error(f'API request failed with error: {response.status_code}')
+            return False
+        
+        if len(response.json()['data']) == 0:
+            self.log.debug('API request failed, no data returned from server.')
+            return False
+        
+        return True

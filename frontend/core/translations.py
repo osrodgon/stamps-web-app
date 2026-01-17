@@ -13,12 +13,15 @@ def _(text: str, **kwargs):
 
     Args:
         text (str): The key for the text to be translated.
-        **kwargs: Optional arguments for dynamic string formatting.
+        **kwargs:   Optional arguments for dynamic string formatting.
+                    To Temporarily override the language, pass '_language' kwarg.
+                    e.g. _('welcome_message', name='User', _language='es')
 
     Returns:
         str: The translated and formatted string.
     """
-    return Translations.translate(text, **kwargs)
+    language = kwargs.pop('_language', None)
+    return Translations.translate(text, language=language, **kwargs)
 
 class Translations:
     """
@@ -66,7 +69,7 @@ class Translations:
             print(f"Error initializing translations: {e}")
     
     @staticmethod
-    def translate(key: str, **kwargs) -> str:
+    def translate(key: str, language: str = None,**kwargs) -> str:
         """
         Translates a key into the user's language with support for fallback and interpolation.
 
@@ -83,11 +86,14 @@ class Translations:
             str: The translated (and formatted) string, or the key if not found.
         """
         # 1. Determine Language safely
-        try:
-            current_language = app.storage.user.get('language', Translations.DEFAULT_LANGUAGE)
-        except (RuntimeError, AttributeError):
-            # Fallback if accessed outside of a page context
-            current_language = Translations.DEFAULT_LANGUAGE
+        if not language:
+            try:
+                current_language = app.storage.user.get('language', Translations.DEFAULT_LANGUAGE)
+            except (RuntimeError, AttributeError):
+                # Fallback if accessed outside of a page context
+                current_language = Translations.DEFAULT_LANGUAGE
+        else:
+            current_language = language
         
         # 2. Fetch Translation with Fallback
         # Try selected language
