@@ -1,7 +1,7 @@
 {
     "account_details": "Enter your details to sign up for an account",
     "agree": "I agree to the <a class=\"text-primary\" href=\"#\">Terms of Service</a> and <a class=\"text-primary\" href=\"#\">Privacy Policy</a>",
-    "api_error": "Invalid response from the backend.",
+    "api_error": "An unexpected response was received from the server, or the requested data is unavailable.",
     "cancel": "Cancel",
     "close": "Close",
     "collectibles": "COLLECTIBLES",

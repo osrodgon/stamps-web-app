@@ -77,7 +77,7 @@ class StampsManagerPage(ui.column, BasePage):
             self.years_select.update()
         else:
             self.log.error(_('api_error', _language='en'))
-            self.notify(_('api_error'), 'negative', timeout=0, close_button=_('close'))
+            self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))
             
     async def get_issues(self, year):
         """
@@ -104,5 +104,5 @@ class StampsManagerPage(ui.column, BasePage):
             self.grid.run_grid_method('autoSizeColumns', ['date'])
         else:
             self.log.error(_('api_error', _language='en'))
-            self.notify(_('api_error'), 'negative', timeout=0, close_button=_('close'))
+            self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))
         
