@@ -1,5 +1,4 @@
 from rest_framework.views import APIView
-from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,6 +13,7 @@ from common.api.messages import Messages
 from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
+import unicodedata
 
 
 @extend_schema(tags=['Database Management'])
@@ -88,9 +88,13 @@ class IssuesView(Logger, APIView):
                 issues = issues.none()
         if issue_name:
             self.log.debug(f"Filtering issues by issue name {issue_name}")
-            issues = issues.filter(name__icontains=issue_name)
+            normalized_search = self._normalize_string(issue_name)
+            issues = [
+                issue for issue in issues 
+                if normalized_search in self._normalize_string(issue.name)
+            ]
         
-        self.log.debug(Messages.Get.retrieved_all("issues", issues.count()))
+        self.log.debug(Messages.Get.retrieved_all("issues", len(issues)))
         response = IssueResponseSerializer(issues, many=True)
         
         return Response(data=response.data, status=status.HTTP_200_OK)
@@ -150,3 +154,13 @@ class IssuesView(Logger, APIView):
             data=GenericResponseSerializer(GenericResponse(issue.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    @staticmethod
+    def _normalize_string(text: str) -> str:
+        """
+        Normalizes a string by converting it to lowercase and removing accents.
+        """
+        if not text:
+            return ""
+        nfd_form = unicodedata.normalize('NFD', text)
+        return "".join(c for c in nfd_form if unicodedata.category(c) != 'Mn').lower()

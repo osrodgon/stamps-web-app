@@ -5,30 +5,37 @@ from core.translations import _
 from nicegui import ui, app
 from services.stamps_service import StampsService
 from settings import API_MASTER_KEY
+import unicodedata
 
 
 class StampsManagerPage(ui.column, BasePage):
     """
-    A page for managing stamps, displaying a year-based filter.
+    The main administrative page for managing stamp issues.
 
-    This class sets up the user interface for the stamps management page,
-    including a top navigation bar and a dropdown menu to filter stamps by year.
-    It fetches the available years from a backend API to populate this dropdown.
+    This page provides a robust interface for browsing and filtering stamp issues.
+    Key features include:
+    - **Year-based Filtering**: A dropdown to view issues from a specific year.
+    - **Series Search**: A text input for filtering by series name (case/accent insensitive).
+    - **Hybrid Filtering**: Local filtering when a year is selected, server-side search when not.
+    - **Persistence**: Remembers the last viewed year across sessions.
+    - **Inline Management**: Integrates with IssuesTable for direct CRUD operations.
     """
     top_bar: TopBar = None
     years_select = None
+    series_filter = None
     table: IssuesTable = None
     stamps_service: StampsService = None
     print_types = []
     stamp_types = []
+    all_issues = []
     
     def __init__(self):
         """
-        Initializes the StampsManagerPage.
+        Initializes the StampsManagerPage component.
 
-        This constructor sets up the page layout, including the top bar with
-        extra controls for year selection. It also schedules an asynchronous
-        task to fetch the years from the backend.
+        Sets up the full page layout including the TopBar with filtering controls
+        (year selection and series search) and the main IssuesTable.
+        It triggers the initial data load sequence.
         """
         super().__init__()
         self.log.debug('Initializing StampsManagerPage...')
@@ -44,16 +51,19 @@ class StampsManagerPage(ui.column, BasePage):
                 with self.top_bar.extra_controls:
                     self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value))
                     self.years_select.classes('w-48')
-                    self.years_select.props('dark popup-content-class="bg-white year-select-popup drop-shadow-md"')
+                    self.years_select.props('dark clearable popup-content-class="bg-white year-select-popup drop-shadow-md"')
+
+                    self.series_filter = ui.input(label=_("filter_series"))
+                    self.series_filter.on('keydown.enter', self.filter_issues)
+                    self.series_filter.on_value_change(lambda e: self.filter_issues() if not e.value else None)
+                    self.series_filter.classes('w-64')
+                    self.series_filter.props('dark clearable')
 
                 self.table = IssuesTable(
                     on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
                     on_delete=lambda e: self.notify(e.args)
                 )
             
-        ui.timer(0, self.get_years, once=True)
-        ui.timer(0, self.get_print_types, once=True)
-        ui.timer(0, self.get_stamp_types, once=True)
         ui.timer(0, self.load_issues_once, once=True)
     
     def configure_styles(self):
@@ -93,20 +103,31 @@ class StampsManagerPage(ui.column, BasePage):
             
     async def get_issues(self, year):
         """
-        Asynchronously fetches and displays issues for a selected year.
-    
-        This method is triggered when a year is selected from the dropdown. It calls
-        the backend to get all stamp issues for that year. On success, it formats
-        and displays the issue names and dates. If no issues are found, it
-        displays a corresponding message. In case of an error or no response,
-        it logs the problem and notifies the user.
+        Fetches stamp issues from the backend or applies local filtering.
+
+        Depending on whether a 'year' is provided or a 'series_name' filter is active,
+        this method either calls the backend API or triggers local filtering.
+        It also handles data enrichment (injecting print/stamp type options)
+        and persists the selected year to user storage.
 
         Args:
-            year (str): The year for which to fetch the issues.
+            year (int|str, optional): The year to fetch issues for. Can be None if
+                                     searching globally by series name.
         """
-        self.log.debug(f'Getting issues for year {year}...')
-        
-        response = await self.stamps_service.get_issues(year, api_key=API_MASTER_KEY)
+        series = self.series_filter.value
+        if series:
+            series = self._normalize_string(series)
+
+        if year:
+            self.log.debug(f'Getting issues for year {year}...')
+            response = await self.stamps_service.get_issues(year=year, api_key=API_MASTER_KEY)
+        else:
+            if series:
+                self.log.debug(f'Getting issues for series {series}...')
+                response = await self.stamps_service.get_issues(series_name=series, api_key=API_MASTER_KEY)
+            else:
+                self.log.debug('No year or series provided')
+                return
         
         if self._is_valid_response(response):
             data = response.json()['data']
@@ -115,11 +136,54 @@ class StampsManagerPage(ui.column, BasePage):
                 row['opts_print_types'] = self.print_types
                 row['opts_stamp_types'] = self.stamp_types
             
+            self.all_issues = data
             self.table.rows[:] = data
             self.table.update()
+            
+            if year:
+                app.storage.user['current_year'] = year
+            
+            # Re-apply filter only if we fetched by year (not by series) implies data might need filtering
+            if year and self.series_filter.value:
+                await self.filter_issues()
         else:
             self.log.error(_('api_error', _language='en'))
             self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))
+
+    async def filter_issues(self, e=None):
+        """
+        Handles the logic for filtering issues based on the series filter input.
+
+        - If a **year is selected**: Performs a local (client-side), case-insensitive,
+          and accent-insensitive search within the already loaded issues.
+        - If **no year is selected**: Triggers a backend search across the entire
+          database using the normalized series name.
+
+        Args:
+            e (ojbect, optional): The event object from UI triggers (keyup/enter).
+        """
+        if self.years_select.value:
+            # Client side filtering
+            self.log.debug('Filtering issues locally...')
+            filter_text = self._normalize_string(self.series_filter.value)
+            
+            if filter_text:
+                filtered_issues = [
+                    issue for issue in self.all_issues 
+                    if issue.get('name') and filter_text in self._normalize_string(issue.get('name'))
+                ]
+                self.table.rows[:] = filtered_issues
+            else:
+                self.table.rows[:] = self.all_issues
+            
+            self.table.update()
+        else:
+            # Server side filtering
+            self.log.debug('Filtering issues via backend...')
+            # We pass None as year to trigger series search in get_issues
+            # But we must ensure we don't cause infinite loop. 
+            # get_issues will call filter_issues ONLY if year is passed.
+            await self.get_issues(year=None)
 
     async def load_issues_once(self):
         """
@@ -129,10 +193,18 @@ class StampsManagerPage(ui.column, BasePage):
         and fetches issues for that year. If no year is stored, it defaults to 1850.
         It is scheduled to run once immediately after page initialization.
         """
+        await self.get_years()
+        await self.get_print_types()
+        await self.get_stamp_types()
+
         if app.storage.user.get('current_year'):
-            await self.get_issues(app.storage.user.get('current_year'))
+            year = int(app.storage.user.get('current_year'))
+            self.years_select.value = year
+            await self.get_issues(year)
         else:
+            self.years_select.value = 1850
             await self.get_issues(1850)
+        self.series_filter.update()
             
     async def get_print_types(self):
         """
@@ -181,3 +253,23 @@ class StampsManagerPage(ui.column, BasePage):
         else:
             self.log.error(_('api_error', _language='en'))
             self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))  
+    
+    def _normalize_string(self, text: str) -> str:
+        """
+        Normalizes a string by converting it to lowercase and removing accents.
+        
+        Args:
+            text (str): The string to normalize.
+            
+        Returns:
+            str: The normalized string.
+        """
+        if not text:
+            return ""
+        
+        # Normalize to NFD (Normalization Form Decomposition)
+        # This separates characters from their accents
+        nfd_form = unicodedata.normalize('NFD', text)
+        
+        # Filter out non-spacing marks (accents)
+        return "".join(c for c in nfd_form if unicodedata.category(c) != 'Mn').lower()

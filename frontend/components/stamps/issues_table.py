@@ -3,12 +3,14 @@ from nicegui import ui
 
 class IssuesTable(ui.table):
     """
-    A specific table component for displaying and managing stamp issues.
-    
-    This component renders a table of stamp issues with functionalities for 
-    viewing details, editing fields inline, and deleting records. It defines 
-    specific columns and custom templates for the table body to handle complex 
-    types and interactions.
+    A specialized table component for the stamp issues database.
+
+    Provides a rich interface for managing stamp issues, including:
+    - **Interactive Data Display**: Custom column rendering for complex types.
+    - **Inline Editing**: Popup-based editing for dates, text, and select fields.
+    - **Expandable Rows**: Detailed view for long descriptions and notes.
+    - **CRUD Actions**: Integrated save and delete triggers.
+    - **Styled Layout**: Custom CSS for zebra striping, sticky headers, and hover effects.
     """
     def __init__(self, on_save, on_delete):
         """
@@ -79,17 +81,17 @@ class IssuesTable(ui.table):
 
     def _get_body_template(self):
         """
-        Generates the HTML template for the table body slots.
+        Generates the Vue HTML template for the table's body slots.
 
-        This template defines how rows are rendered, including:
-        - Expand/collapse buttons for detailed views.
-        - Inline editing popups for various fields (date, name, perforation, etc.).
-        - Custom form controls like date pickers and selects.
-        - Delete buttons.
-        - Expanded detailed view showing descriptions and notes.
+        This template handles:
+        - Recursive expansion for the details row.
+        - `q-popup-edit` components for all editable fields.
+        - Custom form controls (date pickers, options selects).
+        - Event emission (`save`, `delete`) to the parent component.
+        - Responsive layout for notes and descriptions using Tailwind classes.
 
         Returns:
-            str: The raw HTML string for the body slot.
+            str: A raw string containing the Vue template defined in Quasar/NiceGUI style.
         """
         return f'''
             <q-tr :props="props">

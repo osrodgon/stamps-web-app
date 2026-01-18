@@ -3,7 +3,12 @@ from services.base_service import BaseService
 
 
 class StampsService(BaseService):
-    """Service for handling stamps-related API calls."""
+    """
+    Service layer for interacting with the Stamp Database API.
+
+    Provides methods for fetching foundational stamp data including years, 
+    published issues, print methods, and stamp categories.
+    """
     
     async def get_years(self, api_key: str = None, token: str = None):
         """
@@ -36,22 +41,18 @@ class StampsService(BaseService):
             headers=headers
         )
 
-    async def get_issues(self, year: int=0, api_key: str = None, token: str = None):
+    async def get_issues(self, year: int=None, series_name: str=None, api_key: str = None, token: str = None):
         """
-        Fetches stamp issues, optionally filtered by year.
-
-        This method retrieves detailed information about stamp issues. It can filter the results
-        by a specific year if provided. Authentication is required via either an API key or a user token.
+        Retrieves stamp issues, optionally filtered by year or series name.
 
         Args:
-            year (int, optional):   The year to filter issues by. If 0, fetches all issues (depending on backend logic). 
-                                    Defaults to 0.
-            api_key (str, optional): The API master key for authentication. Defaults to None.
-            token (str, optional): The user's JWT token for authentication. Defaults to None.
+            year (int, optional): The exact year to filter by. Defaults to None.
+            series_name (str, optional): A substring search for the series name. Defaults to None.
+            api_key (str, optional): Authentication master key.
+            token (str, optional): User JWT token.
 
         Returns:
-            requests.Response | None:   The response object containing the stamp issues on success, 
-                                        or None if the request fails or authentication is missing.
+            requests.Response|None: The API response or None on auth/network failure.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -62,10 +63,12 @@ class StampsService(BaseService):
         else:
             headers = {'Authorization': f'Bearer {token}'}
             
-        if year == 0:
+        if not year and not series_name:
             url = URLs.Backend.issues
-        else:
+        elif year:
             url = f"{URLs.Backend.issues}?year={year}"
+        elif series_name:
+            url = f"{URLs.Backend.issues}?name={series_name}"
 
         return await self._make_request(
             request_type=self.GET,
