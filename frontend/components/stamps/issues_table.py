@@ -36,9 +36,41 @@ class IssuesTable(ui.table):
         ]
         
         super().__init__(columns=columns, rows=[], row_key='id')
-        self.props('fixed-height')
-        self.classes('w-full flex-grow sticky-header-table')
-        self.style('height: 100%; border: 1px solid #e5e7eb;')
+        
+        # Custom CSS for the table
+        ui.add_head_html('''
+            <style>
+                .issues-table thead tr:first-child th {
+                    background-color: #1e293b !important; /* Slate 800 */
+                    color: white;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    position: sticky;
+                    top: 0;
+                    z-index: 1;
+                }
+                /* Zebra striping: Target every second item.
+                   Each item has 2 rows (Main + Expand).
+                   Item 1: rows 1, 2
+                   Item 2: rows 3, 4  <- Target these
+                   Item 3: rows 5, 6
+                   Item 4: rows 7, 8  <- Target these
+                   Formula: 4n+3, 4n+4
+                */
+                .issues-table tbody tr:nth-child(4n+3),
+                .issues-table tbody tr:nth-child(4n+4) {
+                    background-color: #f8fafc; /* Slate 50 */
+                }
+                .issues-table tbody tr:hover {
+                    background-color: #e2e8f0; /* Slate 200 */
+                }
+            </style>
+        ''')
+        
+        self.classes('issues-table w-full flex-grow')
+        self.style('height: 100%;')
+        self.props('flat bordered square')
         
         self.add_slot('body', self._get_body_template())
         
@@ -142,21 +174,38 @@ class IssuesTable(ui.table):
             </q-tr>
 
             <q-tr v-show="props.expand" :props="props">
-                <q-td colspan="4">
-                    <div class="p-4 bg-blue-50 border rounded grid grid-cols-1 gap-4">
-                        <div class="cursor-pointer">
-                            <strong>{_('description')}:</strong> {{{{ props.row.description }}}}
+                <q-td colspan="100%">
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        
+                        <!-- Description Section -->
+                        <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2 text-primary font-bold uppercase text-xs tracking-wider">
+                                <q-icon name="description" size="xs" />
+                                {_('description')}
+                                <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
+                            </div>
+                            <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
+                                {{{{ props.row.description || 'No description available. Click to add.' }}}}
+                            </div>
                             <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
                                 @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'description', value: val}})">
-                                <q-input type="textarea" v-model="scope.value" dense autofocus label="Edit Description" />
+                                <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('description')}" outlined class="min-w-[300px]" />
                             </q-popup-edit>
                         </div>
                         
-                        <div class="cursor-pointer">
-                            <strong>{_('notes')}:</strong> {{{{ props.row.note }}}}
+                        <!-- Notes Section -->
+                        <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2 text-secondary font-bold uppercase text-xs tracking-wider">
+                                <q-icon name="note" size="xs" />
+                                {_('notes')}
+                                <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
+                            </div>
+                            <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
+                                {{{{ props.row.note || 'No notes available. Click to add.' }}}}
+                            </div>
                             <q-popup-edit v-model="props.row.note" v-slot="scope" buttons
                                 @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'notes', value: val}})">
-                                <q-input type="textarea" v-model="scope.value" dense autofocus label="Edit Notes" />
+                                <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('notes')}" outlined class="min-w-[300px]" />
                             </q-popup-edit>
                         </div>
 

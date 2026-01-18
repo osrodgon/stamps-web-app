@@ -54,19 +54,6 @@ class StampsManagerPage(ui.column, BasePage):
     def configure_styles(self):
         """Configures the page-specific styles."""
         ui.query('body').style('overflow: hidden; margin: 0; padding: 0;')
-        ui.add_head_html('''
-            <style>
-                .sticky-header-table .q-table__top,
-                .sticky-header-table .q-table__bottom,
-                .sticky-header-table thead tr:first-child th {
-                    /* bg-white is important so rows don't bleed through the header */
-                    background-color: white;
-                    position: sticky;
-                    top: 0;
-                    z-index: 2;
-                }
-            </style>
-        ''')
 
     async def get_years(self):
         """
