@@ -24,6 +24,8 @@
     "logout_confirm_message": "¿Estás seguro de que quieres cerrar tu sesión?",
     "notes": "Notas",
     "no_account": "¿No tienes una cuenta?",
+    "no_description": "No hay descripción disponible. Haz clic para agregar.",
+    "no_notes": "No hay notas disponibles. Haz clic para agregar.",
     "no_response": "Fallo en la solicitud de inicio de sesión, el servidor no responde.",
     "ok": "OK",
     "page_not_found": "La página que buscas **no se encuentra** en este servidor.",

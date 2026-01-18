@@ -2,7 +2,7 @@ from base.base_page import BasePage
 from components.common.top_bar import TopBar
 from components.stamps.issues_table import IssuesTable
 from core.translations import _
-from nicegui import ui
+from nicegui import ui, app
 from services.stamps_service import StampsService
 from settings import API_MASTER_KEY
 
@@ -20,6 +20,7 @@ class StampsManagerPage(ui.column, BasePage):
     table: IssuesTable = None
     stamps_service: StampsService = None
     print_types = []
+    stamp_types = []
     
     def __init__(self):
         """
@@ -50,6 +51,8 @@ class StampsManagerPage(ui.column, BasePage):
             
         ui.timer(0, self.get_years, once=True)
         ui.timer(0, self.get_print_types, once=True)
+        ui.timer(0, self.get_stamp_types, once=True)
+        ui.timer(0, self.load_issues_once, once=True)
     
     def configure_styles(self):
         """Configures the page-specific styles."""
@@ -99,13 +102,27 @@ class StampsManagerPage(ui.column, BasePage):
             
             for row in data:
                 row['opts_print_types'] = self.print_types
+                row['opts_stamp_types'] = self.stamp_types
             
             self.table.rows[:] = data
             self.table.update()
         else:
             self.log.error(_('api_error', _language='en'))
             self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))
-        
+
+    async def load_issues_once(self):
+        """
+        Loads the initial set of issues when the page starts.
+
+        This method attempts to retrieve the user's last viewed year from storage
+        and fetches issues for that year. If no year is stored, it defaults to 1850.
+        It is scheduled to run once immediately after page initialization.
+        """
+        if app.storage.user.get('current_year'):
+            await self.get_issues(app.storage.user.get('current_year'))
+        else:
+            await self.get_issues(1850)
+   
     async def get_print_types(self):
         """
         Asynchronously fetches the available print types from the backend.
@@ -129,3 +146,27 @@ class StampsManagerPage(ui.column, BasePage):
         else:
             self.log.error(_('api_error', _language='en'))
             self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))
+
+    async def get_stamp_types(self):
+        """
+        Asynchronously fetches the available stamp types from the backend.
+
+        This method retrieves the list of stamp types from the API and populates
+        the `stamp_types` list, which is used for the dropdown options in the
+        stamps table editing interface.
+        """
+        self.log.debug('Getting stamp types...')
+        
+        response = await self.stamps_service.get_stamp_types(api_key=API_MASTER_KEY)
+        
+        if self._is_valid_response(response):
+            data = response.json()['data']
+            types_list = []
+            
+            for stamp_type in data:
+                types_list.append(stamp_type['name'])
+                
+            self.stamp_types = types_list
+        else:
+            self.log.error(_('api_error', _language='en'))
+            self.notify(_('api_error'), 'warning', timeout=0, close_button=_('close'))  

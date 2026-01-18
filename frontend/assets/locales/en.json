@@ -24,6 +24,8 @@
     "logout_confirm_message": "Are you sure you want to log out of your account?",
     "notes": "Notes",
     "no_account": "Don't have an account?",
+    "no_description": "No description available. Click to add.",
+    "no_notes": "No notes available. Click to add.",
     "no_response": "Login request failed, no response from server.",
     "ok": "OK",
     "page_not_found": "The page you are looking for is **not found** on this server.",

@@ -95,7 +95,7 @@ class IssuesTable(ui.table):
             <q-tr :props="props">
                 <q-td auto-width>
                     <q-btn size="sm" color="primary" round dense 
-                        @click="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
+                        @click="props.expand = !props.expand" :icon="props.expand ? 'keyboard_arrow_down' : 'keyboard_arrow_right'" />
                 </q-td>
                 
                 <q-td key="country" :props="props">{{{{ props.row.country }}}}</q-td>
@@ -145,8 +145,14 @@ class IssuesTable(ui.table):
                 <q-td key="stamp_type" :props="props">
                     {{{{ props.row.stamp_type }}}}
                     <q-popup-edit v-model="props.row.stamp_type" v-slot="scope" buttons
+                        label-set="{_('ok')}" label-cancel="{_('close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'stamp_type', value: val}})">
-                        <q-input v-model="scope.value" dense autofocus />
+                        <q-select 
+                            v-model="scope.value"  
+                            :options="props.row.opts_stamp_types"
+                            dense 
+                            autofocus 
+                        />
                     </q-popup-edit>
                 </q-td>
                 
@@ -164,9 +170,23 @@ class IssuesTable(ui.table):
                     </q-popup-edit>
                 </q-td>
                 
-                <q-td key="total_printed" :props="props">{{{{ props.row.total_printed }}}}</q-td>
+                <q-td key="total_printed" :props="props">
+                    {{{{ props.row.total_printed }}}}
+                    <q-popup-edit v-model="props.row.total_printed" v-slot="scope" buttons
+                        label-set="{'ok'}" label-cancel="{'close'}"
+                        @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'total_printed', value: val}})">
+                        <q-input v-model="scope.value" dense autofocus />
+                    </q-popup-edit>
+                </q-td>
                 
-                <q-td key="market_value" :props="props">${{{{ props.row.market_value }}}}</q-td>
+                <q-td key="market_value" :props="props">
+                    ${{{{ props.row.market_value }}}}
+                    <q-popup-edit v-model="props.row.market_value" v-slot="scope" buttons
+                        label-set="{'ok'}" label-cancel="{'close'}"
+                        @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value', value: val}})">
+                        <q-input v-model="scope.value" dense autofocus />
+                    </q-popup-edit>
+                </q-td>
                 
                 <q-td key="delete" :props="props">
                     <q-btn size="sm" color="red" icon="delete" @click="$parent.$emit('delete', props.row.id)" />
@@ -185,7 +205,7 @@ class IssuesTable(ui.table):
                                 <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                             </div>
                             <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
-                                {{{{ props.row.description || 'No description available. Click to add.' }}}}
+                                {{{{ props.row.description || '{_('no_description')}' }}}}
                             </div>
                             <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
                                 @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'description', value: val}})">
@@ -201,7 +221,7 @@ class IssuesTable(ui.table):
                                 <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                             </div>
                             <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
-                                {{{{ props.row.note || 'No notes available. Click to add.' }}}}
+                                {{{{ props.row.note || '{_('no_notes')}' }}}}
                             </div>
                             <q-popup-edit v-model="props.row.note" v-slot="scope" buttons
                                 @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'notes', value: val}})">

@@ -105,3 +105,34 @@ class StampsService(BaseService):
             headers=headers
         )
 
+    async def get_stamp_types(self, api_key: str = None, token: str = None):
+        """
+        Fetches the available stamp types from the backend.
+        
+        This method retrieves the different types of stamps available.
+        Authentication is required via either an API key or a user token.
+
+        Args:
+            api_key (str, optional): The API master key for authentication. Defaults to None.
+            token (str, optional): The user's JWT token for authentication. Defaults to None.
+
+        Returns:
+            requests.Response | None: The response object containing the stamp types on success, 
+                                      or None if the request fails or authentication is missing.
+        """
+        if api_key is None and token is None:
+            self.log.error("API Key or token is required.")
+            return None
+        
+        if api_key is not None:
+            headers = {'Authorization': f'Api-Key {api_key}'}
+        else:
+            headers = {'Authorization': f'Bearer {token}'}
+        
+        return await self._make_request(
+            request_type=self.GET,
+            url=URLs.Backend.stamp_types,
+            payload=None,
+            headers=headers
+        )   
+
