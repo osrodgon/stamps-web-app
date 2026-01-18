@@ -41,3 +41,4 @@ class BasePage(BaseUI):
             return False
         
         return True
+    

@@ -5,6 +5,7 @@ class URLs:
         login =             f"{BACKEND_URL}/login/"
         logout =            f"{BACKEND_URL}/logoff/"
         issues =            f"{BACKEND_URL}/issues/"
+        print_types =       f"{BACKEND_URL}/print_types/"
         signup =            f"{BACKEND_URL}/users/"
         years =             f"{BACKEND_URL}/years/"
         

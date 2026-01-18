@@ -127,7 +127,7 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             app.storage.user['language'] = 'es'
-                
+            
             if MOCK_LOGIN:
                 """
                 This is just for testing and developing purposes.
