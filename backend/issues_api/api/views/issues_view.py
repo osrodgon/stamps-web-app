@@ -75,7 +75,7 @@ class IssuesView(Logger, APIView):
         """
         self.log.debug(Messages.Get.retrieve_all("issues"))
         year = request.query_params.get('year', None)
-        issue_name = request.query_params.get('name', None)
+        issue_name = request.query_params.get('name', '').strip() or None
         
         issues = Issue.objects.all().order_by('date')
         if year:

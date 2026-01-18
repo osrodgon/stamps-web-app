@@ -18,12 +18,16 @@ LOG_BASE_DIR="logs"
 ASSETS_DIR="/assets"
 ASSETS_FOLDER_NAME="assets"
 BACKGROUND_IMG=f"{ASSETS_DIR}/background.webp"
+NO_STAMP = f"{ASSETS_DIR}/no_stamp.webp"
 MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
 MOCK_USER = os.getenv("MOCK_LOGIN_USER", "none")
 MOCK_PASSWORD = os.getenv("MOCK_LOGIN_PASSWORD", "none")
 
 
 # Backend
-BACKEND_URL=f"http://{os.getenv("BACKEND_HOST", "localhost")}:8000/stamps_server/api/v1"
+BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
+BACKEND_PORT = os.getenv("BACKEND_PORT", "8000")
+BACKEND_SERVER_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
+BACKEND_URL=f"{BACKEND_SERVER_URL}/stamps_server/api/v1"
 API_MASTER_KEY=os.getenv("API_MASTER_KEY")
 

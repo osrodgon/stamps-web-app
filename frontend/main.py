@@ -150,6 +150,12 @@ class StampsApp():
                 
         @app.exception_handler(404)
         async def exception_handler_404(request: Request, exception: Exception) -> Response:
+            # Check if it's a request for an image or other asset to avoid launching NotFoundPage multiple times
+            path = request.url.path.lower()
+            asset_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.css', '.js')
+            if path.endswith(asset_extensions):
+                return Response(status_code=404)
+
             with Client(page(URLs.Frontend.root), request=request) as client:
                 NotFoundPage()
 

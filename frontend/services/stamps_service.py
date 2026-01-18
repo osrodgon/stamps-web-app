@@ -137,5 +137,39 @@ class StampsService(BaseService):
             url=URLs.Backend.stamp_types,
             payload=None,
             headers=headers
-        )   
+        )
+
+    async def get_stamps(self, issue_id: int, api_key: str = None, token: str = None):
+        """
+        Fetches the individual stamps belonging to a specific issue.
+
+        This method retrieves the master list of stamps associated with an issue ID.
+        It is typically used for populating the stamp gallery in the UI.
+
+        Args:
+            issue_id (int): The unique identifier of the issue.
+            api_key (str, optional): Authentication master key.
+            token (str, optional): User JWT token.
+
+        Returns:
+            requests.Response|None: The API response object or None on failure.
+        """
+        if api_key is None and token is None:
+            self.log.error("API Key or token is required.")
+            return None
+        
+        if api_key is not None:
+            headers = {'Authorization': f'Api-Key {api_key}'}
+        else:
+            headers = {'Authorization': f'Bearer {token}'}
+            
+        url = f"{URLs.Backend.stamps}?issue_id={issue_id}"
+
+        return await self._make_request(
+            request_type=self.GET,
+            url=url,
+            payload=None,
+            headers=headers
+        )
+
 

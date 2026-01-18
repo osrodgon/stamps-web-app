@@ -19,6 +19,7 @@ class StampsManagerPage(ui.column, BasePage):
     - **Hybrid Filtering**: Local filtering when a year is selected, server-side search when not.
     - **Persistence**: Remembers the last viewed year across sessions.
     - **Inline Management**: Integrates with IssuesTable for direct CRUD operations.
+    - **Stamp Gallery**: Automatically fetches and displays individual stamps when an issue is expanded.
     """
     top_bar: TopBar = None
     years_select = None
@@ -63,9 +64,55 @@ class StampsManagerPage(ui.column, BasePage):
                     on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
                     on_delete=lambda e: self.notify(e.args)
                 )
+                self.table.on('expand', lambda e: self.handle_expand(e.args))
             
         ui.timer(0, self.load_issues_once, once=True)
-    
+
+    async def handle_expand(self, row_data):
+        """
+        Handles the expansion event triggered by the IssuesTable.
+
+        This method implements lazy loading for stamp data. When a row is expanded:
+        1. It checks if the stamps for that issue have already been loaded.
+        2. If not, it fetches them from the backend using `StampsService.get_stamps`.
+        3. Updates the specific row object in the table's state to ensure reactivity.
+        4. Triggers a UI update to replace the loading spinner with the stamp gallery.
+
+        Args:
+            row_data (dict): The data of the row being expanded, including its ID.
+        """
+        issue_id = row_data.get('id')
+        if not issue_id:
+            return
+            
+        # Find the actual row object in our local data to ensure reactivity
+        row = next((r for r in self.table.rows if r.get('id') == issue_id), None)
+        if not row:
+            return
+            
+        # If stamps are already loading or loaded, don't fetch again
+        if row.get('stamps') is not None:
+            return
+            
+        self.log.debug(f'Fetching stamps for issue {issue_id}...')
+        response = await self.stamps_service.get_stamps(issue_id, api_key=API_MASTER_KEY)
+        
+        if self._is_valid_response(response):
+            stamps_data = response.json().get('data', [])
+            # Update the row in the table's state
+            row['stamps'] = stamps_data
+            
+            # Also update in all_issues if we are in year view
+            all_issue_row = next((r for r in self.all_issues if r.get('id') == issue_id), None)
+            if all_issue_row:
+                all_issue_row['stamps'] = stamps_data
+                
+            self.table.update()
+        else:
+            self.log.error(f"Failed to fetch stamps for issue {issue_id}")
+            row['stamps'] = [] # Set to empty list to stop loading state
+            self.table.update()
+
     def configure_styles(self):
         """Configures the page-specific styles."""
         ui.query('body').style('overflow: hidden; margin: 0; padding: 0;')
@@ -127,6 +174,8 @@ class StampsManagerPage(ui.column, BasePage):
                 response = await self.stamps_service.get_issues(series_name=series, api_key=API_MASTER_KEY)
             else:
                 self.log.debug('No year or series provided')
+                self.table.rows = []
+                self.table.update()
                 return
         
         if self._is_valid_response(response):

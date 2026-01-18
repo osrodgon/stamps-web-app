@@ -1,5 +1,6 @@
 from core.translations import _
 from nicegui import ui
+from settings import BACKEND_SERVER_URL, NO_STAMP
 
 class IssuesTable(ui.table):
     """
@@ -8,7 +9,8 @@ class IssuesTable(ui.table):
     Provides a rich interface for managing stamp issues, including:
     - **Interactive Data Display**: Custom column rendering for complex types.
     - **Inline Editing**: Popup-based editing for dates, text, and select fields.
-    - **Expandable Rows**: Detailed view for long descriptions and notes.
+    - **Expandable Rows**: Detailed view for long descriptions, notes, and a stamp gallery.
+    - **Lazy Loading Integration**: Emits an 'expand' event to trigger data fetching for stamps.
     - **CRUD Actions**: Integrated save and delete triggers.
     - **Styled Layout**: Custom CSS for zebra striping, sticky headers, and hover effects.
     """
@@ -78,16 +80,17 @@ class IssuesTable(ui.table):
         
         self.on('save', on_save)
         self.on('delete', on_delete)
-
+ 
     def _get_body_template(self):
         """
         Generates the Vue HTML template for the table's body slots.
 
         This template handles:
-        - Recursive expansion for the details row.
+        - Recursive expansion for the details row, including a visual stamp gallery.
         - `q-popup-edit` components for all editable fields.
         - Custom form controls (date pickers, options selects).
-        - Event emission (`save`, `delete`) to the parent component.
+        - Event emission (`save`, `delete`, and `expand`) to the parent component.
+        - Dynamic rendering of stamp cards with lazy-loading support (spinner/data view).
         - Responsive layout for notes and descriptions using Tailwind classes.
 
         Returns:
@@ -97,7 +100,8 @@ class IssuesTable(ui.table):
             <q-tr :props="props">
                 <q-td auto-width>
                     <q-btn size="sm" color="primary" round dense 
-                        @click="props.expand = !props.expand" :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" />
+                        @click="props.expand = !props.expand; if(props.expand) $parent.$emit('expand', props.row)" 
+                        :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" />
                 </q-td>
                 
                 <q-td key="country" :props="props">{{{{ props.row.country }}}}</q-td>
@@ -197,40 +201,89 @@ class IssuesTable(ui.table):
 
             <q-tr v-show="props.expand" :props="props">
                 <q-td colspan="100%">
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        
-                        <!-- Description Section -->
-                        <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
-                            <div class="flex items-center gap-2 mb-2 text-primary font-bold uppercase text-xs tracking-wider">
-                                <q-icon name="description" size="xs" />
-                                {_('description')}
-                                <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
+                    <div class="p-6 bg-slate-50">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            
+                            <!-- Description Section -->
+                            <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
+                                <div class="flex items-center gap-2 mb-2 text-primary font-bold uppercase text-xs tracking-wider">
+                                    <q-icon name="description" size="xs" />
+                                    {_('description')}
+                                    <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
+                                </div>
+                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
+                                    {{{{ props.row.description || '{_('no_description')}' }}}}
+                                </div>
+                                <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
+                                    @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'description', value: val}})">
+                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('description')}" outlined class="min-w-[300px]" />
+                                </q-popup-edit>
                             </div>
-                            <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
-                                {{{{ props.row.description || '{_('no_description')}' }}}}
+                            
+                            <!-- Notes Section -->
+                            <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
+                                <div class="flex items-center gap-2 mb-2 text-secondary font-bold uppercase text-xs tracking-wider">
+                                    <q-icon name="note" size="xs" />
+                                    {_('notes')}
+                                    <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
+                                </div>
+                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
+                                    {{{{ props.row.note || '{_('no_notes')}' }}}}
+                                </div>
+                                <q-popup-edit v-model="props.row.note" v-slot="scope" buttons
+                                    @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'notes', value: val}})">
+                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('notes')}" outlined class="min-w-[300px]" />
+                                </q-popup-edit>
                             </div>
-                            <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
-                                @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'description', value: val}})">
-                                <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('description')}" outlined class="min-w-[300px]" />
-                            </q-popup-edit>
-                        </div>
-                        
-                        <!-- Notes Section -->
-                        <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
-                            <div class="flex items-center gap-2 mb-2 text-secondary font-bold uppercase text-xs tracking-wider">
-                                <q-icon name="note" size="xs" />
-                                {_('notes')}
-                                <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
-                            </div>
-                            <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line">
-                                {{{{ props.row.note || '{_('no_notes')}' }}}}
-                            </div>
-                            <q-popup-edit v-model="props.row.note" v-slot="scope" buttons
-                                @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'notes', value: val}})">
-                                <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('notes')}" outlined class="min-w-[300px]" />
-                            </q-popup-edit>
                         </div>
 
+                        <!-- Stamps Section -->
+                        <div class="p-4 bg-white rounded-lg border border-slate-100 shadow-sm">
+                            <div class="flex items-center gap-2 mb-6 text-slate-800 font-bold uppercase text-sm tracking-[0.1em] border-b border-slate-100 pb-2">
+                                <q-icon name="collections" size="sm" class="text-primary" />
+                                {_('stamps')}
+                            </div>
+                            
+                            <div v-if="!props.row.stamps" class="flex flex-col items-center justify-center p-8 text-slate-400">
+                                <q-spinner-dots color="primary" size="40px" />
+                                <div class="mt-2 text-xs">{_('loading_stamps')}</div>
+                            </div>
+                            
+                            <div v-else-if="props.row.stamps.length === 0" class="p-8 text-center text-slate-400 text-sm italic">
+                                {_('no_stamps_found')}
+                            </div>
+                            
+                            <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                <div v-for="stamp in props.row.stamps" :key="stamp.id" 
+                                    class="flex flex-col border border-slate-100 rounded-lg overflow-hidden hover:border-primary/40 transition-all duration-300 bg-white shadow-sm hover:shadow-md">
+                                    <div class="aspect-square bg-slate-50 flex items-center justify-center p-4 relative group">
+                                        <q-img :src="stamp.image ? (stamp.image.indexOf('/') === 0 ? '{BACKEND_SERVER_URL}' + stamp.image : stamp.image) : '{NO_STAMP}'" 
+                                            class="h-48 w-full rounded shadow-sm" 
+                                            style="background-color: #f8fafc;"
+                                            fit="contain">
+                                            <template v-slot:error>
+                                                <q-img src="{NO_STAMP}" class="h-48 w-full" fit="contain" />
+                                            </template>
+                                        </q-img>
+                                        <div class="absolute top-2 right-2 bg-slate-800/90 text-white text-xs px-2 py-1 rounded font-bold font-mono shadow-sm">
+                                            {{{{ stamp.edifil_code }}}}
+                                        </div>
+                                    </div>
+                                    <div class="p-4 flex flex-col gap-2">
+                                        <div class="text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[2.5rem]">{{{{ stamp.name }}}}</div>
+                                        <div class="flex items-center justify-between border-t border-slate-50 pt-2">
+                                            <span class="text-xs text-slate-600 font-medium uppercase tracking-tight">{{{{ stamp.face_value }}}}</span>
+                                            <span v-if="stamp.market_value" class="text-sm font-mono text-primary font-black">${{{{ stamp.market_value }}}}</span>
+                                        </div>
+                                        <div v-if="stamp.colors && stamp.colors.length" class="mt-1 flex flex-wrap gap-1.5">
+                                            <span v-for="color in stamp.colors" :key="color" class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full border border-slate-200">
+                                                {{{{ color }}}}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </q-td>
             </q-tr>
