@@ -17,8 +17,8 @@ class StampsService(BaseService):
             token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
-            requests.Response | None: The response object containing the list of years on success, 
-                                      or None if the request fails or authentication is missing.
+            requests.Response | None:   The response object containing the list of years on success, 
+                                        or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -44,14 +44,14 @@ class StampsService(BaseService):
         by a specific year if provided. Authentication is required via either an API key or a user token.
 
         Args:
-            year (int, optional): The year to filter issues by. If 0, fetches all issues (depending on backend logic). 
-                                  Defaults to 0.
+            year (int, optional):   The year to filter issues by. If 0, fetches all issues (depending on backend logic). 
+                                    Defaults to 0.
             api_key (str, optional): The API master key for authentication. Defaults to None.
             token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
-            requests.Response | None: The response object containing the stamp issues on success, 
-                                      or None if the request fails or authentication is missing.
+            requests.Response | None:   The response object containing the stamp issues on success, 
+                                        or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -86,8 +86,8 @@ class StampsService(BaseService):
             token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
-            requests.Response | None: The response object containing the print types on success, 
-                                      or None if the request fails or authentication is missing.
+            requests.Response | None:   The response object containing the print types on success, 
+                                        or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -117,8 +117,8 @@ class StampsService(BaseService):
             token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
-            requests.Response | None: The response object containing the stamp types on success, 
-                                      or None if the request fails or authentication is missing.
+            requests.Response | None:   The response object containing the stamp types on success, 
+                                        or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")

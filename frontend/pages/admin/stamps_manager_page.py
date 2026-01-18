@@ -44,7 +44,7 @@ class StampsManagerPage(ui.column, BasePage):
                 with self.top_bar.extra_controls:
                     self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value))
                     self.years_select.classes('w-48')
-                    self.years_select.props('dark popup-content-class="bg-white year-select-popup"')
+                    self.years_select.props('dark popup-content-class="bg-white year-select-popup drop-shadow-md"')
 
                 self.table = IssuesTable(
                     on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
@@ -133,7 +133,7 @@ class StampsManagerPage(ui.column, BasePage):
             await self.get_issues(app.storage.user.get('current_year'))
         else:
             await self.get_issues(1850)
-   
+            
     async def get_print_types(self):
         """
         Asynchronously fetches the available print types from the backend.

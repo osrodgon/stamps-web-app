@@ -19,8 +19,8 @@ class IssuesTable(ui.table):
         Args:
             on_save (callable): A callback function to be invoked when a cell edit is saved.
                                 It receives the event arguments containing the edited data.
-            on_delete (callable): A callback function to be invoked when a delete action is triggered.
-                                  It receives the event arguments containing the ID of the item to delete.
+            on_delete (callable):   A callback function to be invoked when a delete action is triggered.
+                                    It receives the event arguments containing the ID of the item to delete.
         """
         columns = [
             {'name': 'expand', 'label': _('details'), 'field': 'expand', 'align': 'center'},
@@ -51,12 +51,12 @@ class IssuesTable(ui.table):
                     z-index: 1;
                 }
                 /* Zebra striping: Target every second item.
-                   Each item has 2 rows (Main + Expand).
-                   Item 1: rows 1, 2
-                   Item 2: rows 3, 4  <- Target these
-                   Item 3: rows 5, 6
-                   Item 4: rows 7, 8  <- Target these
-                   Formula: 4n+3, 4n+4
+                    Each item has 2 rows (Main + Expand).
+                    Item 1: rows 1, 2
+                    Item 2: rows 3, 4  <- Target these
+                    Item 3: rows 5, 6
+                    Item 4: rows 7, 8  <- Target these
+                    Formula: 4n+3, 4n+4
                 */
                 .issues-table tbody tr:nth-child(4n+3),
                 .issues-table tbody tr:nth-child(4n+4) {
@@ -95,7 +95,7 @@ class IssuesTable(ui.table):
             <q-tr :props="props">
                 <q-td auto-width>
                     <q-btn size="sm" color="primary" round dense 
-                        @click="props.expand = !props.expand" :icon="props.expand ? 'keyboard_arrow_down' : 'keyboard_arrow_right'" />
+                        @click="props.expand = !props.expand" :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" />
                 </q-td>
                 
                 <q-td key="country" :props="props">{{{{ props.row.country }}}}</q-td>
@@ -151,7 +151,7 @@ class IssuesTable(ui.table):
                             v-model="scope.value"  
                             :options="props.row.opts_stamp_types"
                             dense 
-                            autofocus 
+                            autofocus
                         />
                     </q-popup-edit>
                 </q-td>
