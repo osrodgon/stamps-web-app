@@ -1,6 +1,6 @@
 from core.translations import _
 from nicegui import ui
-from settings import BACKEND_SERVER_URL, NO_STAMP
+from settings import BACKEND_SERVER_URL, NO_STAMP, IMAGE_DIR
 
 class IssuesTable(ui.table):
     """
@@ -257,9 +257,9 @@ class IssuesTable(ui.table):
                                 <div v-for="stamp in props.row.stamps" :key="stamp.id" 
                                     class="flex flex-col border border-slate-100 rounded-lg overflow-hidden hover:border-primary/40 transition-all duration-300 bg-white shadow-sm hover:shadow-md">
                                     <div class="aspect-square bg-slate-50 flex items-center justify-center p-4 relative group">
-                                        <q-img :src="stamp.image ? (stamp.image.indexOf('/') === 0 ? '{BACKEND_SERVER_URL}' + stamp.image : stamp.image) : '{NO_STAMP}'" 
+                                        <q-img :src="stamp.image ? '{IMAGE_DIR}' + (stamp.image.indexOf('stamps/') === 0 ? stamp.image.substring(7) : (stamp.image.indexOf('/stamps/') === 0 ? stamp.image.substring(8) : (stamp.image.indexOf('/') === 0 ? stamp.image : '/' + stamp.image))) : '{NO_STAMP}'" 
                                             class="h-48 w-full rounded shadow-sm" 
-                                            style="background-color: #f8fafc;"
+                                            style="background-color: #505050;"
                                             fit="contain">
                                             <template v-slot:error>
                                                 <q-img src="{NO_STAMP}" class="h-48 w-full" fit="contain" />

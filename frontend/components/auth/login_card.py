@@ -26,12 +26,13 @@ class LoginCard(ui.card, BaseUI):
             
             self.username = ui.input(
                 label=_('username'),
-            ).classes('w-full')
+            ).classes('w-full').on('keydown.enter', on_sign_in)
+
             self.password = ui.input(
                 label=_('password'), 
                 password=True, 
                 password_toggle_button=True
-            ).classes('w-full')
+            ).classes('w-full').on('keydown.enter', on_sign_in)
             
             ui.button(_('sign_in'), on_click=on_sign_in).classes('w-full')
 

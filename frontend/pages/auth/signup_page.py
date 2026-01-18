@@ -39,7 +39,7 @@ class SignUpPage(ui.column, BasePage):
             self.set_background(BACKGROUND_IMG)
             
             with ui.column().classes('w-full flex-grow justify-center items-center'):
-                self.signup_card = SignUpCard(on_sign_up=self.call_rest_method)
+                self.signup_card = SignUpCard(on_sign_up=self.call_rest_method, on_back=self.back_to_login)
             
             self.footer_branding = FooterBranding()
             
@@ -84,3 +84,7 @@ class SignUpPage(ui.column, BasePage):
             self.signup_card.notify(error_msg, 'negative')
             
             return error_msg
+    
+    def back_to_login(self):
+        ui.navigate.to(URLs.Frontend.login)
+        

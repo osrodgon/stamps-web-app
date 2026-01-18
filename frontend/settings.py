@@ -31,3 +31,6 @@ BACKEND_SERVER_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 BACKEND_URL=f"{BACKEND_SERVER_URL}/stamps_server/api/v1"
 API_MASTER_KEY=os.getenv("API_MASTER_KEY")
 
+# Images
+IMAGE_DIR = f"{ASSETS_DIR}/stamps-data/images"
+IMAGE_FOLDER_NAME="assets/stamps-data/images"
