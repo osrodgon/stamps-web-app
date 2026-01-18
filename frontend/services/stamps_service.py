@@ -9,8 +9,16 @@ class StampsService(BaseService):
         """
         Fetches the available years from the backend.
         
+        This method retrieves a list of years for which stamp issues exist. Authentication
+        is required via either an API key or a user token.
+
+        Args:
+            api_key (str, optional): The API master key for authentication. Defaults to None.
+            token (str, optional): The user's JWT token for authentication. Defaults to None.
+
         Returns:
-            requests.Response | None: The response object on success, or None on error.
+            requests.Response | None: The response object containing the list of years on success, 
+                                      or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -32,13 +40,18 @@ class StampsService(BaseService):
         """
         Fetches stamp issues, optionally filtered by year.
 
+        This method retrieves detailed information about stamp issues. It can filter the results
+        by a specific year if provided. Authentication is required via either an API key or a user token.
+
         Args:
-            year (int, optional):   The year to filter issues by. If 0 or not provided,
-                                    it may fetch all issues depending on the API's behavior.
-                                    Defaults to 0.
+            year (int, optional): The year to filter issues by. If 0, fetches all issues (depending on backend logic). 
+                                  Defaults to 0.
+            api_key (str, optional): The API master key for authentication. Defaults to None.
+            token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
-            requests.Response | None: The response object on success, or None on error.
+            requests.Response | None: The response object containing the stamp issues on success, 
+                                      or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
@@ -65,8 +78,16 @@ class StampsService(BaseService):
         """
         Fetches the available print types from the backend.
         
+        This method retrieves the different types of printing methods used for stamps.
+        Authentication is required via either an API key or a user token.
+
+        Args:
+            api_key (str, optional): The API master key for authentication. Defaults to None.
+            token (str, optional): The user's JWT token for authentication. Defaults to None.
+
         Returns:
-            requests.Response | None: The response object on success, or None on error.
+            requests.Response | None: The response object containing the print types on success, 
+                                      or None if the request fails or authentication is missing.
         """
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
