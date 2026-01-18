@@ -73,20 +73,20 @@ class TopBar(ui.header, BaseUI):
                             ui.label(_('logout')).classes('font-bold')
 
         # The top bar
-        with self.classes('bg-white text-black items-center justify-between border-b px-6 py-2 shadow-none'):
+        with self.classes('bg-slate-800 text-white items-center justify-between border-b border-slate-700 px-6 py-2 shadow-md'):
             # Left Side
             with ui.row().classes('items-center gap-10'):
                 self.log.debug("Initializing left side...")
-                ui.label(name).classes('text-xl font-bold tracking-tight')
+                ui.label(name).classes('text-xl font-bold tracking-tight text-white')
                 self.extra_controls = ui.row()
 
             # Right Side
             self.log.debug("Initializing right side...")
             with ui.row().classes('items-center gap-3'):
                 ui.label(user_full_name.upper()).classes(
-                    'text-xs font-bold text-slate-900 tracking-widest')
+                    'text-xs font-bold text-slate-200 tracking-widest')
                 ui.button(on_click=drawer.toggle, icon='menu').props(
-                    'flat round color=black').classes('hover:bg-slate-100')
+                    'flat round color=white').classes('hover:bg-slate-700')
 
     def confirm_logout(self):
         """

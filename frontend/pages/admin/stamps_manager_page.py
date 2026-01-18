@@ -42,7 +42,9 @@ class StampsManagerPage(ui.column, BasePage):
         with self.classes('fixed inset-0 flex flex-col no-wrap overflow-hidden bg-white'):
             with ui.column().classes('w-full flex-grow p-4 mt-[80px] overflow-hidden flex flex-col no-wrap'):
                 with self.top_bar.extra_controls:
-                    self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value)).classes('w-48')
+                    self.years_select = ui.select([], label=_("select_year"), on_change=lambda e: self.get_issues(e.value))
+                    self.years_select.classes('w-48')
+                    self.years_select.props('dark popup-content-class="bg-white year-select-popup"')
 
                 self.table = IssuesTable(
                     on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
@@ -57,6 +59,15 @@ class StampsManagerPage(ui.column, BasePage):
     def configure_styles(self):
         """Configures the page-specific styles."""
         ui.query('body').style('overflow: hidden; margin: 0; padding: 0;')
+        # Force dropdown items to be black when using dark mode input but light menu
+        ui.add_head_html('''
+            <style>
+                .year-select-popup .q-item, 
+                .year-select-popup .q-item__label {
+                    color: black !important;
+                }
+            </style>
+        ''')
 
     async def get_years(self):
         """
