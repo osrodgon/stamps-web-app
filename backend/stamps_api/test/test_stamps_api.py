@@ -182,6 +182,7 @@ class TestStampsAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.json()['data']['name'] == stamp_post_payload_ok["name"]
         assert response.json()['data']['edifil_code'] == stamp_post_payload_ok["edifil_code"]
+        assert response.json()['data']['total_printed'] == stamp_post_payload_ok.get("total_printed")
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_post_stamp_returns_400_missing_field(self, api_client, stamp_post_payload_ok):
