@@ -1,8 +1,8 @@
-from nicegui import ui
-
 from base.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
+from nicegui import ui
+
 
 class LoginCard(ui.card, BaseUI):
     """A UI component representing a login card with username and password fields."""
@@ -26,21 +26,13 @@ class LoginCard(ui.card, BaseUI):
             
             self.username = ui.input(
                 label=_('username'),
-                # validation={_('required'): lambda v: len(v) > 0}
-            ).classes('w-full')
+            ).classes('w-full').on('keydown.enter', on_sign_in)
+
             self.password = ui.input(
                 label=_('password'), 
                 password=True, 
-                password_toggle_button=True,
-                # validation={
-                #         _('required'): lambda v: len(v) > 0,
-                #         _('invalid_password'): lambda v: len(v) >= 8 and 
-                #             re.search(r"[A-Z]", v) and 
-                #             re.search(r"[a-z]", v) and 
-                #             re.search(r"\d", v) and 
-                #             re.search(r"[^a-zA-Z0-9]", v)
-                #     }
-            ).classes('w-full')
+                password_toggle_button=True
+            ).classes('w-full').on('keydown.enter', on_sign_in)
             
             ui.button(_('sign_in'), on_click=on_sign_in).classes('w-full')
 

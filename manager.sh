@@ -27,6 +27,9 @@ FRONTEND_PROD_COMPOSE_FILE="frontend/docker-compose.prod.yml"
 FRONTEND_PROD_DOCKER="Dockerfile.prod"
 FRONTEND_SERVICE="stamps-frontend" # Main frontend service name (e.g., React/Vue container)
 
+# SQL (python manage.py dumpdata)
+MIN_SQL_DATA="auth users_api rest_framework_api_key --indent 4"
+
 # --- Utility Functions ---
 
 # Function to show usage instructions

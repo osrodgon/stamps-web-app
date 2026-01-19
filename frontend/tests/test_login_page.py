@@ -1,20 +1,20 @@
 import logging
+
 import pytest
-from nicegui.testing import User
 import requests
-
 from components.auth.login_card import LoginCard
-from pages.auth.login_page import LoginPage
-from tests.helpers.abstract_unit_test import AbstractUnitTest
-from frontend.tests.data.users_api_responses import (
-    LOGIN_RESPONSE_200_SUCCESS, 
-    LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN,
-    LOGIN_RESPONSE_400_BAD_REQUEST,
-    LOGIN_RESPONSE_401_UNAUTHORIZED,
-    LOGIN_RESPONSE_500_SERVER_ERROR
-)
-
+from core.translations import _
 from core.urls import URLs
+from nicegui.testing import User
+from pages.auth.login_page import LoginPage
+from services.auth_service import AuthService
+from tests.helpers.abstract_unit_test import AbstractUnitTest
+
+from frontend.tests.data.users_api_responses import (
+    LOGIN_RESPONSE_200_SUCCESS, LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN,
+    LOGIN_RESPONSE_400_BAD_REQUEST, LOGIN_RESPONSE_401_UNAUTHORIZED,
+    LOGIN_RESPONSE_500_SERVER_ERROR)
+
 
 @pytest.mark.asyncio
 class TestLoginPage(AbstractUnitTest):
@@ -45,7 +45,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_200_SUCCESS, 
             status_code=200
         )
@@ -74,7 +74,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN, 
             status_code=200
         )
@@ -89,7 +89,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == "Login failed due to a server response issue."
+        assert response == _('response_issue')
         
     async def test_login_fail_no_response(self, user: User, login_page_components):
         # Get components
@@ -101,7 +101,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=None, 
             status_code=500
         )
@@ -116,7 +116,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == "Login request failed, no response from server."
+        assert response == _('no_response')
     
     async def test_login_fail_bad_request_400(self, user: User, login_page_components):
         # Get components
@@ -128,7 +128,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_400_BAD_REQUEST, 
             status_code=400
         )
@@ -155,7 +155,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_401_UNAUTHORIZED, 
             status_code=401
         )
@@ -182,7 +182,7 @@ class TestLoginPage(AbstractUnitTest):
         
         # Set mocks
         self.set_backend_response(
-            class_object=login_page.__class__, 
+            class_object=AuthService, 
             json_data=LOGIN_RESPONSE_500_SERVER_ERROR, 
             status_code=500
         )
@@ -213,4 +213,4 @@ class TestLoginPage(AbstractUnitTest):
         # Simulates user hitting the submit button
         response = await login_page.call_rest_method()
         
-        assert response == "Username and password are required."
+        assert response == _('username_password_required')

@@ -1,9 +1,8 @@
 import asyncio
 import requests
+from core.logger import Logger
 
-from base.base_ui import BaseUI
-
-class BaseRest(BaseUI):
+class BaseService(Logger):
     """A base class for handling RESTful API requests with common HTTP methods."""
     GET=1
     POST=2
@@ -11,12 +10,11 @@ class BaseRest(BaseUI):
     DELETE=4
     
     def __init__(self):
-        """Initializes the BaseRest, setting up the logger."""
+        """Initializes the BaseService, setting up the logger."""
         super().__init__()
-        self.log.debug("BaseRest initialized.")
+        self.log.debug("BaseService initialized.")
         
-    
-    async def _make_request(self, request_type: int, url: str, payload: dict, headers = None) -> requests.Response:
+    async def _make_request(self, request_type: int, url: str, payload: dict = None, headers: dict = None) -> requests.Response | None:
         """
         Makes an asynchronous HTTP request to the specified URL.
 
@@ -24,9 +22,10 @@ class BaseRest(BaseUI):
         synchronous `requests` call in an `asyncio.to_thread` to avoid blocking.
 
         Args:
-            request_type (int): The type of HTTP request (e.g., BaseRest.GET, BaseRest.POST).
+            request_type (int): The type of HTTP request (e.g., BaseService.GET, BaseService.POST).
             url (str): The URL for the request.
-            payload (dict): The JSON payload to send with the request.
+            payload (dict, optional): The JSON payload to send with the request.
+            headers (dict, optional): The headers to send with the request.
 
         Returns:
             requests.Response | None: The response object on success, or None on a network error.
@@ -62,4 +61,4 @@ class BaseRest(BaseUI):
             return response
         except requests.exceptions.RequestException as e:
             self.log.error(f'Network error: {e}')
-            return None 
+            return None

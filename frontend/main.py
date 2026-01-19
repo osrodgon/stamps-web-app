@@ -1,21 +1,18 @@
 import os
-from fastapi import Request, Response
-from nicegui import ui, app
-from nicegui.page import page
-from nicegui.client import Client
-from dotenv import load_dotenv
 
+from core.log_setup import log_setup
+from core.urls import URLs
+from fastapi import Request, Response
+from nicegui import app, ui
+from nicegui.client import Client
+from nicegui.page import page
+from pages.admin.stamps_manager_page import StampsManagerPage
 from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
-from pages.admin.stamps_manager_page import StampsManagerPage
-from core.log_setup import log_setup
-from core.urls import URLs
+from settings import APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
 
-from settings import (
-    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME
-)
 
 class StampsApp():    
     """
@@ -86,6 +83,7 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
+            app.storage.user['language'] = 'es'
             LoginPage()
         
         @page(URLs.Frontend.signup)
@@ -129,16 +127,35 @@ class StampsApp():
                 request (Request): The FastAPI request object.
             """
             app.storage.user['language'] = 'es'
-            if StampsApp.check_authentication(request): 
-                if app.storage.user.get('is_admin', False):
-                    ui.navigate.to(URLs.Frontend.stamps_manager)
+            
+            if MOCK_LOGIN:
+                """
+                This is just for testing and developing purposes.
+                
+                To avoid manual login, if test mode is enabled, it will autologin
+                using the test user name and password defined in the environment variables.
+                
+                THIS MUST BE ALWAYS DISABLED IN PRODUCTION.
+                """
+                test = LoginPage()
+                await test.mock_login()
+            else :
+                if StampsApp.check_authentication(request): 
+                    if app.storage.user.get('is_admin', False):
+                        ui.navigate.to(URLs.Frontend.stamps_manager)
+                    else:
+                        ui.navigate.to(URLs.Frontend.collections)
                 else:
-                    ui.navigate.to(URLs.Frontend.collections)
-            else:
-                ui.navigate.to(URLs.Frontend.login)
+                    ui.navigate.to(URLs.Frontend.login)
                 
         @app.exception_handler(404)
         async def exception_handler_404(request: Request, exception: Exception) -> Response:
+            # Check if it's a request for an image or other asset to avoid launching NotFoundPage multiple times
+            path = request.url.path.lower()
+            asset_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.css', '.js')
+            if path.endswith(asset_extensions):
+                return Response(status_code=404)
+
             with Client(page(URLs.Frontend.root), request=request) as client:
                 NotFoundPage()
 
@@ -157,14 +174,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     Initializes the application, sets up static files, logging, and routes,
     then creates an instance of the App and runs it.
     """
-    try:
-        from dotenv import load_dotenv
-        
-        # Load variables from environment
-        load_dotenv()
-    except ImportError:
-        pass
-    
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
     StampsApp.run(os.getenv("APP_STORAGE_SECRET"))
