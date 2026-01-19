@@ -11,7 +11,7 @@ from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
-from settings import APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN, IMAGE_DIR, IMAGE_FOLDER_NAME
+from settings import APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
 
 
 class StampsApp():    
@@ -45,10 +45,8 @@ class StampsApp():
             root_dir (str): The root directory of the application, used to locate assets.
         """
         assets_path = os.path.join(root_dir, ASSETS_FOLDER_NAME)
-        image_path = os.path.join(root_dir, IMAGE_FOLDER_NAME)
         
         app.add_static_files(ASSETS_DIR, assets_path)
-        app.add_static_files(IMAGE_DIR, image_path)
         log_setup()
         StampsApp.register_routes()
         

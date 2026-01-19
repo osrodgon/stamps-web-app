@@ -33,4 +33,4 @@ API_MASTER_KEY=os.getenv("API_MASTER_KEY")
 
 # Images
 IMAGE_DIR = f"{ASSETS_DIR}/stamps-data/images"
-IMAGE_FOLDER_NAME="assets/stamps-data/images"
+
