@@ -33,3 +33,6 @@ pytest.ini
 # Docker related
 Dockerfile*
 docker-compose*
+
+# Other
+**/resources/

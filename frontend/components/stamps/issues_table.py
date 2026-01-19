@@ -266,7 +266,7 @@ class IssuesTable(ui.table):
                                             </template>
                                         </q-img>
                                         <div class="absolute top-2 right-2 bg-slate-800/90 text-white text-xs px-2 py-1 rounded font-bold font-mono shadow-sm">
-                                            {{{{ stamp.edifil_code }}}}
+                                            {{{{ 'Ed. ' + stamp.edifil_code }}}}
                                         </div>
                                     </div>
                                     <div class="p-4 flex flex-col gap-2">
