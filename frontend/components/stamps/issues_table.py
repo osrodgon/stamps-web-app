@@ -179,7 +179,7 @@ class IssuesTable(ui.table):
                 <q-td key="total_printed" :props="props">
                     {{{{ props.row.total_printed }}}}
                     <q-popup-edit v-model="props.row.total_printed" v-slot="scope" buttons
-                        label-set="{'ok'}" label-cancel="{'close'}"
+                        label-set="{_('ok')}" label-cancel="{_('close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'total_printed', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
                     </q-popup-edit>
