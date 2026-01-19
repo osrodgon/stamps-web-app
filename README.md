@@ -45,7 +45,7 @@ Represents an individual stamp within an `issue`.
 | **edifil_code** | `VARCHAR` | | Edifil catalog code for the stamp. |
 | **face_value** | `VARCHAR` | | Denominative face value (e.g., "10c", "1€"). |
 | **name** | `VARCHAR` | | Name or description of the individual stamp. |
-| **others_code** | `VARCHAR` | | Other catalog codes for the stamp. |
+| **description** | `VARCHAR` | | Other catalog codes for the stamp. |
 | **image** | `VARCHAR` | | Path or URL to the image of the stamp. |
 | **color_id** | `INT` | FK | The main color of the stamp (links to `color.id`). |
 | **market_value** | `FLOAT` | | Estimated market value of the individual stamp. |

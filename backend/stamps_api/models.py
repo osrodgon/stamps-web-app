@@ -12,7 +12,7 @@ class Stamp(models.Model):
         face_value (CharField): The denominated value printed on the stamp.
         name (CharField):   The specific name or title of the stamp, if different
                             from the issue name.
-        others_code (CharField): Any other relevant catalog code (e.g., Scott, Yvert).
+        description (CharField): A description of the stamp.
         image (ImageField): An uploaded image of the stamp.
         colors (ManyToManyField): The colors present on the stamp.
         market_value (DecimalField):    The estimated market value of this specific
@@ -26,7 +26,7 @@ class Stamp(models.Model):
     edifil_code = models.CharField(max_length=255, null=True, blank=True)
     face_value = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    others_code = models.CharField(max_length=255, null=True, blank=True)
+    description = models.CharField(max_length=255, null=True, blank=True)
     image = models.ImageField(upload_to='stamps/', null=True, blank=True)
     
     # This is the many-to-many relationship field.

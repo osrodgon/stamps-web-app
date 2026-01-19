@@ -17,7 +17,7 @@ class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'edifil_code',
             'face_value',
             'name',
-            'others_code',
+            'description',
             'image',
             'colors',
             'market_value'

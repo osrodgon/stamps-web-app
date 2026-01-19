@@ -143,6 +143,8 @@ class Command(BaseCommand):
                     stamp_colors_raw = self.clean_string(row['stamp_color'])
                     stamp_name = self.clean_string(row['stamp_name'])
                     stamp_face_value = self.clean_string(row['stamp_face_value'])
+                    stamp_market_value = self.clean_number(row['stamp_market_value'])
+                    stamp_description = self.clean_string(row['stamp_description'])
                     
                     issue_year_obj = None
                     if pd.notna(issue_year):
@@ -180,7 +182,9 @@ class Command(BaseCommand):
                         name = stamp_name,
                         face_value = stamp_face_value,
                         image = image,
-                        edifil_code = edifil_code
+                        edifil_code = edifil_code,
+                        market_value = stamp_market_value,
+                        description = stamp_description,
                     )
                         
                     if stamp_colors_raw:
