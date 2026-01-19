@@ -147,7 +147,7 @@
     "pk": 1,
     "fields": {
         "password": "pbkdf2_sha256$1200000$hubxIQV80d3PRkdNHkIus8$cgIFqMvh8LcqNdDWD8lUCh3Ixc7IF7bEe/is2FDHTH0=",
-        "last_login": "2026-01-15T15:28:52.982Z",
+        "last_login": "2026-01-19T19:04:42.309Z",
         "is_superuser": true,
         "username": "osrodgon",
         "first_name": "",
@@ -343,9 +343,9 @@
         "edifil_code": "1",
         "face_value": "6 cuartos",
         "name": "6 cuartos negro",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1850/1.jpg",
-        "market_value": null,
+        "market_value": "400.00",
         "colors": [
             1
         ]
@@ -359,9 +359,9 @@
         "edifil_code": "2",
         "face_value": "12 cuartos",
         "name": "12 cuartos lila",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1850/2.jpg",
-        "market_value": null,
+        "market_value": "3200.00",
         "colors": [
             2
         ]
@@ -375,9 +375,9 @@
         "edifil_code": "3",
         "face_value": "5 reales",
         "name": "5 reales rojo",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1850/3.jpg",
-        "market_value": null,
+        "market_value": "4250.00",
         "colors": [
             3
         ]
@@ -391,9 +391,9 @@
         "edifil_code": "4",
         "face_value": "6 reales",
         "name": "6 reales azul",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1850/4.jpg",
-        "market_value": null,
+        "market_value": "7500.00",
         "colors": [
             4
         ]
@@ -407,9 +407,9 @@
         "edifil_code": "5",
         "face_value": "10 reales",
         "name": "10 reales verde",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1850/5.jpg",
-        "market_value": null,
+        "market_value": "13500.00",
         "colors": [
             5
         ]
@@ -423,9 +423,9 @@
         "edifil_code": "6",
         "face_value": "6 cuartos",
         "name": "6 cuartos negro",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/6.jpg",
-        "market_value": null,
+        "market_value": "250.00",
         "colors": [
             1
         ]
@@ -439,9 +439,9 @@
         "edifil_code": "7",
         "face_value": "12 cuartos",
         "name": "12 cuartos lila",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/7.jpg",
-        "market_value": null,
+        "market_value": "4500.00",
         "colors": [
             2
         ]
@@ -455,9 +455,9 @@
         "edifil_code": "8",
         "face_value": "2 reales",
         "name": "2 reales rojo",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/8.jpg",
-        "market_value": null,
+        "market_value": "8500.00",
         "colors": [
             3
         ]
@@ -471,9 +471,9 @@
         "edifil_code": "9",
         "face_value": "5 reales",
         "name": "5 reales rosa",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/9.jpg",
-        "market_value": null,
+        "market_value": "4250.00",
         "colors": [
             6
         ]
@@ -487,9 +487,9 @@
         "edifil_code": "10",
         "face_value": "6 reales",
         "name": "6 reales azul",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/10.jpg",
-        "market_value": null,
+        "market_value": "8500.00",
         "colors": [
             4
         ]
@@ -503,9 +503,9 @@
         "edifil_code": "11",
         "face_value": "10 reales",
         "name": "10 reales verde",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II con cinta.",
         "image": "1851/11.jpg",
-        "market_value": null,
+        "market_value": "5500.00",
         "colors": [
             5
         ]
@@ -519,9 +519,9 @@
         "edifil_code": "12",
         "face_value": "6 cuartos",
         "name": "6 cuartos rosa",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1852/12.jpg",
-        "market_value": null,
+        "market_value": "180.00",
         "colors": [
             6
         ]
@@ -535,9 +535,9 @@
         "edifil_code": "13",
         "face_value": "12 cuartos",
         "name": "12 cuartos violeta",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1852/13.jpg",
-        "market_value": null,
+        "market_value": "1600.00",
         "colors": [
             7
         ]
@@ -551,9 +551,9 @@
         "edifil_code": "14",
         "face_value": "2 reales",
         "name": "2 reales rojo",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1852/14.jpg",
-        "market_value": null,
+        "market_value": "4500.00",
         "colors": [
             3
         ]
@@ -567,9 +567,9 @@
         "edifil_code": "15",
         "face_value": "5 reales",
         "name": "5 reales verde",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1852/15.jpg",
-        "market_value": null,
+        "market_value": "2900.00",
         "colors": [
             5
         ]
@@ -583,9 +583,9 @@
         "edifil_code": "16",
         "face_value": "6 reales",
         "name": "6 reales azul",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1852/16.jpg",
-        "market_value": null,
+        "market_value": "4750.00",
         "colors": [
             4
         ]
@@ -599,9 +599,9 @@
         "edifil_code": "17",
         "face_value": "6 cuartos",
         "name": "6 cuartos rosa",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1853/17.jpg",
-        "market_value": null,
+        "market_value": "150.00",
         "colors": [
             6
         ]
@@ -615,9 +615,9 @@
         "edifil_code": "18",
         "face_value": "12 cuartos",
         "name": "12 cuartos violeta",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1853/18.jpg",
-        "market_value": null,
+        "market_value": "1300.00",
         "colors": [
             7
         ]
@@ -631,9 +631,9 @@
         "edifil_code": "19",
         "face_value": "2 reales",
         "name": "2 reales rojo",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1853/19.jpg",
-        "market_value": null,
+        "market_value": "3500.00",
         "colors": [
             3
         ]
@@ -647,9 +647,9 @@
         "edifil_code": "20",
         "face_value": "5 reales",
         "name": "5 reales verde",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1853/20.jpg",
-        "market_value": null,
+        "market_value": "2750.00",
         "colors": [
             5
         ]
@@ -663,9 +663,9 @@
         "edifil_code": "21",
         "face_value": "6 reales",
         "name": "6 reales azul",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1853/21.jpg",
-        "market_value": null,
+        "market_value": "4250.00",
         "colors": [
             4
         ]
@@ -679,9 +679,9 @@
         "edifil_code": "22",
         "face_value": "1 cuarto",
         "name": "1 cuarto bronce",
-        "others_code": null,
+        "description": "Escudo de Madrid con oso y madroño.",
         "image": "1853/22.jpg",
-        "market_value": null,
+        "market_value": "2750.00",
         "colors": [
             8
         ]
@@ -695,9 +695,9 @@
         "edifil_code": "23",
         "face_value": "3 cuartos",
         "name": "3 cuartos bronce",
-        "others_code": null,
+        "description": "Escudo de Madrid con oso y madroño.",
         "image": "1853/23.jpg",
-        "market_value": null,
+        "market_value": "12500.00",
         "colors": [
             8
         ]
@@ -711,9 +711,9 @@
         "edifil_code": "24",
         "face_value": "6 cuartos",
         "name": "6 cuartos carmín",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/24.jpg",
-        "market_value": null,
+        "market_value": "500.00",
         "colors": [
             9
         ]
@@ -727,9 +727,9 @@
         "edifil_code": "25",
         "face_value": "2 reales",
         "name": "2 reales rojo",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/25.jpg",
-        "market_value": null,
+        "market_value": "120.00",
         "colors": [
             3
         ]
@@ -743,9 +743,9 @@
         "edifil_code": "26",
         "face_value": "5 reales",
         "name": "5 reales verde",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/26.jpg",
-        "market_value": null,
+        "market_value": "1200.00",
         "colors": [
             5
         ]
@@ -759,9 +759,9 @@
         "edifil_code": "27",
         "face_value": "6 reales",
         "name": "6 reales azul",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/27.jpg",
-        "market_value": null,
+        "market_value": "1100.00",
         "colors": [
             4
         ]
@@ -775,9 +775,9 @@
         "edifil_code": "28",
         "face_value": "1/2 onza",
         "name": "1/2 onza amarillo",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/28.jpg",
-        "market_value": null,
+        "market_value": "550.00",
         "colors": [
             10
         ]
@@ -791,9 +791,9 @@
         "edifil_code": "29",
         "face_value": "4 cuartos",
         "name": "1 onza rosa",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/29.jpg",
-        "market_value": null,
+        "market_value": "140.00",
         "colors": [
             6
         ]
@@ -807,9 +807,9 @@
         "edifil_code": "30",
         "face_value": "4 onzas",
         "name": "4 onzas verde",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/30.jpg",
-        "market_value": null,
+        "market_value": "1100.00",
         "colors": [
             5
         ]
@@ -823,9 +823,9 @@
         "edifil_code": "31",
         "face_value": "1 kibra",
         "name": "1 libra azul",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/31.jpg",
-        "market_value": null,
+        "market_value": "1250.00",
         "colors": [
             4
         ]
@@ -839,9 +839,9 @@
         "edifil_code": "32",
         "face_value": "2 cuartos",
         "name": "2 cuartos verde",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/32.jpg",
-        "market_value": null,
+        "market_value": "900.00",
         "colors": [
             5
         ]
@@ -855,9 +855,9 @@
         "edifil_code": "33",
         "face_value": "4 cuartos",
         "name": "4 cuartos carmín",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/33.jpg",
-        "market_value": null,
+        "market_value": "1900.00",
         "colors": [
             9
         ]
@@ -871,9 +871,9 @@
         "edifil_code": "34",
         "face_value": "1 real",
         "name": "1 real azul",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1854/34.jpg",
-        "market_value": null,
+        "market_value": "4500.00",
         "colors": [
             4
         ]
@@ -887,9 +887,9 @@
         "edifil_code": "35",
         "face_value": "1/2 onza",
         "name": "1/2 onza amarillo",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1855/35.jpg",
-        "market_value": null,
+        "market_value": "450.00",
         "colors": [
             10
         ]
@@ -903,9 +903,9 @@
         "edifil_code": "36",
         "face_value": "1 onza",
         "name": "1 onza rosa",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1855/36.jpg",
-        "market_value": null,
+        "market_value": "80.00",
         "colors": [
             6
         ]
@@ -919,9 +919,9 @@
         "edifil_code": "37",
         "face_value": "4 onzas",
         "name": "4 onzas verde",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1855/37.jpg",
-        "market_value": null,
+        "market_value": "1100.00",
         "colors": [
             5
         ]
@@ -935,9 +935,9 @@
         "edifil_code": "38",
         "face_value": "1 libra",
         "name": "1 libra azul",
-        "others_code": null,
+        "description": "Escudo de España coronado.",
         "image": "1855/38.jpg",
-        "market_value": null,
+        "market_value": "650.00",
         "colors": [
             4
         ]
@@ -951,9 +951,9 @@
         "edifil_code": "39",
         "face_value": "2 cuartos",
         "name": "2 cuartos verde",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/39.jpg",
-        "market_value": null,
+        "market_value": "450.00",
         "colors": [
             5
         ]
@@ -967,9 +967,9 @@
         "edifil_code": "40",
         "face_value": "4 cuartos",
         "name": "4 cuartos carmín",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/40.jpg",
-        "market_value": null,
+        "market_value": "75.00",
         "colors": [
             9
         ]
@@ -983,9 +983,9 @@
         "edifil_code": "41",
         "face_value": "1 real",
         "name": "1 real azul",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/41.jpg",
-        "market_value": null,
+        "market_value": "1150.00",
         "colors": [
             4
         ]
@@ -999,9 +999,9 @@
         "edifil_code": "42",
         "face_value": "2 reales",
         "name": "2 reales violeta",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/42.jpg",
-        "market_value": null,
+        "market_value": "750.00",
         "colors": [
             7
         ]
@@ -1015,9 +1015,9 @@
         "edifil_code": "43",
         "face_value": "2 cuartos",
         "name": "2 cuartos verde (fil. cruz)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/43.jpg",
-        "market_value": null,
+        "market_value": "550.00",
         "colors": [
             5
         ]
@@ -1031,9 +1031,9 @@
         "edifil_code": "44",
         "face_value": "4 cuartos",
         "name": "4 cuartos carmín (fil. cruz)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/44.jpg",
-        "market_value": null,
+        "market_value": "85.00",
         "colors": [
             9
         ]
@@ -1047,9 +1047,9 @@
         "edifil_code": "45",
         "face_value": "1 real",
         "name": "1 real azul (fil. cruz)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/45.jpg",
-        "market_value": null,
+        "market_value": "1200.00",
         "colors": [
             4
         ]
@@ -1063,9 +1063,9 @@
         "edifil_code": "46",
         "face_value": "2 reales",
         "name": "2 reales violeta (fil. cruz)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/46.jpg",
-        "market_value": null,
+        "market_value": "800.00",
         "colors": [
             7
         ]
@@ -1079,9 +1079,9 @@
         "edifil_code": "47",
         "face_value": "2 cuartos",
         "name": "2 cuartos verde (sin fil.)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/47.jpg",
-        "market_value": null,
+        "market_value": "600.00",
         "colors": [
             5
         ]
@@ -1095,9 +1095,9 @@
         "edifil_code": "48",
         "face_value": "4 cuartos",
         "name": "4 cuartos carmín (sin fil.)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/48.jpg",
-        "market_value": null,
+        "market_value": "90.00",
         "colors": [
             9
         ]
@@ -1111,9 +1111,9 @@
         "edifil_code": "49",
         "face_value": "1 real",
         "name": "1 real azul (sin fil.)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/49.jpg",
-        "market_value": null,
+        "market_value": "1300.00",
         "colors": [
             4
         ]
@@ -1127,9 +1127,9 @@
         "edifil_code": "50",
         "face_value": "2 reales",
         "name": "2 reales violeta (sin fil.)",
-        "others_code": null,
+        "description": "Busto de perfil a la derecha de Isabel II.",
         "image": "1855/50.jpg",
-        "market_value": null,
+        "market_value": "850.00",
         "colors": [
             7
         ]
@@ -1143,9 +1143,9 @@
         "edifil_code": "51",
         "face_value": "2 cuartos",
         "name": "2 cuartos verde",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/51.jpg",
-        "market_value": null,
+        "market_value": "550.00",
         "colors": [
             5
         ]
@@ -1159,9 +1159,9 @@
         "edifil_code": "52",
         "face_value": "4 cuartos",
         "name": "4 cuartos naranja",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/52.jpg",
-        "market_value": null,
+        "market_value": "45.00",
         "colors": [
             11
         ]
@@ -1175,9 +1175,9 @@
         "edifil_code": "53",
         "face_value": "12 cuartos",
         "name": "12 cuartos naranja/carmín",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/53.jpg",
-        "market_value": null,
+        "market_value": "1100.00",
         "colors": [
             9
         ]
@@ -1191,9 +1191,9 @@
         "edifil_code": "54",
         "face_value": "19 cuartos",
         "name": "19 cuartos salmón",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/54.jpg",
-        "market_value": null,
+        "market_value": "14500.00",
         "colors": [
             12
         ]
@@ -1207,9 +1207,9 @@
         "edifil_code": "55",
         "face_value": "1 real",
         "name": "1 real azul",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/55.jpg",
-        "market_value": null,
+        "market_value": "1250.00",
         "colors": [
             4
         ]
@@ -1223,9 +1223,9 @@
         "edifil_code": "56",
         "face_value": "2 reales",
         "name": "2 reales lila",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II en relieve.",
         "image": "1860/56.jpg",
-        "market_value": null,
+        "market_value": "750.00",
         "colors": [
             2
         ]
@@ -1239,9 +1239,9 @@
         "edifil_code": "57",
         "face_value": "2 cuartos",
         "name": "2 cuartos añil",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/57.jpg",
-        "market_value": null,
+        "market_value": "480.00",
         "colors": [
             13
         ]
@@ -1255,9 +1255,9 @@
         "edifil_code": "58",
         "face_value": "4 cuartos",
         "name": "4 cuartos marrón",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/58.jpg",
-        "market_value": null,
+        "market_value": "35.00",
         "colors": [
             14
         ]
@@ -1271,9 +1271,9 @@
         "edifil_code": "59",
         "face_value": "12 cuartos",
         "name": "12 cuartos azul",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/59.jpg",
-        "market_value": null,
+        "market_value": "850.00",
         "colors": [
             4
         ]
@@ -1287,9 +1287,9 @@
         "edifil_code": "60",
         "face_value": "19 cuartos",
         "name": "19 cuartos rosa",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/60.jpg",
-        "market_value": null,
+        "market_value": "13500.00",
         "colors": [
             6
         ]
@@ -1303,9 +1303,9 @@
         "edifil_code": "61",
         "face_value": "1 real",
         "name": "1 real chocolate",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/61.jpg",
-        "market_value": null,
+        "market_value": "1150.00",
         "colors": [
             15
         ]
@@ -1319,9 +1319,9 @@
         "edifil_code": "62",
         "face_value": "2 reales",
         "name": "2 reales verde",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1862/62.jpg",
-        "market_value": null,
+        "market_value": "800.00",
         "colors": [
             5
         ]
@@ -1335,9 +1335,9 @@
         "edifil_code": "63",
         "face_value": "2 cuartos",
         "name": "2 cuartos añil",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/63.jpg",
-        "market_value": null,
+        "market_value": "450.00",
         "colors": [
             13
         ]
@@ -1351,9 +1351,9 @@
         "edifil_code": "64",
         "face_value": "4 cuartos",
         "name": "4 cuartos rojo",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/64.jpg",
-        "market_value": null,
+        "market_value": "25.00",
         "colors": [
             3
         ]
@@ -1367,9 +1367,9 @@
         "edifil_code": "65",
         "face_value": "12 cuartos",
         "name": "12 cuartos verde",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/65.jpg",
-        "market_value": null,
+        "market_value": "750.00",
         "colors": [
             5
         ]
@@ -1383,9 +1383,9 @@
         "edifil_code": "66",
         "face_value": "19 cuartos",
         "name": "19 cuartos violeta",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/66.jpg",
-        "market_value": null,
+        "market_value": "12500.00",
         "colors": [
             7
         ]
@@ -1399,9 +1399,9 @@
         "edifil_code": "67",
         "face_value": "1 real",
         "name": "1 real marrón",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/67.jpg",
-        "market_value": null,
+        "market_value": "1100.00",
         "colors": [
             14
         ]
@@ -1415,9 +1415,9 @@
         "edifil_code": "68",
         "face_value": "2 reales",
         "name": "2 reales azul",
-        "others_code": null,
+        "description": "Busto de perfil a la izquierda de Isabel II.",
         "image": "1864/68.jpg",
-        "market_value": null,
+        "market_value": "750.00",
         "colors": [
             4
         ]

@@ -11,7 +11,7 @@ def stamps_table(db, issues_table, colors_table):
         edifil_code="E-1980-001",
         face_value="10 Ptas",
         name="Rey Juan Carlos I",
-        others_code="Scott-1234",
+        description="Scott-1234",
         image="/static/images/stamp1.jpg",
         market_value=5.75
     )
@@ -22,7 +22,7 @@ def stamps_table(db, issues_table, colors_table):
         edifil_code="F-1985-001",
         face_value="5 Francs",
         name="Ciclismo",
-        others_code="Scott-5678",
+        description="Scott-5678",
         image="/static/images/stamp2.jpg",
         market_value=8.50
     )
