@@ -17,6 +17,7 @@ class Stamp(models.Model):
         colors (ManyToManyField): The colors present on the stamp.
         market_value (DecimalField):    The estimated market value of this specific
                                         stamp.
+        total_printed (BigIntegerField): The total number of stamps printed.
     """
     issue = models.ForeignKey(
         'issues_api.Issue', 
@@ -36,6 +37,7 @@ class Stamp(models.Model):
     )
     
     market_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    total_printed = models.BigIntegerField(null=True, blank=True)
     
     class Meta:
         verbose_name = "Stamp"

@@ -18,6 +18,7 @@ LOG_BASE_DIR="logs"
 ASSETS_DIR="/assets"
 ASSETS_FOLDER_NAME="assets"
 BACKGROUND_IMG=f"{ASSETS_DIR}/background.webp"
+ORG_LOGO=f"{ASSETS_DIR}/org.webp"
 NO_STAMP = f"{ASSETS_DIR}/no_stamp.webp"
 MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
 MOCK_USER = os.getenv("MOCK_LOGIN_USER", "none")

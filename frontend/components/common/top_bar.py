@@ -2,6 +2,7 @@ from base.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
 from nicegui import app, ui
+from settings import ORG_LOGO   
 
 
 class TopBar(ui.header, BaseUI):
@@ -36,41 +37,46 @@ class TopBar(ui.header, BaseUI):
         # The drawer that will be used as menu
         with ui.right_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:
             self.log.debug("Initializing drawer...")
-            with ui.column().classes('w-full p-0 gap-0'):
+            with ui.column().classes('w-full h-full p-0 gap-0 no-wrap'):
+                # Content Area (Header + List)
+                with ui.column().classes('w-full flex-grow p-0 gap-0'):
+                    # User Header
+                    with ui.element('div').classes('p-6 bg-white border-b w-full'):
+                        with ui.row().classes('items-center gap-4'):
+                            # Customizing the avatar color to match the blue in your image
+                            ui.avatar('person', color='blue-500',
+                                    text_color='white').props('size=48px')
+                            with ui.column().classes('gap-0'):
+                                ui.label(user_full_name).classes(
+                                    'font-bold text-lg text-slate-800')
+                                ui.label(user_email).classes(
+                                    'text-sm text-blue-400')
 
-                # User Header
-                with ui.element('div').classes('p-6 bg-white border-b w-full'):
-                    with ui.row().classes('items-center gap-4'):
-                        # Customizing the avatar color to match the blue in your image
-                        ui.avatar('person', color='blue-500',
-                                  text_color='white').props('size=48px')
-                        with ui.column().classes('gap-0'):
-                            ui.label(user_full_name).classes(
-                                'font-bold text-lg text-slate-800')
-                            ui.label(user_email).classes(
-                                'text-sm text-blue-400')
+                    # Navigation List
+                    with ui.list().props('padding').classes('w-full'):
+                        with ui.item(on_click=lambda: ui.notify('Profile')).props('clickable v-ripple'):
+                            with ui.item_section().props('avatar'):
+                                ui.icon('person', color='slate-600')
+                            with ui.item_section():
+                                ui.label(_('profile'))
 
-                # Navigation List
-                with ui.list().props('padding').classes('w-full'):
-                    with ui.item(on_click=lambda: ui.notify('Profile')).props('clickable v-ripple'):
-                        with ui.item_section().props('avatar'):
-                            ui.icon('person', color='slate-600')
-                        with ui.item_section():
-                            ui.label(_('profile'))
+                        with ui.item(on_click=lambda: ui.notify('Settings')).props('clickable v-ripple'):
+                            with ui.item_section().props('avatar'):
+                                ui.icon('settings', color='slate-600')
+                            with ui.item_section():
+                                ui.label(_('settings'))
 
-                    with ui.item(on_click=lambda: ui.notify('Settings')).props('clickable v-ripple'):
-                        with ui.item_section().props('avatar'):
-                            ui.icon('settings', color='slate-600')
-                        with ui.item_section():
-                            ui.label(_('settings'))
+                        ui.separator().classes('my-2')
 
-                    ui.separator().classes('my-2')
+                        with ui.item(on_click=lambda: self.confirm_logout()).props('clickable v-ripple').classes('text-red-500'):
+                            with ui.item_section().props('avatar'):
+                                ui.icon('logout', color='red')
+                            with ui.item_section():
+                                ui.label(_('logout')).classes('font-bold')
 
-                    with ui.item(on_click=lambda: self.confirm_logout()).props('clickable v-ripple').classes('text-red-500'):
-                        with ui.item_section().props('avatar'):
-                            ui.icon('logout', color='red')
-                        with ui.item_section():
-                            ui.label(_('logout')).classes('font-bold')
+                # Branding Image at the bottom right
+                with ui.row().classes('w-full justify-end p-4'):
+                    ui.image(ORG_LOGO).classes('w-16 opacity-90')
 
         # The top bar
         with self.classes('bg-slate-800 text-white items-center justify-between border-b border-slate-700 px-6 py-2 shadow-md'):

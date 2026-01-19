@@ -13,7 +13,8 @@ def stamps_table(db, issues_table, colors_table):
         name="Rey Juan Carlos I",
         description="Scott-1234",
         image="/static/images/stamp1.jpg",
-        market_value=5.75
+        market_value=5.75,
+        total_printed=1000000
     )
     stamp1.colors.set([colors_table[0], colors_table[1]])
 
@@ -24,7 +25,8 @@ def stamps_table(db, issues_table, colors_table):
         name="Ciclismo",
         description="Scott-5678",
         image="/static/images/stamp2.jpg",
-        market_value=8.50
+        market_value=8.50,
+        total_printed=500000
     )
     stamp2.colors.set([colors_table[0]])
     return [stamp1, stamp2]

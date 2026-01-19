@@ -14,7 +14,7 @@ Actúa como un experto en filatelia española y especialista en el Catálogo Edi
 
 4. Formato de Salida: Devuelve la información exclusivamente en este formato CSV (una línea por cada variante/sello) sin cabecera, usando | como separador y finalizando cada línea con <EOL> y sin espacios en blanco alrededor del |:
 
-issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_size|stamp_type|stamp_color|stamp_paper_type|stamp_perforation|stamp_artist|stamp_print_type|stamp_printer|issue_amount_printed|stamp_amount_printed|issue_market_value|stamp_market_value|issue_description|stamp_description<EOL>
+issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_size|stamp_type|stamp_color|stamp_paper_type|stamp_perforation|stamp_artist|stamp_print_type|stamp_printer|issue_amount_printed|stamp_amount_printed|issue_market_value|stamp_market_value|issue_description|stamp_description|issue_notes<EOL>
 
    - issue_year es el año en el que se emitió la serie
    - issue_name solo debe de aparecer en el primer sello de la serie, para el resto de sellos de la misma serie, dejarlo en blanco.
@@ -23,5 +23,6 @@ issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_s
    - stamp_type es el tipo de sello (sello, carné, hoja bloque, ....
    - issue_market_value es el valor aproximado de la serie en euros. NO TE INVENTES VALORES, PON n/a SI NO LO SABES
    - stamp_market_value es el valor aproximado del sello en euros. NO TE INVENTES VALORES, PON n/a SI NO LO SABES
+   - issue_notes contiene anotaciones para la serie como datos historicos de la serie y comentarios sobre los sellos de la serie
 
 5. Restricción Geográfica: Solo sellos de España (Excluir dependencias postales o colonias a menos que se especifique lo contrario).

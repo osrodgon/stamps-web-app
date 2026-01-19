@@ -20,7 +20,8 @@ class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
             'description',
             'image',
             'colors',
-            'market_value'
+            'market_value',
+            'total_printed'
         ]
         
         extra_kwargs = {
