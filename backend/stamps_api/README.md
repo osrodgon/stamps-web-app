@@ -27,7 +27,7 @@ The `Stamp` model represents an individual stamp within an `Issue`.
 | `edifil_code` | String | The Edifil catalog code for the stamp. |
 | `face_value` | String | The denominative face value of the stamp (e.g., "10c", "1.00€"). |
 | `name` | String | The name or description of the individual stamp. |
-| `description` | String | Catalog codes from other systems (e.g., Scott, Michel). |
+| `description` | String | A detailed description of the stamp. Can also be used for catalog codes from other systems (e.g., Scott, Michel). |
 | `image` | String | Path or URL to an image of the stamp. |
 | `colors` | Many-to-Many | A list of colors associated with the stamp (links to `colors_api.Color`). |
 | `market_value` | Decimal | The estimated market value of the individual stamp. |
