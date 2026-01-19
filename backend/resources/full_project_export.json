@@ -1,0 +1,1710 @@
+[
+{
+    "model": "admin.logentry",
+    "pk": 1,
+    "fields": {
+        "action_time": "2025-12-05T09:47:08.253Z",
+        "user": 1,
+        "content_type": 7,
+        "object_id": "KZSGyzzu.sha512$$91876a3caebc080b6a9af9e367cebf209ce1a1879b4f2511c65cd05f634c24938a372341452a2cee00a6858f511a9568e11507192f9c65a401d278f2a27e08a5",
+        "object_repr": "Master",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 2,
+    "fields": {
+        "action_time": "2025-12-23T14:39:56.126Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "11",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 3,
+    "fields": {
+        "action_time": "2025-12-23T15:05:13.022Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "12",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 4,
+    "fields": {
+        "action_time": "2025-12-23T15:10:13.566Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "13",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 5,
+    "fields": {
+        "action_time": "2025-12-23T15:12:32.715Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "14",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 6,
+    "fields": {
+        "action_time": "2025-12-23T15:14:43.486Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "15",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 7,
+    "fields": {
+        "action_time": "2025-12-23T15:15:42.374Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "16",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 8,
+    "fields": {
+        "action_time": "2025-12-23T15:19:22.469Z",
+        "user": 1,
+        "content_type": 20,
+        "object_id": "17",
+        "object_repr": "test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 9,
+    "fields": {
+        "action_time": "2025-12-27T22:04:53.272Z",
+        "user": 1,
+        "content_type": 14,
+        "object_id": "8",
+        "object_repr": "ES 2p - Queen Isabel II",
+        "action_flag": 2,
+        "change_message": "[]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 10,
+    "fields": {
+        "action_time": "2026-01-15T11:09:56.386Z",
+        "user": 1,
+        "content_type": 21,
+        "object_id": "1",
+        "object_repr": "Token for test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 11,
+    "fields": {
+        "action_time": "2026-01-15T11:10:55.654Z",
+        "user": 1,
+        "content_type": 21,
+        "object_id": "2",
+        "object_repr": "Token for test_user",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$1200000$hubxIQV80d3PRkdNHkIus8$cgIFqMvh8LcqNdDWD8lUCh3Ixc7IF7bEe/is2FDHTH0=",
+        "last_login": "2026-01-15T15:28:52.982Z",
+        "is_superuser": true,
+        "username": "osrodgon",
+        "first_name": "",
+        "last_name": "",
+        "email": "osrodgon@gmail.com",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2025-12-05T09:45:53.426Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "ruots9z6txjets4z6v4mn4w2pg3bbjxd",
+    "fields": {
+        "session_data": ".eJxVjDsOwjAQBe_iGlmOf3Eo6TmDtetd4wCypTipEHeHSCmgfTPzXiLCtpa4dV7iTOIsBnH63RDSg-sO6A711mRqdV1mlLsiD9rltRE_L4f7d1Cgl2_NQ4IUHDMq7b3xSpM1nM2UcUykOSfPwToMPGEgAKVVcNaDU6M1nki8PwLdOGM:1vZcOX:HXkT45n042EMxpNeo5QvLfbQoeCVaRD5bLqKHRM7BmI",
+        "expire_date": "2026-01-10T22:04:17.479Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "t6l2cd93c1e7xlhqxitsivo96utc6y3o",
+    "fields": {
+        "session_data": ".eJxVjDkOwjAUBe_iGlm2g5dPSZ8zWP6LSQAlUpxUiLtDpBTQvpl5L5XLtg55a7LkkdVFWXX63bDQQ6Yd8L1Mt1nTPK3LiHpX9EGb7meW5_Vw_w6G0oZvHZgrsiMSHxjBUwRrgMQZiB1VYGvY2ERYhJ34c3ICXaBYMQGQRfX-ABDOONM:1vRSOr:rNDs2RT5HmM3v0C4poHBl9y9T2ACMLAvKayyF81eQJ4",
+        "expire_date": "2025-12-19T09:46:53.879Z"
+    }
+},
+{
+    "model": "rest_framework_api_key.apikey",
+    "pk": "KZSGyzzu.sha512$$91876a3caebc080b6a9af9e367cebf209ce1a1879b4f2511c65cd05f634c24938a372341452a2cee00a6858f511a9568e11507192f9c65a401d278f2a27e08a5",
+    "fields": {
+        "prefix": "KZSGyzzu",
+        "hashed_key": "sha512$$91876a3caebc080b6a9af9e367cebf209ce1a1879b4f2511c65cd05f634c24938a372341452a2cee00a6858f511a9568e11507192f9c65a401d278f2a27e08a5",
+        "created": "2025-12-05T09:47:08.253Z",
+        "name": "Master",
+        "revoked": false,
+        "expiry_date": null
+    }
+},
+{
+    "model": "stamp_types_api.stamptype",
+    "pk": 1,
+    "fields": {
+        "name": "sello"
+    }
+},
+{
+    "model": "print_types_api.printtype",
+    "pk": 1,
+    "fields": {
+        "name": "litografía y tipografía"
+    }
+},
+{
+    "model": "print_types_api.printtype",
+    "pk": 2,
+    "fields": {
+        "name": "grabado a buril y tipografía"
+    }
+},
+{
+    "model": "print_types_api.printtype",
+    "pk": 3,
+    "fields": {
+        "name": "mixta (seco y tipografía)"
+    }
+},
+{
+    "model": "print_types_api.printtype",
+    "pk": 4,
+    "fields": {
+        "name": "tipografía"
+    }
+},
+{
+    "model": "countries_api.country",
+    "pk": 1,
+    "fields": {
+        "name": "España"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 1,
+    "fields": {
+        "name": "Negro"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 2,
+    "fields": {
+        "name": "Lila"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 3,
+    "fields": {
+        "name": "Rojo"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 4,
+    "fields": {
+        "name": "Azul"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 5,
+    "fields": {
+        "name": "Verde"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 6,
+    "fields": {
+        "name": "Rosa"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 7,
+    "fields": {
+        "name": "Violeta"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 8,
+    "fields": {
+        "name": "Bronce"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 9,
+    "fields": {
+        "name": "Carmín"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 10,
+    "fields": {
+        "name": "Amarillo"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 11,
+    "fields": {
+        "name": "Naranja"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 12,
+    "fields": {
+        "name": "Salmón"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 13,
+    "fields": {
+        "name": "Añil"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 14,
+    "fields": {
+        "name": "Marrón"
+    }
+},
+{
+    "model": "colors_api.color",
+    "pk": 15,
+    "fields": {
+        "name": "Chocolate"
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 1,
+    "fields": {
+        "issue": 1,
+        "edifil_code": "1",
+        "face_value": "6 cuartos",
+        "name": "6 cuartos negro",
+        "others_code": null,
+        "image": "1850/1.jpg",
+        "market_value": null,
+        "colors": [
+            1
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 2,
+    "fields": {
+        "issue": 1,
+        "edifil_code": "2",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos lila",
+        "others_code": null,
+        "image": "1850/2.jpg",
+        "market_value": null,
+        "colors": [
+            2
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 3,
+    "fields": {
+        "issue": 1,
+        "edifil_code": "3",
+        "face_value": "5 reales",
+        "name": "5 reales rojo",
+        "others_code": null,
+        "image": "1850/3.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 4,
+    "fields": {
+        "issue": 1,
+        "edifil_code": "4",
+        "face_value": "6 reales",
+        "name": "6 reales azul",
+        "others_code": null,
+        "image": "1850/4.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 5,
+    "fields": {
+        "issue": 1,
+        "edifil_code": "5",
+        "face_value": "10 reales",
+        "name": "10 reales verde",
+        "others_code": null,
+        "image": "1850/5.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 6,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "6",
+        "face_value": "6 cuartos",
+        "name": "6 cuartos negro",
+        "others_code": null,
+        "image": "1851/6.jpg",
+        "market_value": null,
+        "colors": [
+            1
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 7,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "7",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos lila",
+        "others_code": null,
+        "image": "1851/7.jpg",
+        "market_value": null,
+        "colors": [
+            2
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 8,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "8",
+        "face_value": "2 reales",
+        "name": "2 reales rojo",
+        "others_code": null,
+        "image": "1851/8.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 9,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "9",
+        "face_value": "5 reales",
+        "name": "5 reales rosa",
+        "others_code": null,
+        "image": "1851/9.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 10,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "10",
+        "face_value": "6 reales",
+        "name": "6 reales azul",
+        "others_code": null,
+        "image": "1851/10.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 11,
+    "fields": {
+        "issue": 2,
+        "edifil_code": "11",
+        "face_value": "10 reales",
+        "name": "10 reales verde",
+        "others_code": null,
+        "image": "1851/11.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 12,
+    "fields": {
+        "issue": 3,
+        "edifil_code": "12",
+        "face_value": "6 cuartos",
+        "name": "6 cuartos rosa",
+        "others_code": null,
+        "image": "1852/12.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 13,
+    "fields": {
+        "issue": 3,
+        "edifil_code": "13",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos violeta",
+        "others_code": null,
+        "image": "1852/13.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 14,
+    "fields": {
+        "issue": 3,
+        "edifil_code": "14",
+        "face_value": "2 reales",
+        "name": "2 reales rojo",
+        "others_code": null,
+        "image": "1852/14.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 15,
+    "fields": {
+        "issue": 3,
+        "edifil_code": "15",
+        "face_value": "5 reales",
+        "name": "5 reales verde",
+        "others_code": null,
+        "image": "1852/15.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 16,
+    "fields": {
+        "issue": 3,
+        "edifil_code": "16",
+        "face_value": "6 reales",
+        "name": "6 reales azul",
+        "others_code": null,
+        "image": "1852/16.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 17,
+    "fields": {
+        "issue": 4,
+        "edifil_code": "17",
+        "face_value": "6 cuartos",
+        "name": "6 cuartos rosa",
+        "others_code": null,
+        "image": "1853/17.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 18,
+    "fields": {
+        "issue": 4,
+        "edifil_code": "18",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos violeta",
+        "others_code": null,
+        "image": "1853/18.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 19,
+    "fields": {
+        "issue": 4,
+        "edifil_code": "19",
+        "face_value": "2 reales",
+        "name": "2 reales rojo",
+        "others_code": null,
+        "image": "1853/19.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 20,
+    "fields": {
+        "issue": 4,
+        "edifil_code": "20",
+        "face_value": "5 reales",
+        "name": "5 reales verde",
+        "others_code": null,
+        "image": "1853/20.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 21,
+    "fields": {
+        "issue": 4,
+        "edifil_code": "21",
+        "face_value": "6 reales",
+        "name": "6 reales azul",
+        "others_code": null,
+        "image": "1853/21.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 22,
+    "fields": {
+        "issue": 5,
+        "edifil_code": "22",
+        "face_value": "1 cuarto",
+        "name": "1 cuarto bronce",
+        "others_code": null,
+        "image": "1853/22.jpg",
+        "market_value": null,
+        "colors": [
+            8
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 23,
+    "fields": {
+        "issue": 5,
+        "edifil_code": "23",
+        "face_value": "3 cuartos",
+        "name": "3 cuartos bronce",
+        "others_code": null,
+        "image": "1853/23.jpg",
+        "market_value": null,
+        "colors": [
+            8
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 24,
+    "fields": {
+        "issue": 6,
+        "edifil_code": "24",
+        "face_value": "6 cuartos",
+        "name": "6 cuartos carmín",
+        "others_code": null,
+        "image": "1854/24.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 25,
+    "fields": {
+        "issue": 6,
+        "edifil_code": "25",
+        "face_value": "2 reales",
+        "name": "2 reales rojo",
+        "others_code": null,
+        "image": "1854/25.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 26,
+    "fields": {
+        "issue": 6,
+        "edifil_code": "26",
+        "face_value": "5 reales",
+        "name": "5 reales verde",
+        "others_code": null,
+        "image": "1854/26.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 27,
+    "fields": {
+        "issue": 6,
+        "edifil_code": "27",
+        "face_value": "6 reales",
+        "name": "6 reales azul",
+        "others_code": null,
+        "image": "1854/27.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 28,
+    "fields": {
+        "issue": 7,
+        "edifil_code": "28",
+        "face_value": "1/2 onza",
+        "name": "1/2 onza amarillo",
+        "others_code": null,
+        "image": "1854/28.jpg",
+        "market_value": null,
+        "colors": [
+            10
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 29,
+    "fields": {
+        "issue": 7,
+        "edifil_code": "29",
+        "face_value": "4 cuartos",
+        "name": "1 onza rosa",
+        "others_code": null,
+        "image": "1854/29.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 30,
+    "fields": {
+        "issue": 7,
+        "edifil_code": "30",
+        "face_value": "4 onzas",
+        "name": "4 onzas verde",
+        "others_code": null,
+        "image": "1854/30.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 31,
+    "fields": {
+        "issue": 7,
+        "edifil_code": "31",
+        "face_value": "1 kibra",
+        "name": "1 libra azul",
+        "others_code": null,
+        "image": "1854/31.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 32,
+    "fields": {
+        "issue": 8,
+        "edifil_code": "32",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos verde",
+        "others_code": null,
+        "image": "1854/32.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 33,
+    "fields": {
+        "issue": 8,
+        "edifil_code": "33",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos carmín",
+        "others_code": null,
+        "image": "1854/33.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 34,
+    "fields": {
+        "issue": 8,
+        "edifil_code": "34",
+        "face_value": "1 real",
+        "name": "1 real azul",
+        "others_code": null,
+        "image": "1854/34.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 35,
+    "fields": {
+        "issue": 9,
+        "edifil_code": "35",
+        "face_value": "1/2 onza",
+        "name": "1/2 onza amarillo",
+        "others_code": null,
+        "image": "1855/35.jpg",
+        "market_value": null,
+        "colors": [
+            10
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 36,
+    "fields": {
+        "issue": 9,
+        "edifil_code": "36",
+        "face_value": "1 onza",
+        "name": "1 onza rosa",
+        "others_code": null,
+        "image": "1855/36.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 37,
+    "fields": {
+        "issue": 9,
+        "edifil_code": "37",
+        "face_value": "4 onzas",
+        "name": "4 onzas verde",
+        "others_code": null,
+        "image": "1855/37.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 38,
+    "fields": {
+        "issue": 9,
+        "edifil_code": "38",
+        "face_value": "1 libra",
+        "name": "1 libra azul",
+        "others_code": null,
+        "image": "1855/38.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 39,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "39",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos verde",
+        "others_code": null,
+        "image": "1855/39.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 40,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "40",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos carmín",
+        "others_code": null,
+        "image": "1855/40.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 41,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "41",
+        "face_value": "1 real",
+        "name": "1 real azul",
+        "others_code": null,
+        "image": "1855/41.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 42,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "42",
+        "face_value": "2 reales",
+        "name": "2 reales violeta",
+        "others_code": null,
+        "image": "1855/42.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 43,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "43",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos verde (fil. cruz)",
+        "others_code": null,
+        "image": "1855/43.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 44,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "44",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos carmín (fil. cruz)",
+        "others_code": null,
+        "image": "1855/44.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 45,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "45",
+        "face_value": "1 real",
+        "name": "1 real azul (fil. cruz)",
+        "others_code": null,
+        "image": "1855/45.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 46,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "46",
+        "face_value": "2 reales",
+        "name": "2 reales violeta (fil. cruz)",
+        "others_code": null,
+        "image": "1855/46.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 47,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "47",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos verde (sin fil.)",
+        "others_code": null,
+        "image": "1855/47.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 48,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "48",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos carmín (sin fil.)",
+        "others_code": null,
+        "image": "1855/48.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 49,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "49",
+        "face_value": "1 real",
+        "name": "1 real azul (sin fil.)",
+        "others_code": null,
+        "image": "1855/49.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 50,
+    "fields": {
+        "issue": 10,
+        "edifil_code": "50",
+        "face_value": "2 reales",
+        "name": "2 reales violeta (sin fil.)",
+        "others_code": null,
+        "image": "1855/50.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 51,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "51",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos verde",
+        "others_code": null,
+        "image": "1860/51.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 52,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "52",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos naranja",
+        "others_code": null,
+        "image": "1860/52.jpg",
+        "market_value": null,
+        "colors": [
+            11
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 53,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "53",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos naranja/carmín",
+        "others_code": null,
+        "image": "1860/53.jpg",
+        "market_value": null,
+        "colors": [
+            9
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 54,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "54",
+        "face_value": "19 cuartos",
+        "name": "19 cuartos salmón",
+        "others_code": null,
+        "image": "1860/54.jpg",
+        "market_value": null,
+        "colors": [
+            12
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 55,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "55",
+        "face_value": "1 real",
+        "name": "1 real azul",
+        "others_code": null,
+        "image": "1860/55.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 56,
+    "fields": {
+        "issue": 11,
+        "edifil_code": "56",
+        "face_value": "2 reales",
+        "name": "2 reales lila",
+        "others_code": null,
+        "image": "1860/56.jpg",
+        "market_value": null,
+        "colors": [
+            2
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 57,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "57",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos añil",
+        "others_code": null,
+        "image": "1862/57.jpg",
+        "market_value": null,
+        "colors": [
+            13
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 58,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "58",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos marrón",
+        "others_code": null,
+        "image": "1862/58.jpg",
+        "market_value": null,
+        "colors": [
+            14
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 59,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "59",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos azul",
+        "others_code": null,
+        "image": "1862/59.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 60,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "60",
+        "face_value": "19 cuartos",
+        "name": "19 cuartos rosa",
+        "others_code": null,
+        "image": "1862/60.jpg",
+        "market_value": null,
+        "colors": [
+            6
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 61,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "61",
+        "face_value": "1 real",
+        "name": "1 real chocolate",
+        "others_code": null,
+        "image": "1862/61.jpg",
+        "market_value": null,
+        "colors": [
+            15
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 62,
+    "fields": {
+        "issue": 12,
+        "edifil_code": "62",
+        "face_value": "2 reales",
+        "name": "2 reales verde",
+        "others_code": null,
+        "image": "1862/62.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 63,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "63",
+        "face_value": "2 cuartos",
+        "name": "2 cuartos añil",
+        "others_code": null,
+        "image": "1864/63.jpg",
+        "market_value": null,
+        "colors": [
+            13
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 64,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "64",
+        "face_value": "4 cuartos",
+        "name": "4 cuartos rojo",
+        "others_code": null,
+        "image": "1864/64.jpg",
+        "market_value": null,
+        "colors": [
+            3
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 65,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "65",
+        "face_value": "12 cuartos",
+        "name": "12 cuartos verde",
+        "others_code": null,
+        "image": "1864/65.jpg",
+        "market_value": null,
+        "colors": [
+            5
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 66,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "66",
+        "face_value": "19 cuartos",
+        "name": "19 cuartos violeta",
+        "others_code": null,
+        "image": "1864/66.jpg",
+        "market_value": null,
+        "colors": [
+            7
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 67,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "67",
+        "face_value": "1 real",
+        "name": "1 real marrón",
+        "others_code": null,
+        "image": "1864/67.jpg",
+        "market_value": null,
+        "colors": [
+            14
+        ]
+    }
+},
+{
+    "model": "stamps_api.stamp",
+    "pk": 68,
+    "fields": {
+        "issue": 13,
+        "edifil_code": "68",
+        "face_value": "2 reales",
+        "name": "2 reales azul",
+        "others_code": null,
+        "image": "1864/68.jpg",
+        "market_value": null,
+        "colors": [
+            4
+        ]
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 1,
+    "fields": {
+        "year": 1,
+        "date": "1850-01-01",
+        "name": "Isabel II (1850)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 1,
+        "description": "Primera emisión de sellos de correos en España, representando el busto de la Reina Isabel II con corona de laurel.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 2,
+    "fields": {
+        "year": 2,
+        "date": "1851-01-01",
+        "name": "Isabel II (1851)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 1,
+        "description": "Segunda emisión de sellos de España. El diseño cambia el busto de la Reina, que ahora luce una cinta en el pelo en lugar de la corona de laurel.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 3,
+    "fields": {
+        "year": 3,
+        "date": "1852-01-01",
+        "name": "Isabel II (1852)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Tercera emisión de España. El diseño presenta el busto de la Reina Isabel II mirando hacia la izquierda, dentro de un óvalo con la leyenda CORREOS 1852.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 4,
+    "fields": {
+        "year": 4,
+        "date": "1853-01-01",
+        "name": "Isabel II (1853)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Cuarta emisión de España. Se recupera el busto de la Reina Isabel II mirando a la derecha, pero con un diseño de peinado y corona distinto a los años anteriores, dentro de un marco rectangular con esquinas curvas.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 5,
+    "fields": {
+        "year": 4,
+        "date": "1853-01-01",
+        "name": "Escudo de Madrid (Correo Interior)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Emisión especial para el correo urbano de Madrid. Presenta el escudo de armas de la Villa y Corte con la corona real.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 6,
+    "fields": {
+        "year": 5,
+        "date": "1854-01-01",
+        "name": "Escudo de España (1854)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Emisión con el Escudo de España. Se introducen nuevos valores para diferentes tarifas postales.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 7,
+    "fields": {
+        "year": 5,
+        "date": "1854-07-01",
+        "name": "Escudo de España (1854)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Variante de color para el valor de 2 cuartos, necesaria para distinguirlo de otras emisiones.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 8,
+    "fields": {
+        "year": 5,
+        "date": "1854-11-01",
+        "name": "Escudo de España (1854)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Nuevos valores de la serie del Escudo de España para complementar la emisión de julio.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 9,
+    "fields": {
+        "year": 6,
+        "date": "1855-01-01",
+        "name": "Escudo de España (1855)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Serie con marca de agua lazos. El papel suele ser más grueso que en emisiones anteriores.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 10,
+    "fields": {
+        "year": 6,
+        "date": "1855-04-01",
+        "name": "Isabel II (1855)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 2,
+        "description": "Busto de la Reina Isabel II. Papel con marca de agua de lazos.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 11,
+    "fields": {
+        "year": 7,
+        "date": "1860-02-01",
+        "name": "Isabel II (1860-61)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 3,
+        "description": "Busto de la Reina Isabel II mirando a la izquierda en relieve (sin color) dentro de un marco circular.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 12,
+    "fields": {
+        "year": 8,
+        "date": "1862-07-16",
+        "name": "Isabel II (1862)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 4,
+        "description": "Busto de la Reina Isabel II mirando a la izquierda. El fondo del óvalo central tiene una trama de red.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "issues_api.issue",
+    "pk": 13,
+    "fields": {
+        "year": 9,
+        "date": "1864-01-16",
+        "name": "Isabel II (1864)",
+        "total_printed": null,
+        "market_value": null,
+        "stamp_type": 1,
+        "print_type": 4,
+        "description": "Busto de la Reina Isabel II hacia la izquierda. Fondo de líneas horizontales y flores de lis en las esquinas.",
+        "country": 1,
+        "note": null,
+        "perforation": "sin dentar"
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 1,
+    "fields": {
+        "year": 1850
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 2,
+    "fields": {
+        "year": 1851
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 3,
+    "fields": {
+        "year": 1852
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 4,
+    "fields": {
+        "year": 1853
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 5,
+    "fields": {
+        "year": 1854
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 6,
+    "fields": {
+        "year": 1855
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 7,
+    "fields": {
+        "year": 1860
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 8,
+    "fields": {
+        "year": 1862
+    }
+},
+{
+    "model": "years_api.year",
+    "pk": 9,
+    "fields": {
+        "year": 1864
+    }
+}
+]
