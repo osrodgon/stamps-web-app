@@ -96,7 +96,7 @@ class IssuesView(Logger, APIView):
             query_conditions |= Q(name__unaccent__icontains=issue_name)
             
         
-        issues = issues.filter(query_conditions).distinct().order_by('date')
+        issues = issues.filter(query_conditions).order_by('date')
         
         self.log.debug(Messages.Get.retrieved_all("issues", len(issues)))
         response = IssueResponseSerializer(issues, many=True)
