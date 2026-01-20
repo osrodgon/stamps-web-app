@@ -7,6 +7,9 @@ def enable_extensions(sender, **kwargs):
     # This runs every time you migrate
     from django.db import connection
     
+    if connection.vendor != 'postgresql':
+        return
+    
     extensions = ['unaccent', 'pg_trgm']
     with connection.cursor() as cursor:
         for ext in extensions:

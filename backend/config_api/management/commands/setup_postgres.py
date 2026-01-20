@@ -8,6 +8,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Checking PostgreSQL extensions...")
         
+        if connection.vendor != 'postgresql':
+            self.stdout.write(self.style.WARNING('This command is only for PostgreSQL. Skipping.'))
+            return
+        
         # Extensions we want to ensure exist
         extensions = ['unaccent', 'pg_trgm']
 
