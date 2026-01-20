@@ -1,19 +1,23 @@
-from rest_framework.views import APIView
+import unicodedata
+
+from common.api.messages import Messages
+from common.api.serializers.generic_response import (
+    GenericResponse,
+    GenericResponseSerializer,
+)
+from common.core.schemas import standardized_response
+from common.log.logger import Logger
+from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework import status
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
+from rest_framework.views import APIView
 
-from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
-from common.log.logger import Logger
-from common.core.schemas import standardized_response
-from common.api.messages import Messages
-
-from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
-import unicodedata
+from issues_api.models import Issue
 
 
 @extend_schema(tags=['Database Management'])
@@ -76,23 +80,23 @@ class IssuesView(Logger, APIView):
         self.log.debug(Messages.Get.retrieve_all("issues"))
         year = request.query_params.get('year', None)
         issue_name = request.query_params.get('name', '').strip() or None
+        query_conditions = Q()
+        issues = Issue.objects.all()
         
-        issues = Issue.objects.all().order_by('date')
         if year:
             try:
+                self.log.debug(f"Adding year filter to query:{year}")
                 year_int = int(year)
-                self.log.debug(f"Filtering issues by year {year_int}")
-                issues = issues.filter(year__year=year_int)
+                query_conditions |= Q(date__year=year_int)
             except ValueError:
                 self.log.warning(f"Invalid value for 'year' filter provided: {year}")
-                issues = issues.none()
+                
         if issue_name:
-            self.log.debug(f"Filtering issues by issue name {issue_name}")
-            normalized_search = self._normalize_string(issue_name)
-            issues = [
-                issue for issue in issues 
-                if normalized_search in self._normalize_string(issue.name)
-            ]
+            self.log.debug(f"Adding name filter to query:{issue_name}")
+            query_conditions |= Q(name__unaccent__icontains=issue_name)
+            
+        
+        issues = issues.filter(query_conditions).order_by('date')
         
         self.log.debug(Messages.Get.retrieved_all("issues", len(issues)))
         response = IssueResponseSerializer(issues, many=True)
