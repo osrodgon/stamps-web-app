@@ -57,21 +57,22 @@ class StampsService(BaseService):
         if api_key is None and token is None:
             self.log.error("API Key or token is required.")
             return None
-        
-        params = "?"        
+              
         if api_key is not None:
             headers = {'Authorization': f'Api-Key {api_key}'}
         else:
             headers = {'Authorization': f'Bearer {token}'}
-            
-        if not year and not series_name:
-            url = URLs.Backend.issues
+
+        query_parts = []
+        if year:
+            query_parts.append(f"year={year}")
+        if series_name:
+            query_parts.append(f"name={series_name}")
+
+        if query_parts:
+            url = f"{URLs.Backend.issues}?{'&'.join(query_parts)}"
         else:
-            if year:
-                params += f"year={year}&"
-            if series_name:
-                params += f"name={series_name}"
-            url = f"{URLs.Backend.issues}{params}"
+            url = URLs.Backend.issues
             
         return await self._make_request(
             request_type=self.GET,
