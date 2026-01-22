@@ -134,7 +134,26 @@ class TestIssuesAPI(AbstractApiUnitTest):
         url = f"{self.__get_url()}?year={year_to_filter}"
         response = api_client.get(url)
         
-        issues = Issue.objects.filter(year=year_to_filter)
+        issues = Issue.objects.filter(year__year=year_to_filter)
+        original = IssueResponseSerializer(issues, many=True)
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == len(original.data)
+        assert response.json()['data'] == original.data
+        assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_all_issues_with_year_range_filter_returns_200_ok_data(self, api_client, issues_table):
+        self.permission(granted=True)    
+
+        start_year = 2000
+        end_year = 2022
+        
+        url = f"{self.__get_url()}?year={start_year}-{end_year}"
+        response = api_client.get(url)
+        
+        issues = Issue.objects.filter(year__year__range=(start_year, end_year))
         original = IssueResponseSerializer(issues, many=True)
 
         assert response.json()['success'] == True
@@ -155,14 +174,16 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
         
-    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='unaccent is a PostgreSQL feature')
     def test_get_all_issues_with_name_filter_returns_200_ok_data(self, api_client, issues_table):
         self.permission(granted=True)
         name_to_filter = issues_table[0].name
         url = f"{self.__get_url()}?name={name_to_filter}"
         response = api_client.get(url)
         
-        issues = Issue.objects.filter(name__unaccent__icontains=name_to_filter)
+        if connection.vendor == 'postgresql':
+            issues = Issue.objects.filter(name__unaccent__icontains=name_to_filter)
+        else:
+            issues = Issue.objects.filter(name__icontains=name_to_filter)
         original = IssueResponseSerializer(issues, many=True)
 
         assert response.json()['success'] == True
@@ -172,7 +193,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['data'] == original.data
         assert response.status_code == status.HTTP_200_OK
 
-    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='unaccent is a PostgreSQL feature')
     def test_get_all_issues_with_non_existing_name_filter_returns_200_ok_no_data(self, api_client, issues_table):
         self.permission(granted=True)
         url = f"{self.__get_url()}?name=non_existing_name"
@@ -184,7 +204,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert len(response.json()['data']) == 0
         assert response.status_code == status.HTTP_200_OK
 
-    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='unaccent is a PostgreSQL feature')
+    # @pytest.mark.skipif(connection.vendor != 'postgresql', reason='unaccent is a PostgreSQL feature')
     def test_get_all_issues_with_year_and_name_filter_returns_200_ok_data(self, api_client, issues_table):
         self.permission(granted=True)
         year_to_filter = issues_table[0].year.year
@@ -192,15 +212,18 @@ class TestIssuesAPI(AbstractApiUnitTest):
         url = f"{self.__get_url()}?year={year_to_filter}&name={name_to_filter}"
         response = api_client.get(url)
 
-        issues = Issue.objects.filter(year=year_to_filter, name__unaccent__icontains=name_to_filter)
+        if connection.vendor == 'postgresql':
+            issues = Issue.objects.filter(year__year=year_to_filter, name__unaccent__icontains=name_to_filter)
+        else:
+            issues = Issue.objects.filter(year__year=year_to_filter, name__icontains=name_to_filter)
         original = IssueResponseSerializer(issues, many=True)
 
-    #     assert response.json()['success'] == True
-    #     assert response.json()['message'] == Messages.retrieved_successfully()
-    #     assert response.json()['errors'] == None
-    #     assert len(response.json()['data']) == len(original.data)
-    #     assert response.json()['data'] == original.data
-    #     assert response.status_code == status.HTTP_200_OK
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == len(original.data)
+        assert response.json()['data'] == original.data
+        assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_returns_500_database_error_connection_lost(self, api_client, issues_table):
         self.permission(granted=True)

@@ -1,6 +1,6 @@
 from core.translations import _
 from nicegui import ui
-from settings import BACKEND_SERVER_URL, NO_STAMP, IMAGE_DIR
+from settings import NO_STAMP
 
 class IssuesTable(ui.table):
     """
@@ -77,10 +77,14 @@ class IssuesTable(ui.table):
         self.props('flat bordered square')
         
         self.add_slot('body', self._get_body_template())
+        with self.add_slot('no-data'):
+            with ui.column().classes('w-full absolute-center items-center'):
+                ui.icon('search_off', size='80px').classes('text-gray-400')
+                ui.label(_('no_issues_found')).classes('text-2xl font-bold text-gray-500 uppercase tracking-wider')
         
         self.on('save', on_save)
         self.on('delete', on_delete)
- 
+
     def _get_body_template(self):
         """
         Generates the Vue HTML template for the table's body slots.
@@ -96,6 +100,7 @@ class IssuesTable(ui.table):
         Returns:
             str: A raw string containing the Vue template defined in Quasar/NiceGUI style.
         """
+        
         return f'''
             <q-tr :props="props">
                 <q-td auto-width>
@@ -256,8 +261,8 @@ class IssuesTable(ui.table):
                             <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 <div v-for="stamp in props.row.stamps" :key="stamp.id" 
                                     class="flex flex-col border border-slate-100 rounded-lg overflow-hidden hover:border-primary/40 transition-all duration-300 bg-white shadow-sm hover:shadow-md">
-                                    <div class="aspect-square bg-slate-50 flex items-center justify-center p-4 relative group">
-                                        <q-img :src="stamp.image ? '{IMAGE_DIR}' + (stamp.image.indexOf('stamps/') === 0 ? stamp.image.substring(7) : (stamp.image.indexOf('/stamps/') === 0 ? stamp.image.substring(8) : (stamp.image.indexOf('/') === 0 ? stamp.image : '/' + stamp.image))) : '{NO_STAMP}'" 
+                                    <div :key="stamp.id" class="aspect-square bg-slate-50 flex items-center justify-center p-4 relative group">
+                                        <q-img :src="stamp.url" 
                                             class="h-48 w-full rounded shadow-sm" 
                                             style="background-color: #505050;"
                                             fit="contain">

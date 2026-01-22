@@ -57,6 +57,5 @@ class BasePage(BaseUI):
 
         if len(response.json()['data']) == 0:
             self.log.debug('API request failed, no data returned from server.')
-            return False
 
         return True
