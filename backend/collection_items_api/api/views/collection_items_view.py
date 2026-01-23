@@ -58,6 +58,7 @@ class CollectionItemsView(Logger, APIView):
         """
         self.log.debug(Messages.Get.retrieve_all("collection items"))
         collection_items = CollectionItem.objects.all()
+        
         self.log.debug(Messages.Get.retrieved_all("collection items", len(collection_items)))
         response = CollectionItemsResponseSerializer(collection_items, many=True)
         
