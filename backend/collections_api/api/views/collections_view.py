@@ -101,7 +101,8 @@ class CollectionsView(Logger, APIView):
             )
         }
     )
-        # TODO. This need to be fixed. User is not in the API-KEY
+    
+    # TODO. This need to be fixed. User is not in the API-KEY
     def post(self, request:Request, *args, **kwargs) -> Response:
         password_hash = request.META.get('HTTP_X_API_KEY')
         user = self.__get_user(password_hash)

@@ -47,7 +47,7 @@ ALLOWED_HOSTS = [host.strip() for host in hosts.split(',') if host.strip()]
 hosts = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [host.strip() for host in hosts.split(',') if host.strip()]
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', '')
 
 # Application configuration
 LOG_LEVEL= os.getenv("LOG_LEVEL", "DEBUG")
@@ -116,6 +116,9 @@ LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
 # Application definition
 
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
