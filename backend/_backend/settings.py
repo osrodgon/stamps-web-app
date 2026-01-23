@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'django.contrib.postgres',
+    'django_extensions',
     'rest_framework',
     'rest_framework_api_key',
     'drf_spectacular',      # For Swagger documentation

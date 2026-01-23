@@ -67,6 +67,13 @@ class StampsManagerPage(ui.column, BasePage):
                 self.series_filter = ui.input(label=_("filter_series_year"), on_change=self.filter_issues)
                 self.series_filter.classes(self.CONTROL_WIDTH)
                 self.series_filter.props('dark clearable debounce=600')
+                with ui.tooltip().classes('bg-blue-grey-9 text-white px-4 py-2'):
+                    # Using HTML or multiple labels to simulate the list
+                    ui.label(_("filter_series_year_tooltip_header")).classes('font-bold mb-1')
+                    ui.label(_("filter_series_year_tooltip_1"))
+                    ui.label(_("filter_series_year_tooltip_2"))
+                    ui.label(_("filter_series_year_tooltip_3"))
+                    ui.label(_("filter_series_year_tooltip_4"))
 
                 with ui.column().classes('items-center gap-2 self-end'):
                     self.slider_container = ui.row().classes(f'items-center {self.TEXT_OPACITY} pb-3')
@@ -82,6 +89,23 @@ class StampsManagerPage(ui.column, BasePage):
         )
         self.table.on('expand', lambda e: self.handle_expand(e.args))
 
+    def _convert_year_pattern_to_range(self, year_pattern: str) -> str:
+        """Converts a year pattern to a range."""
+        s = year_pattern.strip()
+        
+        if len(s) == 4 and s.endswith('*') and s[:-1].isdigit():
+            prefix = s[:-1]
+            return f'{prefix}0-{prefix}9'
+
+        if len(s) == 3 and s.endswith('*') and s[:-1].isdigit():
+            prefix = s[:-1]
+            return f'{prefix}00-{prefix}99'
+
+        if len(s) == 4 and s.isdigit():
+            return int(s)
+
+        return None
+        
     async def handle_expand(self, row_data: dict) -> None:
         """
         Handles the expansion event for a row in the IssuesTable.
@@ -238,19 +262,20 @@ class StampsManagerPage(ui.column, BasePage):
             return
 
         normalized_series = self._normalize_string(series_input)
-        
-        # Determine if search is for a specific year or a series name
-        try:
-            target_year = int(normalized_series)
-            self.log.debug(f'Searching by year: {target_year}')
+        year_filter = self._convert_year_pattern_to_range(normalized_series)
+
+        if year_filter:
             self.enable_years_slider(False)
+            
+            self.log.debug(f'Searching by year or year range: {year_filter}')
+            
             response = await self.stamps_service.get_issues(
-                year=target_year, 
-                series_name=normalized_series, 
+                year=year_filter, 
                 api_key=API_MASTER_KEY
             )
-        except ValueError:
-            # Not a year, search by series name within the selected range
+        else:
+            self.enable_years_slider(True)
+
             year_range_val = self.years_range.value
             year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
             
@@ -261,6 +286,29 @@ class StampsManagerPage(ui.column, BasePage):
                 series_name=normalized_series, 
                 api_key=API_MASTER_KEY
             )
+        
+        # Determine if search is for a specific year or a series name
+        # try:
+        #     target_year = int(normalized_series)
+        #     self.log.debug(f'Searching by year: {target_year}')
+        #     self.enable_years_slider(False)
+        #     response = await self.stamps_service.get_issues(
+        #         year=target_year, 
+        #         series_name=normalized_series, 
+        #         api_key=API_MASTER_KEY
+        #     )
+        # except ValueError:
+        #     # Not a year, search by series name within the selected range
+        #     year_range_val = self.years_range.value
+        #     year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
+            
+        #     self.log.debug(f'Searching by series: "{normalized_series}" in range: {year_range_str}')
+        #     self.enable_years_slider(True)
+        #     response = await self.stamps_service.get_issues(
+        #         year=year_range_str, 
+        #         series_name=normalized_series, 
+        #         api_key=API_MASTER_KEY
+        #     )
 
         if self._is_valid_response(response):
             data = response.json().get('data', [])

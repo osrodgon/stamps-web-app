@@ -1,4 +1,3 @@
-from encodings.base64_codec import base64_decode
 from os import getenv
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_api_key.models import APIKey

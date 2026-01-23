@@ -23,7 +23,7 @@ class Command(BaseCommand):
         if pd.isna(color_string) or str(color_string).strip() == "":
             return []
         
-        colors_names = [c.strip() for c in str(color_string).split('|')]
+        colors_names = [c.strip() for c in re.split(r',| y | Y ', color_string) if c.strip()]
         
         color_objects = []
         for name in colors_names:
@@ -39,15 +39,38 @@ class Command(BaseCommand):
         if pd.isna(value) or str(value).strip() == "":
             return None
         
-        value_str = str(value).replace('.', '').strip()
-        
+        # If it's already a number (int or float), return it directly.
+        # This prevents the bug where a parsed float like 10.0 is converted 
+        # to string "10.0" and then cleaned to "100" by removing the dot.
+        if isinstance(value, (int, float)):
+            return value
+            
+        value_str = str(value).strip()
+        if value_str.lower() in ['n/a', 'nan']:
+            return None
+            
+        # Handle Spanish formatting if it's a string: 1.234,56 -> 1234.56
+        if ',' in value_str:
+            # Assume . is thousands and , is decimal
+            value_str = value_str.replace('.', '').replace(',', '.')
+        else:
+            # If it has only dots, decide if they are thousands or decimal.
+            # Multiple dots means they are thousands separators (e.g., 1.234.567)
+            if value_str.count('.') > 1:
+                value_str = value_str.replace('.', '')
+            # If it has exactly one dot, we treat it as a decimal point (e.g., 10.50)
+            # to be safe and avoid the common "multiply by 10" error.
+
         try:
-            return int(value_str)
+            # Try parsing as float first to preserve potential decimals
+            result = float(value_str)
+            # If it's exactly equivalent to an integer, return it as one
+            if result.is_integer():
+                return int(result)
+            return result
         except ValueError:
-            try:
-                return float(value_str.replace(',', '.'))
-            except ValueError:
-                return None
+            return None
+
             
     def clean_date(self, value):
         if pd.isna(value) or str(value).strip() == "":
@@ -120,7 +143,9 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Successfully exported all data!'))
 
     def handle(self, *args, **options):
-        df = pd.read_csv("backend/resources/stamps.csv", sep='|')
+        csv_file_path = os.path.join(settings.BASE_DIR, 'resources', 'stamps.csv')
+        df = pd.read_csv(csv_file_path, sep='|')
+        df = df.dropna(how='all')
         
         country_obj, _ = Country.objects.get_or_create(name="España")
         
@@ -128,7 +153,7 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 try:
                     issue_year = row['issue_year']
-                    
+                        
                     edifil_code = self.clean_string(row['edifil_code'])
                     issue_date = self.clean_date(row['issue_date'])
                     temp_issue_name = self.clean_string(row['issue_name'])
@@ -136,6 +161,8 @@ class Command(BaseCommand):
                         issue_name = temp_issue_name
                     issue_amount_printed = self.clean_number(row['issue_amount_printed'])
                     issue_description = self.clean_string(row['issue_description'])
+                    issue_notes = self.clean_string(row['issue_notes'])
+                    issue_market_value = self.clean_number(row['issue_market_value'])
                     
                     stamp_print_type = self.clean_string(row['stamp_print_type'])
                     stamp_type = self.clean_string(row['stamp_type'])
@@ -163,12 +190,14 @@ class Command(BaseCommand):
                     issue_obj, created = Issue.objects.get_or_create(
                         name=issue_name,
                         date=issue_date,
-                        total_printed=issue_amount_printed,
                         defaults={
                             'year': issue_year_obj,
                             'perforation': stamp_perforation,
                             'print_type': issue_print_type_obj,
+                            'market_value': issue_market_value,
+                            'total_printed': issue_amount_printed,
                             'description': issue_description,
+                            'note': issue_notes,
                             'country': country_obj,
                             'stamp_type': stamp_type_obj
                         }
@@ -190,22 +219,16 @@ class Command(BaseCommand):
                     )
                         
                     if stamp_colors_raw:
-                        colors = self.clean_and_get_colors(stamp_colors_raw)
-                        
-                        color_objects = []
-                        for color in colors:
-                            color_obj, _ = Color.objects.get_or_create(name=color)
-                            color_objects.append(color_obj)
-                            
+                        color_objects = self.clean_and_get_colors(stamp_colors_raw)
                         stamp_obj.colors.set(color_objects)
 
                     if index % 500 == 0 and index:
-                        print(f"{index} rows processed...")
+                        self.stdout.write(f"{index} rows processed...")
                     
                 except Exception as e:
-                    print(f"❌ Error in row {index} ({row.get('nombre_sello')}): {e}")
+                    self.stdout.write(self.style.ERROR(f"❌ Error in row {index + 2} ({row.get('stamp_name')}): {e}"))
             
-        print(f"Migration completed. {index} rows processed.\n")
+        self.stdout.write(self.style.SUCCESS(f"Migration completed. {index} rows processed.\n"))
         
-        print("Exporting data to json...")
+        self.stdout.write("Exporting data to json...")
         self.export_to_json()
