@@ -15,7 +15,7 @@ class Command(BaseCommand):
             if 'migrations' in root:
                 for file in files:
                     # Target .py and .pyc files, but keep __init__.py
-                    if (file.endswith(".py") or file.endswith(".pyc")) and file != "__init__.py":
+                    if file.endswith(('.py', '.pyc')) and file != "__init__.py":
                         file_path = os.path.join(root, file)
                         try:
                             os.remove(file_path)
