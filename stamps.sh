@@ -44,7 +44,7 @@ show_usage() {
     echo "  rebuild            Forces a fresh build of test images (no-cache)"
     echo ""
     echo "Commands (for prod):"
-    echo "  release            Builds and pushes multi-arch images to Docker Hub"
+    echo "  release [-q|--quiet]   Builds and pushes multi-arch images to Docker Hub"
     exit 1
 }
 
@@ -182,6 +182,12 @@ do_test_rebuild() {
 }
 
 do_prod_release() {
+    local build_args=""
+    if [[ "$1" == "--quiet" || "$1" == "-q" ]]; then
+        echo "🤫 Quiet mode enabled. Suppressing build output."
+        build_args="--quiet"
+    fi
+
     local platforms="linux/amd64,linux/arm64"
     local backend_img="osrogon/stamps-backend:latest"
     local frontend_img="osrogon/stamps-frontend:latest"
@@ -200,14 +206,14 @@ do_prod_release() {
 
     # Build and Push Backend
     echo "📦 Building and pushing Multi-Arch Backend image..."
-    docker buildx build --platform "$platforms" \
+    docker buildx build $build_args --platform "$platforms" \
         -f backend/Dockerfile.prod \
         -t "$backend_img" \
         --push backend || { docker buildx use default; fail "Backend release failed"; }
 
     # Build and Push Frontend
     echo "📦 Building and pushing Multi-Arch Frontend image..."
-    docker buildx build --platform "$platforms" \
+    docker buildx build $build_args --platform "$platforms" \
         -f frontend/Dockerfile.prod \
         -t "$frontend_img" \
         --push frontend || { docker buildx use default; fail "Frontend release failed"; }
@@ -252,7 +258,7 @@ elif [ "$ENV" == "test" ]; then
     esac
 elif [ "$ENV" == "prod" ]; then
     case "$CMD" in
-        release)   do_prod_release ;;
+        release)   do_prod_release "$ARGS" ;;
         *)         show_usage ;;
     esac
 fi

@@ -264,28 +264,32 @@ class StampsManagerPage(ui.column, BasePage):
         normalized_series = self._normalize_string(series_input)
         year_filter = self._convert_year_pattern_to_range(normalized_series)
 
-        if year_filter:
-            self.enable_years_slider(False)
-            
-            self.log.debug(f'Searching by year or year range: {year_filter}')
-            
-            response = await self.stamps_service.get_issues(
-                year=year_filter, 
-                api_key=API_MASTER_KEY
-            )
-        else:
-            self.enable_years_slider(True)
+        self.table.loading = True
+        try:
+            if year_filter:
+                self.enable_years_slider(False)
+                
+                self.log.debug(f'Searching by year or year range: {year_filter}')
+                
+                response = await self.stamps_service.get_issues(
+                    year=year_filter, 
+                    api_key=API_MASTER_KEY
+                )
+            else:
+                self.enable_years_slider(True)
 
-            year_range_val = self.years_range.value
-            year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
-            
-            self.log.debug(f'Searching by series: "{normalized_series}" in range: {year_range_str}')
-            self.enable_years_slider(True)
-            response = await self.stamps_service.get_issues(
-                year=year_range_str, 
-                series_name=normalized_series, 
-                api_key=API_MASTER_KEY
-            )
+                year_range_val = self.years_range.value
+                year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
+                
+                self.log.debug(f'Searching by series: "{normalized_series}" in range: {year_range_str}')
+                self.enable_years_slider(True)
+                response = await self.stamps_service.get_issues(
+                    year=year_range_str, 
+                    series_name=normalized_series, 
+                    api_key=API_MASTER_KEY
+                )
+        finally:
+            self.table.loading = False
 
         if self._is_valid_response(response):
             data = response.json().get('data', [])

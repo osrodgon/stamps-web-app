@@ -39,7 +39,7 @@ class IssuesTable(ui.table):
             {'name': 'delete', 'label': _('actions'), 'field': 'delete', 'align': 'right', 'width': '100%'},
         ]
         
-        super().__init__(columns=columns, rows=[], row_key='id')
+        super().__init__(columns=columns, rows=[], row_key='id', pagination={'rowsPerPage': 15})
         
         # Custom CSS for the table
         ui.add_head_html('''
@@ -69,12 +69,31 @@ class IssuesTable(ui.table):
                 .issues-table tbody tr:hover {
                     background-color: #e2e8f0; /* Slate 200 */
                 }
+                .issues-table .q-table__bottom {
+                    background-color: #f8fafc;
+                    border-top: 1px solid #e2e8f0;
+                    font-weight: 500;
+                    color: #475569; /* Slate 600 */
+                }
+                .issues-table .q-table__control {
+                    font-size: 0.875rem;
+                }
             </style>
         ''')
         
         self.classes('issues-table w-full flex-grow')
         self.style('height: 100%;')
-        self.props('flat bordered square')
+        
+        # Localized pagination labels
+        rows_per_page_label = _('pagination_rows_per_page')
+        of_label = _('pagination_of')
+        
+        self.props(f'''
+            flat bordered square 
+            :rows-per-page-options="[10, 15, 20, 50, 100, 0]"
+            rows-per-page-label="{rows_per_page_label}"
+            :pagination-label="(first, end, total) => first + '-' + end + ' {of_label} ' + total"
+        ''')
         
         self.add_slot('body', self._get_body_template())
         with self.add_slot('no-data'):
