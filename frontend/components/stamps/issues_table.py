@@ -191,7 +191,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="market_value" :props="props">
-                    ${{{{ props.row.market_value }}}}
+                    {{{{ props.row.market_value }}}} €
                     <q-popup-edit v-model="props.row.market_value" v-slot="scope" buttons
                         label-set="{'ok'}" label-cancel="{'close'}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value', value: val}})">
@@ -278,7 +278,7 @@ class IssuesTable(ui.table):
                                         <div class="text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[2.5rem]">{{{{ stamp.name }}}}</div>
                                         <div class="flex items-center justify-between border-t border-slate-50 pt-2">
                                             <span class="text-xs text-slate-600 font-medium uppercase tracking-tight">{{{{ stamp.face_value }}}}</span>
-                                            <span v-if="stamp.market_value" class="text-sm font-mono text-primary font-black">${{{{ stamp.market_value }}}}</span>
+                                            <span v-if="stamp.market_value" class="text-sm font-mono text-primary font-black">{{{{ stamp.market_value }}}} €</span>
                                         </div>
                                         <div v-if="stamp.colors && stamp.colors.length" class="mt-1 flex flex-wrap gap-1.5">
                                             <span v-for="color in stamp.colors" :key="color" class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full border border-slate-200">

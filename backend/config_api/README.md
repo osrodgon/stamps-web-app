@@ -149,3 +149,30 @@ Permanently deletes a configuration entry.
 *   **Error Responses:**
     *   **403 Forbidden:** If the API key is invalid or missing.
     *   **404 Not Found:** If no configuration entry with the given ID exists.
+
+---
+
+## Management Commands
+
+The `config_api` app provides several project-specific management commands to help with database maintenance, data import, and environment setup. All commands are prefixed with `stamps_` to distinguish them from standard Django commands.
+
+### `python manage.py stamps_setup_postgres`
+Enables necessary PostgreSQL extensions (`unaccent` and `pg_trgm`).
+
+### `python manage.py stamps_clean_migrations`
+Removes all migration files from the local directory structure (excluding `__init__.py`). This is useful when resetting the database schema from scratch.
+
+### `python manage.py stamps_clear_data`
+Safely truncates all domain-specific tables (Stamps, Issues, Collections, etc.) and resets their ID sequences.
+
+### `python manage.py stamps_import_csv`
+Main data ingestion command. It reads the catalog from `backend/resources/stamps.csv` and populates the database with Years, Issues, Stamps, Colors, etc.
+
+### `python manage.py stamps_create_admin_user`
+An interactive prompt to create a project-specific administrator in the `UserCollection` model.
+
+### `python manage.py stamps_delete_superuser {username}`
+Deletes a Django superuser from the system based on the provided username.
+
+### `python manage.py stamps_runclearserver`
+A convenience wrapper that clears the `UserToken` table (invalidating all active sessions) before starting the standard Django development server.
