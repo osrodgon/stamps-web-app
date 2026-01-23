@@ -21,7 +21,7 @@ class Command(BaseCommand):
                             os.remove(file_path)
                             self.stdout.write(self.style.SUCCESS(f"✅ Deleted: {file_path}"))
                             count += 1
-                        except Exception as e:
+                        except OSError as e:
                             self.stdout.write(self.style.ERROR(f"❌ Error deleting {file_path}: {e}"))
 
         self.stdout.write(self.style.SUCCESS(f"\n✨ Cleanup complete. {count} migration files removed."))
