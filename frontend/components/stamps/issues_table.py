@@ -35,7 +35,7 @@ class IssuesTable(ui.table):
             {'name': 'stamp_type', 'label': _('stamp_type'), 'field': 'stamp_type', 'align': 'left','width': '1px'},
             {'name': 'print_type', 'label': _('print_type'), 'field': 'print_type', 'align': 'left','width': '1px'},
             {'name': 'total_printed', 'label': _('total_printed'), 'field': 'total_printed', 'align': 'left','width': '1px'},
-            {'name': 'market_value', 'label': _('value'), 'field': 'market_value', 'align': 'left', 'width': '1px'},
+            {'name': 'market_value', 'label': _('value'), 'field': 'market_value', 'align': 'right', 'width': '1px'},
             {'name': 'delete', 'label': _('actions'), 'field': 'delete', 'align': 'right', 'width': '100%'},
         ]
         
@@ -191,7 +191,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="market_value" :props="props">
-                    {{{{ props.row.market_value }}}} €
+                    {{{{ props.row.market_value }}}}
                     <q-popup-edit v-model="props.row.market_value" v-slot="scope" buttons
                         label-set="{'ok'}" label-cancel="{'close'}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value', value: val}})">

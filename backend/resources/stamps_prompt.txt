@@ -22,10 +22,11 @@ issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_s
    - issue_name solo debe de aparecer en el primer sello de la serie, para el resto de sellos de la misma serie, dejarlo en blanco.
    - issue_description solo debe de aparecer en el primer sello de la serie, para el resto de sellos de la misma serie, dejarlo en blanco
    - issue_date debe de estar en formato YYYY/MM/DD
-   - stamp_type es el tipo de sello (sello, carné, hoja bloque, ....
+   - stamp_type es el tipo de sello (sello, carné, hoja bloque, ....)
    - issue_market_value es el valor aproximado de la serie en euros. NO TE INVENTES VALORES, PON n/a SI NO LO SABES
    - stamp_market_value es el valor aproximado del sello en euros. NO TE INVENTES VALORES, PON n/a SI NO LO SABES
    - issue_notes contiene anotaciones para la serie como datos historicos de la serie y comentarios sobre los sellos de la serie, por lo tanto, solo puede aparecer en el primer sello de la serie.
-   - SI cualquiera de los campos empieza con una letra, esta primera letra DEBE DE ESTAR EN MAYUSCULAS.
+   - Si en cualquiera de los campos empieza con una letra, esta primera letra DEBE DE ESTAR EN MAYUSCULAS.
+   - Si en cualquiera de los campos hay numeros romanos, estos DEBEN DE ESTAR EN MAYUSCULAS.
 
 5. Restricción Geográfica: Solo sellos de España (Excluir dependencias postales o colonias a menos que se especifique lo contrario).

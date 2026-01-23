@@ -286,29 +286,6 @@ class StampsManagerPage(ui.column, BasePage):
                 series_name=normalized_series, 
                 api_key=API_MASTER_KEY
             )
-        
-        # Determine if search is for a specific year or a series name
-        # try:
-        #     target_year = int(normalized_series)
-        #     self.log.debug(f'Searching by year: {target_year}')
-        #     self.enable_years_slider(False)
-        #     response = await self.stamps_service.get_issues(
-        #         year=target_year, 
-        #         series_name=normalized_series, 
-        #         api_key=API_MASTER_KEY
-        #     )
-        # except ValueError:
-        #     # Not a year, search by series name within the selected range
-        #     year_range_val = self.years_range.value
-        #     year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
-            
-        #     self.log.debug(f'Searching by series: "{normalized_series}" in range: {year_range_str}')
-        #     self.enable_years_slider(True)
-        #     response = await self.stamps_service.get_issues(
-        #         year=year_range_str, 
-        #         series_name=normalized_series, 
-        #         api_key=API_MASTER_KEY
-        #     )
 
         if self._is_valid_response(response):
             data = response.json().get('data', [])
@@ -317,6 +294,8 @@ class StampsManagerPage(ui.column, BasePage):
             for row in data:
                 row['opts_print_types'] = self.print_types
                 row['opts_stamp_types'] = self.stamp_types
+                if row['market_value']:
+                    row['market_value'] = f"{row['market_value']} €"
             
             self.all_issues = data
             self.table.rows[:] = data

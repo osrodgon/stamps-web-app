@@ -44,6 +44,11 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 hosts = os.getenv("ALLOWED_HOSTS", "localhost")
 ALLOWED_HOSTS = [host.strip() for host in hosts.split(',') if host.strip()]
 
+hosts = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [host.strip() for host in hosts.split(',') if host.strip()]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Application configuration
 LOG_LEVEL= os.getenv("LOG_LEVEL", "DEBUG")
 LOG_FILE_NAME="backend.log"
@@ -109,6 +114,12 @@ LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
 
 # Application definition
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -192,6 +203,7 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

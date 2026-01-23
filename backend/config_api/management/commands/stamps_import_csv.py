@@ -153,8 +153,13 @@ class Command(BaseCommand):
             for index, row in df.iterrows():
                 try:
                     issue_year = row['issue_year']
+
+                    try:
+                        temp_edifil_code = int(row['edifil_code'])
+                    except ValueError:
+                        temp_edifil_code = row['edifil_code']
                         
-                    edifil_code = self.clean_string(row['edifil_code'])
+                    edifil_code = self.clean_string(temp_edifil_code)
                     issue_date = self.clean_date(row['issue_date'])
                     temp_issue_name = self.clean_string(row['issue_name'])
                     if temp_issue_name:
