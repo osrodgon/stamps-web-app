@@ -3,13 +3,13 @@ REQUEST_FAILED = "Request failed"
 LOGIN_RESPONSE_200_SUCCESS = {
     "data": {
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ",
-        "user": {
-            "id": 1,
+        "payload": {
+            "user_id": 1,
             "username": "testuser",
             "email": "test@email.com",
             "first_name": "Test",
             "last_name": "User",
-            "registration_date": "2025-12-02T21:32:04.607Z",
+            "is_admin": True,
             "is_active": True
         }
     },
@@ -21,13 +21,13 @@ LOGIN_RESPONSE_200_SUCCESS = {
 LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN = {
     "data": {
         "token": None,
-        "user": {
-            "id": 1,
+        "payload": {
+            "user_id": 1,
             "username": "testuser",
             "email": "test@email.com",
             "first_name": "Test",
             "last_name": "User",
-            "registration_date": "2025-12-02T21:32:04.607Z",
+            "is_admin": True,
             "is_active": True
         }
     },
@@ -70,6 +70,29 @@ LOGIN_RESPONSE_500_SERVER_ERROR = {
         "field": 'detail',
         "message": "Database connection lost.",
         "code": "connection_lost"
+        }
+    ],
+    "data": None
+}
+SIGNUP_RESPONSE_201_SUCCESS = {
+    "success": True,
+    "message": "User created successfully",
+    "errors": None,
+    "data": {
+        "id": 2,
+        "username": "newuser",
+        "email": "new@email.com"
+    }
+}
+
+SIGNUP_RESPONSE_400_FAIL = {
+    "success": False,
+    "message": REQUEST_FAILED,
+    "errors": [
+        {
+            "field": "username",
+            "message": "A user with that username already exists.",
+            "code": "unique"
         }
     ],
     "data": None

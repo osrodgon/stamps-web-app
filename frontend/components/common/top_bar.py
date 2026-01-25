@@ -2,7 +2,7 @@ from base.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
 from nicegui import app, ui
-from settings import ORG_LOGO   
+from settings import ORG_LOGO, USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME   
 
 
 class TopBar(ui.header, BaseUI):
@@ -30,9 +30,9 @@ class TopBar(ui.header, BaseUI):
         self.log.debug("Initializing TopBar...")
 
         user_full_name = (
-            app.storage.user.get('first_name', 'Unknown').capitalize() + ' ' + app.storage.user.get('last_name', 'Unknown').capitalize()
+            app.storage.user.get(USER_FIRST_NAME, 'Unknown').capitalize() + ' ' + app.storage.user.get(USER_LAST_NAME, 'Unknown').capitalize()
         ).strip()
-        user_email = app.storage.user.get('email', 'Unknown')
+        user_email = app.storage.user.get(USER_EMAIL, 'Unknown')
 
         # The drawer that will be used as menu
         with ui.right_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:

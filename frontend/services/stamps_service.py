@@ -1,5 +1,7 @@
 from core.urls import URLs
 from services.base_service import BaseService
+from settings import API_MASTER_KEY, USER_JWT_TOKEN
+from nicegui import app
 
 
 class StampsService(BaseService):
@@ -9,60 +11,36 @@ class StampsService(BaseService):
     Provides methods for fetching foundational stamp data including years, 
     published issues, print methods, and stamp categories.
     """
+
+    def _get_headers(self):
+        """Helper to construct authentication headers."""
+        return {'Authorization': f'Api-Key {API_MASTER_KEY}'}
     
-    async def get_years(self, api_key: str = None, token: str = None):
+    async def get_years(self):
         """
         Fetches the available years from the backend.
         
-        This method retrieves a list of years for which stamp issues exist. Authentication
-        is required via either an API key or a user token.
-
-        Args:
-            api_key (str, optional): The API master key for authentication. Defaults to None.
-            token (str, optional): The user's JWT token for authentication. Defaults to None.
-
         Returns:
-            requests.Response | None:   The response object containing the list of years on success, 
-                                        or None if the request fails or authentication is missing.
+            requests.Response | None:   The response object containing the list of years.
         """
-        if api_key is None and token is None:
-            self.log.error("API Key or token is required.")
-            return None
-        
-        if api_key is not None:
-            headers = {'Authorization': f'Api-Key {api_key}'}
-        else:
-            headers = {'Authorization': f'Bearer {token}'}
-            
         return await self._make_request(
             request_type=self.GET,
             url=URLs.Backend.years,
             payload=None,
-            headers=headers
+            headers=self._get_headers()
         )
 
-    async def get_issues(self, year: int=None, series_name: str=None, api_key: str = None, token: str = None):
+    async def get_issues(self, year: int=None, series_name: str=None):
         """
         Retrieves stamp issues, optionally filtered by year or series name.
 
         Args:
             year (int, optional): The exact year to filter by. Defaults to None.
             series_name (str, optional): A substring search for the series name. Defaults to None.
-            api_key (str, optional): Authentication master key.
-            token (str, optional): User JWT token.
 
         Returns:
             requests.Response|None: The API response or None on auth/network failure.
         """
-        if api_key is None and token is None:
-            self.log.error("API Key or token is required.")
-            return None
-              
-        if api_key is not None:
-            headers = {'Authorization': f'Api-Key {api_key}'}
-        else:
-            headers = {'Authorization': f'Bearer {token}'}
-
         query_parts = []
         if year:
             query_parts.append(f"year={year}")
@@ -78,72 +56,44 @@ class StampsService(BaseService):
             request_type=self.GET,
             url=url,
             payload=None,
-            headers=headers
+            headers=self._get_headers()
         )
         
-    async def get_print_types(self, api_key: str = None, token: str = None):
+    async def get_print_types(self):
         """
         Fetches the available print types from the backend.
         
         This method retrieves the different types of printing methods used for stamps.
-        Authentication is required via either an API key or a user token.
-
-        Args:
-            api_key (str, optional): The API master key for authentication. Defaults to None.
-            token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
             requests.Response | None:   The response object containing the print types on success, 
                                         or None if the request fails or authentication is missing.
         """
-        if api_key is None and token is None:
-            self.log.error("API Key or token is required.")
-            return None
-        
-        if api_key is not None:
-            headers = {'Authorization': f'Api-Key {api_key}'}
-        else:
-            headers = {'Authorization': f'Bearer {token}'}
-        
         return await self._make_request(
             request_type=self.GET,
             url=URLs.Backend.print_types,
             payload=None,
-            headers=headers
+            headers=self._get_headers()
         )
 
-    async def get_stamp_types(self, api_key: str = None, token: str = None):
+    async def get_stamp_types(self):
         """
         Fetches the available stamp types from the backend.
         
         This method retrieves the different types of stamps available.
-        Authentication is required via either an API key or a user token.
-
-        Args:
-            api_key (str, optional): The API master key for authentication. Defaults to None.
-            token (str, optional): The user's JWT token for authentication. Defaults to None.
 
         Returns:
             requests.Response | None:   The response object containing the stamp types on success, 
                                         or None if the request fails or authentication is missing.
         """
-        if api_key is None and token is None:
-            self.log.error("API Key or token is required.")
-            return None
-        
-        if api_key is not None:
-            headers = {'Authorization': f'Api-Key {api_key}'}
-        else:
-            headers = {'Authorization': f'Bearer {token}'}
-        
         return await self._make_request(
             request_type=self.GET,
             url=URLs.Backend.stamp_types,
             payload=None,
-            headers=headers
+            headers=self._get_headers()
         )
 
-    async def get_stamps(self, issue_id: int, api_key: str = None, token: str = None):
+    async def get_stamps(self, issue_id: int):
         """
         Fetches the individual stamps belonging to a specific issue.
 
@@ -152,28 +102,15 @@ class StampsService(BaseService):
 
         Args:
             issue_id (int): The unique identifier of the issue.
-            api_key (str, optional): Authentication master key.
-            token (str, optional): User JWT token.
 
         Returns:
             requests.Response|None: The API response object or None on failure.
         """
-        if api_key is None and token is None:
-            self.log.error("API Key or token is required.")
-            return None
-        
-        if api_key is not None:
-            headers = {'Authorization': f'Api-Key {api_key}'}
-        else:
-            headers = {'Authorization': f'Bearer {token}'}
-            
         url = f"{URLs.Backend.stamps}?issue_id={issue_id}"
 
         return await self._make_request(
             request_type=self.GET,
             url=url,
             payload=None,
-            headers=headers
+            headers=self._get_headers()
         )
-
-

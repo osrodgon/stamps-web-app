@@ -3,6 +3,10 @@
 # --- Configuration ---
 NETWORK="stamps-network"
 
+# Ensure we are in the script's directory (Project Root)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT" || { echo "❌ Failed to change directory to project root: $PROJECT_ROOT"; exit 1; }
+
 # Backend
 BACKEND_COMPOSE="-f backend/docker-compose.yml -f backend/docker-compose.dev.yml"
 BACKEND_SVC="stamps-backend"
@@ -238,8 +242,6 @@ ARGS=$@
 if [[ "$ENV" != "dev" && "$ENV" != "test" && "$ENV" != "prod" ]]; then
     fail "Environment '$ENV' not supported. Use 'dev', 'test', or 'prod'."
 fi
-
-cd "$(dirname "$(readlink -f "$0")")"
 
 if [ "$ENV" == "dev" ]; then
     case "$CMD" in

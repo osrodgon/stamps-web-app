@@ -10,6 +10,7 @@ class URLs:
         stamps =            f"{BACKEND_URL}/stamps/"
         stamp_types =       f"{BACKEND_URL}/stamps_type/"
         years =             f"{BACKEND_URL}/years/"
+        config =            f"{BACKEND_URL}/config/"
         
     class Frontend:
         collections =       "/collections"
