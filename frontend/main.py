@@ -11,7 +11,11 @@ from pages.auth.login_page import LoginPage
 from pages.auth.signup_page import SignUpPage
 from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
-from settings import APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN
+from services.config_service import ConfigService
+from settings import (
+    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN,
+    USER_IS_ADMIN, USER_JWT_TOKEN
+)
 
 
 class StampsApp():    
@@ -61,7 +65,7 @@ class StampsApp():
         Returns:
             bool: True if authenticated, False otherwise.
         """
-        return app.storage.user.get('jwt_token') is not None
+        return app.storage.user.get(USER_JWT_TOKEN) is not None
     
     @staticmethod
     def register_routes():
@@ -83,7 +87,6 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
-            app.storage.user['language'] = 'es'
             LoginPage()
         
         @page(URLs.Frontend.signup)
@@ -97,13 +100,14 @@ class StampsApp():
             SignUpPage()
         
         @page(URLs.Frontend.logout)    
-        def logout(request: Request):
+        async def logout(request: Request):
             """
             Logs out the user and redirects to the login page.
 
             Args:
                 request (Request): The FastAPI request object.
             """
+            await ConfigService().save_user_config()
             app.storage.user.clear()
             ui.navigate.to(URLs.Frontend.login)
             
@@ -126,8 +130,6 @@ class StampsApp():
             Args:
                 request (Request): The FastAPI request object.
             """
-            app.storage.user['language'] = 'es'
-            
             if MOCK_LOGIN:
                 """
                 This is just for testing and developing purposes.
@@ -141,7 +143,7 @@ class StampsApp():
                 await test.mock_login()
             else :
                 if StampsApp.check_authentication(request): 
-                    if app.storage.user.get('is_admin', False):
+                    if app.storage.user.get(USER_IS_ADMIN, False):
                         ui.navigate.to(URLs.Frontend.stamps_manager)
                     else:
                         ui.navigate.to(URLs.Frontend.collections)

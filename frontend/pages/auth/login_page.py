@@ -5,8 +5,13 @@ from components.branding.footer_branding import FooterBranding
 from core.translations import _
 from core.urls import URLs
 from nicegui import app, ui
-from settings import BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER
+from settings import (
+    BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER, 
+    USER_NAME, USER_IS_ADMIN, USER_FIRST_NAME, USER_LANGUAGE,
+    USER_LAST_NAME, USER_EMAIL, USER_JWT_TOKEN, USER_ID
+)
 from services.auth_service import AuthService
+from services.config_service import ConfigService
 
 
 class LoginPage(ui.column, BasePage):
@@ -32,7 +37,8 @@ class LoginPage(ui.column, BasePage):
         self.log.debug('Initializing LoginPage...')
         super().__init__()
         self.auth_service = AuthService()
-        
+        self.config = ConfigService()
+            
         with self.classes('w-full h-screen p-4'):
             self.set_background(BACKGROUND_IMG)
             
@@ -66,7 +72,7 @@ class LoginPage(ui.column, BasePage):
                 data = response.json()['data']
                 self.log.debug(f"User Info: {data}")                
                 
-                if self.login_success(data):
+                if await self.login_success(data):
                     self.log.debug('Login successful')
                     return response
                 else:
@@ -87,7 +93,7 @@ class LoginPage(ui.column, BasePage):
             self.login_card.notify(error_msg, 'negative')
             return error_msg
         
-    def login_success(self, data: dict):
+    async def login_success(self, data: dict):
         """
         Handles a successful login response from the backend API.
 
@@ -108,18 +114,21 @@ class LoginPage(ui.column, BasePage):
         first_name = data.get('payload', {}).get('first_name', "No name")
         last_name = data.get('payload', {}).get('last_name', "No last name")
         email = data.get('payload', {}).get('email', "No email")
+        user_id = data.get('payload', {}).get('user_id', None)
         
         if token is None:
             error_msg = _('token_missing')
             self.log.error(error_msg)
             return False
         
-        app.storage.user['jwt_token'] = token
-        app.storage.user['is_admin'] = is_admin
-        app.storage.user['username'] = username
-        app.storage.user['first_name'] = first_name
-        app.storage.user['last_name'] = last_name
-        app.storage.user['email'] = email
+        app.storage.user[USER_JWT_TOKEN] = token
+        app.storage.user[USER_IS_ADMIN] = is_admin
+        app.storage.user[USER_NAME] = username
+        app.storage.user[USER_FIRST_NAME] = first_name
+        app.storage.user[USER_LAST_NAME] = last_name
+        app.storage.user[USER_EMAIL] = email
+        app.storage.user[USER_ID] = user_id
+        await self.config.load_user_config()
         
         self.log.debug(f"Token: {token[:10]}...")
         
@@ -154,7 +163,7 @@ class LoginPage(ui.column, BasePage):
             if response and response.status_code == requests.codes.ok:
                 data = response.json()['data']
                 self.log.debug(f"User Info: {data}")
-                self.login_success(data)
+                await self.login_success(data)
             else:
                 error_msg = _('response_mock_login')
                 self.log.error(error_msg)

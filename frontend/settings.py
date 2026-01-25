@@ -7,6 +7,15 @@ try:
 except ImportError:
     pass
 
+# User settings
+USER_NAME = 'username'
+USER_IS_ADMIN = 'is_admin'
+USER_FIRST_NAME = 'first_name'
+USER_LAST_NAME = 'last_name'
+USER_EMAIL = 'email'
+USER_JWT_TOKEN = 'jwt_token'
+USER_LANGUAGE = 'language'
+USER_ID = 'id'
 
 # Application configuration
 APP_NAME = "Stamps App"

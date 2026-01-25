@@ -3,6 +3,10 @@
 # Exit on error
 set -e
 
+# Ensure we are in the script's directory (Project Root)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT" || { echo "❌ Failed to change directory to project root: $PROJECT_ROOT"; exit 1; }
+
 echo "🚀 Starting project reset..."
 
 # 1. DELETE SUPERUSER

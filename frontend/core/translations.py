@@ -3,6 +3,8 @@ from pathlib import Path
 
 from nicegui import app
 
+from settings import USER_LANGUAGE
+
 
 def _(text: str, **kwargs):
     """
@@ -88,7 +90,7 @@ class Translations:
         # 1. Determine Language safely
         if not language:
             try:
-                current_language = app.storage.user.get('language', Translations.DEFAULT_LANGUAGE)
+                current_language = app.storage.user.get(USER_LANGUAGE, Translations.DEFAULT_LANGUAGE)
             except (RuntimeError, AttributeError):
                 # Fallback if accessed outside of a page context
                 current_language = Translations.DEFAULT_LANGUAGE

@@ -209,9 +209,9 @@ class Command(BaseCommand):
                     )
 
                     if edifil_code:
-                        image = f"{issue_year}/{edifil_code}.jpg"
+                        image = f"{int(issue_year)}/{edifil_code}.jpg"
                     else:
-                        image = f"{issue_year}/{stamp_name.replace(' ','-')}.jpg"
+                        image = f"{int(issue_year)}/{stamp_name.replace(' ','-')}.jpg"
                     stamp_obj, _ = Stamp.objects.get_or_create(
                         issue = issue_obj,
                         name = stamp_name,

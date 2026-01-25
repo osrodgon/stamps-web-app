@@ -4,9 +4,10 @@ from base.base_page import BasePage
 from components.common.top_bar import TopBar
 from components.stamps.issues_table import IssuesTable
 from core.translations import _
-from nicegui import ui
+from nicegui import app, ui
 from services.stamps_service import StampsService
-from settings import API_MASTER_KEY, IMAGE_DIR, NO_STAMP
+from settings import API_MASTER_KEY, IMAGE_DIR, NO_STAMP, USER_LANGUAGE
+from core.numbers import Numbers
 import unicodedata
 
 
@@ -119,12 +120,18 @@ class StampsManagerPage(ui.column, BasePage):
             return
 
         self.log.debug(f'Fetching stamps for issue {issue_id}...')
-        response = await self.stamps_service.get_stamps(issue_id, api_key=API_MASTER_KEY)
+        response = await self.stamps_service.get_stamps(issue_id)
 
         if self._is_valid_response(response):
             stamps_data = response.json().get('data', [])
+            lang = app.storage.user.get(USER_LANGUAGE, 'en')
             for stamp in stamps_data:
                 stamp['url'] = self._resolve_stamp_image_url(stamp.get('image'))
+                # Format stamp numbers
+                if stamp.get('market_value'):
+                    stamp['market_value'] = Numbers.format_localized(stamp['market_value'], lang, 2, 2)
+                if stamp.get('face_value'):
+                    stamp['face_value'] = stamp['face_value']
 
             # Update the row in the table's state
             row[self.STAMPS_KEY] = stamps_data
@@ -192,7 +199,7 @@ class StampsManagerPage(ui.column, BasePage):
         """
         self.log.debug('Getting years...')
         
-        response = await self.stamps_service.get_years(api_key=API_MASTER_KEY)
+        response = await self.stamps_service.get_years()
         
         if self._is_valid_response(response):
             data = response.json()['data']
@@ -272,8 +279,7 @@ class StampsManagerPage(ui.column, BasePage):
                 self.log.debug(f'Searching by year or year range: {year_filter}')
                 
                 response = await self.stamps_service.get_issues(
-                    year=year_filter, 
-                    api_key=API_MASTER_KEY
+                    year=year_filter
                 )
             else:
                 self.enable_years_slider(True)
@@ -285,8 +291,7 @@ class StampsManagerPage(ui.column, BasePage):
                 self.enable_years_slider(True)
                 response = await self.stamps_service.get_issues(
                     year=year_range_str, 
-                    series_name=normalized_series, 
-                    api_key=API_MASTER_KEY
+                    series_name=normalized_series
                 )
         finally:
             self.table.loading = False
@@ -295,11 +300,15 @@ class StampsManagerPage(ui.column, BasePage):
             data = response.json().get('data', [])
             
             # Enrich data with metadata for editing
+            lang = app.storage.user.get(USER_LANGUAGE, 'en')
             for row in data:
                 row['opts_print_types'] = self.print_types
                 row['opts_stamp_types'] = self.stamp_types
-                if row['market_value']:
-                    row['market_value'] = f"{row['market_value']} €"
+                
+                # Format numbers for display
+                row['total_printed'] = Numbers.format_localized(row.get('total_printed'), lang, 0, 0)
+                row['market_value'] = Numbers.format_localized(row.get('market_value'), lang, 2, 2, ' €')
+                row['perforation'] = Numbers.format_localized(row.get('perforation'), lang, 0, 2)
             
             self.all_issues = data
             self.table.rows[:] = data
@@ -329,7 +338,7 @@ class StampsManagerPage(ui.column, BasePage):
             log_name (str): A descriptive name for logging/errors.
         """
         self.log.debug(f'Fetching {log_name}...')
-        response = await service_method(api_key=API_MASTER_KEY)
+        response = await service_method()
 
         if self._is_valid_response(response):
             data = response.json().get('data', [])
