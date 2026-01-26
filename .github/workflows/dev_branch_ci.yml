@@ -98,7 +98,7 @@ jobs:
           # Replace 'STORAGE_SECRET' with the exact env var name your code uses
           # If you don't use an env var, adding one here often forces NiceGUI's 
           # test plugin to initialize correctly.
-          STORAGE_SECRET: "ci_test_secret_only"
+          APP_STORAGE_SECRET: "ci_test_secret_only"
         # Run tests and generate an XML report for coverage
         run: |
           pytest --cov=.
