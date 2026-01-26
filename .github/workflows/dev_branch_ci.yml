@@ -13,7 +13,7 @@ on:
 jobs:
   # 1. Backend CI Job (Django) - UPDATED
   backend_ci:
-    name: Django Backend Build & Test (pytest/coverage)
+    name: Django Backend Build & Test
     runs-on: ubuntu-latest
     
     steps:
@@ -76,13 +76,13 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
+      - name: Checkout repository 
         uses: actions/checkout@v4
         
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           
       - name: Install Frontend Dependencies
         working-directory: ./frontend
@@ -94,6 +94,11 @@ jobs:
       # ----------------------------------------------------
       - name: Run Pytest with Coverage
         working-directory: ./frontend
+        env:
+          # Replace 'STORAGE_SECRET' with the exact env var name your code uses
+          # If you don't use an env var, adding one here often forces NiceGUI's 
+          # test plugin to initialize correctly.
+          STORAGE_SECRET: "ci_test_secret_only"
         # Run tests and generate an XML report for coverage
         run: |
           pytest --cov=.
