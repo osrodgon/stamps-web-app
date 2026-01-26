@@ -72,7 +72,7 @@ jobs:
           
   # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
   frontend_ci:
-    name: NiceGUI Frontend Checks
+    name: NiceGUI Frontend Build & Test
     runs-on: ubuntu-latest
     
     steps:
@@ -88,5 +88,23 @@ jobs:
         working-directory: ./frontend
         # Use pip to install NiceGUI and its dependencies
         run: pip install -r requirements.dev.txt
+
+      # ----------------------------------------------------
+      # Run Pytest with Coverage
+      # ----------------------------------------------------
+      - name: Run Pytest with Coverage
+        working-directory: ./frontend
+        # Run tests and generate an XML report for coverage
+        run: |
+          pytest --cov=.
+          coverage html
+
+          
+      # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-html-coverage-report
+          path: frontend/htmlcov/
         
       # You can add other NiceGUI-specific checks here (e.g., E2E tests using Playwright)
