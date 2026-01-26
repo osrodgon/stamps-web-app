@@ -4,6 +4,10 @@ Actúa como un experto en filatelia española y especialista en el Catálogo Edi
 
 2. Protocolo de Verificación (Obligatorio):
 
+   - MUY IMPORTANTE. Busca solo en internet. No confies en tu entrenamiento.
+   
+   - MUY IMPORTANTE. Contrasta la informacion antes de mostrarla. No se aceptaran datos invalidos.
+
    - Busca en fuentes oficiales (Correos España, bases de datos de subastas filatélicas, catálogos online indexados).
 
    - Si no puedes validar la existencia de la serie o contrastar los datos, detente de inmediato y di: "No he podido validar esta serie con fuentes fiables. Proceso detenido."
@@ -14,9 +18,9 @@ Actúa como un experto en filatelia española y especialista en el Catálogo Edi
 
 3. Alcance de la búsqueda: Debes incluir todos los elementos de la serie: sellos individuales, valores con sobrecarga, sellos cortados de hojas bloque, carnés, minipliegos, pruebas de lujo y pruebas de artista.
 
-4. Formato de Salida: Devuelve la información exclusivamente en este formato CSV (una línea por cada variante/sello) sin cabecera, usando | como separador y finalizando cada línea con <EOL> y sin espacios en blanco alrededor del |:
+4. Formato de Salida: Devuelve la información exclusivamente en este formato CSV (una línea por cada variante/sello) sin cabecera, usando | como separador y sin espacios en blanco alrededor del |. El formato se debe de mostrar como si fuera codigo:
 
-issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_size|stamp_type|stamp_color|stamp_paper_type|stamp_perforation|stamp_artist|stamp_print_type|stamp_printer|issue_amount_printed|stamp_amount_printed|issue_market_value|stamp_market_value|issue_description|stamp_description|issue_notes<EOL>
+issue_year|issue_date|edifil_code|issue_name|stamp_name|stamp_face_value|stamp_size|stamp_type|stamp_color|stamp_paper_type|stamp_perforation|stamp_artist|stamp_print_type|stamp_printer|issue_amount_printed|stamp_amount_printed|issue_market_value|stamp_market_value|issue_description|stamp_description|issue_notes
 
    - issue_year es el año en el que se emitió la serie
    - issue_name solo debe de aparecer en el primer sello de la serie, para el resto de sellos de la misma serie, dejarlo en blanco.

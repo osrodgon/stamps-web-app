@@ -26,24 +26,20 @@ class ConfigService(BaseService):
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
         response = await self._make_request(
             request_type=self.GET,
-            url=URLs.Backend.config,
+            url=f"{URLs.Backend.config}?user_id={app.storage.user.get(USER_ID)}",
             headers=headers
         )
         
         if response and response.status_code == requests.codes.ok:
             data = response.json().get('data', [])
-            user_id = app.storage.user.get(USER_ID)
-            
-            # Filter results to only include current user's config
-            user_configs = [entry for entry in data if entry.get('user') == user_id]
             
             # Update local storage with allowed retrieved settings
-            for entry in user_configs:
+            for entry in data:
                 prop = entry.get('property')
                 if prop == USER_LANGUAGE:
                     app.storage.user[prop] = entry.get('value')
             
-            return user_configs
+            return data
             
         self.log.error(f"Failed to fetch configuration. Status: {response.status_code if response else 'No response'}")
         return []
@@ -69,13 +65,12 @@ class ConfigService(BaseService):
         # Fetch current configs from backend to determine whether to POST or PUT
         response = await self._make_request(
             request_type=self.GET,
-            url=URLs.Backend.config,
+            url=f"{URLs.Backend.config}?user_id={user_id}",
             headers=headers
         )
         
         if response and response.status_code == requests.codes.ok:
             data = response.json().get('data', [])
-            user_configs = [entry for entry in data if entry.get('user') == user_id]
             
             # Identify properties to save from app.storage.user
             supported_properties = [USER_LANGUAGE]
@@ -92,7 +87,7 @@ class ConfigService(BaseService):
                     'value': value
                 }
                 
-                existing_config = next((c for c in user_configs if c['property'] == prop), None)
+                existing_config = next((c for c in data if c['property'] == prop), None)
                 
                 if existing_config:
                     # Perform update (PUT)

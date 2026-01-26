@@ -42,6 +42,27 @@ class TestConfigAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
         assert response.status_code == status.HTTP_200_OK
+
+    def test_get_all_config_with_user_id_returns_filtered_data(self, api_client, config_table, users_table):
+        self.permission(granted=True)
+        user_id = users_table[0].id
+        response = api_client.get(f"{self.__get_url()}?user_id={user_id}")
+        
+        expected_config = Config.objects.filter(user=user_id)
+        original = ConfigResponseSerializer(expected_config, many=True)
+        
+        assert len(response.json()['data']) == expected_config.count()
+        assert response.json()['data'] == original.data
+        assert response.json()['success'] == True
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_get_all_config_with_non_existent_user_id_returns_empty_list(self, api_client, config_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?user_id=9999")
+        
+        assert len(response.json()['data']) == 0
+        assert response.json()['success'] == True
+        assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_config_returns_403_header_missing(self, api_client):
         response = api_client.get(self.__get_url())
