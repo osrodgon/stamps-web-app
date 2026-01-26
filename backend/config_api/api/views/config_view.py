@@ -64,7 +64,11 @@ class ConfigView(Logger, APIView):
         
         user_id = request.query_params.get('user_id')
         if user_id:
-            config = Config.objects.filter(user=user_id)
+            if user_id.isdigit():
+                config = Config.objects.filter(user=user_id)
+            else:
+                # Return an empty queryset for non-numeric user_id to prevent ValueError
+                config = Config.objects.none()
         else:
             config = Config.objects.all()
 
