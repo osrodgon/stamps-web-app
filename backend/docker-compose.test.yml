@@ -2,7 +2,9 @@ services:
   stamps-backend:
     build:
       dockerfile: Dockerfile.test
+      args:
+        - PYTEST_ARGS="--no-header"
     image: osrogon/test-stamps-backend
     # The command runs tests and then exits
-    command: pytest 
+    command: sh -c "pytest $$PYTEST_ARGS"
     
