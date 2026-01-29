@@ -33,22 +33,26 @@ show_usage() {
     echo "  prod"
     echo ""
     echo "Commands (for dev):"
-    echo "  start [service]    Starts services in order (detached)."
-    echo "                     No args: starts all (db -> backend -> frontend)"
-    echo "                     stamps-db: starts db only"
-    echo "                     stamps-backend: starts db and backend"
-    echo "                     stamps-frontend: starts all three"
-    echo "  log                Shows both backend and frontend logs"
-    echo "  stop               Stops and removes all dev containers"
-    echo "  rebuild            Forces a fresh build of dev images (no-cache)"
-    echo "  reset              Full database and migration reset"
+    echo "  start [service]        Starts services in order (detached)."
+    echo "                         No args: starts all (db -> backend -> frontend)"
+    echo "                         stamps-db: starts db only"
+    echo "                         stamps-backend: starts db and backend"
+    echo "                         stamps-frontend: starts all three"
+    echo "  log                    Shows both backend and frontend logs"
+    echo "  stop                   Stops and removes all dev containers"
+    echo "  rebuild                Forces a fresh build of dev images (no-cache)"
+    echo "  reset                  Full database and migration reset"
     echo ""
     echo "Commands (for test):"
-    echo "  run                Runs pytest in backend and then frontend (rebuilds if needed)"
-    echo "  rebuild            Forces a fresh build of test images (no-cache)"
+    echo "  run [-v|--verbose]     Runs pytest in backend and then frontend (rebuilds if needed)."
+    echo "                         By default, runs in quiet mode. Use -v or --verbose for detailed"
+    echo "                         output."
+    echo "  rebuild [-v|--verbose] Forces a fresh build of test images (no-cache). By default, runs in"
+    echo "                         quiet mode. Use -v or --verbose for detailed output."
     echo ""
     echo "Commands (for prod):"
-    echo "  release [-q|--quiet]   Builds and pushes multi-arch images to Docker Hub"
+    echo "  release [-v|--verbose] Builds and pushes multi-arch images to Docker Hub. By default, runs"
+    echo "                         in quiet mode. Use -v or --verbose for detailed output"
     exit 1
 }
 
@@ -169,27 +173,47 @@ do_reset() {
 }
 
 do_test_run() {
+    local test_args="--no-header"
+    local build_args="--quiet "
+    if [[ "$1" == "--verbose" || "$1" == "-v" ]]; then
+        echo "🔊 Verbose mode enabled."
+        test_args=""
+        build_args=""
+    else
+        echo "🤫 Quiet mode enabled. Only test results will be shown."
+    fi
+
     echo "🧪 Running tests for Backend..."
-    docker compose $BACKEND_TEST_COMPOSE run --build --rm $BACKEND_SVC || fail "Backend tests failed"
+    docker compose $BACKEND_TEST_COMPOSE run -e PYTEST_ARGS=$test_args --build --rm $build_args $BACKEND_SVC || fail "Backend tests failed"
     
     echo "🧪 Running tests for Frontend..."
-    docker compose $FRONTEND_TEST_COMPOSE run --build --rm $FRONTEND_SVC || fail "Frontend tests failed"
+    docker compose $FRONTEND_TEST_COMPOSE run -e PYTEST_ARGS=$test_args --build --rm $build_args $FRONTEND_SVC || fail "Frontend tests failed"
     
     echo "✅ All tests passed!"
 }
 
 do_test_rebuild() {
     echo "🏗️  Forcing fresh build of test images..."
-    docker compose $BACKEND_TEST_COMPOSE build --no-cache
-    docker compose $FRONTEND_TEST_COMPOSE build --no-cache
+
+    local build_args="--quiet "
+    if [[ "$1" == "--verbose" || "$1" == "-v" ]]; then
+        echo "🔊 Verbose mode enabled. Showing build output."
+        build_args=""
+    else
+        echo "🤫 Quiet mode enabled. Suppressing build output."
+    fi
+    docker compose $BACKEND_TEST_COMPOSE build --no-cache $build_args
+    docker compose $FRONTEND_TEST_COMPOSE build --no-cache $build_args
     echo "✅ Test images rebuilt."
 }
 
 do_prod_release() {
-    local build_args=""
-    if [[ "$1" == "--quiet" || "$1" == "-q" ]]; then
+    local build_args="--quiet"
+    if [[ "$1" == "--verbose" || "$1" == "-v" ]]; then
+        echo "🔊 Verbose mode enabled. Showing build output."
+        build_args=""
+    else
         echo "🤫 Quiet mode enabled. Suppressing build output."
-        build_args="--quiet"
     fi
 
     local platforms="linux/amd64,linux/arm64"
@@ -254,8 +278,8 @@ if [ "$ENV" == "dev" ]; then
     esac
 elif [ "$ENV" == "test" ]; then
     case "$CMD" in
-        run)       do_test_run ;;
-        rebuild)   do_test_rebuild ;;
+        run)       do_test_run "$ARGS" ;;
+        rebuild)   do_test_rebuild "$ARGS" ;;
         *)         show_usage ;;
     esac
 elif [ "$ENV" == "prod" ]; then
