@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import nicegui
 import requests
 
-
 class AbstractUnitTest:
     """Abstract base class for unit tests, providing helper methods for mocking and component interaction."""
     _mocker = None
