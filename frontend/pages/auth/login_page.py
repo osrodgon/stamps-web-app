@@ -8,7 +8,7 @@ from nicegui import app, ui
 from settings import (
     BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER, 
     USER_NAME, USER_IS_ADMIN, USER_FIRST_NAME, USER_LANGUAGE,
-    USER_LAST_NAME, USER_EMAIL, USER_JWT_TOKEN, USER_ID
+    USER_LAST_NAME, USER_EMAIL, USER_JWT_TOKEN, USER_ID, DEFAULT_LANGUAGE
 )
 from services.auth_service import AuthService
 from services.config_service import ConfigService
