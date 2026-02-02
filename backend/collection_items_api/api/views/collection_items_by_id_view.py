@@ -156,9 +156,9 @@ class CollectionItemsByIdView(Logger, APIView):
         operation_id="delete_collection_item",
         tags=['Collection Management'],
         summary="Delete a Collection Item",
-        description="Deletes a collection item entry by its unique ID. A successful deletion returns a 204 No Content response.",
+        description="Deletes a collection item entry by its unique ID. A successful deletion returns a 200 OK response.",
         responses={
-            status.HTTP_204_NO_CONTENT: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CollectionItemsResponseSerializer,
                 name="CollectionItemDeleted",
                 description="The collection item was deleted successfully."

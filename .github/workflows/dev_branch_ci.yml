@@ -99,6 +99,7 @@ jobs:
           # If you don't use an env var, adding one here often forces NiceGUI's 
           # test plugin to initialize correctly.
           APP_STORAGE_SECRET: "ci_test_secret_only"
+          DEFAULT_LANGUAGE: "en"
         # Run tests and generate an XML report for coverage
         run: |
           pytest --cov=.

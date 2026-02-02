@@ -24,6 +24,8 @@
     "invalid_email": "Invalid email address",
     "invalid_password": "Password must be at least 8 characters, include uppercase, lowercase, number, and special character",
     "issue_name": "Issue Name",
+    "language_en": "English",
+    "language_es": "Spanish",
     "last_name": "Last Name",
     "loading_stamps": "Loading stamps...",
     "logout": "Logout",

@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-from nicegui import app
+from nicegui import ui, app
 
-from settings import USER_LANGUAGE
+from settings import USER_LANGUAGE, DEFAULT_LANGUAGE
 
 
 def _(text: str, **kwargs):
@@ -25,6 +25,15 @@ def _(text: str, **kwargs):
     language = kwargs.pop('_language', None)
     return Translations.translate(text, language=language, **kwargs)
 
+async def get_browser_language() -> str:
+    """
+    Retrieves the browser's language setting using JavaScript.
+
+    Returns:
+        str: The detected browser language code (e.g., 'en', 'es').
+    """
+    lang = str(await ui.run_javascript('navigator.language || navigator.userLanguage;')).split('-')[0]
+    return lang
 class Translations:
     """
     Manages and provides translations for the application.
@@ -38,7 +47,7 @@ class Translations:
                                 language codes (e.g., 'en', 'es') and the inner
                                 dictionaries map translation keys to strings.
     """
-    DEFAULT_LANGUAGE = 'en'
+    DEFAULT_LANGUAGE = DEFAULT_LANGUAGE
     translations = {}
 
     @staticmethod

@@ -17,6 +17,9 @@ USER_JWT_TOKEN = 'jwt_token'
 USER_LANGUAGE = 'language'
 USER_ID = 'id'
 
+# Default language
+DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "es")  
+
 # Application configuration
 APP_NAME = "Stamps App"
 LOG_LEVEL= os.getenv("LOG_LEVEL", "DEBUG")
@@ -38,7 +41,7 @@ MOCK_PASSWORD = os.getenv("MOCK_LOGIN_PASSWORD", "none")
 BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
 BACKEND_PORT = os.getenv("BACKEND_PORT", "8000")
 BACKEND_SERVER_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
-BACKEND_URL=f"{BACKEND_SERVER_URL}/stamps_server/api/v1"
+BACKEND_URL=f"{BACKEND_SERVER_URL}/stamps-backend/api/v1"
 API_MASTER_KEY=os.getenv("API_MASTER_KEY")
 
 # Images

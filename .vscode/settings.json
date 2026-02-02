@@ -1,10 +1,10 @@
 {
     "python.testing.pytestArgs": [
-        "backend"
+        "frontend"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.envFile": "${workspaceFolder}/backend/.env",
+    "python.envFile": "${workspaceFolder}/frontend/.env",
     "python.testing.cwd": "${workspaceFolder}",
     "geminicodeassist.updateChannel": "Insiders",
     "python.analysis.extraPaths": [
