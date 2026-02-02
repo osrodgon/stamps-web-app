@@ -46,7 +46,7 @@ class LoginPage(ui.column, BasePage):
                 self.login_card = LoginCard(on_sign_in=self.call_rest_method)
             
             with ui.row().classes('absolute top-4 right-4 items-center gap-2 text-sm font-medium'):
-                if app.storage.user.get(USER_LANGUAGE, 'en') == 'en':
+                if app.storage.user.get(USER_LANGUAGE, DEFAULT_LANGUAGE) == 'en':
                     ui.link(_('language_es', _language='es'), '#') \
                         .on('click', lambda: self._set_language('es')) \
                         .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
