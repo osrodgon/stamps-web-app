@@ -24,6 +24,8 @@
     "invalid_email": "Dirección de correo electrónico no válida",
     "invalid_password": "La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y carácteres especiales",
     "issue_name": "Nombre de la serie",
+    "language_en": "Inglés",
+    "language_es": "Español",
     "last_name": "Apellidos",
     "loading_stamps": "Cargando sellos...",
     "logout": "Cerrar sesión",

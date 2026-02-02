@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from core.log_setup import log_setup
 from core.urls import URLs
@@ -14,17 +15,19 @@ from pages.not_found_page import NotFoundPage
 from services.config_service import ConfigService
 from settings import (
     APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN,
-    USER_IS_ADMIN, USER_JWT_TOKEN
+    USER_IS_ADMIN, USER_JWT_TOKEN, DEFAULT_LANGUAGE, USER_LANGUAGE
 )
+from core.translations import get_browser_language
 
 
-class StampsApp():    
+class StampsApp:    
     """
     Main application class for the Stamps web application.
     Handles static file setup, logging, route registration, and authentication.
     """
+    
     @staticmethod
-    def set_background_image(image_url: str):
+    def set_background_image(image_url: str) -> None:
         """
         Applies a background image to the NiceGUI page body.
 
@@ -32,16 +35,16 @@ class StampsApp():
             image_url (str): The URL of the image to be used as the background.
         """
         ui.query('body').style(
-                f'background-image: url("{image_url}");'
-                'background-size: cover;'
-                'background-position: center;'
-                'background-repeat: no-repeat;'
-                'height: 100vh;'
-                'overflow: hidden;'
-            )
+            f'background-image: url("{image_url}");'
+            'background-size: cover;'
+            'background-position: center;'
+            'background-repeat: no-repeat;'
+            'height: 100vh;'
+            'overflow: hidden;'
+        )
         
     @staticmethod
-    def setup_static_logging_and_routes(root_dir: str):
+    def setup_static_logging_and_routes(root_dir: str) -> None:
         """
         Sets up logging, static files, and routes for the NiceGUI application.
 
@@ -68,19 +71,19 @@ class StampsApp():
         return app.storage.user.get(USER_JWT_TOKEN) is not None
     
     @staticmethod
-    def register_routes():
+    def register_routes() -> None:
         """
         Registers all application routes using NiceGUI's `@page` decorator.
         """
         @page(URLs.Frontend.collections)
-        def collections_page():
+        def collections_page() -> None:
             """
-            Displays the collections page
+            Displays the collections page.
             """
             CollectionsPage()
             
         @page(URLs.Frontend.login)
-        def login_page(request: Request):
+        def login_page(request: Request) -> None:
             """
             Displays the login page.
 
@@ -90,17 +93,17 @@ class StampsApp():
             LoginPage()
         
         @page(URLs.Frontend.signup)
-        def signup_page(request: Request):
+        def signup_page(request: Request) -> None:
             """
             Displays the signup page.
 
             Args:
-                request (Request): _description_
+                request (Request): The FastAPI request object.
             """
             SignUpPage()
         
         @page(URLs.Frontend.logout)    
-        async def logout(request: Request):
+        async def logout(request: Request) -> None:
             """
             Logs out the user and redirects to the login page.
 
@@ -112,17 +115,17 @@ class StampsApp():
             ui.navigate.to(URLs.Frontend.login)
             
         @page(URLs.Frontend.stamps_manager)
-        async def stamps_manager(request: Request):
+        async def stamps_manager(request: Request) -> None:
             """
-            Displays the stamp manager page
+            Displays the stamp manager page.
 
             Args:
-                request (Request): _description_
+                request (Request): The FastAPI request object.
             """
             StampsManagerPage()
             
         @page(URLs.Frontend.root)
-        async def main_page(request: Request):
+        async def main_page(request: Request, client: Client) -> None:
             """
             The main entry point of the application.
             Redirects to dashboard if authenticated, otherwise to login.
@@ -142,6 +145,11 @@ class StampsApp():
                 test = LoginPage()
                 await test.mock_login()
             else :
+                
+                if USER_LANGUAGE not in app.storage.user:
+                    await client.connected()
+                    app.storage.user[USER_LANGUAGE] = await get_browser_language()
+                
                 if StampsApp.check_authentication(request): 
                     if app.storage.user.get(USER_IS_ADMIN, False):
                         ui.navigate.to(URLs.Frontend.stamps_manager)
@@ -152,6 +160,16 @@ class StampsApp():
                 
         @app.exception_handler(404)
         async def exception_handler_404(request: Request, exception: Exception) -> Response:
+            """
+            Custom 404 error handler that avoids launching NotFoundPage for asset requests.
+            
+            Args:
+                request (Request): The FastAPI request object.
+                exception (Exception): The exception that triggered the 404.
+                
+            Returns:
+                Response: The appropriate response for the request.
+            """
             # Check if it's a request for an image or other asset to avoid launching NotFoundPage multiple times
             path = request.url.path.lower()
             asset_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.css', '.js')
@@ -164,9 +182,12 @@ class StampsApp():
             return client.build_response(request, 404)
     
     @staticmethod            
-    def run(storage_secret: str):
+    def run(storage_secret: str) -> None:
         """
         Runs the NiceGUI application with a specified title.
+
+        Args:
+            storage_secret (str): The secret key for session storage.
         """
         ui.run(title=APP_NAME, storage_secret=storage_secret)
                 
@@ -178,5 +199,10 @@ if __name__ in {"__main__", "__mp_main__"}:
     """
     APP_DIR = os.path.dirname(os.path.abspath(__file__))
     StampsApp.setup_static_logging_and_routes(APP_DIR)
-    StampsApp.run(os.getenv("APP_STORAGE_SECRET"))
+    
+    storage_secret = os.getenv("APP_STORAGE_SECRET")
+    if not storage_secret:
+        raise ValueError("APP_STORAGE_SECRET environment variable must be set")
+    
+    StampsApp.run(storage_secret)
     

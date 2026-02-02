@@ -28,6 +28,7 @@ class TopBar(ui.header, BaseUI):
         """
         super().__init__()
         self.log.debug("Initializing TopBar...")
+        self.title = name
 
         user_full_name = (
             app.storage.user.get(USER_FIRST_NAME, 'Unknown').capitalize() + ' ' + app.storage.user.get(USER_LAST_NAME, 'Unknown').capitalize()

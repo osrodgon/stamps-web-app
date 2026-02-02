@@ -59,7 +59,7 @@ class ConfigService(BaseService):
         if not user_id:
             self.log.error("User ID is missing. User may not be logged in.")
             return False
-            
+        
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
         
         # Fetch current configs from backend to determine whether to POST or PUT

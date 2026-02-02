@@ -165,9 +165,9 @@ class CollectionsByIdView(Logger, APIView):
         operation_id="delete_collection",
         tags=['Collection Management'],
         summary="Delete a Collection",
-        description="Deletes a collection entry by its unique ID. A successful deletion returns a 204 No Content response.",
+        description="Deletes a collection entry by its unique ID. A successful deletion returns a 200 OK response.",
         responses={
-            status.HTTP_204_NO_CONTENT: standardized_response(
+            status.HTTP_200_OK: standardized_response(
                 CollectionResponseSerializer,
                 name="CollectionDeleted",
                 success=True,

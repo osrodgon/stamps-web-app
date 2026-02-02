@@ -45,8 +45,28 @@ class LoginPage(ui.column, BasePage):
             with ui.column().classes('w-full flex-grow justify-center items-center'):
                 self.login_card = LoginCard(on_sign_in=self.call_rest_method)
             
+            with ui.row().classes('absolute top-4 right-4 items-center gap-2 text-sm font-medium'):
+                if app.storage.user.get(USER_LANGUAGE, 'en') == 'en':
+                    ui.link(_('language_es', _language='es'), '#') \
+                        .on('click', lambda: self._set_language('es')) \
+                        .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
+                else:
+                    ui.link(_('language_en', _language='en'), '#') \
+                        .on('click', lambda: self._set_language('en')) \
+                        .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
+                        
             self.footer_branding = FooterBranding()
         
+    async def _set_language(self, lang: str):
+        """
+        Sets the application language and persists this preference.
+        
+        Args:
+            lang (str): The language code (en/es)
+        """
+        app.storage.user[USER_LANGUAGE] = lang
+        ui.navigate.reload()
+
     async def call_rest_method(self):
         """
         Processes a login attempt by calling the backend API.

@@ -95,7 +95,7 @@ SCHEMA_ENDPOINT="schema/"
 
 # URLs
 ADMIN_URL="admin/"
-SERVER_URL_V1="stamps_server/api/v1/"
+SERVER_URL_V1="stamps-backend/api/v1/"
 
 COLORS_URL_V1=f"{SERVER_URL_V1}{COLORS_ENDPOINT}"
 CONFIG_URL_V1=f"{SERVER_URL_V1}{CONFIG_ENDPOINT}"
