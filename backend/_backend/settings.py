@@ -178,6 +178,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
+    'SORT_OPERATION_PARAMETERS': False,
     "TAGS": [
         {
             "name": "Database Management",

@@ -16,6 +16,7 @@ from common.test.year_api_test_data import years_table
 from django.db import connection
 from rest_framework import status
 
+from backend.issues_api.api.serializers.issue_paginated_response_serializer import IssuePaginatedResponseSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from issues_api.models import Issue
 
@@ -31,8 +32,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == len(original.data)
-        assert response.json()['data'] == original.data
+        assert len(response.json()['data']['issues']) == len(original.data)
+        assert response.json()['data']['issues'] == original.data
         assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_returns_200_ok_no_data(self, api_client):
@@ -42,7 +43,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == 0
+        assert len(response.json()['data']['issues']) == 0
         assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_returns_403_header_missing(self, api_client):
@@ -140,8 +141,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == len(original.data)
-        assert response.json()['data'] == original.data
+        assert len(response.json()['data']['issues']) == len(original.data)
+        assert response.json()['data']['issues'] == original.data
         assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_with_year_range_filter_returns_200_ok_data(self, api_client, issues_table):
@@ -159,8 +160,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == len(original.data)
-        assert response.json()['data'] == original.data
+        assert len(response.json()['data']['issues']) == len(original.data)
+        assert response.json()['data']['issues'] == original.data
         assert response.status_code == status.HTTP_200_OK
 
     def test_get_all_issues_with_invalid_year_filter_returns_200_ok_no_data(self, api_client, issues_table):
@@ -171,7 +172,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == 0
+        assert len(response.json()['data']['issues']) == 0
         assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_with_name_filter_returns_200_ok_data(self, api_client, issues_table):
@@ -189,8 +190,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == len(original.data)
-        assert response.json()['data'] == original.data
+        assert len(response.json()['data']['issues']) == len(original.data)
+        assert response.json()['data']['issues'] == original.data
         assert response.status_code == status.HTTP_200_OK
 
     def test_get_all_issues_with_non_existing_name_filter_returns_200_ok_no_data(self, api_client, issues_table):
@@ -201,7 +202,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == 0
+        assert len(response.json()['data']['issues']) == 0
         assert response.status_code == status.HTTP_200_OK
 
     # @pytest.mark.skipif(connection.vendor != 'postgresql', reason='unaccent is a PostgreSQL feature')
@@ -221,8 +222,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.retrieved_successfully()
         assert response.json()['errors'] == None
-        assert len(response.json()['data']) == len(original.data)
-        assert response.json()['data'] == original.data
+        assert len(response.json()['data']['issues']) == len(original.data)
+        assert response.json()['data']['issues'] == original.data
         assert response.status_code == status.HTTP_200_OK
         
     def test_get_all_issues_returns_500_database_error_connection_lost(self, api_client, issues_table):

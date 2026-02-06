@@ -1,0 +1,300 @@
+# Stamps Web App - Coding Standards and Guidelines
+
+## Project Overview
+This is a full-stack philatelic collection management application built with Django REST Framework (backend) and NiceGUI (frontend). The project follows a layered architecture with clear separation of concerns.
+
+## Architecture Standards
+
+### Backend (Django REST Framework)
+- **Pattern**: Layered Architecture with API-First Design
+- **Structure**: Modular Django apps following domain-driven design
+- **Authentication**: JWT tokens + API Key authentication
+- **Database**: PostgreSQL with Django ORM
+- **Documentation**: drf-spectacular for Swagger/OpenAPI
+
+### Frontend (NiceGUI)
+- **Pattern**: Component-based architecture with service layer
+- **Structure**: Pages, Components, and Services separation
+- **Routing**: NiceGUI `@page` decorators with centralized URL management
+- **State Management**: Session-based with secure storage
+
+## Code Organization
+
+### Backend Module Structure
+```
+Core Reference Data (Read-only):
+├── years_api, colors_api, countries_api
+├── stamp_types_api, print_types_api
+└── condition_types_api, locations_api
+
+Master Catalog:
+├── issues_api (stamp issues)
+└── stamps_api (individual stamps)
+
+User Collections:
+├── collections_api (user collections)
+├── collection_items_api (items in collections)
+└── users_api (user management)
+
+System:
+├── config_api (system configuration)
+├── health_api (system health)
+└── common/ (shared utilities)
+```
+
+### Frontend Module Structure
+```
+Pages:
+├── auth/ (login, signup)
+├── collection/ (collections management)
+└── admin/ (stamp catalog management)
+
+Components:
+├── auth/ (authentication components)
+├── branding/ (app branding)
+├── common/ (shared UI components)
+└── stamps/ (stamp-specific components)
+
+Services:
+└── API service layer for backend communication
+```
+
+## Development Standards
+
+### Python Code Style
+- Follow PEP 8 guidelines
+- Use meaningful variable and function names
+- Maintain consistent import organization
+- Use type hints where appropriate
+- Maximum line length: 88 characters (Black formatter compatible)
+
+### Django Best Practices
+- Use Django's built-in security features
+- Implement proper validation in serializers
+- Follow REST API conventions
+- Use custom permissions for access control
+- Implement proper error handling with custom exceptions
+- Use database transactions for complex operations
+
+### NiceGUI Frontend Standards
+- Use descriptive component names
+- Implement proper error handling in UI
+- Follow accessibility guidelines
+- Use consistent styling patterns
+- Implement proper form validation
+- Handle authentication state properly
+
+## Security Guidelines
+
+### Authentication & Authorization
+- Always use established authentication patterns (JWT + API Key)
+- Implement role-based access control
+- Never expose sensitive data in frontend code
+- Use secure session storage
+- Validate all user inputs on backend
+- Implement proper CSRF protection
+
+### Data Security
+- Use environment variables for sensitive configuration
+- Never commit secrets to version control
+- Use proper database permissions
+- Implement data validation and sanitization
+- Follow Django security best practices
+
+## API Standards
+
+### REST API Design
+- Use consistent URL patterns
+- Implement proper HTTP status codes
+- Use standardized response formats
+- Include comprehensive API documentation
+- Implement proper versioning strategy
+- Use appropriate HTTP methods
+
+### Error Handling
+- Return meaningful error messages
+- Use consistent error response format
+- Log errors appropriately
+- Handle exceptions gracefully
+- Provide helpful debugging information
+
+## Testing Standards
+
+### Backend Testing
+- Use pytest with Django test framework
+- Implement unit tests for all business logic
+- Test API endpoints thoroughly
+- Use fixtures for test data
+- Implement integration tests
+- Maintain test coverage reports
+
+### Frontend Testing
+- Use NiceGUI testing plugin for component tests
+- Test user interactions and workflows
+- Implement end-to-end tests for critical paths
+- Test authentication flows
+- Validate form submissions
+
+## Deployment Standards
+
+### Docker Configuration
+- Use separate compose files for dev/prod/test
+- Implement proper environment variable management
+- Use multi-stage builds for production
+- Implement health checks
+- Configure proper networking
+- Use volume mounts for development
+
+### Environment Management
+- Use `.env.example` files for documentation
+- Implement proper secret management
+- Use environment-specific configurations
+- Implement proper logging levels
+- Configure monitoring and alerting
+
+## Git Workflow
+
+### Branching Strategy
+- Use feature branches for new development
+- Implement pull request workflow
+- Use meaningful commit messages
+- Follow conventional commit standards
+- Squash commits before merging
+
+### Code Review
+- All changes require code review
+- Check for security vulnerabilities
+- Verify test coverage
+- Ensure documentation is updated
+- Validate against coding standards
+
+## Performance Guidelines
+
+### Backend Optimization
+- Use database indexing appropriately
+- Implement caching for frequently accessed data
+- Optimize database queries
+- Use pagination for large datasets
+- Implement proper error handling
+- Monitor API response times
+
+### Frontend Optimization
+- Implement lazy loading for components
+- Optimize image assets
+- Use efficient data fetching patterns
+- Implement proper state management
+- Minimize bundle size
+- Use appropriate caching strategies
+
+## Documentation Standards
+
+### Code Documentation
+- Use docstrings for all public functions and classes
+- Document API endpoints with examples
+- Maintain README files for each module
+- Document configuration options
+- Include setup and deployment instructions
+
+### API Documentation
+- Use drf-spectacular for automatic documentation
+- Include request/response examples
+- Document authentication requirements
+- Specify error codes and messages
+- Maintain up-to-date documentation
+
+## File Naming Conventions
+
+### Python Files
+- Use lowercase with underscores: `user_service.py`
+- Django apps: `collections_api/`
+- Test files: `test_user_service.py`
+- Configuration: `settings.py`
+
+### Frontend Files
+- Pages: `collections_page.py`
+- Components: `auth_button.py`
+- Services: `api_service.py`
+- Assets: `images/`, `styles/`
+
+## Error Handling Strategy
+
+### Backend Error Handling
+- Use custom exception classes
+- Implement global exception handler
+- Return standardized error responses
+- Log errors with appropriate levels
+- Handle database exceptions gracefully
+
+### Frontend Error Handling
+- Display user-friendly error messages
+- Implement error boundaries
+- Handle network errors appropriately
+- Provide retry mechanisms
+- Log client-side errors
+
+## Monitoring and Logging
+
+### Application Logging
+- Use structured logging with colorlog
+- Implement appropriate log levels
+- Include context in log messages
+- Avoid logging sensitive information
+- Configure log rotation
+
+### Monitoring
+- Implement health check endpoints
+- Monitor API response times
+- Track error rates and patterns
+- Use application performance monitoring
+- Set up alerts for critical issues
+
+## Code Quality Tools
+
+### Required Tools
+- Black for code formatting
+- isort for import sorting
+- flake8 for linting
+- pytest for testing
+- coverage for test coverage
+
+### Pre-commit Hooks
+- Run linting and formatting
+- Execute tests
+- Validate commit messages
+- Check for security issues
+- Verify documentation
+
+## Environment-Specific Guidelines
+
+### Development
+- Use hot reload for faster development
+- Enable debug mode
+- Use local database for development
+- Implement proper error reporting
+- Use development-specific configurations
+
+### Production
+- Disable debug mode
+- Use production database
+- Implement proper security headers
+- Configure static file serving
+- Enable monitoring and logging
+- Use production-optimized settings
+
+## Compliance and Best Practices
+
+### Data Privacy
+- Follow GDPR requirements
+- Implement proper data retention policies
+- Use secure data transmission
+- Handle user data appropriately
+- Provide data export capabilities
+
+### Accessibility
+- Follow WCAG guidelines
+- Implement keyboard navigation
+- Use semantic HTML
+- Provide alternative text for images
+- Ensure color contrast compliance
+
+This document serves as the authoritative guide for all development work on the Stamps Web App project. All team members must adhere to these standards to maintain code quality, security, and maintainability.

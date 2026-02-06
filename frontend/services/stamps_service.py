@@ -1,7 +1,7 @@
+from urllib.parse import urlencode
 from core.urls import URLs
 from services.base_service import BaseService
-from settings import API_MASTER_KEY, USER_JWT_TOKEN
-from nicegui import app
+from settings import API_MASTER_KEY
 
 
 class StampsService(BaseService):
@@ -30,7 +30,7 @@ class StampsService(BaseService):
             headers=self._get_headers()
         )
 
-    async def get_issues(self, year: int=None, series_name: str=None):
+    async def get_issues(self, year: str=None, series_name: str=None, page: int=None, page_size: int=None, sort_by: str='date', descending: bool=False):
         """
         Retrieves stamp issues, optionally filtered by year or series name.
 
@@ -41,16 +41,25 @@ class StampsService(BaseService):
         Returns:
             requests.Response|None: The API response or None on auth/network failure.
         """
-        query_parts = []
+        params = {}
         if year:
-            query_parts.append(f"year={year}")
+            if str(year).endswith('*'):
+                params['year'] = self._convert_year_pattern_to_range(year)
+            else:
+                params['year'] = year
         if series_name:
-            query_parts.append(f"name={series_name}")
-
-        if query_parts:
-            url = f"{URLs.Backend.issues}?{'&'.join(query_parts)}"
-        else:
-            url = URLs.Backend.issues
+            params['name'] = series_name
+        if  page is not None:
+            params['page'] = page
+        if page_size is not None:
+            params['pageSize'] = page_size
+        if sort_by:
+            params['sortBy'] = sort_by
+        if descending is not None:
+            params['order'] = 'desc' if descending else 'asc'
+        
+        query_string = urlencode(params) if params else ''
+        url = f"{URLs.Backend.issues}?{query_string}" if query_string else URLs.Backend.issues
             
         return await self._make_request(
             request_type=self.GET,
@@ -58,6 +67,54 @@ class StampsService(BaseService):
             payload=None,
             headers=self._get_headers()
         )
+        
+    def _convert_year_pattern_to_range(self, year_pattern: str) -> str:
+        """
+        Converts a year pattern to a range for API filtering.
+        
+        Supports patterns like:
+        - '20*' -> '2000-2099' (2-digit year with wildcard)
+        - '202*' -> '2020-2029' (3-digit year with wildcard)  
+        - '2023' -> 2023 (exact year)
+        
+        Args:
+            year_pattern (str): The year pattern to convert.
+            
+        Returns:
+            str or int: The converted year range or exact year, or None if invalid.
+        """
+        s = year_pattern.strip()
+        
+        # Handle 3-digit year with wildcard (e.g., '202*' -> '2020-2029')
+        if len(s) == 4 and s.endswith('*') and s[:-1].isdigit():
+            prefix = s[:-1]
+            return f'{prefix}0-{prefix}9'
+
+        # Handle 2-digit year with wildcard (e.g., '20*' -> '2000-2099')
+        elif len(s) == 3 and s.endswith('*') and s[:-1].isdigit():
+            prefix = s[:-1]
+            return f'{prefix}00-{prefix}99'
+
+        # Handle exact year (e.g., '2023' -> 2023)
+        elif len(s) == 4 and s.isdigit():
+            return int(s)
+
+        return None
+        
+    async def get_issues_paginated(self, page: int=1, page_size: int=15, year: int=None, series_name: str=None):
+        """
+        Retrieves paginated stamp issues.
+
+        Args:
+            page (int): The page number to retrieve (default is 1).
+            page_size (int): The number of issues per page (default is 15).
+            year (int, optional): The exact year to filter by. Defaults to None.
+            series_name (str, optional): A substring search for the series name. Defaults to None.
+
+        Returns:
+            requests.Response|None: The API response object or None on failure.
+        """
+        return await self.get_issues(year=year, series_name=series_name, page=page, page_size=page_size)
         
     async def get_print_types(self):
         """

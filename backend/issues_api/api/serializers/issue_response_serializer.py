@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from issues_api.models import Issue
 
-
 class IssueResponseSerializer(serializers.ModelSerializer):
     """
     Serializer for representing Issue instances in responses.
@@ -17,3 +16,4 @@ class IssueResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Issue
         fields = '__all__'
+        
