@@ -292,8 +292,6 @@ class StampsManagerPage(ui.column, BasePage):
             sort_by = pagination.get('sort_by', 'date')
             order = pagination.get('order', 'asc')
             descending = order == 'desc' 
-
-            self.log.error(f'Sort by: {sort_by}, Order: {order}, Descending: {descending}')
             
             lang = app.storage.user.get(USER_LANGUAGE, 'en')
             
