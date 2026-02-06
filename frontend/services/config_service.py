@@ -2,7 +2,7 @@ import requests
 from services.base_service import BaseService
 from core.urls import URLs
 from nicegui import app
-from settings import USER_ID, USER_JWT_TOKEN, USER_LANGUAGE, API_MASTER_KEY
+from settings import USER_ID, USER_JWT_TOKEN, USER_LANGUAGE, API_MASTER_KEY, USER_NAME
 
 class ConfigService(BaseService):
     """
@@ -15,14 +15,14 @@ class ConfigService(BaseService):
     
     def __init__(self):
         super().__init__()
-        
-    async def load_user_config(self) -> list:
+
+    async def _get_user_config(self) -> list:
         """
         Retrieves all configuration entries from the backend for the current user.
         
         Returns:
             list: A list of configuration entry dictionaries.
-        """    
+        """
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
         response = await self._make_request(
             request_type=self.GET,
@@ -32,7 +32,21 @@ class ConfigService(BaseService):
         
         if response and response.status_code == requests.codes.ok:
             data = response.json().get('data', [])
+            return data
             
+        self.log.error(f"Failed to fetch configuration. Status: {response.status_code if response else 'No response'}")
+        return []
+        
+    async def load_user_config(self) -> list:
+        """
+        Retrieves all configuration entries from the backend for the current user.
+        
+        Returns:
+            list: A list of configuration entry dictionaries.
+        """    
+        data = await self._get_user_config()
+        
+        if data:
             # Update local storage with allowed retrieved settings
             for entry in data:
                 prop = entry.get('property')
@@ -41,7 +55,6 @@ class ConfigService(BaseService):
             
             return data
             
-        self.log.error(f"Failed to fetch configuration. Status: {response.status_code if response else 'No response'}")
         return []
 
     async def save_user_config(self) -> bool:
@@ -129,7 +142,17 @@ class ConfigService(BaseService):
             bool: True if deleted successfully, False otherwise.
         """            
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
-        url = f"{URLs.Backend.config}{app.storage.user[USER_ID]}"
+
+        data = await self._get_user_config()
+        config_to_delete = next((c for c in data if c['property'] == property_name), None)
+        if config_to_delete:
+            id = config_to_delete['id']
+        else:
+            user_name = app.storage.user.get(USER_NAME)
+            self.log.error(f"Failed to fetch configuration for deleting {property_name} for user {user_name}.")
+            return False
+
+        url = f"{URLs.Backend.config}{id}"
         response = await self._make_request(
             request_type=self.DELETE,
             url=url,

@@ -5,7 +5,7 @@ from core.urls import URLs
 from services.auth_service import AuthService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
-from frontend.tests.data.users_api_responses import (
+from tests.data.users_api_responses import (
     LOGIN_RESPONSE_200_SUCCESS,
     SIGNUP_RESPONSE_201_SUCCESS,
     LOGIN_RESPONSE_400_BAD_REQUEST,
@@ -26,7 +26,7 @@ class TestAuthService(AbstractUnitTest):
     def init_data(self, mocker, caplog):
         """Initializes mock data and configures logging for tests."""
         caplog.set_level(logging.CRITICAL)
-        self._AbstractUnitTest__mocker = mocker
+        self._mocker = mocker
         
     @pytest.fixture
     def auth_service(self):

@@ -1,6 +1,6 @@
 import json
 from io import BytesIO
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import nicegui
 import requests
@@ -48,7 +48,7 @@ class AbstractUnitTest:
         Returns:
             The mocker patch object.
         """
-        return self.__mocker.patch(f"{self.__get_class_path(card)}.is_valid", return_value=valid)
+        return self._mocker.patch(f"{self.__get_class_path(card)}.is_valid", return_value=valid)
 
     def set_backend_response(self, class_object, status_code, json_data):
         """
@@ -62,6 +62,7 @@ class AbstractUnitTest:
         Returns:
             The mocker patch object.
         """
+        response = None
         if json_data is not None:
             json_bytes = json.dumps(json_data).encode('utf-8')
 
@@ -71,10 +72,8 @@ class AbstractUnitTest:
             response.raw = BytesIO(json_bytes)
             response.encoding = 'utf-8'
             response.headers['Content-Type'] = 'application/json'
-        else:
-            response = None
 
-        return self.__mocker.patch(f"{self.__get_class_path(class_object)}._make_request", return_value=response)
+        return self._mocker.patch(f"{self.__get_class_path(class_object)}._make_request", side_effect=AsyncMock(return_value=response))
 
     def skip_notify(self, class_object):
         """
@@ -86,7 +85,7 @@ class AbstractUnitTest:
         Returns:
             The mocker patch object.
         """
-        return self.__mocker.patch(f"{self.__get_class_path(class_object)}.notify", return_value=None)
+        return self._mocker.patch(f"{self.__get_class_path(class_object)}.notify", return_value=None)
 
     def create_user_storage(self, __mocker):
         """
