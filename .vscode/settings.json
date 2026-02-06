@@ -7,5 +7,6 @@
     "python.testing.pytestEnvVars": {
         "APP_STORAGE_SECRET": "test",
         "RUNNING_TESTS": "True"
-    }
+    },
+    "python.analysis.autoImportCompletions": true
 }

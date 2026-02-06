@@ -1,14 +1,13 @@
-from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from common.log.logger import Logger
 from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
-from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from common.api.messages import Messages
 from common.core.schemas import standardized_response
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer

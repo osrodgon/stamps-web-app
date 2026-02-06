@@ -93,6 +93,7 @@ class IssuesTable(ui.table):
             :rows-per-page-options="[10, 15, 20, 50, 100, 0]"
             rows-per-page-label="{rows_per_page_label}"
             :pagination-label="(first, end, total) => first + '-' + end + ' {of_label} ' + total"
+            binary-state-sort
         ''')
         
         self.add_slot('body', self._get_body_template())

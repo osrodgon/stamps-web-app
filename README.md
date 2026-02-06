@@ -1,162 +1,249 @@
-# Stamps Collection Web App
-This project is an application to store and stamps collection. It has two differentiated parts:
+# Stamps Web App
 
-- The backend (API REST interface). 
-- The frontend (User's interfaces).
+A modern, full-stack web application for managing and cataloging stamp collections. This project provides a comprehensive solution for philatelists to organize their collections, track individual stamps, and manage detailed information about issues, print types, and more.
 
-## Backend
-The backend is made with the Django framework. It provides an API to access the stamps collection stored in the database. For each one of the entities in the database, a django app will be created to handle the REST interface for that entity.
+## 🚀 Quick Start
 
-### Stamp Collection Database Schema
+### Prerequisites
 
-This document provides a detailed description of the database schema for the Stamp Collection application. The model is designed to organize and manage data related to stamp issues, individual stamps, and associated metadata.
+- Docker and Docker Compose
+- Python 3.13+ (for local development)
 
-The overall database structure is illustrated below:
+### Development Setup
 
-![alt text](backend/resources/stamps-db-model.png)
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd stamps-web-app
+   ```
 
-#### 1. Core Entities
+2. **Set up environment variables**
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   # Edit the .env files with your configuration
+   ```
 
-#### `issue`
-Represents a specific issue of stamps, often a series or set released at a particular time. This is the central entity linking various lookup tables.
+3. **Start the development environment**
+   ```bash
+   # Start both backend and frontend in development mode
+   docker-compose -f backend/docker-compose.dev.yml -f frontend/docker-compose.dev.yml up
+   
+   # Or start them separately
+   docker-compose -f backend/docker-compose.dev.yml up -d
+   docker-compose -f frontend/docker-compose.dev.yml up -d
+   ```
 
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier for the issue. |
-| **year_id** | `INT` | FK | The year of the issue (links to `year.id`). |
-| **date** | `DATE` | | Release date of the issue. |
-| **name** | `VARCHAR` | | Name or description of the issue. |
-| **total_printed** | `INT` | | Total number of stamps printed for this issue. |
-| **market_value** | `FLOAT` | | Estimated market value of the issue as a set. |
-| **stamp_type_id** | `INT` | FK | Type of stamp in this issue (links to `stamp_type.id`). |
-| **paper_type_id** | `INT` | FK | Type of paper used (links to `paper_type.id`). |
-| **description** | `VARCHAR` | | Detailed description of the issue. |
-| **country_id** | `INT` | FK | Country of origin for the issue (links to `country.id`). |
-| **note** | `VARCHAR` | | Any additional notes for the issue. |
-| **perforation** | `VARCHAR` | | Perforation details (e.g., "13", "11.5x12"). |
+4. **Access the application**
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/stamps-backend/api/v1/swagger/
 
-#### `stamp`
-Represents an individual stamp within an `issue`.
+### Production Deployment
 
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier for the stamp. |
-| **issue_id** | `INT` | FK | The issue this stamp belongs to (links to `issue.id`). |
-| **edifil_code** | `VARCHAR` | | Edifil catalog code for the stamp. |
-| **face_value** | `VARCHAR` | | Denominative face value (e.g., "10c", "1€"). |
-| **name** | `VARCHAR` | | Name or description of the individual stamp. |
-| **description** | `VARCHAR` | | Other catalog codes for the stamp. |
-| **image** | `VARCHAR` | | Path or URL to the image of the stamp. |
-| **color_id** | `INT` | FK | The main color of the stamp (links to `color.id`). |
-| **market_value** | `FLOAT` | | Estimated market value of the individual stamp. |
+```bash
+# Build and start production containers
+docker-compose -f backend/docker-compose.prod.yml -f frontend/docker-compose.prod.yml up -d
+```
+
+## 📋 Project Structure
+
+```
+stamps-web-app/
+├── backend/                    # Django REST API backend
+│   ├── _backend/              # Django project configuration
+│   ├── stamps_api/            # Master stamp catalog management
+│   ├── issues_api/            # Stamp issue management
+│   ├── collections_api/       # User collection management
+│   ├── collection_items_api/  # Individual stamp items in collections
+│   ├── config_api/            # System configuration
+│   ├── users_api/             # User management and authentication
+│   ├── years_api/             # Year reference data
+│   ├── colors_api/            # Color reference data
+│   ├── countries_api/         # Country reference data
+│   ├── stamp_types_api/       # Stamp type reference data
+│   ├── print_types_api/       # Print type reference data
+│   ├── locations_api/         # Storage location management
+│   ├── condition_types_api/   # Condition type reference data
+│   ├── health_api/            # System health checks
+│   ├── common/                # Shared utilities and middleware
+│   ├── resources/             # Static resources and data files
+│   └── manage.py              # Django management script
+├── frontend/                   # NiceGUI frontend application
+│   ├── main.py                # Application entry point
+│   ├── pages/                 # Page components
+│   ├── components/            # Reusable UI components
+│   ├── services/              # API service layer
+│   ├── assets/                # Static assets (images, styles)
+│   ├── core/                  # Core utilities and configuration
+│   └── settings.py            # Application settings
+├── logs/                      # Application logs
+└── README.md                  # This file
+```
+
+## 🏗️ Architecture
+
+### Backend (Django REST Framework)
+
+The backend is built with Django and Django REST Framework, providing a robust API for managing stamp collections. Key features include:
+
+- **RESTful API design** with comprehensive documentation
+- **Authentication and authorization** using JWT tokens and API keys
+- **Database management** with PostgreSQL support
+- **Reference data management** for stamps, issues, colors, countries, etc.
+- **Collection management** for user-specific stamp collections
+- **Health monitoring** endpoints for system status
+
+### Frontend (NiceGUI)
+
+The frontend uses NiceGUI to create a modern, responsive web interface:
+
+- **Modern UI/UX** with responsive design
+- **Authentication flow** with login/logout functionality
+- **Collection management** interface for users
+- **Admin interface** for managing the master stamp catalog
+- **Multi-language support** (Spanish and English)
+- **Static file serving** for images and assets
+
+## 📊 Data Model
+
+The application manages several key entities:
+
+### Core Entities
+
+- **Issues**: Stamp issues with metadata (year, date, name, description, etc.)
+- **Stamps**: Individual stamps within issues (face value, colors, market value, etc.)
+- **Collections**: User-specific collections of stamps
+- **Collection Items**: Individual stamps within user collections
+
+### Reference Data
+
+- **Years**: Year reference for issues
+- **Countries**: Country reference for issues
+- **Colors**: Color reference for stamps
+- **Stamp Types**: Type classification for stamps
+- **Print Types**: Printing method reference
+- **Locations**: Storage location reference
+- **Condition Types**: Condition reference for collection items
+
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Backend
+```bash
+# Database
+POSTGRES_DB=stamps_db
+POSTGRES_USER=stamps_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+# Django
+SECRET_KEY=your_secret_key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=http://localhost:8000
+
+# API
+API_MASTER_KEY=your_master_api_key
+```
+
+#### Frontend
+```bash
+# Application
+APP_NAME=Stamps App
+LOG_LEVEL=DEBUG
+DEFAULT_LANGUAGE=es
+
+# Backend Connection
+BACKEND_HOST=localhost
+BACKEND_PORT=8000
+API_MASTER_KEY=your_master_api_key
+
+# Authentication
+APP_STORAGE_SECRET=your_storage_secret
+```
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+# Run backend tests
+cd backend
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=.
+```
+
+### Frontend Tests
+```bash
+# Run frontend tests
+cd frontend
+python -m pytest
+
+# Run with NiceGUI testing plugin
+python -m pytest -p nicegui.testing.user_plugin
+```
+
+## 📚 API Documentation
+
+The API is documented using Swagger/OpenAPI. Access the documentation at:
+
+- **Development**: http://localhost:8000/stamps-backend/api/v1/swagger/
+- **Production**: http://your-domain.com/stamps-backend/api/v1/swagger/
+
+### Key Endpoints
+
+- **Authentication**: `/stamps-backend/api/v1/login/` - User login
+- **Issues**: `/stamps-backend/api/v1/issues/` - Manage stamp issues
+- **Stamps**: `/stamps-backend/api/v1/stamps/` - Manage individual stamps
+- **Collections**: `/stamps-backend/api/v1/collections/` - Manage user collections
+- **Collection Items**: `/stamps-backend/api/v1/collection_items/` - Manage collection items
+
+## 🚀 Deployment
+
+### Docker Compose
+
+The project includes Docker Compose configurations for different environments:
+
+- **Development**: `docker-compose.dev.yml` - With hot reload and development tools
+- **Production**: `docker-compose.prod.yml` - Optimized for production deployment
+- **Testing**: `docker-compose.test.yml` - For running tests
+
+### Production Considerations
+
+1. **Security**: Set strong secrets and disable debug mode
+2. **Database**: Use a production PostgreSQL instance
+3. **Static Files**: Configure proper static file serving
+4. **SSL/TLS**: Enable HTTPS in production
+5. **Monitoring**: Set up health checks and monitoring
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Django](https://www.djangoproject.com/) and [Django REST Framework](https://www.django-rest-framework.org/)
+- Frontend powered by [NiceGUI](https://nicegui.io/)
+- Database management with [PostgreSQL](https://www.postgresql.org/)
+
+## 🔗 Links
+
+- [Backend Documentation](backend/README.md)
+- [Frontend Documentation](frontend/README.md)
+- [API Documentation](http://localhost:8000/stamps-backend/api/v1/swagger/)
 
 ---
 
-#### 2. Collection Management
-
-#### `collection`
-Represents a user's personal stamp collection.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier for the collection. |
-| **user** | `VARCHAR` | | Identifier for the user who owns the collection. |
-| **name** | `VARCHAR` | | Name of the collection. |
-
-#### `collection_item`
-A junction table linking individual stamps to user collections, essentially recording ownership.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier for the collection item instance. |
-| **collection_id** | `INT` | FK | The collection this item belongs to (links to `collection.id`). |
-| **stamp_id** | `INT` | FK | The individual stamp included (links to `stamp.id`). |
-| **location_id** | `INT` | FK | Associated location for the issue (links to `location.id`). |
-| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
-| **condition_type_id** | `INT` | FK | Current condition of the stamp (links to `condition.id`). |
-
-
----
-
-#### 3. Lookup Tables (Reference Data)
-
-#### `year`
-Stores the unique years associated with stamp issues.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **year** | `INT` | | The specific year value. |
-
-#### `stamp_type`
-Categorizes the different types of stamps.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **name** | `VARCHAR` | | Name of the stamp type (e.g., "Commemorative", "Definitive"). |
-
-#### `paper_type`
-Defines the types of paper used for stamps.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **name** | `VARCHAR` | | Name of the paper type. |
-
-#### `location`
-Stores geographical locations relevant to stamp issues (e.g., cities, regions).
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **name** | `VARCHAR` | | Name of the location. |
-
-#### `country`
-Lists countries associated with stamp issues.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **name** | `VARCHAR` | | Name of the country. |
-
-#### `color`
-Defines available colors for stamps.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **id** | `INT` | PK | Unique identifier. |
-| **name** | `VARCHAR` | | Name of the color (e.g., "Red", "Blue"). |
-
-#### 4. Configuration
-
-#### `config`
-Stores application configuration settings as simple key-value pairs.
-
-| Column Name | Data Type | Key Type | Description |
-| :--- | :--- | :--- | :--- |
-| **property** | `VARCHAR` | PK | Name of the configuration property (key). |
-| **value** | `VARCHAR` | | Value of the configuration property. |
-
-#### 5. Relationships Summary
-
-| Source Table | Relationship | Target Table | Description |
-| :--- | :--- | :--- | :--- |
-| **`issue`** | Many-to-One (FKs) | `year`, `stamp_type`, `paper_type`, `location`, `country` | An `issue` is categorized by a single entry from each of these reference tables. |
-| **`stamp`** | Many-to-One (FK) | `issue` | Every `stamp` belongs to one specific `issue`. |
-| **`stamp`** | Many-to-One (FK) | `color` | Every `stamp` is associated with one primary `color`. |
-| **`collection_item`** | Many-to-One (FK) | `collection` | Every `collection_item` belongs to one `collection`. |
-| **`collection_item`** | Many-to-One (FK) | `stamp` | Every `collection_item` records the ownership of one specific `stamp`. |
-
-### REST API Endpoints 
-For detailed information about all available REST endpoints, please refer to the [API Documentation](./backend/readme_api.md).
-
-## Frontend
-TBD.
-
-### Things to consider
-- https://nicegui.io/ for Frontend
-- https://justpy.io/ for Frontend
-- https://github.com/reactive-python/reactpy for Frontend
-- https://www.gradio.app/ for Frontend
-- https://reflex.dev/ for Frontend
+**Note**: This is a philatelic collection management application designed for stamp collectors and enthusiasts.

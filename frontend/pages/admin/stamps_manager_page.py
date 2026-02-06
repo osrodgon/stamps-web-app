@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from base.base_page import BasePage
 from components.common.top_bar import TopBar
@@ -6,9 +5,8 @@ from components.stamps.issues_table import IssuesTable
 from core.translations import _
 from nicegui import app, ui
 from services.stamps_service import StampsService
-from settings import API_MASTER_KEY, IMAGE_DIR, NO_STAMP, USER_LANGUAGE
+from settings import IMAGE_DIR, NO_STAMP, USER_LANGUAGE
 from core.numbers import Numbers
-import unicodedata
 
 
 class StampsManagerPage(ui.column, BasePage):
@@ -29,11 +27,16 @@ class StampsManagerPage(ui.column, BasePage):
     # Localization Keys
     ERR_API = 'api_error'
 
+    # UI Components
     top_bar: TopBar = None
     years_range = None
     series_filter = None
     table: IssuesTable = None
+    
+    # Services
     stamps_service: StampsService = None
+    
+    # Data Storage
     print_types = []
     stamp_types = []
     all_issues = []
@@ -45,10 +48,8 @@ class StampsManagerPage(ui.column, BasePage):
         super().__init__()
         self.log.debug('Initializing StampsManagerPage...')
         self.stamps_service = StampsService()
-
         self.configure_styles()
         self._setup_ui()
-
         ui.timer(0, self.load_initial_data, once=True)
 
     def _setup_ui(self) -> None:
@@ -89,23 +90,18 @@ class StampsManagerPage(ui.column, BasePage):
             on_delete=lambda e: self.notify(e.args)
         )
         self.table.on('expand', lambda e: self.handle_expand(e.args))
-
-    def _convert_year_pattern_to_range(self, year_pattern: str) -> str:
-        """Converts a year pattern to a range."""
-        s = year_pattern.strip()
+        self.table.on('request', lambda e: self.handle_pagination_change(e.args))
         
-        if len(s) == 4 and s.endswith('*') and s[:-1].isdigit():
-            prefix = s[:-1]
-            return f'{prefix}0-{prefix}9'
-
-        if len(s) == 3 and s.endswith('*') and s[:-1].isdigit():
-            prefix = s[:-1]
-            return f'{prefix}00-{prefix}99'
-
-        if len(s) == 4 and s.isdigit():
-            return int(s)
-
-        return None
+    async def handle_pagination_change(self, event_data: dict) -> None:
+        pagination = event_data.get('pagination', {})
+        
+        page = pagination.get('page', 1)
+        rows_per_page = pagination.get('rowsPerPage', 15)
+        sort_by = pagination.get('sortBy', 'date')
+        descending = pagination.get('descending', False)
+        
+        self.log.debug(f'Pagination changed: page={page}, rows_per_page={rows_per_page} sort_by={sort_by} descending={descending}')
+        await self.get_issues(page=page, page_size=rows_per_page, sort_by=sort_by, descending=descending)
         
     async def handle_expand(self, row_data: dict) -> None:
         """
@@ -146,49 +142,6 @@ class StampsManagerPage(ui.column, BasePage):
             self.log.error(f"Failed to fetch stamps for issue {issue_id}")
             row[self.STAMPS_KEY] = []
             self.table.update()
-
-    def _resolve_stamp_image_url(self, image_name: str) -> str:
-        """Resolves the full URL/path for a stamp image, falling back to NO_STAMP."""
-        if not image_name:
-            return str(NO_STAMP)
-
-        image_path = f"{IMAGE_DIR}{image_name}"
-        root_path = Path(__file__).resolve().parent.parent.parent
-        full_physical_path = os.path.join(root_path, image_path.lstrip('/'))
-
-        if os.path.exists(full_physical_path):
-            return image_path
-        return str(NO_STAMP)
-
-    def configure_styles(self) -> None:
-        """
-        Configures the page-specific styles and injects necessary CSS.
-
-        This includes:
-        - Setting body overflow and margins.
-        - Injecting custom CSS for the year selection popup and range slider.
-        """
-        ui.query('body').style('overflow: hidden; margin: 0; padding: 0;')
-        # Force dropdown items to be black when using dark mode input but light menu
-        ui.add_head_html('''
-            <style>
-                .year-select-popup .q-item, 
-                .year-select-popup .q-item__label {
-                    color: black !important;
-                }
-                .compact-slider .q-slider__track { 
-                    height: 1px !important; 
-                }
-                .compact-slider .q-slider__thumb { 
-                    width: 15px !important; 
-                    height: 15px !important; 
-                }
-                /* Removes the thick 'focus' ring that appears when clicking */
-                .compact-slider .q-slider__thumb:after {
-                    display: none !important;
-                }
-            </style>
-        ''')
 
     async def get_years(self) -> None:
         """
@@ -238,70 +191,113 @@ class StampsManagerPage(ui.column, BasePage):
             self.log.error(_(self.ERR_API, _language='en'))
             self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
 
-    def enable_years_slider(self, is_active: bool = True) -> None:
+    async def get_issues(self, page: int=1, page_size: int=None, sort_by: str='date', descending: bool=False) -> None:
         """
-        Enables or disables the years range slider and toggles associated labels.
-
-        Args:
-            is_active (bool): Whether to enable the slider. Defaults to True.
+        Fetches stamp issues based on the current filter criteria with optimized filtering.
+        
+        This method implements intelligent filtering logic that:
+        - Validates and processes filter inputs safely
+        - Determines the appropriate filtering strategy (year-only vs series-based)
+        - Handles year pattern detection in series input (e.g., "202*" -> year range)
+        - Manages loading states consistently across all code paths
+        - Processes API responses with proper error handling and data formatting
+        
+        The method delegates specific tasks to specialized helper methods for better
+        maintainability and testability.
+        
+        Raises:
+            Exception: If an unexpected error occurs during the filtering process.
         """
-        if is_active:
-            self.years_range.props(f'color="{self.ACTIVE_COLOR}" selection-color="{self.ACTIVE_COLOR}"')
-            self.years_range.enable()
-        else:
-            self.years_range.props(f'color="{self.INACTIVE_COLOR}" selection-color="{self.INACTIVE_COLOR}"')
-            self.years_range.disable()
-
-        self.years_label.set_visibility(is_active)
-        self.feedback_label.set_visibility(not is_active)
-
-        self.years_range.update()
-
-    async def get_issues(self) -> None:
-        """
-        Fetches stamp issues based on the current filter criteria.
-        """
-        series_input = self.series_filter.value
-        if not series_input or len(series_input) <= self.MIN_SEARCH_LENGTH:
-            self.log.debug('Filter input too short or empty.')
-            self.table.rows = []
-            self.enable_years_slider(False)
-            return
-
-        normalized_series = self._normalize_string(series_input)
-        year_filter = self._convert_year_pattern_to_range(normalized_series)
-
+        # Get and validate inputs
+        series_input = (self.series_filter.value or "").strip()
+        year_range_str = self._get_year_range_string()
+        
+        if page_size is None:
+            pagination = self.table.pagination
+            page_size = pagination.get('rows_per_page', 15) if pagination else 15
+            
+        current_page = page
+        
+        # Set loading state early for consistent UX
         self.table.loading = True
+        
         try:
-            if year_filter:
-                self.enable_years_slider(False)
-                
-                self.log.debug(f'Searching by year or year range: {year_filter}')
-                
+            # Determine filtering strategy based on input validation
+            if self._should_use_year_only_filter(series_input):
+                self.log.debug(f"Getting issues for years: {year_range_str}")
                 response = await self.stamps_service.get_issues(
-                    year=year_filter
+                    year=year_range_str,
+                    page=current_page,
+                    page_size=page_size,
+                    sort_by=sort_by,
+                    descending=descending
                 )
             else:
-                self.enable_years_slider(True)
-
-                year_range_val = self.years_range.value
-                year_range_str = f"{year_range_val['min']}-{year_range_val['max']}"
-                
-                self.log.debug(f'Searching by series: "{normalized_series}" in range: {year_range_str}')
-                self.enable_years_slider(True)
+                if series_input[:-1].isdigit():
+                    year_range_str=series_input
+                    series_input=''
+                    
+                self.log.debug(f"Getting issues for years: {year_range_str} and issues name: {series_input}")
+                    
                 response = await self.stamps_service.get_issues(
-                    year=year_range_str, 
-                    series_name=normalized_series
+                    year=year_range_str,
+                    series_name=series_input,
+                    page=current_page,
+                    page_size=page_size,
+                    sort_by=sort_by,
+                    descending=descending
                 )
-        finally:
-            self.table.loading = False
-
-        if self._is_valid_response(response):
-            data = response.json().get('data', [])
+                self.enable_years_slider(True)
             
-            # Enrich data with metadata for editing
+            # Process response with centralized logic
+            await self._process_paginated_response(response)
+            
+        except Exception as e:
+            self.log.error(f'Error fetching issues: {e}')
+            self.notify(_('unexpected_error'), 'warning', timeout=0, close_button=_('close'))
+        finally:
+            # Always ensure loading state is reset
+            self.table.loading = False
+    
+    async def _process_paginated_response(self, response) -> None:
+        """
+        Processes a paginated API response for issues and updates the table state.
+
+        This method handles:
+        - Response validation and error checking
+        - Data enrichment with metadata for editing
+        - Number formatting for display based on user locale
+        - Updating the table's pagination state based on response metadata
+
+        Args:
+            response (requests.Response | None): The API response to process.
+        """
+        if not self._is_valid_response(response):
+            self.log.error(f'API error fetching paginated issues: {response.status_code if response else "No response"}')
+            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
+            return
+        
+        data = response.json()
+        
+        # Extract data and pagination metadata
+        issues  = data.get('data', {}).get('issues', [])
+        pagination = data.get('data', {}).get('pagination', {})
+        
+        if not issues:
+            self.table.rows = []
+        else:
+            total_count = pagination.get('total', len(issues))
+            current_page = pagination.get('page', 1)
+            current_page_size = pagination.get('page_size', 15)
+            sort_by = pagination.get('sort_by', 'date')
+            order = pagination.get('order', 'asc')
+            descending = order == 'desc' 
+
+            self.log.error(f'Sort by: {sort_by}, Order: {order}, Descending: {descending}')
+            
             lang = app.storage.user.get(USER_LANGUAGE, 'en')
-            for row in data:
+            
+            for row in issues:
                 row['opts_print_types'] = self.print_types
                 row['opts_stamp_types'] = self.stamp_types
                 
@@ -309,24 +305,69 @@ class StampsManagerPage(ui.column, BasePage):
                 row['total_printed'] = Numbers.format_localized(row.get('total_printed'), lang, 0, 0)
                 row['market_value'] = Numbers.format_localized(row.get('market_value'), lang, 2, 2, ' €')
                 row['perforation'] = Numbers.format_localized(row.get('perforation'), lang, 0, 2)
+                
+            self.all_issues = issues
+            self.table.rows[:] = issues
             
-            self.all_issues = data
-            self.table.rows[:] = data
-        else:
-            self.log.error(f'API error fetching issues: {response.status_code if response else "No response"}')
-            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
+            
+            self.table.pagination = {
+                'page': current_page,
+                'rowsPerPage': current_page_size,
+                'rowsNumber': total_count,
+                'sortBy': sort_by,
+                'descending': descending
+            }
 
-    async def filter_issues(self, e=None) -> None:
-        """Callback for filter UI changes."""
-        await self.get_issues()
+    def _get_year_range_string(self) -> str:
+        """
+        Safely extracts the year range string from the years_range slider.
+        
+        This method handles potential None values and missing keys gracefully
+        to prevent runtime errors when the slider is not initialized.
+        
+        Returns:
+            str: The year range string in format "min-max", or empty string if invalid.
+        """
+        if not self.years_range:
+            return ""
+        
+        year_range_val = self.years_range.value
+        if not year_range_val or 'min' not in year_range_val or 'max' not in year_range_val:
+            return ""
+        
+        return f"{year_range_val['min']}-{year_range_val['max']}"
 
-    async def load_initial_data(self) -> None:
+    def _should_use_year_only_filter(self, series_input: str) -> bool:
         """
-        Loads all necessary initial data sequentially.
-        """
-        await self.get_years()
-        await self.get_print_types()
-        await self.get_stamp_types()
+        Determines if filtering should be year-only based on the series input.
+        
+        Year-only filtering is used when:
+        - No series input is provided, OR
+        - Series input is too short (less than MIN_SEARCH_LENGTH characters)
+        
+        Args:
+            series_input (str): The series input string to evaluate.
+            
+        Returns:
+            bool: True if year-only filtering should be used, False otherwise.
+        """ 
+        if not series_input:
+            return True  # Enable year-only when no input
+        
+        return len(series_input.strip()) <= self.MIN_SEARCH_LENGTH
+
+    def _resolve_stamp_image_url(self, image_name: str) -> str:
+        """Resolves the full URL/path for a stamp image, falling back to NO_STAMP."""
+        if not image_name:
+            return str(NO_STAMP)
+
+        image_path = f"{IMAGE_DIR}{image_name}"
+        root_path = Path(__file__).resolve().parent.parent.parent
+        full_physical_path = root_path / image_path.lstrip('/')
+
+        if Path(full_physical_path).exists():
+            return image_path
+        return str(NO_STAMP)
 
     async def _fetch_metadata_list(self, service_method, storage_attr: str, log_name: str) -> None:
         """
@@ -355,23 +396,66 @@ class StampsManagerPage(ui.column, BasePage):
         """Fetches available stamp types."""
         await self._fetch_metadata_list(self.stamps_service.get_stamp_types, 'stamp_types', 'stamp types')
     
-    def _normalize_string(self, text: str) -> str:
+    def configure_styles(self) -> None:
         """
-        Normalizes a string by converting it to lowercase and removing accents.
-        
+        Configures the page-specific styles and injects necessary CSS.
+
+        This includes:
+        - Setting body overflow and margins.
+        - Injecting custom CSS for the year selection popup and range slider.
+        """
+        ui.query('body').style('overflow: hidden; margin: 0; padding: 0;')
+        # Force dropdown items to be black when using dark mode input but light menu
+        ui.add_head_html('''
+            <style>
+                .year-select-popup .q-item, 
+                .year-select-popup .q-item__label {
+                    color: black !important;
+                }
+                .compact-slider .q-slider__track { 
+                    height: 1px !important; 
+                }
+                .compact-slider .q-slider__thumb { 
+                    width: 15px !important; 
+                    height: 15px !important; 
+                }
+                /* Removes the thick 'focus' ring that appears when clicking */
+                .compact-slider .q-slider__thumb:after {
+                    display: none !important;
+                }
+            </style>
+        ''')
+
+    async def filter_issues(self, e=None) -> None:
+        """Callback for filter UI changes."""
+        await self.get_issues()
+
+    async def load_initial_data(self) -> None:
+        """
+        Loads all necessary initial data sequentially.
+        """
+        await self.get_years()
+        await self.get_print_types()
+        await self.get_stamp_types()
+        await self.get_issues()
+        self.enable_years_slider(True)
+
+    def enable_years_slider(self, is_active: bool = True) -> None:
+        """
+        Enables or disables the years range slider and toggles associated labels.
+
         Args:
-            text (str): The string to normalize.
-            
-        Returns:
-            str: The normalized string.
+            is_active (bool): Whether to enable the slider. Defaults to True.
         """
-        if not text:
-            return ""
-        
-        # Normalize to NFD (Normalization Form Decomposition)
-        # This separates characters from their accents
-        nfd_form = unicodedata.normalize('NFD', text)
-        
-        # Filter out non-spacing marks (accents)
-        return "".join(c for c in nfd_form if unicodedata.category(c) != 'Mn').lower()
+        if is_active:
+            self.years_range.props(f'color="{self.ACTIVE_COLOR}" selection-color="{self.ACTIVE_COLOR}"')
+            self.years_range.enable()
+        else:
+            self.years_range.props(f'color="{self.INACTIVE_COLOR}" selection-color="{self.INACTIVE_COLOR}"')
+            self.years_range.disable()
+
+        self.years_label.set_visibility(is_active)
+        self.feedback_label.set_visibility(not is_active)
+
+        self.years_range.update()
 
