@@ -101,21 +101,6 @@ class StampsService(BaseService):
 
         return None
         
-    async def get_issues_paginated(self, page: int=1, page_size: int=15, year: int=None, series_name: str=None):
-        """
-        Retrieves paginated stamp issues.
-
-        Args:
-            page (int): The page number to retrieve (default is 1).
-            page_size (int): The number of issues per page (default is 15).
-            year (int, optional): The exact year to filter by. Defaults to None.
-            series_name (str, optional): A substring search for the series name. Defaults to None.
-
-        Returns:
-            requests.Response|None: The API response object or None on failure.
-        """
-        return await self.get_issues(year=year, series_name=series_name, page=page, page_size=page_size)
-        
     async def get_print_types(self):
         """
         Fetches the available print types from the backend.
