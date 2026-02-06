@@ -30,7 +30,7 @@ class StampsService(BaseService):
             headers=self._get_headers()
         )
 
-    async def get_issues(self, year: int=None, series_name: str=None, page: int=None, page_size: int=None, sort_by: str='date', descending: bool=False):
+    async def get_issues(self, year: str=None, series_name: str=None, page: int=None, page_size: int=None, sort_by: str='date', descending: bool=False):
         """
         Retrieves stamp issues, optionally filtered by year or series name.
 
