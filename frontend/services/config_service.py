@@ -2,7 +2,7 @@ import requests
 from services.base_service import BaseService
 from core.urls import URLs
 from nicegui import app
-from settings import USER_ID, USER_JWT_TOKEN, USER_LANGUAGE, API_MASTER_KEY
+from settings import USER_ID, USER_JWT_TOKEN, USER_LANGUAGE, API_MASTER_KEY, USER_NAME
 
 class ConfigService(BaseService):
     """
