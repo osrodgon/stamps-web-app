@@ -144,10 +144,12 @@ class ConfigService(BaseService):
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
 
         data = await self._get_user_config()
-        if data:
-            id = data[0]['id']
+        config_to_delete = next((c for c in data if c['property'] == property_name), None)
+        if config_to_delete:
+            id = config_to_delete['id']
         else:
-            self.log.error("Failed to fetch configuration for deletion.")
+            user_name = app.storage.user.get(USER_NAME)
+            self.log.error(f"Failed to fetch configuration for deleting {property_name} for user {user_name}.")
             return False
 
         url = f"{URLs.Backend.config}{id}"
