@@ -15,14 +15,14 @@ class ConfigService(BaseService):
     
     def __init__(self):
         super().__init__()
-        
-    async def load_user_config(self) -> list:
+
+    async def _get_user_config(self) -> list:
         """
         Retrieves all configuration entries from the backend for the current user.
         
         Returns:
             list: A list of configuration entry dictionaries.
-        """    
+        """
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
         response = await self._make_request(
             request_type=self.GET,
@@ -32,7 +32,21 @@ class ConfigService(BaseService):
         
         if response and response.status_code == requests.codes.ok:
             data = response.json().get('data', [])
+            return data
             
+        self.log.error(f"Failed to fetch configuration. Status: {response.status_code if response else 'No response'}")
+        return []
+        
+    async def load_user_config(self) -> list:
+        """
+        Retrieves all configuration entries from the backend for the current user.
+        
+        Returns:
+            list: A list of configuration entry dictionaries.
+        """    
+        data = await self._get_user_config()
+        
+        if data:
             # Update local storage with allowed retrieved settings
             for entry in data:
                 prop = entry.get('property')
@@ -129,7 +143,15 @@ class ConfigService(BaseService):
             bool: True if deleted successfully, False otherwise.
         """            
         headers = {'Authorization': f'Api-Key {API_MASTER_KEY}'}
-        url = f"{URLs.Backend.config}{app.storage.user[USER_ID]}"
+
+        data = await self._get_user_config()
+        if data:
+            id = data[0]['id']
+        else:
+            self.log.error("Failed to fetch configuration for deletion.")
+            return False
+
+        url = f"{URLs.Backend.config}{id}"
         response = await self._make_request(
             request_type=self.DELETE,
             url=url,
