@@ -5,7 +5,7 @@ from core.urls import URLs
 from services.stamps_service import StampsService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
-from frontend.tests.data.stamps_api_responses import (
+from tests.data.stamps_api_responses import (
     YEARS_RESPONSE_200_SUCCESS,
     ISSUES_RESPONSE_200_SUCCESS,
     PRINT_TYPES_RESPONSE_200_SUCCESS,

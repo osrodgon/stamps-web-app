@@ -9,7 +9,7 @@ from pages.auth.login_page import LoginPage
 from services.auth_service import AuthService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
-from frontend.tests.data.users_api_responses import (
+from tests.data.users_api_responses import (
     LOGIN_RESPONSE_200_SUCCESS, LOGIN_RESPONSE_200_SUCCESS_MISSING_TOKEN,
     LOGIN_RESPONSE_400_BAD_REQUEST, LOGIN_RESPONSE_401_UNAUTHORIZED,
     LOGIN_RESPONSE_500_SERVER_ERROR)

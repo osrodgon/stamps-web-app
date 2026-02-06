@@ -10,7 +10,7 @@ from pages.auth.signup_page import SignUpPage
 from services.auth_service import AuthService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
-from frontend.tests.data.users_api_responses import (
+from tests.data.users_api_responses import (
     SIGNUP_RESPONSE_201_SUCCESS, SIGNUP_RESPONSE_400_FAIL
 )
 

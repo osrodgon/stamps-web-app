@@ -100,6 +100,7 @@ jobs:
           # test plugin to initialize correctly.
           APP_STORAGE_SECRET: "ci_test_secret_only"
           DEFAULT_LANGUAGE: "en"
+          API_MASTER_KEY: "test_master_key"
         # Run tests and generate an XML report for coverage
         run: |
           pytest --cov=.

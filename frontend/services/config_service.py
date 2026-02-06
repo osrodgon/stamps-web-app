@@ -55,7 +55,6 @@ class ConfigService(BaseService):
             
             return data
             
-        self.log.error(f"Failed to fetch configuration. Status: {response.status_code if response else 'No response'}")
         return []
 
     async def save_user_config(self) -> bool:
