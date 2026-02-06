@@ -28,7 +28,7 @@ class TestSignUpPage(AbstractUnitTest):
     def init_data(self, mocker, caplog):
         """Initializes mock data and configures logging for tests."""
         caplog.set_level(logging.CRITICAL)
-        self._AbstractUnitTest__mocker = mocker
+        self._mocker = mocker
         
     @pytest.fixture
     async def signup_page_components(self, user: User):

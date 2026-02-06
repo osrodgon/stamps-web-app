@@ -21,7 +21,7 @@ class TestCollectionsPage(AbstractUnitTest):
     def init_data(self, mocker, caplog):
         """Initializes mock data and configures logging for tests."""
         caplog.set_level(logging.CRITICAL)
-        self._AbstractUnitTest__mocker = mocker
+        self._mocker = mocker
         
     @pytest.fixture
     async def collections_page_components(self, user: User):
