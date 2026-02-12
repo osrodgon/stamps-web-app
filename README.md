@@ -50,7 +50,7 @@ docker-compose -f backend/docker-compose.prod.yml -f frontend/docker-compose.pro
 
 ```
 stamps-web-app/
-├── backend/                    # Django REST API backend
+├── backend/                   # Django REST API backend
 │   ├── _backend/              # Django project configuration
 │   ├── stamps_api/            # Master stamp catalog management
 │   ├── issues_api/            # Stamp issue management
@@ -183,8 +183,24 @@ python -m pytest --cov=.
 cd frontend
 python -m pytest
 
-# Run with NiceGUI testing plugin
-python -m pytest -p nicegui.testing.user_plugin
+# Run with coverage
+python -m pytest --cov=.
+```
+
+## Testing everything
+```bash
+# Run all tests
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=.
+```
+
+The project is configured to use `pytest` for running unit and integration tests.
+
+```bash
+# Run all frontend tests
+python -m pytest
 ```
 
 ## 📚 API Documentation
