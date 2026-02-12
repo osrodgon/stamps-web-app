@@ -26,7 +26,8 @@ from _backend.settings import (
     USERS_ENDPOINT,
     YEARS_ENDPOINT,
     LOGIN_ENDPOINT,
-    LOGOFF_ENDPOINT
+    LOGOFF_ENDPOINT,
+    AI_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
 from health_api.api.views.health_view import HealthView
@@ -53,6 +54,8 @@ urlpatterns = [
             # Login/Logoff
             path(LOGIN_ENDPOINT, LoginView.as_view(), name="login"),
             path(LOGOFF_ENDPOINT, LogoffView.as_view(), name="logoff"),
+            # AI
+            path(AI_ENDPOINT, include('ai_manager.urls')),
             # Health
             path(HEALTH_ENDPOINT, HealthView.as_view(), name="health"),
             # Documentations
