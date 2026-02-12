@@ -44,6 +44,9 @@ class StampsManagerPage(ui.column, BasePage):
     def __init__(self) -> None:
         """
         Initializes the StampsManagerPage component.
+        
+        This method sets up the page by initializing the StampsService, configuring
+        styles, setting up the UI components, and loading the initial data.
         """
         super().__init__()
         self.log.debug('Initializing StampsManagerPage...')
@@ -53,7 +56,12 @@ class StampsManagerPage(ui.column, BasePage):
         ui.timer(0, self.load_initial_data, once=True)
 
     def _setup_ui(self) -> None:
-        """Sets up the main UI components."""
+        """
+        Sets up the main UI components.
+        
+        This method creates the TopBar and IssuesTable components, configuring their
+        layout and event handlers.
+        """
         self.top_bar = TopBar(_('stamps_manager_title'))
         self.classes('w-full h-screen no-wrap p-0 m-0 overflow-hidden')
 
@@ -63,7 +71,12 @@ class StampsManagerPage(ui.column, BasePage):
                 self._setup_table()
 
     def _setup_filters(self) -> None:
-        """Sets up the filtering controls in the top bar."""
+        """
+        Sets up the filtering controls in the top bar.
+        
+        This method creates the filter inputs for series/year and the years range slider,
+        configuring their properties and event handlers.
+        """
         with self.top_bar.extra_controls:
             with ui.row().classes('items-center gap-8'):
                 self.series_filter = ui.input(label=_("filter_series_year"), on_change=self.filter_issues)
@@ -84,7 +97,12 @@ class StampsManagerPage(ui.column, BasePage):
                         self.loading_spinner = ui.spinner(size='sm', color=self.ACTIVE_COLOR)
 
     def _setup_table(self) -> None:
-        """Initializes and configures the issues table."""
+        """
+        Initializes and configures the issues table.
+        
+        This method creates the IssuesTable component and configures its event handlers
+        for saving, deleting, expanding, and paginating issues.
+        """
         self.table = IssuesTable(
             on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
             on_delete=lambda e: self.notify(e.args)
@@ -93,6 +111,15 @@ class StampsManagerPage(ui.column, BasePage):
         self.table.on('request', lambda e: self.handle_pagination_change(e.args))
         
     async def handle_pagination_change(self, event_data: dict) -> None:
+        """
+        Handles pagination change events from the issues table.
+        
+        This method is triggered when the user navigates between pages, changes
+        the number of rows per page, or sorts the table columns.
+        
+        Args:
+            event_data (dict): The event data containing pagination information.
+        """
         pagination = event_data.get('pagination', {})
         
         page = pagination.get('page', 1)
@@ -106,6 +133,12 @@ class StampsManagerPage(ui.column, BasePage):
     async def handle_expand(self, row_data: dict) -> None:
         """
         Handles the expansion event for a row in the IssuesTable.
+        
+        This method is triggered when the user expands a row to view the stamps
+        associated with that issue.
+        
+        Args:
+            row_data (dict): The data for the row that was expanded.
         """
         issue_id = row_data.get(self.ID_KEY)
         if not issue_id:
@@ -204,6 +237,12 @@ class StampsManagerPage(ui.column, BasePage):
         
         The method delegates specific tasks to specialized helper methods for better
         maintainability and testability.
+        
+        Args:
+            page (int): The page number to fetch (default: 1).
+            page_size (int): The number of items per page (default: None, uses table default).
+            sort_by (str): The field to sort by (default: 'date').
+            descending (bool): Whether to sort in descending order (default: False).
         
         Raises:
             Exception: If an unexpected error occurs during the filtering process.
@@ -355,7 +394,18 @@ class StampsManagerPage(ui.column, BasePage):
         return len(series_input.strip()) <= self.MIN_SEARCH_LENGTH
 
     def _resolve_stamp_image_url(self, image_name: str) -> str:
-        """Resolves the full URL/path for a stamp image, falling back to NO_STAMP."""
+        """
+        Resolves the full URL/path for a stamp image, falling back to NO_STAMP.
+        
+        This method checks if the image file exists at the expected path and returns
+        the appropriate URL or the default NO_STAMP image path.
+        
+        Args:
+            image_name (str): The name of the image file to resolve.
+            
+        Returns:
+            str: The URL/path to the image, or NO_STAMP if not found.
+        """
         if not image_name:
             return str(NO_STAMP)
 
@@ -425,12 +475,28 @@ class StampsManagerPage(ui.column, BasePage):
         ''')
 
     async def filter_issues(self, e=None) -> None:
-        """Callback for filter UI changes."""
+        """
+        Callback for filter UI changes.
+        
+        This method is triggered when the filter UI changes and initiates the
+        process of fetching stamp issues based on the current filter criteria.
+        
+        Args:
+            e: The event object (optional).
+        """
         await self.get_issues()
 
     async def load_initial_data(self) -> None:
         """
         Loads all necessary initial data sequentially.
+        
+        This method fetches the following data in order:
+        1. Years for the range slider
+        2. Print types for filtering
+        3. Stamp types for filtering
+        4. Initial stamp issues
+        
+        After loading the data, it enables the years slider.
         """
         await self.get_years()
         await self.get_print_types()
