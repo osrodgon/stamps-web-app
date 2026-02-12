@@ -5,9 +5,10 @@ from issues_api.api.serializers.issue_response_serializer import IssueResponseSe
 class IssuePaginatedResponseSerializer(serializers.Serializer):
     """
     Serializer for representing a list of Issue instances along with pagination details.
-    
-    This serializer combines the IssueDataSerializer for the main data payload with 
-    the IssuePaginationSerializer to provide a comprehensive response structure for issue listings.
+
+    Attributes:
+        issues (IssueResponseSerializer): List of issues matching the query parameters.
+        pagination (PaginationSerializer): Pagination details for the current response.
     """
     issues = IssueResponseSerializer(many=True, help_text="List of issues matching the query parameters.")
     pagination = PaginationSerializer(help_text="Pagination details for the current response.")
