@@ -16,7 +16,7 @@ from common.test.year_api_test_data import years_table
 from django.db import connection
 from rest_framework import status
 
-from backend.issues_api.api.serializers.issue_paginated_response_serializer import IssuePaginatedResponseSerializer
+from issues_api.api.serializers.issue_paginated_response_serializer import IssuePaginatedResponseSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from issues_api.models import Issue
 

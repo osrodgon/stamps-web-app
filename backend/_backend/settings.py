@@ -38,6 +38,10 @@ SECRET_KEY = os.getenv(
 JWT_SECRET = SECRET_KEY 
 JWT_ALGORITHM = 'HS256'
 
+# Google API Key
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
+GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', None)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
@@ -87,6 +91,7 @@ USERS_ENDPOINT = "users/"
 HEALTH_ENDPOINT = "health/"
 LOGIN_ENDPOINT = "login/"
 LOGOFF_ENDPOINT = "logoff/"
+AI_ENDPOINT = "research/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -112,6 +117,8 @@ CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
+AI_URL_V1=f"{SERVER_URL_V1}{AI_ENDPOINT}"
+
 
 # Application definition
 
@@ -149,6 +156,7 @@ INSTALLED_APPS = [
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
     "users_api",            # All APIs for the table user
+    "ai_manager",           # All APIs for the AI manager
     "health_api"            # All APIs for checking the system health
 ]
 
@@ -195,6 +203,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "User Management",
             "description": "APIs for managing users."  
+        },
+        {
+            "name": "AI Research",
+            "description": "APIs for AI-powered stamp and series research."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
