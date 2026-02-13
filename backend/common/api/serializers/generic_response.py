@@ -11,6 +11,8 @@ class GenericResponse():
             self.errors = None
         elif isinstance(data, dict):
             self.message = data.get('message') or data.get('detail')
+            if not self.message:
+                self.message = data
             self.errors = data.get('error')
         else:
             self.message = data

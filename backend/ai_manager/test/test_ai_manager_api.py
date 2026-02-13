@@ -203,11 +203,11 @@ class TestAImanagerAPI(AbstractApiUnitTest):
             response = api_client.post(self.__get_url(), research_request_payload_ok, format='json')
 
         assert response.json()['success'] == False
-        # assert response.json()['message'] == Messages.failed()
+        assert response.json()['message'] == Messages.AI.response_format_error()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == Messages.AI.response_format_error()
-        assert response.json()['errors'][0]['code'] == Messages.Code.other()
+        assert response.json()['errors'][0]['field'] == 'confidence_score'
+        assert response.json()['errors'][0]['message'] == Messages.field_required()
+        assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         
     def test_post_research_series_returns_422_ai_value_error(
