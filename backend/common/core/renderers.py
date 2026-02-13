@@ -50,12 +50,12 @@ class StandardJSONRenderer(JSONRenderer):
                                 "message": item.get('message', Messages.failed()),
                                 "code": item.get('code', Messages.Code.other())
                             })
-                else:
-                    errors_list.append({
-                        "field": field,
-                        "message": str(value),
-                        "code": getattr(value, 'code', Messages.Code.other())
-                    })
+                    else:
+                        errors_list.append({
+                            "field": field,
+                            "message": str(value),
+                            "code": getattr(value, 'code', Messages.Code.other())
+                        })
         elif isinstance(errors, list):
             for item in errors:
                 errors_list.append({
@@ -94,6 +94,7 @@ class StandardJSONRenderer(JSONRenderer):
             if status_code >= status.HTTP_400_BAD_REQUEST:
                 if (
                     status_code == status.HTTP_403_FORBIDDEN or
+                    status_code == status.HTTP_422_UNPROCESSABLE_ENTITY or
                     status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
                 ):
                     try:
@@ -102,6 +103,8 @@ class StandardJSONRenderer(JSONRenderer):
                         success = False
                     try:
                         message = data['message']
+                        if not message:
+                            message = Messages.failed()
                     except KeyError:
                         message = Messages.failed()
                     try:

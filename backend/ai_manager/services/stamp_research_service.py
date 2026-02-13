@@ -1,5 +1,3 @@
-from logging import config
-import os
 import json
 import re
 from typing import Dict, Any, Optional
@@ -7,6 +5,7 @@ from _backend.settings import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from google import genai
 from google.genai import types
 
+from common.api.messages import Messages
 from common.log.logger import Logger
 from ai_manager.services.prompts import SERIES_RESEARCH_PROMPT_TEMPLATE
 
@@ -29,10 +28,10 @@ class StampResearchService(Logger):
         # Configure Google Gemini API
         api_key = GEMINI_API_KEY
         if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is required")
+            raise ValueError(Messages.AI.missing_api_key())
         
         if not GEMINI_MODEL_NAME:
-            raise ValueError("GEMINI_MODEL_NAME environment variable is required")
+            raise ValueError(Messages.AI.missing_model_name())
         
         self.client = genai.Client(api_key=api_key)
         

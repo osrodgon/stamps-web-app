@@ -84,7 +84,6 @@ class ResearchResponseSerializer(serializers.Serializer):
         
         return representation
         
-    
     class Meta:
         fields = [
             'confidence_score',
