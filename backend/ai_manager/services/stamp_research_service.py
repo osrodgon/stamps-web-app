@@ -36,7 +36,7 @@ class StampResearchService(Logger):
         
         self.client = genai.Client(api_key=api_key)
         
-        # Create the configuration
+        # Create the configuration  
         self.generation_config = types.GenerateContentConfig(
             temperature=0.0,
             top_p=1.0,
@@ -98,83 +98,6 @@ class StampResearchService(Logger):
             
         return response_text.strip()
 
-    def _sanitize_response_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitize response data to ensure compatibility with serializers.
-        Converts None values to empty strings for text fields.
-        """
-        # Text fields that should be strings (not None)
-        text_fields = [
-            'description', 'artist', 'printer', 'print_type', 
-            'perforation', 'paper_type', 'stamp_type', 'notes'
-        ]
-        
-        for field in text_fields:
-            if field in data and data[field] is None:
-                data[field] = "n/a"
-                
-        # Sanitize stamps list
-        if 'stamps' in data and isinstance(data['stamps'], list):
-            stamp_text_fields = ['edifil_code', 'face_value', 'description', 'color']
-            for stamp in data['stamps']:
-                if isinstance(stamp, dict):
-                    for field in stamp_text_fields:
-                        if field in stamp and stamp[field] is None:
-                            stamp[field] = "n/a"
-                            
-        return data
-    
-    def _validate_ai_response(self, response_text: str) -> Dict[str, Any]:
-        """
-        Validate and parse the AI response.
-        
-        Args:
-            response_text: Raw response text from the AI model
-            
-        Returns:
-            Parsed JSON response as a dictionary
-            
-        Raises:
-            ValueError: If the response cannot be parsed as JSON or is invalid
-        """
-        try:
-            # Parse the JSON response
-            cleaned_text = self._clean_json_response(response_text) 
-            response_data = json.loads(cleaned_text)
-            
-            # Sanitize data (handle nulls for text fields)
-            response_data = self._sanitize_response_data(response_data)
-            
-            # Validate required fields
-            required_fields = ['confidence_score', 'confidence_score_reasons', 'description', 'issue_date', 'artist', 
-                                'printer', 'print_type', 'perforation', 'paper_type', 
-                                'stamp_type', 'notes', 'total_printed', 'market_value_mnh', 
-                                'market_value_used', 'stamps']
-            
-            for field in required_fields:
-                if field not in response_data:
-                    raise ValueError(f"Missing required field in AI response: {field}")
-            
-            # Validate data types
-            if not isinstance(response_data['confidence_score'], int) or not (0 <= response_data['confidence_score'] <= 100):
-                raise ValueError("confidence_score must be an integer between 0 and 100")
-            
-            if not isinstance(response_data['confidence_score_reasons'], list):
-                raise ValueError("confidence_score_reasons must be a list")
-            
-            if not isinstance(response_data['stamps'], list):
-                raise ValueError("stamps must be a list")
-            
-            self.log.debug("AI response validation successful")
-            return response_data
-            
-        except json.JSONDecodeError as e:
-            self.log.error(f"Failed to parse AI response as JSON: {e}")
-            raise ValueError(f"Invalid JSON response from AI: {e}")
-        except Exception as e:
-            self.log.error(f"AI response validation failed: {e}")
-            raise ValueError(f"Invalid AI response format: {e}")
-    
     def research_series(
         self, 
         issue_name: str, 
@@ -223,10 +146,10 @@ class StampResearchService(Logger):
             self.log.debug(f"Received AI response (length: {len(response.text)})")
             
             # Validate and parse the response
-            result = self._validate_ai_response(response.text)
+            self._clean_json_response(response.text)
             
             self.log.info(f"AI research completed successfully for series: {issue_name}")
-            return result
+            return json.loads(response.text)
             
         except Exception as e:
             self.log.error(f"AI research failed for series {issue_name}: {str(e)}")

@@ -1,3 +1,4 @@
+from email.policy import default
 from rest_framework import serializers
 from common.api.serializers.generic_serializer import GenericSerializer
 
@@ -20,14 +21,15 @@ class ResearchRequestSerializer(GenericSerializer, serializers.Serializer):
         max_length=10,
         required=False,    # Optional field
         allow_blank=True,  # Allow empty string if provided
+        default=None,      # Set default to None
         help_text="Starting Edifil catalog number for the series (optional)"
     )
     
-    def validate(self, data):
-        super().validate(data)
-        if not 'edifil_start_number' in data:
-            data['edifil_start_number'] = None
-        return data
+    # def validate(self, data):
+    #     super().validate(data)
+    #     if not 'edifil_start_number' in data:
+    #         data['edifil_start_number'] = None
+    #     return data
     
     class Meta:
         fields = [
@@ -36,6 +38,6 @@ class ResearchRequestSerializer(GenericSerializer, serializers.Serializer):
             'edifil_start_number'
         ]
         
-        extra_kwargs = {
-            'extra': {'allow_extra_fields': False}
-        }
+        # extra_kwargs = {
+        #     'extra': {'allow_extra_fields': False}
+        # }

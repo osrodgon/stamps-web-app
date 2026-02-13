@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 
 class ResearchResponseSerializer(serializers.Serializer):
@@ -68,6 +69,21 @@ class ResearchResponseSerializer(serializers.Serializer):
         child=serializers.DictField(),
         help_text="List of individual stamp details"
     )
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        fields_to_check = [
+            'description', 'artist', 'printer', 'print_type', 
+            'perforation', 'paper_type', 'stamp_type', 'notes'
+        ]
+        
+        for field in fields_to_check:
+            if field in representation and representation[field] is None:
+                representation[field] = "n/a"
+        
+        return representation
+        
     
     class Meta:
         fields = [
