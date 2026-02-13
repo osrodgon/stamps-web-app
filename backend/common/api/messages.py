@@ -175,3 +175,22 @@ class Messages:
         
         def running():
             return "Running"
+        
+    class AI:
+        def unavailable():
+            return "The AI service is currently unavailable or encountered an error."
+        
+        def validation_error():
+            return "AI Validation Error"
+        
+        def missing_api_key():
+            return "GEMINI_API_KEY environment variable is required"
+        
+        def missing_model_name():
+            return "GEMINI_MODEL_NAME environment variable is required"
+        
+        def response_format_error():
+            return "Invalid AI response format"
+        
+        def error():
+            return "Research Service Error"

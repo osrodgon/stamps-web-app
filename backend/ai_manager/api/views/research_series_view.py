@@ -8,6 +8,7 @@ from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
+from common.api.messages import Messages
 from ai_manager.services.stamp_research_service import StampResearchService
 from ai_manager.api.serializers.research_request_serializer import ResearchRequestSerializer
 from ai_manager.api.serializers.research_response_serializer import ResearchResponseSerializer
@@ -118,8 +119,8 @@ class ResearchSeriesView(Logger, APIView):
                 self.log.error(f"AI response validation failed: {response_serializer.errors}")
                 return Response(
                     data=GenericResponseSerializer(GenericResponse({
-                        "error": "Invalid AI response format",
-                        "details": response_serializer.errors
+                        "error": Messages.AI.response_format_error(),
+                        "message": response_serializer.errors
                     })).data,
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
@@ -134,7 +135,7 @@ class ResearchSeriesView(Logger, APIView):
             self.log.warning(f"AI research validation error: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
-                    "error": "AI Validation Error",
+                    "error": Messages.AI.validation_error(),
                     "message": str(e)
                 })).data,
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -143,8 +144,8 @@ class ResearchSeriesView(Logger, APIView):
             self.log.error(f"AI research failed for series: {issue_name}: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
-                    "error": "Research service error",
-                    "message": "The AI service is currently unavailable or encountered an error."
+                    "error": Messages.AI.error(),
+                    "message": Messages.AI.unavailable()
                 })).data,
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
