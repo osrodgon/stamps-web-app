@@ -38,6 +38,10 @@ SECRET_KEY = os.getenv(
 JWT_SECRET = SECRET_KEY 
 JWT_ALGORITHM = 'HS256'
 
+# Google API Key
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
+GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', None)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
@@ -199,6 +203,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "User Management",
             "description": "APIs for managing users."  
+        },
+        {
+            "name": "AI Research",
+            "description": "APIs for AI-powered stamp and series research."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API

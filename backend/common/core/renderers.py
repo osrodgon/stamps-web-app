@@ -5,35 +5,70 @@ from common.api.messages import Messages
 
 class StandardJSONRenderer(JSONRenderer):
     def errors_to_list(self, errors):
-        # Define a regular expression to find all key-value pairs
-        # This pattern looks for a field name, a message, and a code
-        pattern = r"'([^']+)': ErrorDetail\(string='([^']+)', code='([^']+)'\)"
+        if not errors:
+            return []
 
-        # Find all matches in the string
-        matches = re.findall(pattern, errors)
-        
-        if not matches:
-            pattern = r"'([^']+)': \[ErrorDetail\(string='([^']+)', code='([^']+)'\)\]"
-            matches = re.findall(pattern, errors)
-        
-        # Create an empty list to store the results
         errors_list = []
 
-        # Iterate over each match and format it into a dictionary
-        for field_name, error_message, error_code in matches:
-            error_dict = {
-                "field": field_name,
-                "message": error_message,
-                "code": error_code
-            }
-            errors_list.append(error_dict)
+        # Try to convert to dict
+        if isinstance(errors, str):
+            # Define a regular expression to find all key-value pairs
+            # This pattern looks for a field name, a message, and a code
+            pattern = r"'([^']+)': ErrorDetail\(string='([^']+)', code='([^']+)'\)"
+
+            # Find all matches in the string
+            matches = re.findall(pattern, errors)
             
-        if not errors_list:
+            if not matches:
+                pattern = r"'([^']+)': \[ErrorDetail\(string='([^']+)', code='([^']+)'\)\]"
+                matches = re.findall(pattern, errors)
+
+            # Create an empty list to store the results
+            errors_dict = {}
+            
+            for match in matches:
+                field, message, code = match
+                # item = type('ErrorItem', (object,), {'message': message, 'code': code})()
+                if field not in errors_dict:
+                    errors_dict[field] = []
+                errors_dict[field].append(
+                    {
+                        "message": message,
+                        "code": code
+                    }
+                )
+            
+            if errors_dict:
+                errors = errors_dict
+
+        if isinstance(errors, dict):
+                for field, value in errors.items():
+                    if isinstance(value, list):
+                        for item in value:
+                            errors_list.append({
+                                "field": field,
+                                "message": item.get('message', Messages.failed()),
+                                "code": item.get('code', Messages.Code.other())
+                            })
+                else:
+                    errors_list.append({
+                        "field": field,
+                        "message": str(value),
+                        "code": getattr(value, 'code', Messages.Code.other())
+                    })
+        elif isinstance(errors, list):
+            for item in errors:
+                errors_list.append({
+                    "field": None,
+                    "message": str(item),
+                    "code": getattr(item, 'code', Messages.Code.other())
+                })
+        else:
             errors_list.append(
                 {
                     "field": None,
-                    "message": errors,
-                    "code": Messages.Code.other()
+                    "message": str(errors),
+                    "code": getattr(errors, 'code', Messages.Code.other())
                 }
             )
 
@@ -55,16 +90,28 @@ class StandardJSONRenderer(JSONRenderer):
         if response is not None:
             status_code = response.status_code
             
-            # 🔹 Handle errors
+            # Handle errors
             if status_code >= status.HTTP_400_BAD_REQUEST:
                 if (
                     status_code == status.HTTP_403_FORBIDDEN or
                     status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
                 ):
-                    success = data['success']
-                    message = data['message']
-                    errors = self.errors_to_list(f"'internal_server_error': {data['errors']}")
-                    data = data['data']
+                    try:
+                        success = data['success']
+                    except KeyError:
+                        success = False
+                    try:
+                        message = data['message']
+                    except KeyError:
+                        message = Messages.failed()
+                    try:
+                        errors = self.errors_to_list(data['errors'])
+                    except KeyError:
+                        errors = None
+                    try:
+                        data = data['data']
+                    except KeyError:
+                        data = None
                 else:
                     success = False
                     message = Messages.failed()
