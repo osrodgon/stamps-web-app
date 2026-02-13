@@ -9,9 +9,12 @@ class GenericResponse():
         if isinstance(data, str):
             self.message = data
             self.errors = None
+        elif isinstance(data, dict):
+            self.message = data.get('message') or data.get('detail')
+            self.errors = data.get('error')
         else:
-            self.message = data.get('message', str(data)) or data.get('detail', str(data))
-            self.errors = data.get('error', None)
+            self.message = data
+            self.errors = None
         self.many = many
         
     @property
