@@ -119,8 +119,8 @@ class ResearchSeriesView(Logger, APIView):
                 self.log.error(f"AI response validation failed: {response_serializer.errors}")
                 return Response(
                     data=GenericResponseSerializer(GenericResponse({
-                        "error": Messages.AI.response_format_error(),
-                        "message": response_serializer.errors
+                        "error": response_serializer.errors,
+                        "message": Messages.AI.response_format_error()
                     })).data,
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
