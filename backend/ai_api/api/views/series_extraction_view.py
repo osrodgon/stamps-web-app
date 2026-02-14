@@ -83,17 +83,17 @@ class SeriesExtractionView(Logger, APIView):
         self.log.debug(Messages.Post.create_one("research request", request.data))
         
         # Validate input data
-        research_request = SeriesExtractionRequestSerializer(data=request.data)
+        series_extraction_request = SeriesExtractionRequestSerializer(data=request.data)
         
-        if not research_request.is_valid():
-            self.log.warning(Messages.Post.validation_failed("research request", research_request.errors))
+        if not series_extraction_request.is_valid():
+            self.log.warning(Messages.Post.validation_failed("research request", series_extraction_request.errors))
             return Response(
-                data=GenericResponseSerializer(GenericResponse(research_request.errors)).data,
+                data=GenericResponseSerializer(GenericResponse(series_extraction_request.errors)).data,
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         # Extract validated data
-        validated_data = research_request.validated_data
+        validated_data = series_extraction_request.validated_data
         issue_name = validated_data['issue_name']
         issue_date = validated_data['issue_date']
         edifil_start_number = validated_data['edifil_start_number']
