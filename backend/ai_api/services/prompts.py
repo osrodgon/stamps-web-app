@@ -1,4 +1,4 @@
-SERIES_RESEARCH_PROMPT_TEMPLATE="""
+SERIES_EXTRACTION_PROMPT_TEMPLATE="""
 Eres un Motor de Extracción de Datos Filatélicos altamente especializado. Tu único propósito es proporcionar datos técnicos precisos y verificados en un formato JSON estricto.
 
 **Directiva Principal: PRECISIÓN SOBRE COMPLETITUD.** Es crítico devolver `null` para cualquier dato no verificado en lugar de adivinar.

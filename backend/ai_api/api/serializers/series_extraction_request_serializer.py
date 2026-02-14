@@ -1,14 +1,13 @@
-from email.policy import default
 from rest_framework import serializers
 from common.api.serializers.generic_serializer import GenericSerializer
 
 
-class ResearchRequestSerializer(GenericSerializer, serializers.Serializer):
+class SeriesExtractionRequestSerializer(GenericSerializer, serializers.Serializer):
     """
-    Serializer for AI research request data.
+    Serializer for AI series extraction request data.
 
     This serializer handles validation and deserialization of incoming
-    data for AI-powered stamp series research requests.
+    data for AI-powered stamp series extraction requests.
     """
     issue_name = serializers.CharField(
         max_length=200,
@@ -25,12 +24,6 @@ class ResearchRequestSerializer(GenericSerializer, serializers.Serializer):
         help_text="Starting Edifil catalog number for the series (optional)"
     )
     
-    # def validate(self, data):
-    #     super().validate(data)
-    #     if not 'edifil_start_number' in data:
-    #         data['edifil_start_number'] = None
-    #     return data
-    
     class Meta:
         fields = [
             'issue_name',
@@ -38,6 +31,3 @@ class ResearchRequestSerializer(GenericSerializer, serializers.Serializer):
             'edifil_start_number'
         ]
         
-        # extra_kwargs = {
-        #     'extra': {'allow_extra_fields': False}
-        # }

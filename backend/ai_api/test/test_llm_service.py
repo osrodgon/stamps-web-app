@@ -2,14 +2,14 @@ import pytest
 from unittest.mock import Mock, patch, mock_open
 import json
 
-from ai_manager.services.stamp_research_service import StampResearchService
+from ai_api.services.llm_service import LLMService
 from common.api.messages import Messages
 
-class TestStampResearchService:
-    """Test class for StampResearchService (No Database)."""
+class TestLLMService:
+    """Test class for LLMService (No Database)."""
     
     def test_init_success(self, mocker):
-        """Test successful initialization of StampResearchService."""
+        """Test successful initialization of LLMService."""
         # Mock environment variables
         mocker.patch.dict('os.environ', {
             'GEMINI_API_KEY': 'test-api-key',
@@ -18,13 +18,13 @@ class TestStampResearchService:
         
         # Mock model initialization
         mock_model = Mock()
-        mocker.patch('ai_manager.services.stamp_research_service.genai.Client.models', mock_model)
+        mocker.patch('ai_api.services.llm_service.genai.Client.models', mock_model)
         
         # Mock prompt loading
         mock_prompt = "Test prompt template"
-        mocker.patch('ai_manager.services.stamp_research_service.SERIES_RESEARCH_PROMPT_TEMPLATE', mock_prompt)
+        mocker.patch('ai_api.services.llm_service.SERIES_EXTRACTION_PROMPT_TEMPLATE', mock_prompt)
         
-        service = StampResearchService()
+        service = LLMService()
         
         # Verify initialization
         assert service.client.models == mock_model
@@ -32,21 +32,21 @@ class TestStampResearchService:
     
     def test_init_missing_api_key(self, mocker):
         """Test initialization fails when API key is missing."""
-        mocker.patch('ai_manager.services.stamp_research_service.GEMINI_API_KEY', None)
+        mocker.patch('ai_api.services.llm_service.GEMINI_API_KEY', None)
         
         with pytest.raises(ValueError, match=Messages.AI.missing_api_key()):
-            StampResearchService()
+            LLMService()
     
     def test_init_missing_model_name(self, mocker):
         """Test initialization fails when model name is missing."""
-        mocker.patch('ai_manager.services.stamp_research_service.GEMINI_MODEL_NAME', None)
+        mocker.patch('ai_api.services.llm_service.GEMINI_MODEL_NAME', None)
         
         with pytest.raises(ValueError, match=Messages.AI.missing_model_name()):
-            StampResearchService()
+            LLMService()
     
     def test_format_prompt(self):
         """Test prompt formatting with provided parameters."""
-        service = StampResearchService()
+        service = LLMService()
         service.prompt_template = "Template: {{ issue_name }}, {{ issue_date }}, {{ edifil_start_number }}"
         
         result = service._format_prompt("Test Series", "2023-01-01", "1234")
@@ -56,7 +56,7 @@ class TestStampResearchService:
     
     def test_format_prompt_optional_field_none(self):
         """Test prompt formatting when optional field is None."""
-        service = StampResearchService()
+        service = LLMService()
         service.prompt_template = "Template: {{ issue_name }}, {{ issue_date }}, {{ edifil_start_number }}"
         
         result = service._format_prompt("Test Series", "2023-01-01", None)
@@ -66,7 +66,7 @@ class TestStampResearchService:
     
     def test_clean_json_response_with_markdown(self):
         """Test JSON response cleaning when wrapped in markdown."""
-        service = StampResearchService()
+        service = LLMService()
         
         response_text = "```json\n{\"key\": \"value\"}\n```"
         result = service._clean_json_response(response_text)
@@ -76,7 +76,7 @@ class TestStampResearchService:
     
     def test_clean_json_response_standalone(self):
         """Test JSON response cleaning when standalone."""
-        service = StampResearchService()
+        service = LLMService()
         
         response_text = "{\"key\": \"value\"}"
         result = service._clean_json_response(response_text)
@@ -84,9 +84,9 @@ class TestStampResearchService:
         expected = "{\"key\": \"value\"}"
         assert result == expected
     
-    def test_research_series_success(self, mocker):
-        """Test successful research series call."""
-        service = StampResearchService()
+    def test_series_extraction_success(self, mocker):
+        """Test successful series extraction call."""
+        service = LLMService()
         
         # Mock model response
         mock_response = Mock()
@@ -110,25 +110,25 @@ class TestStampResearchService:
         
         service.client.models.generate_content = Mock(return_value=mock_response)
         
-        result = service.research_series("Test Series", "2023-01-01", "1234")
+        result = service.series_extract("Test Series", "2023-01-01", "1234")
         
         assert result["confidence_score"] == 95
         assert result["description"] == "Test description"
         service.client.models.generate_content.assert_called_once()
     
-    def test_research_series_validation_error(self, mocker):
-        """Test research series fails with validation error."""
-        service = StampResearchService()
+    def test_series_extraction_validation_error(self, mocker):
+        """Test series extraction fails with validation error."""
+        service = LLMService()
         
         with pytest.raises(ValueError, match="issue_name is required and cannot be empty"):
-            service.research_series("", "2023-01-01", "1234")
+            service.series_extract("", "2023-01-01", "1234")
     
-    def test_research_series_service_error(self, mocker):
-        """Test research series fails with service error."""
-        service = StampResearchService()
+    def test_series_extraction_service_error(self, mocker):
+        """Test series extraction fails with service error."""
+        service = LLMService()
         
         # Mock model to raise exception
         service.client.models.generate_content = Mock(side_effect=Exception(Messages.AI.error()))
         
         with pytest.raises(Exception, match=Messages.AI.error()):
-            service.research_series("Test Series", "2023-01-01", "1234")
+            service.series_extract("Test Series", "2023-01-01", "1234")

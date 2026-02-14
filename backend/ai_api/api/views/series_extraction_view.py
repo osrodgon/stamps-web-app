@@ -9,61 +9,60 @@ from common.api.serializers.generic_response import GenericResponseSerializer, G
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from common.api.messages import Messages
-from ai_manager.services.stamp_research_service import StampResearchService
-from ai_manager.api.serializers.research_request_serializer import ResearchRequestSerializer
-from ai_manager.api.serializers.research_response_serializer import ResearchResponseSerializer
+from ai_api.services.llm_service import LLMService
+from ai_api.api.serializers.series_extraction_request_serializer import SeriesExtractionRequestSerializer
+from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 
 
-
-class ResearchSeriesView(Logger, APIView):
+class SeriesExtractionView(Logger, APIView):
     """
-    API view for AI-powered stamp series research.
+    API view for AI-powered series extraction.
 
-    This view handles POST requests to research stamp series using Google Gemini AI.
+    This view handles POST requests to extract information for series using Google Gemini AI.
     It validates input data, calls the AI service, and returns structured research results.
     """
-    serializer_class = ResearchResponseSerializer
+    serializer_class = SeriesExtractionResponseSerializer
     
     @extend_schema(
-        operation_id="research_stamp_series",
-        tags=['AI Research'],
-        summary="Research Stamp Series with AI",
-        description="Performs AI-powered research on a stamp series using Google Gemini. "
+        operation_id="series_extraction_post",
+        tags=['AI Services'],
+        summary="Extract Information for Series using AI",
+        description="Performs AI-powered extraction of series information using Google Gemini. "
                     "Requires issue name, publication date, and starting Edifil catalog number.",
-        request=ResearchRequestSerializer,
+        request=SeriesExtractionRequestSerializer,
         responses={
             status.HTTP_200_OK: standardized_response(
-                ResearchResponseSerializer, 
-                name="ResearchCompleted",
-                description="Research completed successfully.",
+                SeriesExtractionResponseSerializer, 
+                name="SeriesExtractionCompleted",
+                description="Series extraction completed successfully.",
                 ),
             status.HTTP_400_BAD_REQUEST: standardized_response(
                 GenericResponseSerializer,
-                name="ResearchInvalidPayload",
+                name="SeriesExtractionInvalidPayload",
                 success=False,
                 description="Invalid request payload (e.g., missing required fields)."
                 ),
             status.HTTP_401_UNAUTHORIZED: standardized_response(
                 GenericResponseSerializer,
-                name="ResearchUnauthorized",
+                name="SeriesExtractionUnauthorized",
                 success=False,
                 description="Authentication required."
             ),
             status.HTTP_403_FORBIDDEN: standardized_response(
                 GenericResponseSerializer,
-                name="ResearchPermissionDenied",
+                name="SeriesExtractionPermissionDenied",
                 success=False,
                 description="Permission denied."
             ),
             status.HTTP_422_UNPROCESSABLE_ENTITY: standardized_response(
                 GenericResponseSerializer,
-                name="ResearchAIValidationError",
+                name="SeriesExtractionValidationError",
                 success=False,
                 description="AI returned invalid or unparseable data."
             ),
             status.HTTP_500_INTERNAL_SERVER_ERROR: standardized_response(
                 GenericResponseSerializer,
-                name="ResearchServiceError",
+                name="SeriesExtractionServiceError",
                 success=False,
                 description="AI service unavailable or internal error."
             )
@@ -71,30 +70,30 @@ class ResearchSeriesView(Logger, APIView):
     )
     def post(self, request: Request, *args, **kwargs) -> Response:
         """
-        Handles POST requests to perform AI research on a stamp series.
+        Handles POST requests to perform AI series extraction.
 
         Args:
-            request: The incoming HTTP request containing research parameters.
+            request: The incoming HTTP request containing series extraction parameters.
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            A Response object with research results and appropriate HTTP status.
+            A Response object with extraction results and appropriate HTTP status.
         """
         self.log.debug(Messages.Post.create_one("research request", request.data))
         
         # Validate input data
-        research_request = ResearchRequestSerializer(data=request.data)
+        series_extraction_request = SeriesExtractionRequestSerializer(data=request.data)
         
-        if not research_request.is_valid():
-            self.log.warning(Messages.Post.validation_failed("research request", research_request.errors))
+        if not series_extraction_request.is_valid():
+            self.log.warning(Messages.Post.validation_failed("research request", series_extraction_request.errors))
             return Response(
-                data=GenericResponseSerializer(GenericResponse(research_request.errors)).data,
+                data=GenericResponseSerializer(GenericResponse(series_extraction_request.errors)).data,
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         # Extract validated data
-        validated_data = research_request.validated_data
+        validated_data = series_extraction_request.validated_data
         issue_name = validated_data['issue_name']
         issue_date = validated_data['issue_date']
         edifil_start_number = validated_data['edifil_start_number']
@@ -103,17 +102,17 @@ class ResearchSeriesView(Logger, APIView):
         
         try:
             # Initialize AI service
-            research_service = StampResearchService()
+            llm_service = LLMService()
             
-            # Perform research
-            research_result = research_service.research_series(
+            # Perform series extraction
+            llm_result = llm_service.series_extract(
                 issue_name=issue_name,
                 issue_date=issue_date,
                 edifil_start_number=edifil_start_number
             )
             
             # Create response serializer
-            response_serializer = ResearchResponseSerializer(data=research_result)
+            response_serializer = SeriesExtractionResponseSerializer(data=llm_result)
             
             if not response_serializer.is_valid():
                 self.log.error(f"AI response validation failed: {response_serializer.errors}")
@@ -125,14 +124,14 @@ class ResearchSeriesView(Logger, APIView):
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
             
-            self.log.info(f"AI research completed successfully for series: {issue_name}")
+            self.log.info(f"AI series extraction completed successfully for series: {issue_name}")
             return Response(
                 data=response_serializer.data,
                 status=status.HTTP_200_OK
             )
         
         except ValueError as e:
-            self.log.warning(f"AI research validation error: {str(e)}")
+            self.log.warning(f"AI series extraction validation error: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
                     "error": Messages.AI.validation_error(),
@@ -141,7 +140,7 @@ class ResearchSeriesView(Logger, APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
         except Exception as e:
-            self.log.error(f"AI research failed for series: {issue_name}: {str(e)}")
+            self.log.error(f"AI series extraction failed for series: {issue_name}: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
                     "error": Messages.AI.error(),

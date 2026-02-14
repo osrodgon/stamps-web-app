@@ -7,9 +7,9 @@ from google.genai import types
 
 from common.api.messages import Messages
 from common.log.logger import Logger
-from ai_manager.services.prompts import SERIES_RESEARCH_PROMPT_TEMPLATE
+from ai_api.services.prompts import SERIES_EXTRACTION_PROMPT_TEMPLATE
 
-class StampResearchService(Logger):
+class LLMService(Logger):
     """
     Service for performing AI-powered research on stamp series using Google Gemini.
     
@@ -19,9 +19,9 @@ class StampResearchService(Logger):
     
     def __init__(self):
         """
-        Initialize the StampResearchService.
+        Initialize the LLMService.
         
-        Sets up Google Gemini API configuration and loads the research prompt template.
+        Sets up Google Gemini API configuration and loads the series extraction prompt template.
         """
         super().__init__()
         
@@ -44,8 +44,8 @@ class StampResearchService(Logger):
             response_mime_type="application/json"
         )
         
-        # Load the research prompt template
-        self.prompt_template = SERIES_RESEARCH_PROMPT_TEMPLATE
+        # Load the series extraction prompt template
+        self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
     
     def _format_prompt(self, issue_name: str, issue_date: str, edifil_start_number: Optional[str]) -> str:
         """
@@ -97,28 +97,28 @@ class StampResearchService(Logger):
             
         return response_text.strip()
 
-    def research_series(
+    def series_extract(
         self, 
         issue_name: str, 
         issue_date: str, 
         edifil_start_number: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Perform AI research on a stamp series.
+        Perform AI series extraction.
         
         Args:
-            issue_name: Name of the stamp series to research
+            issue_name: Name of the series to extract
             issue_date: Publication date of the series (YYYY-MM-DD format)
             edifil_start_number: Starting Edifil catalog number (optional)
             
         Returns:
-            Dictionary containing the research results in the specified format
+            Dictionary containing the extraction results in the specified format
             
         Raises:
             ValueError: If required parameters are invalid or AI response is invalid
             Exception: If the AI service call fails
         """
-        self.log.info(f"Starting AI research for series: {issue_name} ({issue_date})")
+        self.log.info(f"Starting AI extraction for series: {issue_name} ({issue_date})")
         
         # Validate input parameters
         if not issue_name or not issue_name.strip():
@@ -147,9 +147,9 @@ class StampResearchService(Logger):
             # Validate and parse the response
             self._clean_json_response(response.text)
             
-            self.log.info(f"AI research completed successfully for series: {issue_name}")
+            self.log.info(f"AI extraction completed successfully for series: {issue_name}")
             return json.loads(response.text)
             
         except Exception as e:
-            self.log.error(f"AI research failed for series {issue_name}: {str(e)}")
-            raise Exception(f"Research service error: {str(e)}")
+            self.log.error(f"AI extraction failed for series {issue_name}: {str(e)}")
+            raise Exception(f"Extraction service error: {str(e)}")

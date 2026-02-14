@@ -1,11 +1,10 @@
-import re
 from rest_framework import serializers
 
-class ResearchResponseSerializer(serializers.Serializer):
+class SeriesExtractionResponseSerializer(serializers.Serializer):
     """
-    Serializer for AI research response data.
+    Serializer for AI series extraction response data.
 
-    This serializer formats the AI research results for client-facing responses,
+    This serializer formats the AI series extraction results for client-facing responses,
     following the exact structure required for stamp series research.
     """
     confidence_score = serializers.IntegerField(
