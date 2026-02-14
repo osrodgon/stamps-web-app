@@ -4,7 +4,7 @@ from typing import Dict, Any
 import pytest
 
 @pytest.fixture
-def research_request_payload_ok() -> Dict[str, Any]:
+def series_extraction_request_payload_ok() -> Dict[str, Any]:
     """Valid research request payload for testing."""
     return {
         "issue_name": "Castillos",
@@ -13,7 +13,7 @@ def research_request_payload_ok() -> Dict[str, Any]:
     }
 
 @pytest.fixture
-def research_request_payload_minimal() -> Dict[str, Any]:
+def series_extraction_request_payload_minimal() -> Dict[str, Any]:
     """Minimal valid research request payload (optional field omitted)."""
     return {
         "issue_name": "Navidad",
@@ -21,7 +21,7 @@ def research_request_payload_minimal() -> Dict[str, Any]:
     }
 
 @pytest.fixture
-def research_request_payload_invalid() -> Dict[str, Any]:
+def series_extraction_request_payload_invalid() -> Dict[str, Any]:
     """Invalid research request payload for testing validation."""
     return {
         "issue_name": "",  # Empty required field
@@ -30,7 +30,7 @@ def research_request_payload_invalid() -> Dict[str, Any]:
     }
 
 @pytest.fixture
-def research_response_data() -> Dict[str, Any]:
+def series_extraction_response_data() -> Dict[str, Any]:
     """Mock AI service response data for testing."""
     return {
         "confidence_score": 95,

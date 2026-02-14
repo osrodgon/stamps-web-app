@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 class StampDetailSerializer(serializers.Serializer):
     """
-    Serializer for individual stamp details within the research response.
+    Serializer for individual stamp details within the series extraction response.
     """
     edifil_code = serializers.CharField(
         allow_blank=True,

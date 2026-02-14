@@ -91,7 +91,7 @@ USERS_ENDPOINT = "users/"
 HEALTH_ENDPOINT = "health/"
 LOGIN_ENDPOINT = "login/"
 LOGOFF_ENDPOINT = "logoff/"
-AI_ENDPOINT = "research/"
+AI_SERIES_EXTRACTION = "series/extraction/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -117,7 +117,7 @@ CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
-AI_URL_V1=f"{SERVER_URL_V1}{AI_ENDPOINT}"
+AI_SERIES_EXTRACTION_URL_V1=f"{SERVER_URL_V1}{AI_SERIES_EXTRACTION}"
 
 
 # Application definition
@@ -156,7 +156,7 @@ INSTALLED_APPS = [
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
     "users_api",            # All APIs for the table user
-    "ai_manager",           # All APIs for the AI manager
+    "ai_api",               # All APIs for the AI service
     "health_api"            # All APIs for checking the system health
 ]
 
@@ -205,8 +205,8 @@ SPECTACULAR_SETTINGS = {
             "description": "APIs for managing users."  
         },
         {
-            "name": "AI Research",
-            "description": "APIs for AI-powered stamp and series research."
+            "name": "AI Services",  
+            "description": "APIs for AI-powered stamp series extraction and data validation."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
