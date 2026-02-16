@@ -179,14 +179,10 @@ class ScrapingService(Logger):
             This ensures that partial failures don't break the entire scraping process.
         """
         extracted_data = []
-    
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
 
         for url in urls:
             try:
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=self.headers, timeout=10)
                 response.raise_for_status()
                 # Use 'lxml' or 'html.parser'
                 soup = BeautifulSoup(response.content, 'html.parser')

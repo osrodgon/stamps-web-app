@@ -1,6 +1,3 @@
-from math import e
-
-
 class Messages:
     def success():
         return "Request successful"
