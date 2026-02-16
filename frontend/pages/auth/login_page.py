@@ -47,11 +47,11 @@ class LoginPage(ui.column, BasePage):
             
             with ui.row().classes('absolute top-4 right-4 items-center gap-2 text-sm font-medium'):
                 if app.storage.user.get(USER_LANGUAGE, DEFAULT_LANGUAGE) == 'en':
-                    ui.link(_('language_es', _language='es'), '#') \
+                    ui.link(_('branding.language_es', _language='es'), '#') \
                         .on('click', lambda: self._set_language('es')) \
                         .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
                 else:
-                    ui.link(_('language_en', _language='en'), '#') \
+                    ui.link(_('branding.language_en', _language='en'), '#') \
                         .on('click', lambda: self._set_language('en')) \
                         .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
                         
@@ -83,7 +83,7 @@ class LoginPage(ui.column, BasePage):
             response = await self.auth_service.login(payload=payload)
             
             if response is None:
-                error_msg = _('no_response')
+                error_msg = _('messages.no_response')
                 self.log.error(error_msg)
                 self.notify(error_msg, 'negative')
                 return error_msg
@@ -96,7 +96,7 @@ class LoginPage(ui.column, BasePage):
                     self.log.debug('Login successful')
                     return response
                 else:
-                    error_msg = _('response_issue')
+                    error_msg = _('messages.response_issue')
                     self.log.error(error_msg)
                     self.notify(error_msg, 'negative')
                     return error_msg
@@ -108,7 +108,7 @@ class LoginPage(ui.column, BasePage):
                 self.login_card.notify(f'Error: {error_msg}', 'negative')
                 return response
         else:
-            error_msg = _('username_password_required')
+            error_msg = _('auth.username_password_required')
             self.log.debug("Login data invalid. Showing error message...")
             self.login_card.notify(error_msg, 'negative')
             return error_msg
@@ -137,7 +137,7 @@ class LoginPage(ui.column, BasePage):
         user_id = data.get('payload', {}).get('user_id', None)
         
         if token is None:
-            error_msg = _('token_missing')
+            error_msg = _('messages.token_missing')
             self.log.error(error_msg)
             return False
         
@@ -185,8 +185,8 @@ class LoginPage(ui.column, BasePage):
                 self.log.debug(f"User Info: {data}")
                 await self.login_success(data)
             else:
-                error_msg = _('response_mock_login')
+                error_msg = _('messages.response_mock_login')
                 self.log.error(error_msg)
-                self.notify(error_msg, 'negative', timeout=0, close_button=_('close'))
+                self.notify(error_msg, 'negative', timeout=0, close_button=_('ui.close'))
         else:
             self.log.debug("Test mode failed. Review environment variables.")

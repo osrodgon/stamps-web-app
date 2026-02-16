@@ -80,17 +80,40 @@ class Translations:
             print(f"Error initializing translations: {e}")
     
     @staticmethod
+    def _get_nested_value(lang_dict: dict, key: str):
+        """
+        Retrieves a value from a dictionary, supporting dot notation for nested keys.
+
+        Args:
+            lang_dict (dict): The language dictionary to search in.
+            key (str): The key, potentially with dot notation (e.g., 'auth.sign_in').
+
+        Returns:
+            The value if found, or None if not found.
+        """
+        if '.' in key:
+            parts = key.split('.')
+            value = lang_dict
+            for part in parts:
+                if isinstance(value, dict):
+                    value = value.get(part)
+                else:
+                    return None
+            return value
+        return lang_dict.get(key)
+
+    @staticmethod
     def translate(key: str, language: str = None,**kwargs) -> str:
         """
         Translates a key into the user's language with support for fallback and interpolation.
 
         1. Determines the user's language safely (handling non-request contexts).
-        2. Looks up the key in the selected language.
+        2. Looks up the key in the selected language (supports dot notation for nested keys).
         3. Falls back to default language ('en') if key is missing.
         4. Applies string formatting if kwargs are provided.
 
         Args:
-            key (str): The translation key.
+            key (str): The translation key, optionally with dot notation (e.g., 'auth.sign_in').
             **kwargs: Variables for string interpolation.
 
         Returns:
@@ -106,15 +129,15 @@ class Translations:
         else:
             current_language = language
         
-        # 2. Fetch Translation with Fallback
+        # 2. Fetch Translation with Fallback (supports dot notation)
         # Try selected language
         lang_dict = Translations.translations.get(current_language, {})
-        translation = lang_dict.get(key)
+        translation = Translations._get_nested_value(lang_dict, key)
         
         # Fallback to default language if missing
         if translation is None and current_language != Translations.DEFAULT_LANGUAGE:
             fallback_dict = Translations.translations.get(Translations.DEFAULT_LANGUAGE, {})
-            translation = fallback_dict.get(key)
+            translation = Translations._get_nested_value(fallback_dict, key)
             
         # If still None, return key
         if translation is None:

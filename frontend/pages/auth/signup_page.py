@@ -59,14 +59,14 @@ class SignUpPage(ui.column, BasePage):
             response = await self.auth_service.signup(payload=payload)
             
             if response is None:
-                error_msg = _('no_response')
+                error_msg = _('messages.no_response')
                 self.log.error(error_msg)
                 self.notify(error_msg, 'negative')
                 return error_msg
 
             if response.status_code == requests.codes.created:
                 self.log.debug('Signup successful')
-                self.notify(_('sign_up_sucess'), 'positive')
+                self.notify(_('auth.sign_up_sucess'), 'positive')
                 await asyncio.sleep(3)
                 ui.navigate.to(URLs.Frontend.login)
                 
@@ -79,7 +79,7 @@ class SignUpPage(ui.column, BasePage):
                 
                 return response
         else:
-            error_msg = _('review_form_data')
+            error_msg = _('messages.review_form_data')
             self.log.debug("Signup data not valid. Please review the form.")
             self.signup_card.notify(error_msg, 'negative')
             

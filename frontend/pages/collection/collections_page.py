@@ -12,4 +12,4 @@ class CollectionsPage(ui.column, BasePage):
         super().__init__()
         self.log.debug('Initializing CollectionsPage...')
         
-        self.top_bar = TopBar(_('collections_tile'))
+        self.top_bar = TopBar(_('collections.collections_tile'))

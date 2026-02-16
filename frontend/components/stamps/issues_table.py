@@ -27,16 +27,16 @@ class IssuesTable(ui.table):
                                     It receives the event arguments containing the ID of the item to delete.
         """
         columns = [
-            {'name': 'expand', 'label': _('details'), 'field': 'expand', 'align': 'center'},
-            {'name': 'country', 'label': _('country'), 'field': 'country', 'align': 'left', 'width': '1px'},
-            {'name': 'date', 'label': _('date'), 'field': 'date', 'align': 'left', 'sortable': True, 'width': '1px'},
-            {'name': 'name', 'label': _('issue_name'), 'field': 'name', 'align': 'left', 'sortable': True, 'width': '1px'},
-            {'name': 'perforation', 'label': _('perforation'), 'field': 'perforation', 'align': 'left', 'width': '1px'},
-            {'name': 'stamp_type', 'label': _('stamp_type'), 'field': 'stamp_type', 'align': 'left','width': '1px'},
-            {'name': 'print_type', 'label': _('print_type'), 'field': 'print_type', 'align': 'left','width': '1px'},
-            {'name': 'total_printed', 'label': _('total_printed'), 'field': 'total_printed', 'align': 'left','width': '1px'},
-            {'name': 'market_value', 'label': _('value'), 'field': 'market_value', 'align': 'right', 'width': '1px'},
-            {'name': 'delete', 'label': _('actions'), 'field': 'delete', 'align': 'right', 'width': '100%'},
+            {'name': 'expand', 'label': _('ui.details'), 'field': 'expand', 'align': 'center'},
+            {'name': 'country', 'label': _('stamps.country'), 'field': 'country', 'align': 'left', 'width': '1px'},
+            {'name': 'date', 'label': _('ui.date'), 'field': 'date', 'align': 'left', 'sortable': True, 'width': '1px'},
+            {'name': 'name', 'label': _('stamps.issue_name'), 'field': 'name', 'align': 'left', 'sortable': True, 'width': '1px'},
+            {'name': 'perforation', 'label': _('stamps.perforation'), 'field': 'perforation', 'align': 'left', 'width': '1px'},
+            {'name': 'stamp_type', 'label': _('stamps.stamp_type'), 'field': 'stamp_type', 'align': 'left','width': '1px'},
+            {'name': 'print_type', 'label': _('stamps.print_type'), 'field': 'print_type', 'align': 'left','width': '1px'},
+            {'name': 'total_printed', 'label': _('stamps.total_printed'), 'field': 'total_printed', 'align': 'left','width': '1px'},
+            {'name': 'market_value', 'label': _('ui.value'), 'field': 'market_value', 'align': 'right', 'width': '1px'},
+            {'name': 'delete', 'label': _('ui.actions'), 'field': 'delete', 'align': 'right', 'width': '100%'},
         ]
         
         super().__init__(columns=columns, rows=[], row_key='id', pagination={'rowsPerPage': 15})
@@ -85,8 +85,8 @@ class IssuesTable(ui.table):
         self.style('height: 100%;')
         
         # Localized pagination labels
-        rows_per_page_label = _('pagination_rows_per_page')
-        of_label = _('pagination_of')
+        rows_per_page_label = _('pagination.pagination_rows_per_page')
+        of_label = _('pagination.pagination_of')
         
         self.props(f'''
             flat bordered square 
@@ -100,7 +100,7 @@ class IssuesTable(ui.table):
         with self.add_slot('no-data'):
             with ui.column().classes('w-full absolute-center items-center'):
                 ui.icon('search_off', size='80px').classes('text-gray-400')
-                ui.label(_('no_issues_found')).classes('text-2xl font-bold text-gray-500 uppercase tracking-wider')
+                ui.label(_('collections.no_issues_found')).classes('text-2xl font-bold text-gray-500 uppercase tracking-wider')
         
         self.on('save', on_save)
         self.on('delete', on_delete)
@@ -144,10 +144,10 @@ class IssuesTable(ui.table):
                                     :first-day-of-week="1"
                                 >
                                 <div class="row items-center justify-end q-gutter-sm">
-                                    <q-btn label="{_('today')}" color="secondary" flat 
+                                    <q-btn label="{_('branding.today')}" color="secondary" flat 
                                         @click="props.row.date = new Date().toISOString().split('T')[0]" />
                                     
-                                    <q-btn v-close-popup label="{_('ok')}" color="primary" flat 
+                                    <q-btn v-close-popup label="{_('ui.ok')}" color="primary" flat 
                                         @click="$parent.$emit('save', {{id: props.row.id, key: 'date', value: props.row.date}})" />
                                     
                                 </div>
@@ -176,7 +176,7 @@ class IssuesTable(ui.table):
                 <q-td key="stamp_type" :props="props">
                     {{{{ props.row.stamp_type }}}}
                     <q-popup-edit v-model="props.row.stamp_type" v-slot="scope" buttons
-                        label-set="{_('ok')}" label-cancel="{_('close')}"
+                        label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'stamp_type', value: val}})">
                         <q-select 
                             v-model="scope.value"  
@@ -190,7 +190,7 @@ class IssuesTable(ui.table):
                 <q-td key="print_type" :props="props">
                     {{{{ props.row.print_type }}}}
                     <q-popup-edit v-model="props.row.print_type" v-slot="scope" buttons
-                        label-set="{_('ok')}" label-cancel="{_('close')}"
+                        label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'print_type', value: val}})">
                         <q-select 
                             v-model="scope.value"  
@@ -204,7 +204,7 @@ class IssuesTable(ui.table):
                 <q-td key="total_printed" :props="props">
                     {{{{ props.row.total_printed }}}}
                     <q-popup-edit v-model="props.row.total_printed" v-slot="scope" buttons
-                        label-set="{_('ok')}" label-cancel="{_('close')}"
+                        label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'total_printed', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
                     </q-popup-edit>
@@ -233,15 +233,15 @@ class IssuesTable(ui.table):
                             <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
                                 <div class="flex items-center gap-2 mb-2 text-primary font-bold uppercase text-xs tracking-wider">
                                     <q-icon name="description" size="xs" />
-                                    {_('description')}
+                                    {_('ui.description')}
                                     <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                                 </div>
                                 <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
-                                    {{{{ props.row.description || '{_('no_description')}' }}}}
+                                    {{{{ props.row.description || '{_('messages.no_description')}' }}}}
                                 </div>
                                 <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
                                     @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'description', value: val}})">
-                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('description')}" outlined class="min-w-[300px]" />
+                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('ui.description')}" outlined class="min-w-[300px]" />
                                 </q-popup-edit>
                             </div>
                             
@@ -249,15 +249,15 @@ class IssuesTable(ui.table):
                             <div class="cursor-pointer group relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
                                 <div class="flex items-center gap-2 mb-2 text-secondary font-bold uppercase text-xs tracking-wider">
                                     <q-icon name="note" size="xs" />
-                                    {_('notes')}
+                                    {_('ui.notes')}
                                     <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                                 </div>
                                 <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
-                                    {{{{ props.row.note || '{_('no_notes')}' }}}}
+                                    {{{{ props.row.note || '{_('messages.no_notes')}' }}}}
                                 </div>
                                 <q-popup-edit v-model="props.row.note" v-slot="scope" buttons
                                     @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'notes', value: val}})">
-                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('notes')}" outlined class="min-w-[300px]" />
+                                    <q-input type="textarea" v-model="scope.value" dense autofocus label="{_('ui.notes')}" outlined class="min-w-[300px]" />
                                 </q-popup-edit>
                             </div>
                         </div>
@@ -266,16 +266,16 @@ class IssuesTable(ui.table):
                         <div class="p-4 bg-white rounded-lg border border-slate-100 shadow-sm">
                             <div class="flex items-center gap-2 mb-6 text-slate-800 font-bold uppercase text-sm tracking-[0.1em] border-b border-slate-100 pb-2">
                                 <q-icon name="collections" size="sm" class="text-primary" />
-                                {_('stamps')}
+                                {_('stamps.stamps')}
                             </div>
                             
                             <div v-if="!props.row.stamps" class="flex flex-col items-center justify-center p-8 text-slate-400">
                                 <q-spinner-dots color="primary" size="40px" />
-                                <div class="mt-2 text-xs">{_('loading_stamps')}</div>
+                                <div class="mt-2 text-xs">{_('stamps.loading_stamps')}</div>
                             </div>
                             
                             <div v-else-if="props.row.stamps.length === 0" class="p-8 text-center text-slate-400 text-sm italic">
-                                {_('no_stamps_found')}
+                                {_('stamps.no_stamps_found')}
                             </div>
                             
                             <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

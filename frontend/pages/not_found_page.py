@@ -31,13 +31,13 @@ class NotFoundPage(ui.column, BasePage):
                 .classes('text-[150px] font-extrabold') \
                 .style(f'color: {self.NICEGUI_COLOR}; line-height: 1.0;')
 
-            ui.label(_('you_are_lost')) \
+            ui.label(_('errors.you_are_lost')) \
                 .classes('text-2xl font-semibold mt-[-20px] mb-4')
             
-            ui.markdown(_('page_not_found')) \
+            ui.markdown(_('errors.page_not_found')) \
                 .classes('text-lg text-gray-600 mb-8')
 
-            ui.button(_('take_me_home'), 
+            ui.button(_('errors.take_me_home'), 
                     on_click=lambda: ui.navigate.to(URLs.Frontend.root),
                     icon='home') \
                     .props('size=md color=primary')
