@@ -9,6 +9,8 @@ from common.api.serializers.generic_response import GenericResponseSerializer, G
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from common.api.messages import Messages
+from ai_api.services.search_service import SearchService
+from ai_api.services.scraping_service import ScrapingService
 from ai_api.services.llm_service import LLMService
 from ai_api.api.serializers.series_extraction_request_serializer import SeriesExtractionRequestSerializer
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
@@ -28,7 +30,7 @@ class SeriesExtractionView(Logger, APIView):
         tags=['AI Services'],
         summary="Extract Information for Series using AI",
         description="Performs AI-powered extraction of series information using Google Gemini. "
-                    "Requires issue name, publication date, and starting Edifil catalog number.",
+                    "Requires a name (either series name or the motive of one of the stamps in the serie) and publication date.",
         request=SeriesExtractionRequestSerializer,
         responses={
             status.HTTP_200_OK: standardized_response(
@@ -53,6 +55,12 @@ class SeriesExtractionView(Logger, APIView):
                 name="SeriesExtractionPermissionDenied",
                 success=False,
                 description="Permission denied."
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="SeriesExtractionNotFound",
+                success=False,
+                description="Series not found."
             ),
             status.HTTP_422_UNPROCESSABLE_ENTITY: standardized_response(
                 GenericResponseSerializer,
@@ -82,33 +90,55 @@ class SeriesExtractionView(Logger, APIView):
         """
         self.log.debug(Messages.Post.create_one("research request", request.data))
         
-        # Validate input data
-        series_extraction_request = SeriesExtractionRequestSerializer(data=request.data)
+        # Get payload and validate it
+        payload = SeriesExtractionRequestSerializer(data=request.data)
         
-        if not series_extraction_request.is_valid():
-            self.log.warning(Messages.Post.validation_failed("research request", series_extraction_request.errors))
+        if not payload.is_valid():
+            self.log.warning(Messages.Post.validation_failed("research request", payload.errors))
             return Response(
-                data=GenericResponseSerializer(GenericResponse(series_extraction_request.errors)).data,
+                data=GenericResponseSerializer(GenericResponse(payload.errors)).data,
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Extract validated data
-        validated_data = series_extraction_request.validated_data
-        issue_name = validated_data['issue_name']
-        issue_date = validated_data['issue_date']
-        edifil_start_number = validated_data['edifil_start_number']
-        
-        self.log.info(f"Starting AI research for series: {issue_name} ({issue_date}) - Edifil: {edifil_start_number}")
+        # Extract data from payload
+        name = payload.validated_data.get('name')
+        date = payload.validated_data.get('date')
         
         try:
-            # Initialize AI service
+            # Initialize Search, Scrape and AI services
+            self.log.debug(f"Starting AI research for name: {name} ({date})")
+            search_service = SearchService()
+            scraping_service = ScrapingService()
             llm_service = LLMService()
             
-            # Perform series extraction
+            # Search for an URL that matches the name and date
+            url = search_service.find_series_url(name, date)
+            if url is None:
+                # No URL found
+                message = f"Could not find anything for name: {name} and date: {date}"
+                self.log.warning(message)
+                return Response(
+                    data=GenericResponseSerializer(GenericResponse({
+                        "error": None,
+                        "message": message
+                    })).data,
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Get all URLs that have information about the series
+            series_urls = scraping_service.extract_links(url)
+            
+            # Scrap and clean all information from URLs
+            content = scraping_service.scrape_content(series_urls)
+            clean_data = scraping_service.clean_scraped_data(content)
+            
+            # Send cleaned scraped data to LLM
+            name = clean_data.get("serie_info").get("título serie")
+            date = clean_data.get("serie_info").get("fecha de emisión")
             llm_result = llm_service.series_extract(
-                issue_name=issue_name,
-                issue_date=issue_date,
-                edifil_start_number=edifil_start_number
+                name=name,
+                date=date,
+                clean_data=str(clean_data),
             )
             
             # Create response serializer
@@ -124,7 +154,7 @@ class SeriesExtractionView(Logger, APIView):
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
             
-            self.log.info(f"AI series extraction completed successfully for series: {issue_name}")
+            self.log.info(f"AI series extraction completed successfully for series: {name}")
             return Response(
                 data=response_serializer.data,
                 status=status.HTTP_200_OK
@@ -140,7 +170,7 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
         except Exception as e:
-            self.log.error(f"AI series extraction failed for series: {issue_name}: {str(e)}")
+            self.log.error(f"AI series extraction failed for series: {name}: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
                     "error": Messages.AI.error(),

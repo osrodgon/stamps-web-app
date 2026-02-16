@@ -194,3 +194,12 @@ class Messages:
         
         def error():
             return "Research Service Error"
+        
+        def missing_input_data():
+            return "No input data provided"
+        
+        def empty_response():
+            return "Empty response from AI service"
+        
+        def service_error(error_message):
+            return f"Extraction service error: {error_message}"

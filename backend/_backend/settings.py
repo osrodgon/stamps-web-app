@@ -42,6 +42,10 @@ JWT_ALGORITHM = 'HS256'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
 GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', None)
 
+# Serper API Key
+SERPER_API_KEY = os.getenv('SERPER_API_KEY', None)
+SERPER_URL = os.getenv('SERPER_URL', None)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
