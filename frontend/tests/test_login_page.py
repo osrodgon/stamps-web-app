@@ -108,7 +108,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == _('response_issue')
+        assert response == _('messages.response_issue')
         
     async def test_login_fail_no_response(self, user: User, login_page_components):
         """
@@ -134,7 +134,7 @@ class TestLoginPage(AbstractUnitTest):
         response = await login_page.call_rest_method()
         
         # Assert response
-        assert response == _('no_response')
+        assert response == _('messages.no_response')
     
     async def test_login_fail_bad_request_400(self, user: User, login_page_components):
         """
@@ -229,7 +229,7 @@ class TestLoginPage(AbstractUnitTest):
         # Simulates user hitting the submit button
         response = await login_page.call_rest_method()
         
-        assert response == _('username_password_required')
+        assert response == _('auth.username_password_required')
 
     async def test_login_redirection_admin(self, user: User, login_page_components, mocker):
         """

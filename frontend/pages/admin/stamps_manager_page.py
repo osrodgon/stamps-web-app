@@ -25,7 +25,8 @@ class StampsManagerPage(ui.column, BasePage):
     ID_KEY = 'id'
     
     # Localization Keys
-    ERR_API = 'api_error'
+    ERR_API = 'messages.api_error'
+    ERR_UNEXPECTED = 'messages.unexpected_error'
 
     # UI Components
     top_bar: TopBar = None
@@ -62,7 +63,7 @@ class StampsManagerPage(ui.column, BasePage):
         This method creates the TopBar and IssuesTable components, configuring their
         layout and event handlers.
         """
-        self.top_bar = TopBar(_('stamps_manager_title'))
+        self.top_bar = TopBar(_('stamps.stamps_manager_title'))
         self.classes('w-full h-screen no-wrap p-0 m-0 overflow-hidden')
 
         with self.classes('fixed inset-0 flex flex-col no-wrap overflow-hidden bg-white'):
@@ -79,16 +80,16 @@ class StampsManagerPage(ui.column, BasePage):
         """
         with self.top_bar.extra_controls:
             with ui.row().classes('items-center gap-8'):
-                self.series_filter = ui.input(label=_("filter_series_year"), on_change=self.filter_issues)
+                self.series_filter = ui.input(label=_("filter.series_year"), on_change=self.filter_issues)
                 self.series_filter.classes(self.CONTROL_WIDTH)
                 self.series_filter.props('dark clearable debounce=600')
                 with ui.tooltip().classes('bg-blue-grey-9 text-white px-4 py-2'):
                     # Using HTML or multiple labels to simulate the list
-                    ui.label(_("filter_series_year_tooltip_header")).classes('font-bold mb-1')
-                    ui.label(_("filter_series_year_tooltip_1"))
-                    ui.label(_("filter_series_year_tooltip_2"))
-                    ui.label(_("filter_series_year_tooltip_3"))
-                    ui.label(_("filter_series_year_tooltip_4"))
+                    ui.label(_("filter.series_year_tooltip_header")).classes('font-bold mb-1')
+                    ui.label(_("filter.series_year_tooltip_1"))
+                    ui.label(_("filter.series_year_tooltip_2"))
+                    ui.label(_("filter.series_year_tooltip_3"))
+                    ui.label(_("filter.series_year_tooltip_4"))
 
                 with ui.column().classes('items-center gap-2 self-end'):
                     self.slider_container = ui.row().classes(f'items-center {self.TEXT_OPACITY} pb-3')
@@ -104,7 +105,7 @@ class StampsManagerPage(ui.column, BasePage):
         for saving, deleting, expanding, and paginating issues.
         """
         self.table = IssuesTable(
-            on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('close')),
+            on_save=lambda e: self.notify(e.args, timeout=0, close_button=_('ui.close')),
             on_delete=lambda e: self.notify(e.args)
         )
         self.table.on('expand', lambda e: self.handle_expand(e.args))
@@ -209,7 +210,7 @@ class StampsManagerPage(ui.column, BasePage):
 
                     self.years_label = ui.label().bind_text_from(
                         self.years_range, 'value',
-                        backward=lambda v: f"{_('years_available')}: {v['min']} - {v['max']}"
+                        backward=lambda v: f"{_('filter.years_available')}: {v['min']} - {v['max']}"
                     ).classes(f'text-{self.ACTIVE_COLOR} mb-[-4px] {self.TEXT_OPACITY} order-first gap-10')
 
                     self.feedback_label = ui.label() \
@@ -217,12 +218,12 @@ class StampsManagerPage(ui.column, BasePage):
 
                     # Show total collection span as a hint
                     total_range = f"{min_year} - {max_year}"
-                    self.feedback_label.set_text(f"{_('use_filter_to_enable_slider')} ({total_range})")
+                    self.feedback_label.set_text(f"{_('filter.use_filter_to_enable_slider')} ({total_range})")
 
                     self.enable_years_slider(False)
         else:
             self.log.error(_(self.ERR_API, _language='en'))
-            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
+            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('ui.close'))
 
     async def get_issues(self, page: int=1, page_size: int=None, sort_by: str='date', descending: bool=False) -> None:
         """
@@ -293,7 +294,7 @@ class StampsManagerPage(ui.column, BasePage):
             
         except Exception as e:
             self.log.error(f'Error fetching issues: {e}')
-            self.notify(_('unexpected_error'), 'warning', timeout=0, close_button=_('close'))
+            self.notify(_(self.ERR_UNEXPECTED), 'warning', timeout=0, close_button=_('ui.close'))
         finally:
             # Always ensure loading state is reset
             self.table.loading = False
@@ -313,7 +314,7 @@ class StampsManagerPage(ui.column, BasePage):
         """
         if not self._is_valid_response(response):
             self.log.error(f'API error fetching paginated issues: {response.status_code if response else "No response"}')
-            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
+            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('ui.close'))
             return
         
         data = response.json()
@@ -434,7 +435,7 @@ class StampsManagerPage(ui.column, BasePage):
             setattr(self, storage_attr, [item.get('name') for item in data])
         else:
             self.log.error(f'Failed to fetch {log_name}: {response.status_code if response else "No response"}')
-            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('close'))
+            self.notify(_(self.ERR_API), 'warning', timeout=0, close_button=_('ui.close'))
 
     async def get_print_types(self) -> None:
         """Fetches available print types."""

@@ -59,13 +59,13 @@ class TopBar(ui.header, BaseUI):
                             with ui.item_section().props('avatar'):
                                 ui.icon('person', color='slate-600')
                             with ui.item_section():
-                                ui.label(_('profile'))
+                                ui.label(_('profile.profile'))
 
                         with ui.item(on_click=lambda: ui.notify('Settings')).props('clickable v-ripple'):
                             with ui.item_section().props('avatar'):
                                 ui.icon('settings', color='slate-600')
                             with ui.item_section():
-                                ui.label(_('settings'))
+                                ui.label(_('profile.settings'))
 
                         ui.separator().classes('my-2')
 
@@ -73,7 +73,7 @@ class TopBar(ui.header, BaseUI):
                             with ui.item_section().props('avatar'):
                                 ui.icon('logout', color='red')
                             with ui.item_section():
-                                ui.label(_('logout')).classes('font-bold')
+                                ui.label(_('auth.logout')).classes('font-bold')
 
                 # Branding Image at the bottom right
                 with ui.row().classes('w-full justify-end p-4'):
@@ -104,12 +104,12 @@ class TopBar(ui.header, BaseUI):
         """
         self.log.debug("Displaying the logout confirmation dialog...")
         with ui.dialog() as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
-            ui.label(_('logout_confirm')).classes('text-lg font-bold mb-2')
-            ui.label(_('logout_confirm_message')).classes('text-gray-600 mb-4')
+            ui.label(_('auth.logout_confirm')).classes('text-lg font-bold mb-2')
+            ui.label(_('auth.logout_confirm_message')).classes('text-gray-600 mb-4')
 
             with ui.row().classes('w-full justify-end gap-2'):
-                ui.button(_('cancel'), on_click=dialog.close).props('flat')
-                ui.button(_('logout'), color='red',
+                ui.button(_('ui.cancel'), on_click=dialog.close).props('flat')
+                ui.button(_('auth.logout'), color='red',
                           on_click=self.logout).props('unelevated')
 
         dialog.open()

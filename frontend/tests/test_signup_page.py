@@ -103,7 +103,7 @@ class TestSignUpPage(AbstractUnitTest):
         
         response = await signup_page.call_rest_method()
         
-        assert response == _('review_form_data')
+        assert response == _('messages.review_form_data')
         
     async def test_signup_fail_backend_error_400(self, user: User, signup_page_components):
         """
@@ -166,7 +166,7 @@ class TestSignUpPage(AbstractUnitTest):
         
         response = await signup_page.call_rest_method()
         
-        assert response == _('no_response')
+        assert response == _('messages.no_response')
 
     async def test_back_to_login(self, user: User, signup_page_components, mocker):
         """
