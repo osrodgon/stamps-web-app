@@ -219,7 +219,7 @@ class ScrapingService(Logger):
                 extracted_data.append(stamp_data)
                     
             except Exception as e:
-                print(f"Error scraping data from {url}: {e}")
+                self.log.error(f"Error scraping data from {url}: {e}")
                 # We skip the failing URL but keep the rest of the list processing
                 continue
                 
