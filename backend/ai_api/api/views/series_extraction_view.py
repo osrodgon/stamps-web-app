@@ -101,8 +101,8 @@ class SeriesExtractionView(Logger, APIView):
             )
         
         # Extract data from payload
-        name = payload.data.get('name')
-        date = payload.data.get('date')
+        name = payload.validated_data.get('name')
+        date = payload.validated_data.get('date')
         
         try:
             # Initialize Search, Scrape and AI services
