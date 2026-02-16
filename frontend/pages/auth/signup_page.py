@@ -66,7 +66,7 @@ class SignUpPage(ui.column, BasePage):
 
             if response.status_code == requests.codes.created:
                 self.log.debug('Signup successful')
-                self.notify(_('auth.sign_up_sucess'), 'positive')
+                self.notify(_('auth.sign_up_success'), 'positive')
                 await asyncio.sleep(3)
                 ui.navigate.to(URLs.Frontend.login)
                 

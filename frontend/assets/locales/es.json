@@ -18,7 +18,9 @@
         "password_not_match": "Las contraseñas no coinciden",
         "agree": "Acepto los <a class=\"text-primary\" href=\"#\">Términos de servicio</a> y la <a class=\"text-primary\" href=\"#\">Política de privacidad</a>",
         "no_account": "¿No tienes una cuenta?",
-        "sign_up_sucess": "Usuario registrado correctamente"
+        "sign_up_success": "Usuario registrado correctamente",
+        "logout_confirm": "Confirmar cierre de sesión",
+        "logout_confirm_message": "¿Estás seguro de que quieres cerrar tu sesión?"
     },
     "profile": {
         "profile": "Perfil",
@@ -43,7 +45,8 @@
         "review_form_data": "Datos inválidos o faltantes. Por favor, revisa el formulario y inténtalo de nuevo.",
         "token_missing": "No se pudo obtener el token de la respuesta de inicio de sesión.",
         "no_description": "No hay descripción disponible. Haz clic para agregar.",
-        "no_notes": "No hay notas disponibles. Haz clic para agregar."
+        "no_notes": "No hay notas disponibles. Haz clic para agregar.",
+        "unexpected_error": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
     },
     "ui": {
         "actions": "Acciones",
@@ -81,9 +84,7 @@
     "errors": {
         "page_not_found": "La página que buscas **no se encuentra** en este servidor.",
         "you_are_lost": "¡Ups! Parece que te has perdido.",
-        "take_me_home": "Volver al Inicio",
-        "logout_confirm": "Confirmar cierre de sesión",
-        "logout_confirm_message": "¿Estás seguro de que quieres cerrar tu sesión?"
+        "take_me_home": "Volver al Inicio"
     },
     "branding": {
         "today": "Hoy",

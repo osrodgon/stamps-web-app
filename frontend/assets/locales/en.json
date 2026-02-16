@@ -18,7 +18,9 @@
         "password_not_match": "Passwords do not match",
         "agree": "I agree to the <a class=\"text-primary\" href=\"#\">Terms of Service</a> and <a class=\"text-primary\" href=\"#\">Privacy Policy</a>",
         "no_account": "Don't have an account?",
-        "sign_up_sucess": "User registered successfully"
+        "sign_up_success": "User registered successfully",
+        "logout_confirm": "Confirm Logout",
+        "logout_confirm_message": "Are you sure you want to log out of your account?"
     },
     "profile": {
         "profile": "Profile",
@@ -43,7 +45,8 @@
         "review_form_data": "Data invalid or missing. Please review the form and try again.",
         "token_missing": "Could not obtain token from login response.",
         "no_description": "No description available. Click to add.",
-        "no_notes": "No notes available. Click to add."
+        "no_notes": "No notes available. Click to add.",
+        "unexpected_error": "An unexpected error occurred. Please try again."
     },
     "ui": {
         "actions": "Actions",
@@ -81,9 +84,7 @@
     "errors": {
         "page_not_found": "The page you are looking for is **not found** on this server.",
         "you_are_lost": "Oops! You seem to be lost.",
-        "take_me_home": "TAKE ME HOME",
-        "logout_confirm": "Confirm Logout",
-        "logout_confirm_message": "Are you sure you want to log out of your account?"
+        "take_me_home": "TAKE ME HOME"
     },
     "branding": {
         "today": "Today",

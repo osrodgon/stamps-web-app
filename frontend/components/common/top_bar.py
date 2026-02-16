@@ -104,8 +104,8 @@ class TopBar(ui.header, BaseUI):
         """
         self.log.debug("Displaying the logout confirmation dialog...")
         with ui.dialog() as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
-            ui.label(_('errors.logout_confirm')).classes('text-lg font-bold mb-2')
-            ui.label(_('errors.logout_confirm_message')).classes('text-gray-600 mb-4')
+            ui.label(_('auth.logout_confirm')).classes('text-lg font-bold mb-2')
+            ui.label(_('auth.logout_confirm_message')).classes('text-gray-600 mb-4')
 
             with ui.row().classes('w-full justify-end gap-2'):
                 ui.button(_('ui.cancel'), on_click=dialog.close).props('flat')
