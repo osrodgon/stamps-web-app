@@ -7,34 +7,30 @@ import pytest
 def series_extraction_request_payload_ok() -> Dict[str, Any]:
     """Valid research request payload for testing."""
     return {
-        "issue_name": "Castillos",
-        "issue_date": "2007-09-10",
-        "edifil_start_number": "4349"
+        "name": "Castillos",
+        "date": "2007-09-10"
     }
 
-@pytest.fixture
-def series_extraction_request_payload_minimal() -> Dict[str, Any]:
-    """Minimal valid research request payload (optional field omitted)."""
-    return {
-        "issue_name": "Navidad",
-        "issue_date": "1978-12-22"
-    }
+# @pytest.fixture
+# def series_extraction_request_payload_minimal() -> Dict[str, Any]:
+#     """Minimal valid research request payload (optional field omitted)."""
+#     return {
+#         "issue_name": "Navidad",
+#         "issue_date": "1978-12-22"
+#     }
 
 @pytest.fixture
 def series_extraction_request_payload_invalid() -> Dict[str, Any]:
     """Invalid research request payload for testing validation."""
     return {
-        "issue_name": "",  # Empty required field
-        "issue_date": "invalid-date",  # Invalid date format
-        "edifil_start_number": "12345678901"  # Too long
+        "name": "",  # Empty required field
+        "date": "invalid-date",  # Invalid date format
     }
 
 @pytest.fixture
 def series_extraction_response_data() -> Dict[str, Any]:
     """Mock AI service response data for testing."""
     return {
-        "confidence_score": 95,
-        "confidence_score_reasons": ["Date matches catalog", "Edifil number verified"],
         "description": "Castillos de España series",
         "issue_date": "2007-09-10",
         "artist": "José Luis López",
@@ -58,5 +54,15 @@ def series_extraction_response_data() -> Dict[str, Any]:
                 "market_value_used": 1.25
             }
         ]
+    }
+    
+@pytest.fixture
+def series_extraction_cleaned_data() -> Dict[str, Any]:
+    """Mock scraper service cleaned data for testing."""
+    return {
+        "serie_info": {
+            "título serie": "Castillos",
+            "fecha de emisión": "2007-09-10"
+        },
     }
     

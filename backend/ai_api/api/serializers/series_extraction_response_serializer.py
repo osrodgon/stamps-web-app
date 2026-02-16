@@ -7,15 +7,6 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
     This serializer formats the AI series extraction results for client-facing responses,
     following the exact structure required for stamp series research.
     """
-    confidence_score = serializers.IntegerField(
-        min_value=0,
-        max_value=100,
-        help_text="Confidence score of the research (0-100)"
-    )
-    confidence_score_reasons = serializers.ListField(
-        child=serializers.CharField(),
-        help_text="List of reasons for the confidence score"
-    )
     description = serializers.CharField(
         allow_blank=True,
         help_text="Historical description or 'n/a'"
@@ -26,30 +17,37 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
     )
     artist = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Artist/engraver name or 'n/a'"
     )
     printer = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Printer name or 'n/a'"
     )
     print_type = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Printing technique or 'n/a'"
     )
     perforation = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Perforation measurement or 'n/a'"
     )
     paper_type = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Paper type or 'n/a'"
     )
     stamp_type = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Format: Sello, Hoja Bloque, Carné... or 'n/a'"
     )
     notes = serializers.CharField(
         allow_blank=True,
+        allow_null=True,
         help_text="Relevant notes or 'n/a'"
     )
     total_printed = serializers.IntegerField(
@@ -85,8 +83,6 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
         
     class Meta:
         fields = [
-            'confidence_score',
-            'confidence_score_reasons',
             'description',
             'issue_date',
             'artist',

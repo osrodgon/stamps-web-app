@@ -1,6 +1,29 @@
+"""
+LLM service for AI-powered stamp series extraction.
+
+This module provides integration with Google Gemini API to perform AI-powered
+research and extraction of stamp series information. It processes stamp issue
+data and extracts structured information using large language models.
+
+The service is designed to work in conjunction with the SearchService and 
+ScrapingService to gather comprehensive data about stamp series for the 
+philatelic collection management application.
+
+Dependencies:
+    - google.genai: Google Gemini API client for AI processing
+    - common.api.messages: For standardized error messages
+    - common.log.logger: For consistent application logging
+    - ai_api.services.prompts: For prompt templates
+
+Integration:
+    - Used by SeriesExtractionView in the AI workflow
+    - Part of the ai_api.services module
+    - Works with SearchService for complete series extraction
+"""
+
 import json
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from _backend.settings import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from google import genai
 from google.genai import types
@@ -9,12 +32,28 @@ from common.api.messages import Messages
 from common.log.logger import Logger
 from ai_api.services.prompts import SERIES_EXTRACTION_PROMPT_TEMPLATE
 
+
 class LLMService(Logger):
     """
     Service for performing AI-powered research on stamp series using Google Gemini.
     
     This service handles the integration with Google Gemini API to research
     stamp series information based on issue name, date, and optional Edifil number.
+    
+    The service provides methods for:
+    - Initializing and configuring the Google Gemini API client
+    - Formatting prompts for series extraction
+    - Cleaning and validating AI responses
+    - Performing complete series extraction workflows
+    
+    Attributes:
+        client: Google Gemini API client instance
+        generation_config: Configuration for AI content generation
+        prompt_template: Template for series extraction prompts
+        
+    Usage:
+        llm_service = LLMService()
+        result = llm_service.series_extract("Olimpiadas", "1992", "cleaned_data")
     """
     
     def __init__(self):
@@ -47,30 +86,33 @@ class LLMService(Logger):
         # Load the series extraction prompt template
         self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
     
-    def _format_prompt(self, issue_name: str, issue_date: str, edifil_start_number: Optional[str]) -> str:
+    def _format_prompt(self, input_data: str) -> str:
         """
-        Format the prompt template with the provided parameters.
+        Format the prompt template with the provided input data.
+        
+        This method replaces the placeholder {{ input_data }} in the prompt template
+        with the actual cleaned data to be processed by the AI model.
         
         Args:
-            issue_name: Name of the stamp series
-            issue_date: Publication date of the series
-            edifil_start_number: Starting Edifil catalog number (optional)
-            
+            input_data (str):   The cleaned input data to be inserted into the prompt template.
+                                This should be the processed stamp issue information.
+
         Returns:
-            Formatted prompt string with variables replaced.
+            str: The formatted prompt with the input data inserted into the template.
+            
+        Example:
+            >>> service = LLMService()
+            >>> formatted = service._format_prompt("Olimpiadas 1992 data")
+            >>> print(formatted)  # Returns template with "Olimpiadas 1992 data" inserted
+            
+        Note:
+            This is a private method used internally by the series_extract method.
+            The prompt template is loaded during initialization from the prompts module.
         """
-        # Prepare the Edifil number for the prompt
-        edifil_display = edifil_start_number if edifil_start_number else "n/a"
-        
         formatted_prompt = self.prompt_template.replace(
-            "{{ issue_name }}", issue_name
-        ).replace(
-            "{{ issue_date }}", issue_date
-        ).replace(
-            "{{ edifil_start_number }}", edifil_display
+            "{{ input_data }}", input_data
         )
         
-        self.log.debug(f"Formatted prompt for series: {issue_name}")
         return formatted_prompt
     
     def _clean_json_response(self, response_text: str) -> str:
@@ -98,39 +140,62 @@ class LLMService(Logger):
         return response_text.strip()
 
     def series_extract(
-        self, 
-        issue_name: str, 
-        issue_date: str, 
-        edifil_start_number: Optional[str] = None
+        self,
+        name: str,
+        date: str,
+        clean_data: str
     ) -> Dict[str, Any]:
         """
-        Perform AI series extraction.
+        Perform AI-powered extraction of stamp series information using Google Gemini.
+        
+        This is the main method that orchestrates the complete AI extraction workflow.
+        It takes stamp issue parameters and cleaned data, formats them into a prompt,
+        sends the request to Google Gemini API, and processes the response.
         
         Args:
-            issue_name: Name of the series to extract
-            issue_date: Publication date of the series (YYYY-MM-DD format)
-            edifil_start_number: Starting Edifil catalog number (optional)
-            
+            name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
+            date (str): The publication date of the stamp issue (e.g., "1992", "2023")
+            clean_data (str):   The cleaned and processed data about the stamp issue
+                                that will be used as input for the AI model. This should
+                                contain relevant information extracted from previous
+                                processing steps.
+                                
         Returns:
-            Dictionary containing the extraction results in the specified format
-            
+            Dict[str, Any]: A dictionary containing the extracted stamp series information
+                            in structured format as returned by the AI model. The exact
+                            structure depends on the prompt template and model response.
+
         Raises:
-            ValueError: If required parameters are invalid or AI response is invalid
-            Exception: If the AI service call fails
+            ValueError: If clean_data is empty or None
+            ValueError: If the AI service returns an empty response
+            Exception: If the AI service call fails or returns invalid data
+            
+        Example:
+            >>> llm_service = LLMService()
+            >>> result = llm_service.series_extract(
+            ...     name="Olimpiadas",
+            ...     date="1992", 
+            ...     clean_data="Olimpiadas Barcelona 1992 stamp series information..."
+            ... )
+            >>> print(result)  # Returns structured data about the stamp series
+            
+        Note:
+            This method includes comprehensive error handling and logging. It validates
+            input parameters, formats prompts using the internal template, makes the
+            API call to Google Gemini, cleans the response, and parses it as JSON.
+            Any errors during this process are logged and re-raised with descriptive messages.
         """
-        self.log.info(f"Starting AI extraction for series: {issue_name} ({issue_date})")
+        self.log.debug(f"Starting AI extraction for series: {name} ({date})")
         
         # Validate input parameters
-        if not issue_name or not issue_name.strip():
-            raise ValueError("issue_name is required and cannot be empty")
+        if not clean_data or not clean_data.strip():
+            raise ValueError(Messages.AI.missing_input_data())
         
-        if not issue_date:
-            raise ValueError("issue_date is required")
         
         try:
             # Format the prompt with the provided parameters
-            prompt = self._format_prompt(issue_name, issue_date, edifil_start_number)
-            
+            prompt = self._format_prompt(clean_data)
+                        
             # Call the AI model
             self.log.debug("Sending request to Google Gemini API")
             response = self.client.models.generate_content(
@@ -140,16 +205,16 @@ class LLMService(Logger):
             )
             
             if not response or not response.text:
-                raise ValueError("Empty response from AI service")
+                raise ValueError(Messages.AI.empty_response())
             
             self.log.debug(f"Received AI response (length: {len(response.text)})")
             
             # Validate and parse the response
             self._clean_json_response(response.text)
             
-            self.log.info(f"AI extraction completed successfully for series: {issue_name}")
+            self.log.debug(f"AI extraction completed successfully for series: {name}")
             return json.loads(response.text)
             
         except Exception as e:
-            self.log.error(f"AI extraction failed for series {issue_name}: {str(e)}")
-            raise Exception(f"Extraction service error: {str(e)}")
+            self.log.error(f"AI extraction failed for series {name}: {str(e)}")
+            raise Exception(Messages.AI.service_error(str(e)))

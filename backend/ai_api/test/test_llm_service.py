@@ -47,21 +47,11 @@ class TestLLMService:
     def test_format_prompt(self):
         """Test prompt formatting with provided parameters."""
         service = LLMService()
-        service.prompt_template = "Template: {{ issue_name }}, {{ issue_date }}, {{ edifil_start_number }}"
+        service.prompt_template = "Template: {{ input_data }}"
         
-        result = service._format_prompt("Test Series", "2023-01-01", "1234")
+        result = service._format_prompt("{'issue': 'Hello world}")
         
-        expected = "Template: Test Series, 2023-01-01, 1234"
-        assert result == expected
-    
-    def test_format_prompt_optional_field_none(self):
-        """Test prompt formatting when optional field is None."""
-        service = LLMService()
-        service.prompt_template = "Template: {{ issue_name }}, {{ issue_date }}, {{ edifil_start_number }}"
-        
-        result = service._format_prompt("Test Series", "2023-01-01", None)
-        
-        expected = "Template: Test Series, 2023-01-01, n/a"
+        expected = "Template: {'issue': 'Hello world}"
         assert result == expected
     
     def test_clean_json_response_with_markdown(self):
@@ -120,8 +110,8 @@ class TestLLMService:
         """Test series extraction fails with validation error."""
         service = LLMService()
         
-        with pytest.raises(ValueError, match="issue_name is required and cannot be empty"):
-            service.series_extract("", "2023-01-01", "1234")
+        with pytest.raises(ValueError, match=Messages.AI.missing_input_data()):
+            service.series_extract("Series name", "2023-01-01", "")
     
     def test_series_extraction_service_error(self, mocker):
         """Test series extraction fails with service error."""

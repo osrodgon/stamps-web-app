@@ -7,9 +7,9 @@ from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client
 from common.test.ai_api_test_data import (
     series_extraction_request_payload_ok,
-    series_extraction_request_payload_minimal,
     series_extraction_request_payload_invalid,
-    series_extraction_response_data
+    series_extraction_response_data,
+    series_extraction_cleaned_data
 )
 
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
@@ -23,55 +23,40 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         self, 
         api_client, 
         series_extraction_request_payload_ok, 
-        series_extraction_response_data
+        series_extraction_response_data,
+        series_extraction_cleaned_data
     ):
         """Test successful extraction request returns 200 OK."""
         self.permission(granted=True)
         
         # Mock the AI service response
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = "some test value for search"
+        
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+        
         mock_service = Mock()
         mock_service.series_extract.return_value = series_extraction_response_data
         
-        with patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
             response = api_client.post(self.__get_url(), series_extraction_request_payload_ok, format='json')
 
         assert response.json()['success'] == True
         assert response.json()['message'] == Messages.success()
         assert response.json()['errors'] == None
-        assert response.json()['data']['confidence_score'] == 95
         assert response.json()['data']['description'] == "Castillos de España series"
         assert response.status_code == status.HTTP_200_OK
         
         # Verify service was called with correct parameters
         mock_service.series_extract.assert_called_once_with(
-            issue_name="Castillos",
-            issue_date="2007-09-10", 
-            edifil_start_number="4349"
-        )
-        
-    def test_post_series_extraction_minimal_payload_returns_200_ok(
-        self, 
-        api_client, 
-        series_extraction_request_payload_minimal, 
-        series_extraction_response_data
-    ):
-        """Test series extraction request with minimal payload (optional field omitted) returns 200 OK."""
-        self.permission(granted=True)
-        
-        mock_service = Mock()
-        mock_service.series_extract.return_value = series_extraction_response_data
-        
-        with patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
-            response = api_client.post(self.__get_url(), series_extraction_request_payload_minimal, format='json')
-
-        assert response.json()['success'] == True
-        assert response.status_code == status.HTTP_200_OK
-        
-        # Verify service was called with None for optional field
-        mock_service.series_extract.assert_called_once_with(
-            issue_name="Navidad",
-            issue_date="1978-12-22",
-            edifil_start_number=None
+            name="Castillos",
+            date="2007-09-10",
+            clean_data=str(series_extraction_cleaned_data)
         )
         
     def test_post_series_extraction_returns_400_missing_required_field(
@@ -81,13 +66,13 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
     ):
         """Test series extraction request with missing required field returns 400 Bad Request."""
         self.permission(granted=True)
-        del series_extraction_request_payload_invalid["issue_name"]  # Remove required field
+        del series_extraction_request_payload_invalid["name"]  # Remove required field
         
         response = api_client.post(self.__get_url(), series_extraction_request_payload_invalid, format='json')
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
-        assert response.json()['errors'][0]['field'] == 'issue_name'
+        assert response.json()['errors'][0]['field'] == 'name'
         assert response.json()['errors'][0]['message'] == Messages.field_required()
         assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.json()['data'] == None
@@ -171,11 +156,22 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         """Test series extraction request when AI service fails returns 500 Internal Server Error."""
         self.permission(granted=True)
         
-        # Mock service to raise an exception
-        mock_service = Mock()
-        mock_service.series_extract.side_effect = Exception("AI service unavailable")
+        # Mock services to raise an exception
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = "some test value for search"
         
-        with patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = "some test value for clean data"
+        
+        mock_llm_service = Mock()
+        mock_llm_service.series_extract.side_effect = Exception(Messages.AI.error())
+        
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_llm_service):
+            
             response = api_client.post(self.__get_url(), series_extraction_request_payload_ok, format='json')
 
         assert response.json()['success'] == False
@@ -188,22 +184,34 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
     def test_post_series_extraction_returns_422_ai_validation_error(
         self, 
         api_client, 
-        series_extraction_request_payload_ok
+        series_extraction_request_payload_ok,
+        series_extraction_cleaned_data
     ):
         """Test series extraction request when AI returns invalid data returns 422 Unprocessable Entity."""
         self.permission(granted=True)
         
         # Mock service to return invalid data
-        mock_service = Mock()
-        mock_service.series_extract.return_value = {"invalid": "data"}  # Missing required fields
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = "some test value for search"
         
-        with patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+        
+        mock_llm_service = Mock()
+        mock_llm_service.series_extract.return_value = {"invalid": "data"}  # Missing required fields
+        
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_llm_service):
+            
             response = api_client.post(self.__get_url(), series_extraction_request_payload_ok, format='json')
 
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.AI.response_format_error()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == 'confidence_score'
+        assert response.json()['errors'][0]['field'] == 'description'
         assert response.json()['errors'][0]['message'] == Messages.field_required()
         assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -211,16 +219,27 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
     def test_post_series_extraction_returns_422_ai_value_error(
         self, 
         api_client, 
-        series_extraction_request_payload_ok
+        series_extraction_request_payload_ok,
+        series_extraction_cleaned_data
     ):
         """Test series extraction request when AI validation fails returns 422 Unprocessable Entity."""
         self.permission(granted=True)
         
         # Mock service to raise ValueError
-        mock_service = Mock()
-        mock_service.series_extract.side_effect = ValueError(Messages.failed())
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = "some test value for search"
         
-        with patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+        
+        mock_llm_service = Mock()
+        mock_llm_service.series_extract.side_effect = ValueError(Messages.failed())
+        
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_llm_service):
             response = api_client.post(self.__get_url(), series_extraction_request_payload_ok, format='json')
 
         assert response.json()['success'] == False
