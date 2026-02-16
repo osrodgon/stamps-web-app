@@ -53,7 +53,7 @@ class TestCollectionsPage(AbstractUnitTest):
         assert isinstance(top_bar, TopBar)
         
         # Verify page title
-        assert top_bar.title == _('collections_tile')  # This will be translated by the actual app
+        assert top_bar.title == _('collections.collections_tile')  # This will be translated by the actual app
         
     async def test_page_inheritance(self, collections_page_components):
         """
