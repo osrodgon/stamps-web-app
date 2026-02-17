@@ -211,7 +211,7 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.AI.response_format_error()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == 'description'
+        assert response.json()['errors'][0]['field'] == 'issue_name'
         assert response.json()['errors'][0]['message'] == Messages.field_required()
         assert response.json()['errors'][0]['code'] == Messages.Code.required()
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

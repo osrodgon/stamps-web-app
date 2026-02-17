@@ -31,6 +31,7 @@ def series_extraction_request_payload_invalid() -> Dict[str, Any]:
 def series_extraction_response_data() -> Dict[str, Any]:
     """Mock AI service response data for testing."""
     return {
+        "issue_name": "Castillos",
         "description": "Castillos de España series",
         "issue_date": "2007-09-10",
         "artist": "José Luis López",
