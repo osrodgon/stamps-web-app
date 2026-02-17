@@ -10,8 +10,8 @@ class TopBar(ui.header, BaseUI):
     A UI component for the top navigation bar.
 
     This component inherits from `ui.header` and `BaseUI`. It features the page
-    title, user information, and a right drawer that can be toggled. The drawer
-    contains navigation links and user-specific actions like logging out.
+    title, hamburger menu (left drawer), and page-specific operations (right side).
+    The left drawer contains user information, navigation links, and logout.
     """
     filter_controls = None
 
@@ -35,9 +35,9 @@ class TopBar(ui.header, BaseUI):
         ).strip()
         user_email = app.storage.user.get(USER_EMAIL, 'Unknown')
 
-        # The drawer that will be used as menu
-        with ui.right_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:
-            self.log.debug("Initializing drawer...")
+        # The drawer that will be used as menu - LEFT side
+        with ui.left_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:
+            self.log.debug("Initializing left drawer...")
             with ui.column().classes('w-full h-full p-0 gap-0 no-wrap'):
                 # Content Area (Header + List)
                 with ui.column().classes('w-full flex-grow p-0 gap-0'):
@@ -81,22 +81,22 @@ class TopBar(ui.header, BaseUI):
 
         # The top bar
         with self.classes('bg-slate-800 text-white items-center justify-between border-b border-slate-700 px-6 py-2 shadow-md'):
-            # Left Side
-            with ui.row().classes('items-center gap-10'):
+            # Left Side - Hamburger menu button + Page title + Spacer + Filters
+            with ui.row().classes('items-center gap-2'):
                 self.log.debug("Initializing left side...")
+                # Hamburger button moved to left side (before title)
+                ui.button(on_click=drawer.toggle, icon='menu').props(
+                    'flat round color=white').classes('hover:bg-slate-700')
                 ui.label(name).classes('text-xl font-bold tracking-tight text-white')
+                # Vertical separator line between title and filters
+                ui.separator().props('vertical').classes('h-8 self-center bg-slate-600 mx-2 gap-0')
                 self.filter_controls = ui.row()
                 
             # Middle Side
             self.db_operations = ui.row().classes('ml-auto gap-4')
 
-            # Right Side
+            # Right Side - empty (user info is now in left drawer)
             self.log.debug("Initializing right side...")
-            with ui.row().classes('items-center gap-3'):
-                ui.label(user_full_name.upper()).classes(
-                    'text-xs font-bold text-slate-200 tracking-widest')
-                ui.button(on_click=drawer.toggle, icon='menu').props(
-                    'flat round color=white').classes('hover:bg-slate-700')
 
     def confirm_logout(self):
         """

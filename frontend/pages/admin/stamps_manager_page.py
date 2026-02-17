@@ -86,9 +86,9 @@ class StampsManagerPage(ui.column, BasePage):
         configuring their properties and event handlers.
         """
         with self.top_bar.filter_controls:
-            with ui.row().classes('items-center gap-8'):
+            with ui.row().classes('items-center gap-4'):
                 self.series_filter = ui.input(label=_("filter.series_year"), on_change=self.filter_issues)
-                self.series_filter.classes(self.CONTROL_WIDTH)
+                self.series_filter.classes(self.CONTROL_WIDTH + ' ml-0')
                 self.series_filter.props('dark clearable debounce=600')
                 with ui.tooltip().classes('bg-blue-grey-9 text-white px-4 py-2'):
                     # Using HTML or multiple labels to simulate the list
@@ -126,7 +126,7 @@ class StampsManagerPage(ui.column, BasePage):
         an extract button, and a results display area.
         """
         # Right drawer version - auto-expands with content
-        with ui.right_drawer(value=False).props('bordered width=600') as drawer:
+        with ui.right_drawer(value=False).props('bordered width=600 color=black').classes('bg-slate-50') as drawer:
             self.ai_drawer = drawer
             with ui.column().classes('w-full gap-4 p-4'):
                 ui.label(_('ai_series_lookup.title')).classes('text-h6 font-bold')
@@ -144,47 +144,20 @@ class StampsManagerPage(ui.column, BasePage):
                     ).classes('flex-grow')
                 
                 # Extract button
-                ui.button(
-                    _('ai_series_lookup.extract_button'),
-                    on_click=self._handle_ai_extraction
-                ).props('color=primary')
+                with ui.row().classes('w-full justify-end gap-2'):
+                    ui.button(
+                        _('ai_series_lookup.extract_button'),
+                        on_click=self._handle_ai_extraction
+                    ).props('color=primary')
                 
                 # Results container - let it grow naturally
                 self.ai_result_container = ui.column().classes('w-auto gap-2')
-        
-        
-        # with ui.dialog() as self.ai_dialog, ui.card().classes('w-[600px] max-h-[80vh]'):
-        #     ui.label(_('ai_series_lookup.title')).classes('text-h6 font-bold mb-4')
-            
-        #     # Input fields
-        #     with ui.row().classes('w-full gap-4 mb-4'):
-        #         self.ai_name_input = ui.input(
-        #             label=_('ai_series_lookup.name_label'),
-        #             placeholder=_('ai_series_lookup.name_placeholder')
-        #         ).classes('flex-1')
-                
-        #         self.ai_date_input = ui.input(
-        #             label=_('ai_series_lookup.date_label'),
-        #             placeholder=_('ai_series_lookup.date_placeholder')
-        #         ).classes('flex-1')
-            
-        #     # Extract button
-        #     with ui.row().classes('w-full justify-end gap-2 mb-4'):
-        #         ui.button(
-        #             _('ai_series_lookup.extract_button'),
-        #             on_click=self._handle_ai_extraction
-        #         ).props('color=primary')
-            
-        #     # Results container (scrollable)
-        #     with ui.scroll_area().classes('w-full h-[400px]'):
-        #         self.ai_result_container = ui.column().classes('w-full gap-2')
         
         # Add button to top bar in _setup_filters
         with self.top_bar.db_operations:
             ui.button(
                 icon='psychology',
                 on_click=self.ai_drawer.toggle
-                # on_click=self.ai_dialog.open
             ).props('round color=teal').tooltip(_('ai_series_lookup.button_tooltip'))
         
     async def _handle_ai_extraction(self) -> None:
@@ -323,10 +296,6 @@ class StampsManagerPage(ui.column, BasePage):
                     _('ai_series_lookup.save_button'),
                     on_click=lambda: self._handle_save_ai_issue(data)
                 ).props('color=positive')
-                # ui.button(
-                #     _('ai_series_lookup.close_button'),
-                #     on_click=self.ai_dialog.close
-                # )
                 
     def _display_ai_error(self, message: str) -> None:
         """
