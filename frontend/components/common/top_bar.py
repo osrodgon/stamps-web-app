@@ -13,7 +13,7 @@ class TopBar(ui.header, BaseUI):
     title, user information, and a right drawer that can be toggled. The drawer
     contains navigation links and user-specific actions like logging out.
     """
-    extra_controls = None
+    filter_controls = None
 
     def __init__(self, name="Please assign a name to this page"):
         """
@@ -85,7 +85,10 @@ class TopBar(ui.header, BaseUI):
             with ui.row().classes('items-center gap-10'):
                 self.log.debug("Initializing left side...")
                 ui.label(name).classes('text-xl font-bold tracking-tight text-white')
-                self.extra_controls = ui.row()
+                self.filter_controls = ui.row()
+                
+            # Middle Side
+            self.db_operations = ui.row().classes('ml-auto gap-4')
 
             # Right Side
             self.log.debug("Initializing right side...")
@@ -103,7 +106,7 @@ class TopBar(ui.header, BaseUI):
         proceed with logging out. If confirmed, the `logout` method is called.
         """
         self.log.debug("Displaying the logout confirmation dialog...")
-        with ui.dialog() as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
+        with ui.dialog().props('persistent') as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
             ui.label(_('auth.logout_confirm')).classes('text-lg font-bold mb-2')
             ui.label(_('auth.logout_confirm_message')).classes('text-gray-600 mb-4')
 

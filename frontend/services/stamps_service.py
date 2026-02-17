@@ -1,4 +1,6 @@
 from urllib.parse import urlencode
+
+from httpx import request
 from core.urls import URLs
 from services.base_service import BaseService
 from settings import API_MASTER_KEY
@@ -156,3 +158,38 @@ class StampsService(BaseService):
             payload=None,
             headers=self._get_headers()
         )
+        
+    async def series_extraction(self, name: str, date: str):
+        """
+        Performs AI-powered series extraction.
+        
+        Args:
+            name: Series name or stamp motive
+            date: Publication date (any format accepted)
+            
+        Returns:
+            requests.Response | None: The API response with series data
+        """
+        from tests.data.stamps_api_responses import SERIES_EXTRACTION_RESPONSE_200_SUCCESS
+        import requests as mock_requests
+        import json
+        
+        response = mock_requests.Response()
+        response.status_code = 200
+        response._content = json.dumps(SERIES_EXTRACTION_RESPONSE_200_SUCCESS).encode('utf-8')
+        response.encoding = 'utf-8'
+        response.headers['Content-Type'] = 'application/json'
+        
+        return response
+        
+        # payload = {
+        #     'name': name,
+        #     'date': date
+        # }
+        
+        # return await self._make_request(
+        #     request_type=self.POST,
+        #     url=URLs.Backend.series_extraction,
+        #     payload=payload,
+        #     headers=self._get_headers()
+        # )

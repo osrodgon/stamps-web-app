@@ -42,6 +42,12 @@ class StampsManagerPage(ui.column, BasePage):
     stamp_types = []
     all_issues = []
     
+    # AI Series Lookup
+    ai_dialog = None
+    ai_name_input = None
+    ai_date_input = None
+    ai_result_container = None
+    
     def __init__(self) -> None:
         """
         Initializes the StampsManagerPage component.
@@ -54,6 +60,7 @@ class StampsManagerPage(ui.column, BasePage):
         self.stamps_service = StampsService()
         self.configure_styles()
         self._setup_ui()
+        self._setup_ai_series_lookup() 
         ui.timer(0, self.load_initial_data, once=True)
 
     def _setup_ui(self) -> None:
@@ -78,7 +85,7 @@ class StampsManagerPage(ui.column, BasePage):
         This method creates the filter inputs for series/year and the years range slider,
         configuring their properties and event handlers.
         """
-        with self.top_bar.extra_controls:
+        with self.top_bar.filter_controls:
             with ui.row().classes('items-center gap-8'):
                 self.series_filter = ui.input(label=_("filter.series_year"), on_change=self.filter_issues)
                 self.series_filter.classes(self.CONTROL_WIDTH)
@@ -111,6 +118,290 @@ class StampsManagerPage(ui.column, BasePage):
         self.table.on('expand', lambda e: self.handle_expand(e.args))
         self.table.on('request', lambda e: self.handle_pagination_change(e.args))
         
+    def _setup_ai_series_lookup(self) -> None:
+        """
+        Sets up the AI Series Lookup dialog.
+        
+        Creates a modal dialog with input fields for name and date,
+        an extract button, and a results display area.
+        """
+        # Right drawer version - auto-expands with content
+        with ui.right_drawer(value=False).props('bordered width=600') as drawer:
+            self.ai_drawer = drawer
+            with ui.column().classes('w-full gap-4 p-4'):
+                ui.label(_('ai_series_lookup.title')).classes('text-h6 font-bold')
+                
+                # Input fields
+                with ui.row().classes('w-full gap-4'):
+                    self.ai_name_input = ui.input(
+                        label=_('ai_series_lookup.name_label'),
+                        placeholder=_('ai_series_lookup.name_placeholder')
+                    ).classes('flex-grow')
+                    
+                    self.ai_date_input = ui.input(
+                        label=_('ai_series_lookup.date_label'),
+                        placeholder=_('ai_series_lookup.date_placeholder')
+                    ).classes('flex-grow')
+                
+                # Extract button
+                ui.button(
+                    _('ai_series_lookup.extract_button'),
+                    on_click=self._handle_ai_extraction
+                ).props('color=primary')
+                
+                # Results container - let it grow naturally
+                self.ai_result_container = ui.column().classes('w-auto gap-2')
+        
+        
+        # with ui.dialog() as self.ai_dialog, ui.card().classes('w-[600px] max-h-[80vh]'):
+        #     ui.label(_('ai_series_lookup.title')).classes('text-h6 font-bold mb-4')
+            
+        #     # Input fields
+        #     with ui.row().classes('w-full gap-4 mb-4'):
+        #         self.ai_name_input = ui.input(
+        #             label=_('ai_series_lookup.name_label'),
+        #             placeholder=_('ai_series_lookup.name_placeholder')
+        #         ).classes('flex-1')
+                
+        #         self.ai_date_input = ui.input(
+        #             label=_('ai_series_lookup.date_label'),
+        #             placeholder=_('ai_series_lookup.date_placeholder')
+        #         ).classes('flex-1')
+            
+        #     # Extract button
+        #     with ui.row().classes('w-full justify-end gap-2 mb-4'):
+        #         ui.button(
+        #             _('ai_series_lookup.extract_button'),
+        #             on_click=self._handle_ai_extraction
+        #         ).props('color=primary')
+            
+        #     # Results container (scrollable)
+        #     with ui.scroll_area().classes('w-full h-[400px]'):
+        #         self.ai_result_container = ui.column().classes('w-full gap-2')
+        
+        # Add button to top bar in _setup_filters
+        with self.top_bar.db_operations:
+            ui.button(
+                icon='psychology',
+                on_click=self.ai_drawer.toggle
+                # on_click=self.ai_dialog.open
+            ).props('round color=teal').tooltip(_('ai_series_lookup.button_tooltip'))
+        
+    async def _handle_ai_extraction(self) -> None:
+        """
+        Handles the AI extraction process.
+        
+        Validates input, calls the AI service, and displays results
+        or error messages.
+        """
+        name = (self.ai_name_input.value or "").strip()
+        date = (self.ai_date_input.value or "").strip()
+        
+        if not name or not date:
+            self.notify(_('ai_series_lookup.error_empty_fields'), 'warning')
+            return
+        
+        # Show loading state
+        self.ai_result_container.clear()
+        with self.ai_result_container:
+            ui.spinner(size='lg')
+            ui.label(_('ai_series_lookup.loading'))
+        
+        try:
+            response = await self.stamps_service.series_extraction(name, date)
+            
+            if response is None:
+                self._display_ai_error(_('ai_series_lookup.error_network'))
+                return
+                
+            status = response.status_code
+            
+            if status == 200:
+                data = response.json().get('data', {})
+                self._display_ai_results(data)
+            elif status == 404:
+                self._display_ai_error(_('ai_series_lookup.error_not_found'))
+            elif status == 400:
+                error_data = response.json().get('data', {})
+                self._display_ai_error(error_data.get('message', _('ai_series_lookup.error_validation')))
+            elif status == 500:
+                self._display_ai_error(_('ai_series_lookup.error_service'))
+            else:
+                self._display_ai_error(_('ai_series_lookup.error_unknown'))
+                
+        except Exception as e:
+            self.log.error(f'AI extraction error: {e}')
+            self._display_ai_error(_('ai_series_lookup.error_unknown'))
+    
+    def _display_ai_results(self, data: dict) -> None:
+        """
+        Displays AI extraction results in the dialog.
+        
+        Shows all extracted fields and provides options to save
+        or view individual stamps.
+        
+        Args:
+            data: The AI response data dictionary
+        """
+        self.ai_result_container.clear()
+        
+        with self.ai_result_container:
+            # Get user language
+            lang = app.storage.user.get(USER_LANGUAGE, 'en')
+
+            # Header
+            ui.label(data.get('issue_name', 'N/A')).classes('text-h6 font-bold')
+            
+            # Details grid
+            with ui.grid().classes('w-full grid-cols-2 gap-2 text-sm'):
+                self._add_result_field(_('ai_series_lookup.field_issue_date'), data.get('issue_date'))
+                self._add_result_field(_('ai_series_lookup.field_artist'), data.get('artist'))
+                self._add_result_field(_('ai_series_lookup.field_printer'), data.get('printer'))
+                self._add_result_field(_('ai_series_lookup.field_print_type'), data.get('print_type'))
+                self._add_result_field(_('ai_series_lookup.field_perforation'), data.get('perforation'))
+                self._add_result_field(_('ai_series_lookup.field_paper_type'), data.get('paper_type'))
+                self._add_result_field(_('ai_series_lookup.field_stamp_type'), data.get('stamp_type'))
+                self._add_result_field(
+                    _('ai_series_lookup.field_total_printed'), 
+                    Numbers.format_localized(data.get('total_printed'), lang, 0, 0)
+                )
+                self._add_result_field(
+                    _('ai_series_lookup.field_market_value_mnh'), 
+                    Numbers.format_localized(data.get('market_value_mnh'), lang, 2, 2, ' €')
+                )
+                self._add_result_field(
+                    _('ai_series_lookup.field_market_value_used'), 
+                    Numbers.format_localized(data.get('market_value_used'), lang, 2, 2, ' €')
+                )
+            
+            # Description
+            if data.get('description'):
+                ui.label(_('ai_series_lookup.field_description')).classes('text-subtitle2 font-bold mt-2')
+                ui.label(data.get('description')).classes('text-body2 text-justify')
+                
+            # Notes
+            if data.get('notes'):
+                ui.label(_('ai_series_lookup.field_notes')).classes('text-subtitle2 font-bold mt-2')
+                ui.label(data.get('notes')).classes('text-body2 text-justify')
+            
+            # Stamps list
+            stamps = data.get('stamps', [])
+            if stamps:
+                ui.label(_('ai_series_lookup.stamps_title')).classes('text-subtitle2 font-bold mt-4')
+                for stamp in stamps:
+                    with ui.card().classes('w-full pa-2 mb-2'):
+                        ui.label(stamp.get('motive', 'N/A')).classes('font-bold')
+                        
+                        if stamp.get('description'):
+                            ui.label(stamp.get('description')).classes('text-body2 text-justify')
+                            
+                        with ui.grid().classes('w-full grid-cols-2 gap-2 text-sm'):
+                            self._add_result_field(_('ai_series_lookup.field_edifil_code'), stamp.get('edifil_code', 'N/A'))
+                            self._add_result_field(_('ai_series_lookup.field_face_value'), stamp.get('face_value', 'N/A'))
+                            amount_printed = stamp.get('amount_printed', 'N/A')
+                            if amount_printed != data.get('total_printed'):
+                                self._add_result_field(
+                                    _('ai_series_lookup.field_total_printed'), 
+                                    Numbers.format_localized(amount_printed, lang, 0, 0)
+                                    )
+                            self._add_result_field(_('ai_series_lookup.field_color'), stamp.get('color', 'N/A'))
+                            self._add_result_field(
+                                _('ai_series_lookup.field_market_value_mnh'), 
+                                Numbers.format_localized(stamp.get('market_value_mnh', 'N/A'), lang, 2, 2, ' €')
+                            )
+                            self._add_result_field(
+                                _('ai_series_lookup.field_market_value_used'), 
+                                Numbers.format_localized(stamp.get('market_value_used', 'N/A'), lang, 2, 2, ' €')
+                            )
+                            
+                            
+                        
+            
+            # Action buttons
+            with ui.row().classes('w-full justify-end gap-2 mt-4'):
+                ui.button(
+                    _('ai_series_lookup.save_button'),
+                    on_click=lambda: self._handle_save_ai_issue(data)
+                ).props('color=positive')
+                # ui.button(
+                #     _('ai_series_lookup.close_button'),
+                #     on_click=self.ai_dialog.close
+                # )
+                
+    def _display_ai_error(self, message: str) -> None:
+        """
+        Displays an error message in the AI results container.
+        
+        Args:
+            message: The error message to display
+        """
+        self.ai_result_container.clear()
+        
+        with self.ai_result_container:
+            with ui.row().classes('w-full items-center gap-2 text-negative'):
+                ui.icon('error', size='lg')
+                ui.label(message).classes('font-bold')
+            
+            ui.label(_('ai_series_lookup.error_help')).classes('text-caption text-grey-7 mt-2')
+    
+    async def _handle_save_ai_issue(self, data: dict) -> None:
+        """
+        Handles saving AI extracted data as a new issue.
+        
+        Converts AI response data to issue format and creates a new issue.
+        
+        Args:
+            data: The AI response data dictionary
+        """
+        self.notify(_('ai_series_lookup.save_not_implemented'), 'info')
+        # Convert AI data to issue format
+        # issue_data = {
+        #     'name': data.get('issue_name').split('\n')[0][:200],  # Use first line of description as name
+        #     'date': data.get('issue_date'),
+        #     'total_printed': data.get('total_printed'),
+        #     'market_value': data.get('market_value_mnh'),
+        #     'print_type': data.get('print_type'),
+        #     'perforation': data.get('perforation'),
+        #     'paper_type': data.get('paper_type'),
+        #     'stamp_type': data.get('stamp_type'),
+        #     'printer': data.get('printer'),
+        #     'notes': data.get('notes'),
+        # }
+        
+        # # Show loading
+        # self.notify(_('ai_series_lookup.saving'), 'info', timeout=0)
+        
+        # try:
+        #     response = await self.stamps_service.create_issue(issue_data)
+            
+        #     if response is None:
+        #         self.notify(_('ai_series_lookup.error_network'), 'negative')
+        #         return
+                
+        #     if response.status_code in [200, 201]:
+        #         created_issue = response.json().get('data', {})
+        #         issue_id = created_issue.get('id')
+        #         self.notify(
+        #             _('ai_series_lookup.save_success'), 
+        #             'positive',
+        #             close_button=_('ui.close')
+        #         )
+        #         # Optionally: refresh the issues table
+        #         await self.get_issues()
+        #         self.ai_dialog.close()
+        #     else:
+        #         error_msg = response.json().get('data', {}).get('message', _('ai_series_lookup.error_save_failed'))
+        #         self.notify(error_msg, 'negative', timeout=0, close_button=_('ui.close'))
+                
+        # except Exception as e:
+        #     self.log.error(f'Error saving AI issue: {e}')
+        #     self.notify(_('ai_series_lookup.error_save_failed'), 'negative', timeout=0, close_button=_('ui.close'))
+
+    def _add_result_field(self, label: str, value) -> None:
+        """Helper to display a label-value pair in results."""
+        ui.label(f"{label}:").classes('font-bold')
+        ui.label(str(value) if value else 'N/A')
+    
     async def handle_pagination_change(self, event_data: dict) -> None:
         """
         Handles pagination change events from the issues table.
@@ -197,7 +488,7 @@ class StampsManagerPage(ui.column, BasePage):
             self.slider_container.clear()
             self.slider_container.delete()
             
-            with self.top_bar.extra_controls:
+            with self.top_bar.filter_controls:
                 with ui.column().classes('items-center gap-2 self-end'):
                     self.years_range = ui.range(
                         min=min_year,
