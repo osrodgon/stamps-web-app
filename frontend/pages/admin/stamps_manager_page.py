@@ -32,11 +32,19 @@ class StampsManagerPage(ui.column, BasePage):
     # UI Components
     top_bar: TopBar = None
     years_range = None
+    years_label = None
+    feedback_label = None
     series_filter = None
+    slider_container = None
     table: IssuesTable = None
     
     # Services
     stamps_service: StampsService = None
+    
+    # Cached Data
+    all_issues: list = None
+    print_types: list = None
+    stamp_types: list = None
     
     # AI Series Lookup
     ai_drawer = None
@@ -95,7 +103,7 @@ class StampsManagerPage(ui.column, BasePage):
                     self.slider_container = ui.row().classes(f'items-center {self.TEXT_OPACITY} pb-3')
                     with self.slider_container:
                         # This spinner will disappear once we load data
-                        self.loading_spinner = ui.spinner(size='sm', color=self.ACTIVE_COLOR)
+                        ui.spinner(size='sm', color=self.ACTIVE_COLOR)
 
     def _setup_table(self) -> None:
         """
@@ -184,7 +192,6 @@ class StampsManagerPage(ui.column, BasePage):
         Args:
             data: The AI response data dictionary
         """
-        self.log.error('Not implemented yet')
         self.notify(_('ai_series_lookup.save_not_implemented'), 'info')
         # Convert AI data to issue format
         # issue_data = {

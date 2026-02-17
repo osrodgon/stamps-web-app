@@ -13,6 +13,12 @@ class TopBar(ui.header, BaseUI):
     title, hamburger menu (left drawer), and page-specific operations (right side).
     The left drawer contains user information, navigation links, and logout.
     """
+    BG_SLATE_800 = '#1e293b'
+    BG_SLATE_350 = '#a5a9b1'
+    BG_WHITE = '#ffffff'
+    
+    # UI Components
+
     filter_controls = None
 
     def __init__(self, name="Please assign a name to this page"):
@@ -97,7 +103,27 @@ class TopBar(ui.header, BaseUI):
 
             # Right Side - empty (user info is now in left drawer)
             self.log.debug("Initializing right side...")
-
+            
+            ui.add_head_html(f'''
+                <style>
+                    /* Avoid white background in autofill */
+                    .q-header input:-webkit-autofill,
+                    .q-header input:-webkit-autofill:hover, 
+                    .q-header input:-webkit-autofill:focus {{
+                        -webkit-box-shadow: 0 0 0 1000px { self.BG_SLATE_800 } inset !important;
+                        box-shadow: 0 0 0 1000px { self.BG_SLATE_800 } inset !important;
+                        border-radius: 0px !important;
+                        border-bottom: 1px solid { self.BG_SLATE_350} !important;
+                        -webkit-text-fill-color: { self.BG_WHITE } !important;
+                    }}
+                    .q-header input:-webkit-autofill:hover {{
+                        border-bottom: 1px solid { self.BG_WHITE } !important;
+                    }}
+                </style>
+            ''')
+            
+            
+            
     def confirm_logout(self):
         """
         Displays a confirmation dialog for logging out.

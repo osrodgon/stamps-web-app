@@ -12,6 +12,9 @@ class AISeriesLookupDrawer(ui.right_drawer, BaseUI):
     Provides input fields for series name and date, extracts information
     using AI, and displays results.
     """
+    SLATE_50 = '#f8fafc'
+    GRAY_400 = '#bdbdbd'
+    GRAY_900 = '#212121'
     
     def __init__(self, on_extract: callable = None, on_save: callable = None):
         """
@@ -48,22 +51,40 @@ class AISeriesLookupDrawer(ui.right_drawer, BaseUI):
                 self.name_input = ui.input(
                     label=_('ai_series_lookup.name_label'),
                     placeholder=_('ai_series_lookup.name_placeholder')
-                ).classes('flex-grow')
+                ).classes('w-full')
                 
                 self.date_input = ui.input(
                     label=_('ai_series_lookup.date_label'),
                     placeholder=_('ai_series_lookup.date_placeholder')
-                ).classes('flex-grow')
+                ).classes('w-full')
             
             # Extract button
             with ui.row().classes('w-full justify-end gap-2'):
                 ui.button(
                     _('ai_series_lookup.extract_button'),
-                    on_click=self._handle_extract
+                    on_click=lambda: self._handle_extract()  # Wrap to avoid async callback warning
                 ).props('color=teal')
             
             # Results container
             self.result_container = ui.column().classes('w-auto gap-2')
+            
+        ui.add_head_html(f'''
+            <style>
+                /* Avoid blue background in autofill */
+                input:-webkit-autofill,
+                input:-webkit-autofill:hover, 
+                input:-webkit-autofill:focus, 
+                input:-webkit-autofill:active  {{
+                    -webkit-box-shadow: 0 0 0 30px { self.SLATE_50 } inset !important;
+                    box-shadow: 0 0 0 30px { self.SLATE_50} inset !important;
+                    border-bottom: 1px solid { self.GRAY_400 } !important;
+                    border-radius: 0px !important;
+                }}
+                input:-webkit-autofill:hover {{
+                    border-bottom: 1px solid { self.GRAY_900 } !important; /* Darker gray for hover*/
+                }}
+            </style>
+        ''')
     
     async def _handle_extract(self):
         """Handles extract button click - calls parent's callback."""
