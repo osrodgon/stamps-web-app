@@ -7,6 +7,10 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
     This serializer formats the AI series extraction results for client-facing responses,
     following the exact structure required for stamp series research.
     """
+    issue_name = serializers.CharField(
+        allow_blank=True,
+        help_text="Name of the issue"
+    )
     description = serializers.CharField(
         allow_blank=True,
         help_text="Historical description or 'n/a'"
@@ -83,6 +87,7 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
         
     class Meta:
         fields = [
+            'issue_name',
             'description',
             'issue_date',
             'artist',
