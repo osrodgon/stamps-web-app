@@ -30,7 +30,7 @@
         "field_color": "Color",
         "field_edifil_code": "Edifil Code",
         "stamps_title": "Stamps in Series",
-        "save_button": "Save as Issue",
+        "save_button": "Save issue",
         "close_button": "Close",
         "save_not_implemented": "Save functionality coming soon!",
         "saving": "Saving issue...",
