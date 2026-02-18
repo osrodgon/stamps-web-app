@@ -95,7 +95,12 @@ USERS_ENDPOINT = "users/"
 HEALTH_ENDPOINT = "health/"
 LOGIN_ENDPOINT = "login/"
 LOGOFF_ENDPOINT = "logoff/"
-AI_SERIES_EXTRACTION = "issues/extraction/"
+AI_ISSUES_EXTRACTION_ENDPOINT = "issues/extraction/"
+ISSUES_COLLECTIONS_ENDPOINT = "collections/"    # This is a sub-endpoint of issues, not collections. 
+                                                # It is used for the creation of issues with all 
+                                                # related entities in a single request. 
+                                                # It is not used for the retrieval of collections, 
+                                                # which is handled by the collections endpoint.
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -121,8 +126,7 @@ CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
-AI_SERIES_EXTRACTION_URL_V1=f"{SERVER_URL_V1}{AI_SERIES_EXTRACTION}"
-
+AI_ISSUES_EXTRACTION_URL_V1=f"{SERVER_URL_V1}{AI_ISSUES_EXTRACTION_ENDPOINT}"
 
 # Application definition
 
