@@ -113,7 +113,8 @@ STAMPS_RESPONSE_200_SUCCESS = {
     ]
 }
 
-SERIES_EXTRACTION_RESPONSE_200_SUCCESS = {
+# Issues Extraction API - Success Response
+ISSUES_EXTRACTION_RESPONSE_200_SUCCESS = {
   "success": True,
   "message": "Request successful",
   "errors": None,
@@ -211,4 +212,54 @@ SERIES_EXTRACTION_RESPONSE_200_SUCCESS = {
       }
     ]
   }
+}
+
+# Issues Extraction API - Not Found Response
+ISSUES_EXTRACTION_RESPONSE_404_NOT_FOUND = {
+    "success": False,
+    "message": "No information was found for the provided search criteria",
+    "errors": None,
+    "data": None
+}
+
+# Issues Extraction API - Validation Error Response
+ISSUES_EXTRACTION_RESPONSE_400_VALIDATION_ERROR = {
+    "success": False,
+    "message": "Validation error in the provided data",
+    "errors": [
+        {"field": "name", "message": "The series name is required"}
+    ],
+    "data": None
+}
+
+# Issues Collections (Create) API - Success Response
+ISSUES_COLLECTIONS_RESPONSE_201_CREATED = {
+    "success": True,
+    "message": "Stamp collection created successfully",
+    "errors": None,
+    "data": {
+        "id": 100,
+        "country": "Spain",
+        "date": "1967-07-26",
+        "name": "Landscapes and Monuments",
+        "perforation": "13 1/4",
+        "stamp_type": "Standard mail",
+        "print_type": "Photogravure",
+        "total_printed": 10000000,
+        "market_value": 3.5,
+        "description": "The 1967 'Landscapes and Monuments' series...",
+        "note": None,
+        "stamps_count": 7
+    }
+}
+
+# Issues Collections (Create) API - Validation Error Response
+ISSUES_COLLECTIONS_RESPONSE_400_ERROR = {
+    "success": False,
+    "message": "Validation error",
+    "errors": [
+        {"field": "issue_name", "message": "The issue name is required"},
+        {"field": "issue_date", "message": "The emission date is required"}
+    ],
+    "data": None
 }

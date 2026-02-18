@@ -1,4 +1,3 @@
-from os import error
 from pathlib import Path
 from base.base_page import BasePage
 from components.common.top_bar import TopBar

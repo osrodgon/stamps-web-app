@@ -1,6 +1,5 @@
 from urllib.parse import urlencode
 
-from httpx import request
 from core.urls import URLs
 from services.base_service import BaseService
 from settings import API_MASTER_KEY

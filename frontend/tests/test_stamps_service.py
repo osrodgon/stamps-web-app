@@ -6,11 +6,16 @@ from services.stamps_service import StampsService
 from tests.helpers.abstract_unit_test import AbstractUnitTest
 
 from tests.data.stamps_api_responses import (
+    ISSUES_COLLECTIONS_RESPONSE_201_CREATED,
+    ISSUES_COLLECTIONS_RESPONSE_400_ERROR,
+    ISSUES_EXTRACTION_RESPONSE_400_VALIDATION_ERROR,
+    ISSUES_EXTRACTION_RESPONSE_404_NOT_FOUND,
     YEARS_RESPONSE_200_SUCCESS,
     ISSUES_RESPONSE_200_SUCCESS,
     PRINT_TYPES_RESPONSE_200_SUCCESS,
     STAMP_TYPES_RESPONSE_200_SUCCESS,
-    STAMPS_RESPONSE_200_SUCCESS
+    STAMPS_RESPONSE_200_SUCCESS,
+    ISSUES_EXTRACTION_RESPONSE_200_SUCCESS
 )
 
 
@@ -250,6 +255,160 @@ class TestStampsService(AbstractUnitTest):
         )
         
         response = await stamps_service.get_stamps(issue_id=123)
+        
+        # Assert response
+        assert response is None
+        
+    async def test_issues_extraction_success_200(self, stamps_service):
+        """
+        Verifies that the issues_extraction method successfully extracts 
+        series information using AI.
+        
+        Tests that:
+        1. A successful 200 OK response is returned from the backend
+        2. The response contains the expected series data structure
+        """
+        # Set mocks
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=ISSUES_EXTRACTION_RESPONSE_200_SUCCESS, 
+            status_code=requests.codes.ok
+        )
+        
+        response = await stamps_service.issues_extraction(
+            name="Paisajes y Monumentos", 
+            date="1967"
+        )
+        
+        # Assert response
+        assert response.status_code == requests.codes.ok
+        assert response.json() == ISSUES_EXTRACTION_RESPONSE_200_SUCCESS
+        assert response.json()['data']['issue_name'] == "Paisajes y Monumentos"
+        
+    async def test_issues_extraction_error_404(self, stamps_service):
+        """
+        Verifies the handling of a issues_extraction request when 
+        the series is not found.
+        """
+        # Set mocks
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=ISSUES_EXTRACTION_RESPONSE_404_NOT_FOUND, 
+            status_code=requests.codes.not_found
+        )
+        
+        response = await stamps_service.issues_extraction(
+            name="NonExistent Series", 
+            date="1900"
+        )
+        
+        # Assert response
+        assert response.status_code == requests.codes.not_found
+        assert response.json()['success'] is False
+        
+    async def test_issues_extraction_error_400_validation(self, stamps_service):
+        """
+        Verifies the handling of a issues_extraction request with 
+        validation errors.
+        """
+        # Set mocks
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=ISSUES_EXTRACTION_RESPONSE_400_VALIDATION_ERROR, 
+            status_code=requests.codes.bad_request
+        )
+        
+        response = await stamps_service.issues_extraction(
+            name="",  # Invalid empty name
+            date="1967"
+        )
+        
+        # Assert response
+        assert response.status_code == requests.codes.bad_request
+        assert response.json()['success'] is False
+        
+    async def test_issues_extraction_network_error(self, stamps_service):
+        """
+        Verifies the handling of a issues_extraction request when 
+        the backend fails to respond (network error).
+        """
+        # Set mocks - return None to simulate network failure
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=None, 
+            status_code=500
+        )
+        
+        response = await stamps_service.issues_extraction(
+            name="Test Series", 
+            date="1967"
+        )
+        
+        # Assert response
+        assert response is None
+        
+    async def test_issues_collections_create_success_201(self, stamps_service):
+        """
+        Verifies that the issues_collections method successfully creates 
+        a new issue with stamps.
+        
+        Tests that:
+        1. A successful 201 Created response is returned
+        2. The response contains the created issue data
+        """
+        # Set mocks
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=ISSUES_COLLECTIONS_RESPONSE_201_CREATED, 
+            status_code=requests.codes.created
+        )
+        
+        # Sample issue data to create
+        issue_data = ISSUES_EXTRACTION_RESPONSE_200_SUCCESS['data']
+        
+        response = await stamps_service.issues_collections(issue_data)
+        
+        # Assert response
+        assert response.status_code == requests.codes.created
+        assert response.json()['success'] is True
+        assert response.json()['data']['id'] == 100
+    
+    async def test_issues_collections_error_400_validation(self, stamps_service):
+        """
+        Verifies the handling of a issues_collections request with 
+        validation errors.
+        """
+        # Set mocks
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=ISSUES_COLLECTIONS_RESPONSE_400_ERROR, 
+            status_code=requests.codes.bad_request
+        )
+        
+        # Invalid issue data (missing required fields)
+        invalid_data = {"issue_name": ""}
+        
+        response = await stamps_service.issues_collections(invalid_data)
+        
+        # Assert response
+        assert response.status_code == requests.codes.bad_request
+        assert response.json()['success'] is False
+        
+    async def test_issues_collections_network_error(self, stamps_service):
+        """
+        Verifies the handling of a issues_collections request when 
+        the backend fails to respond (network error).
+        """
+        # Set mocks - return None to simulate network failure
+        self.set_backend_response(
+            class_object=StampsService, 
+            json_data=None, 
+            status_code=500
+        )
+        
+        sample_data = {"issue_name": "Test", "issue_date": "2020"}
+        
+        response = await stamps_service.issues_collections(sample_data)
         
         # Assert response
         assert response is None
