@@ -1,7 +1,7 @@
 from rest_framework import status
 from unittest.mock import Mock, patch
 
-from _backend.settings import AI_SERIES_EXTRACTION_URL_V1
+from _backend.settings import AI_ISSUES_EXTRACTION_URL_V1
 from common.api.messages import Messages
 from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client
@@ -252,4 +252,4 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
     
     def __get_url(self):
         """Get the base URL for AI Manager API endpoints."""
-        return f"/{AI_SERIES_EXTRACTION_URL_V1}"
+        return f"/{AI_ISSUES_EXTRACTION_URL_V1}"

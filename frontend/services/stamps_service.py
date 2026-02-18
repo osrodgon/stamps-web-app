@@ -1,4 +1,6 @@
 from urllib.parse import urlencode
+
+from httpx import request
 from core.urls import URLs
 from services.base_service import BaseService
 from settings import API_MASTER_KEY
@@ -154,5 +156,46 @@ class StampsService(BaseService):
             request_type=self.GET,
             url=url,
             payload=None,
+            headers=self._get_headers()
+        )
+        
+    async def issues_extraction(self, name: str, date: str):
+        """
+        Performs AI-powered series extraction.
+        
+        Args:
+            name: Series name or stamp motive
+            date: Publication date (any format accepted)
+            
+        Returns:
+            requests.Response | None: The API response with series data
+        """
+        payload = {
+            'name': name,
+            'date': date
+        }
+        
+        return await self._make_request(
+            request_type=self.POST,
+            url=URLs.Backend.issues_extraction,
+            payload=payload,
+            headers=self._get_headers()
+        )
+
+    async def issues_collections(self, issues_collections_data: dict):
+        """
+        Creates a new issue with stamps.
+        
+        Args:
+            issue_data: Dictionary containing issue and stamps data
+            
+        Returns:
+            requests.Response | None: The API response with created issue data
+        """
+        
+        return await self._make_request(
+            request_type=self.POST,
+            url=URLs.Backend.issues_collections,
+            payload=issues_collections_data,
             headers=self._get_headers()
         )

@@ -19,6 +19,7 @@ Integration:
     - Works with SearchService to find URLs and LLMService to process data
 """
 
+from operator import ne
 import requests
 from bs4 import BeautifulSoup
 from typing import List
@@ -275,22 +276,25 @@ class ScrapingService(Logger):
         keys_to_check = ['año de emisión', 'fecha de emisión', 'título serie', 
                         'imprenta', 'impresión', 'tipo de correo', 'valores de la serie', 'grabador', 'tirada', 'dentado']
         
-        for key in keys_to_check:
+        new_keys = ['year', 'issue_date', 'issue_name', 'printer', 'print_type', 'stamp_type', 'series_values', 
+                    'engraver', 'print_run', 'perforation']
+        
+        for index, key in enumerate(keys_to_check):
             # If the value is the same in all stamps, it's a constant
             if all(s.get(key) == first_stamp.get(key) for s in scraped_data):
-                common_fields[key] = first_stamp.get(key)
+                common_fields[new_keys[index]] = first_stamp.get(key)
 
         # 2. Extract unique stamp data
         unique_stamps = []
         for s in scraped_data:
             stamp_entry = {
-                "edifil": s.get("número edifil"),
-                "fesofi": s.get("número fesofi"),
-                "motivo": s.get("motivo sello"),
-                "facial": s.get("facial"),
+                "edifil_code": s.get("número edifil"),
+                "fesofi_code": s.get("número fesofi"),
+                "motive": s.get("motivo sello"),
+                "face_value": s.get("facial"),
                 "color": s.get("color"),
-                "dentado": s.get("dentado"),
-                "formato": s.get("formato"),
+                "perforation": s.get("dentado"),
+                "format": s.get("formato"),
                 # Truncate description to save ~70% of tokens
                 "desc_snippet": (s.get("descripcion", "")[:180] + "...") if s.get("descripcion") else "N/A"
             }

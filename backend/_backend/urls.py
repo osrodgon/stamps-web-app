@@ -27,7 +27,7 @@ from _backend.settings import (
     YEARS_ENDPOINT,
     LOGIN_ENDPOINT,
     LOGOFF_ENDPOINT,
-    AI_SERIES_EXTRACTION
+    AI_ISSUES_EXTRACTION_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
 from health_api.api.views.health_view import HealthView
@@ -55,7 +55,7 @@ urlpatterns = [
             path(LOGIN_ENDPOINT, LoginView.as_view(), name="login"),
             path(LOGOFF_ENDPOINT, LogoffView.as_view(), name="logoff"),
             # AI
-            path(AI_SERIES_EXTRACTION, include('ai_api.urls')),
+            path(AI_ISSUES_EXTRACTION_ENDPOINT, include('ai_api.urls')),
             # Health
             path(HEALTH_ENDPOINT, HealthView.as_view(), name="health"),
             # Documentations

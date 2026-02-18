@@ -1,7 +1,9 @@
+from os import error
 from pathlib import Path
 from base.base_page import BasePage
 from components.common.top_bar import TopBar
 from components.stamps.issues_table import IssuesTable
+from components.stamps.ai_series_lookup import AISeriesLookupDrawer
 from core.translations import _
 from nicegui import app, ui
 from services.stamps_service import StampsService
@@ -31,16 +33,22 @@ class StampsManagerPage(ui.column, BasePage):
     # UI Components
     top_bar: TopBar = None
     years_range = None
+    years_label = None
+    feedback_label = None
     series_filter = None
+    slider_container = None
     table: IssuesTable = None
     
     # Services
     stamps_service: StampsService = None
     
-    # Data Storage
-    print_types = []
-    stamp_types = []
-    all_issues = []
+    # Cached Data
+    all_issues: list = None
+    print_types: list = None
+    stamp_types: list = None
+    
+    # AI Series Lookup
+    ai_drawer = None
     
     def __init__(self) -> None:
         """
@@ -54,6 +62,7 @@ class StampsManagerPage(ui.column, BasePage):
         self.stamps_service = StampsService()
         self.configure_styles()
         self._setup_ui()
+        self._setup_ai_series_lookup() 
         ui.timer(0, self.load_initial_data, once=True)
 
     def _setup_ui(self) -> None:
@@ -78,10 +87,10 @@ class StampsManagerPage(ui.column, BasePage):
         This method creates the filter inputs for series/year and the years range slider,
         configuring their properties and event handlers.
         """
-        with self.top_bar.extra_controls:
-            with ui.row().classes('items-center gap-8'):
-                self.series_filter = ui.input(label=_("filter.series_year"), on_change=self.filter_issues)
-                self.series_filter.classes(self.CONTROL_WIDTH)
+        with self.top_bar.filter_controls:
+            with ui.row().classes('items-center gap-4'):
+                self.series_filter = ui.input(label=_("filter.series_year"), on_change=self.filter_issues).classes('pb-1.5')
+                self.series_filter.classes(self.CONTROL_WIDTH + ' ml-0 pb-0')
                 self.series_filter.props('dark clearable debounce=600')
                 with ui.tooltip().classes('bg-blue-grey-9 text-white px-4 py-2'):
                     # Using HTML or multiple labels to simulate the list
@@ -95,7 +104,7 @@ class StampsManagerPage(ui.column, BasePage):
                     self.slider_container = ui.row().classes(f'items-center {self.TEXT_OPACITY} pb-3')
                     with self.slider_container:
                         # This spinner will disappear once we load data
-                        self.loading_spinner = ui.spinner(size='sm', color=self.ACTIVE_COLOR)
+                        ui.spinner(size='sm', color=self.ACTIVE_COLOR)
 
     def _setup_table(self) -> None:
         """
@@ -111,6 +120,107 @@ class StampsManagerPage(ui.column, BasePage):
         self.table.on('expand', lambda e: self.handle_expand(e.args))
         self.table.on('request', lambda e: self.handle_pagination_change(e.args))
         
+    def _setup_ai_series_lookup(self) -> None:
+        """
+        Sets up the AI Series Lookup drawer using the reusable component.
+        
+        Creates the AISeriesLookupDrawer component with callbacks for
+        extraction and save actions.
+        """
+        # Create the AI drawer component with callbacks
+        self.ai_drawer = AISeriesLookupDrawer(
+            on_extract=self._handle_ai_extraction,
+            on_save=self._handle_save_ai_issue
+        )
+        
+        # Add button to top bar
+        with self.top_bar.db_operations:
+            ui.button(
+                icon='psychology',
+                on_click=self.ai_drawer.toggle
+            ).props('round color=teal').tooltip(_('ai_series_lookup.button_tooltip'))
+        
+    async def _handle_ai_extraction(self, name: str, date: str) -> None:
+        """
+        Handles the AI extraction process.
+        
+        Validates input, calls the AI service, and displays results
+        or error messages.
+        
+        Args:
+            name: The series name to search for
+            date: The date/year to search for
+        """
+        if not name or not date:
+            self.notify(_('ai_series_lookup.error_empty_fields'), 'warning')
+            return
+        
+        # Show loading state using component method
+        self.ai_drawer.show_loading()
+        
+        try:
+            response = await self.stamps_service.issues_extraction(name, date)
+            
+            if response is None:
+                self.ai_drawer.display_error(_('ai_series_lookup.error_network'))
+                return
+                
+            status = response.status_code
+            
+            if status == 200:
+                data = response.json().get('data', {})
+                self.ai_drawer.display_results(data)
+            elif status == 404:
+                self.ai_drawer.display_error(_('ai_series_lookup.error_not_found'))
+            elif status == 400:
+                error_data = response.json().get('data', {})
+                self.ai_drawer.display_error(error_data.get('message', _('ai_series_lookup.error_validation')))
+            elif status == 500:
+                self.ai_drawer.display_error(_('ai_series_lookup.error_service'))
+            else:
+                self.ai_drawer.display_error(_('ai_series_lookup.error_unknown'))
+                
+        except Exception as e:
+            self.log.error(f'AI extraction error: {e}')
+            self.ai_drawer.display_error(_('ai_series_lookup.error_unknown'))
+    
+    async def _handle_save_ai_issue(self, data: dict) -> None:
+        """
+        Handles saving AI extracted data as a new issue.
+        
+        Converts AI response data to issue format and creates a new issue.
+        
+        Args:
+            data: The AI response data dictionary
+        """
+        self.ai_drawer.show_loading()
+        
+        try:
+            response = await self.stamps_service.issues_collections(data)
+            
+            if response is None:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_network'))
+                return
+                
+            status = response.status_code
+            
+            if status == 201:
+                self.ai_drawer.close()
+                self.notify(_('ai_series_lookup.save_success'), 'positive')
+                # Refresh the issues list
+                await self.get_issues()
+            elif status == 400:
+                error_data = response.json().get('errors', {})
+                self.ai_drawer.display_error(error_data[0].get('message', _('ai_series_lookup.save_error_validation')))
+            elif status == 500:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_service'))
+            else:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_unknown'))
+                
+        except Exception as e:
+            self.log.error(f'Save AI issue error: {e}')
+            self.ai_drawer.display_error(_('ai_series_lookup.save_error_unknown'))
+    
     async def handle_pagination_change(self, event_data: dict) -> None:
         """
         Handles pagination change events from the issues table.
@@ -197,7 +307,7 @@ class StampsManagerPage(ui.column, BasePage):
             self.slider_container.clear()
             self.slider_container.delete()
             
-            with self.top_bar.extra_controls:
+            with self.top_bar.filter_controls:
                 with ui.column().classes('items-center gap-2 self-end'):
                     self.years_range = ui.range(
                         min=min_year,

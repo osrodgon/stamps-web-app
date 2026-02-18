@@ -10,10 +10,16 @@ class TopBar(ui.header, BaseUI):
     A UI component for the top navigation bar.
 
     This component inherits from `ui.header` and `BaseUI`. It features the page
-    title, user information, and a right drawer that can be toggled. The drawer
-    contains navigation links and user-specific actions like logging out.
+    title, hamburger menu (left drawer), and page-specific operations (right side).
+    The left drawer contains user information, navigation links, and logout.
     """
-    extra_controls = None
+    BG_SLATE_800 = '#1e293b'
+    BG_SLATE_350 = '#a5a9b1'
+    BG_WHITE = '#ffffff'
+    
+    # UI Components
+
+    filter_controls = None
 
     def __init__(self, name="Please assign a name to this page"):
         """
@@ -35,9 +41,9 @@ class TopBar(ui.header, BaseUI):
         ).strip()
         user_email = app.storage.user.get(USER_EMAIL, 'Unknown')
 
-        # The drawer that will be used as menu
-        with ui.right_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:
-            self.log.debug("Initializing drawer...")
+        # The drawer that will be used as menu - LEFT side
+        with ui.left_drawer(value=False, fixed=True).props('bordered').classes('bg-slate-50 p-0') as drawer:
+            self.log.debug("Initializing left drawer...")
             with ui.column().classes('w-full h-full p-0 gap-0 no-wrap'):
                 # Content Area (Header + List)
                 with ui.column().classes('w-full flex-grow p-0 gap-0'):
@@ -81,20 +87,43 @@ class TopBar(ui.header, BaseUI):
 
         # The top bar
         with self.classes('bg-slate-800 text-white items-center justify-between border-b border-slate-700 px-6 py-2 shadow-md'):
-            # Left Side
-            with ui.row().classes('items-center gap-10'):
+            # Left Side - Hamburger menu button + Page title + Spacer + Filters
+            with ui.row().classes('items-center gap-2'):
                 self.log.debug("Initializing left side...")
-                ui.label(name).classes('text-xl font-bold tracking-tight text-white')
-                self.extra_controls = ui.row()
-
-            # Right Side
-            self.log.debug("Initializing right side...")
-            with ui.row().classes('items-center gap-3'):
-                ui.label(user_full_name.upper()).classes(
-                    'text-xs font-bold text-slate-200 tracking-widest')
+                # Hamburger button moved to left side (before title)
                 ui.button(on_click=drawer.toggle, icon='menu').props(
                     'flat round color=white').classes('hover:bg-slate-700')
+                ui.label(name).classes('text-xl font-bold tracking-tight text-white')
+                # Vertical separator line between title and filters
+                ui.separator().props('vertical').classes('h-8 self-center bg-slate-600 mx-2 gap-0')
+                self.filter_controls = ui.row()
+                
+            # Middle Side
+            self.db_operations = ui.row().classes('ml-auto gap-4')
 
+            # Right Side - empty (user info is now in left drawer)
+            self.log.debug("Initializing right side...")
+            
+            ui.add_head_html(f'''
+                <style>
+                    /* Avoid white background in autofill */
+                    .q-header input:-webkit-autofill,
+                    .q-header input:-webkit-autofill:hover, 
+                    .q-header input:-webkit-autofill:focus {{
+                        -webkit-box-shadow: 0 0 0 1000px { self.BG_SLATE_800 } inset !important;
+                        box-shadow: 0 0 0 1000px { self.BG_SLATE_800 } inset !important;
+                        border-radius: 0px !important;
+                        border-bottom: 1px solid { self.BG_SLATE_350} !important;
+                        -webkit-text-fill-color: { self.BG_WHITE } !important;
+                    }}
+                    .q-header input:-webkit-autofill:hover {{
+                        border-bottom: 1px solid { self.BG_WHITE } !important;
+                    }}
+                </style>
+            ''')
+            
+            
+            
     def confirm_logout(self):
         """
         Displays a confirmation dialog for logging out.
@@ -103,7 +132,7 @@ class TopBar(ui.header, BaseUI):
         proceed with logging out. If confirmed, the `logout` method is called.
         """
         self.log.debug("Displaying the logout confirmation dialog...")
-        with ui.dialog() as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
+        with ui.dialog().props('persistent') as dialog, ui.card().classes('w-auto p-6 rounded-lg'):
             ui.label(_('auth.logout_confirm')).classes('text-lg font-bold mb-2')
             ui.label(_('auth.logout_confirm_message')).classes('text-gray-600 mb-4')
 

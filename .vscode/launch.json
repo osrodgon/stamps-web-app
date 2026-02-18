@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "NigeGUI",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "frontend/main.py",
             "console": "integratedTerminal"
         }
     ]

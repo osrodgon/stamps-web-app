@@ -54,7 +54,7 @@ class BaseService(Logger):
                     url, 
                     json=payload,
                     headers=headers,
-                    timeout=5
+                    timeout=60
                 )
             
             self.log.debug(f"Received response with status code {response.status_code} from {url}")
