@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from artists_api.models import Artist
+from paper_types_api.models import PaperType
+from printers_api.models import Printer
 from stamps_api.models import Stamp
 from colors_api.models import Color
 from issues_api.models import Issue
@@ -110,7 +113,7 @@ class IssuesCollectionsView(Logger, APIView):
                     issue_name_value = validated_data.get('issue_name')
                     if not issue_name_value or issue_name_value.lower() == "n/a":
                         raise ValueError("issue_name")
-                    issue_name_value = issue_name_value.strip().capitalize()
+                    issue_name_value = issue_name_value.strip()
                     
                     # Validate total_printed
                     total_printed_value = validated_data.get('total_printed')
@@ -141,7 +144,38 @@ class IssuesCollectionsView(Logger, APIView):
                         raise ValueError("market_value")
                     if market_value_mnh_value is None:
                         market_value_mnh_value = 0.0
-
+                        
+                    # Validate market_value_used
+                    market_value_used_value = validated_data.get('market_value_used')
+                    if market_value_used_value is not None and market_value_used_value < 0:
+                        raise ValueError("market_value_used")
+                    if market_value_used_value is None:
+                        market_value_used_value = 0.0
+                        
+                    # Validate artist
+                    artist_value = validated_data.get('artist', 'n/a')
+                    if artist_value and artist_value.lower() != "n/a":
+                        artist_value = artist_value.strip()
+                        artist, _ = Artist.objects.get_or_create(name=artist_value) 
+                    else:
+                        artist = None
+                        
+                    # Validate printer
+                    printer_value = validated_data.get('printer', 'n/a')
+                    if printer_value and printer_value.lower() != "n/a":
+                        printer_value = printer_value.strip()
+                        printer, _ = Printer.objects.get_or_create(name=printer_value)
+                    else:
+                        printer = None
+                        
+                    # Validate paper_type
+                    paper_type_value = validated_data.get('paper_type', 'n/a')
+                    if paper_type_value and paper_type_value.lower() != "n/a":
+                        paper_type_value = paper_type_value.strip().capitalize()
+                        paper_type, _ = PaperType.objects.get_or_create(name=paper_type_value)
+                    else:
+                        paper_type = None
+                        
                     # Create issue only if combination og year, name and date is unique
                     # Otherwise update the existing one with the new data (except for 
                     # the name, date and year that will remain unchanged)
@@ -157,7 +191,11 @@ class IssuesCollectionsView(Logger, APIView):
                             'perforation': perforation_value,
                             'description': description_value,
                             'note': notes_value,
-                            'market_value': market_value_mnh_value
+                            'market_value_mnh': market_value_mnh_value,
+                            'market_value_used': market_value_used_value,
+                            'artist': artist,
+                            'printer': printer,
+                            'paper_type': paper_type
                         }
                     )
                     
@@ -171,25 +209,25 @@ class IssuesCollectionsView(Logger, APIView):
                         edifil_code_value = stamp.get('edifil_code')
                         if not edifil_code_value:
                             edifil_code_value = "n/a"
-                        edifil_code_value = edifil_code_value.strip().capitalize()
+                        edifil_code_value = edifil_code_value.strip()
                         
                         #validate fesofi_code
                         fesofi_code_value = stamp.get('fesofi_code')
                         if not fesofi_code_value:
                             fesofi_code_value = "n/a"
-                        fesofi_code_value = fesofi_code_value.strip().capitalize()
+                        fesofi_code_value = fesofi_code_value.strip()
                         
                         # Validate motive
                         motive_value = stamp.get('motive')
                         if not motive_value:
                             motive_value = "n/a"
-                        motive_value = motive_value.strip().capitalize()
+                        motive_value = motive_value.strip()
                         
                         # Validate face_value
                         face_value_value = stamp.get('face_value')
                         if not face_value_value:
                             face_value_value = "n/a"
-                        face_value_value = face_value_value.strip().capitalize()
+                        face_value_value = face_value_value.strip()
                         
                         # Validate amount_printed
                         amount_printed_value = stamp.get('amount_printed')
@@ -216,7 +254,7 @@ class IssuesCollectionsView(Logger, APIView):
                         description_value = stamp.get('description')
                         if not description_value:
                             description_value = "n/a"
-                        description_value = description_value.strip().capitalize()
+                        description_value = description_value.strip()
                         
                         # Create image path
                         image_path_value = f"{year_value}/{edifil_code_value}.webp" 

@@ -29,7 +29,8 @@ class Issue(models.Model):
     date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=255)
     total_printed = models.BigIntegerField(null=True, blank=True)
-    market_value = models.DecimalField(max_digits=8, decimal_places=2,null=True, blank=True)
+    market_value_mnh = models.DecimalField(max_digits=8, decimal_places=2,null=True, blank=True)
+    market_value_used = models.DecimalField(max_digits=8, decimal_places=2,null=True, blank=True)
     stamp_type = models.ForeignKey(
         'stamp_types_api.StampType', 
         on_delete=models.SET_NULL, 
@@ -38,6 +39,24 @@ class Issue(models.Model):
     )
     print_type = models.ForeignKey(
         'print_types_api.PrintType', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='issues'
+    )
+    printer = models.ForeignKey(
+        'printers_api.Printer', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='issues'
+    )
+    artist = models.ForeignKey(
+        'artists_api.Artist', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='issues'
+    )
+    paper_type = models.ForeignKey(
+        'paper_types_api.PaperType', 
         on_delete=models.SET_NULL, 
         null=True, blank=True,
         related_name='issues'
