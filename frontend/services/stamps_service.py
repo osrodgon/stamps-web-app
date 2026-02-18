@@ -159,7 +159,7 @@ class StampsService(BaseService):
             headers=self._get_headers()
         )
         
-    async def series_extraction(self, name: str, date: str):
+    async def issues_extraction(self, name: str, date: str):
         """
         Performs AI-powered series extraction.
         
@@ -170,26 +170,32 @@ class StampsService(BaseService):
         Returns:
             requests.Response | None: The API response with series data
         """
-        from tests.data.stamps_api_responses import SERIES_EXTRACTION_RESPONSE_200_SUCCESS
-        import requests as mock_requests
-        import json
+        payload = {
+            'name': name,
+            'date': date
+        }
         
-        response = mock_requests.Response()
-        response.status_code = 200
-        response._content = json.dumps(SERIES_EXTRACTION_RESPONSE_200_SUCCESS).encode('utf-8')
-        response.encoding = 'utf-8'
-        response.headers['Content-Type'] = 'application/json'
+        return await self._make_request(
+            request_type=self.POST,
+            url=URLs.Backend.issues_extraction,
+            payload=payload,
+            headers=self._get_headers()
+        )
+
+    async def issues_collections(self, issues_collections_data: dict):
+        """
+        Creates a new issue with stamps.
         
-        return response
+        Args:
+            issue_data: Dictionary containing issue and stamps data
+            
+        Returns:
+            requests.Response | None: The API response with created issue data
+        """
         
-        # payload = {
-        #     'name': name,
-        #     'date': date
-        # }
-        
-        # return await self._make_request(
-        #     request_type=self.POST,
-        #     url=URLs.Backend.series_extraction,
-        #     payload=payload,
-        #     headers=self._get_headers()
-        # )
+        return await self._make_request(
+            request_type=self.POST,
+            url=URLs.Backend.issues_collections,
+            payload=issues_collections_data,
+            headers=self._get_headers()
+        )

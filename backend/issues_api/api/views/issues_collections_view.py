@@ -55,8 +55,9 @@ class IssuesCollectionsView(Logger, APIView):
             A Response object with the result of the creation operation.
         """
         message = "This endpoint is a placeholder for future implementation."
-        generic_response = GenericResponse(message=message, success=False)
+        self.log.error(request.data)
         return Response(
-            data=GenericResponseSerializer(generic_response).data, 
+            data=GenericResponseSerializer(GenericResponse(message)).data, 
             status=status.HTTP_400_BAD_REQUEST
         )
+        

@@ -1,3 +1,4 @@
+from os import error
 from pathlib import Path
 from base.base_page import BasePage
 from components.common.top_bar import TopBar
@@ -158,7 +159,7 @@ class StampsManagerPage(ui.column, BasePage):
         self.ai_drawer.show_loading()
         
         try:
-            response = await self.stamps_service.series_extraction(name, date)
+            response = await self.stamps_service.issues_extraction(name, date)
             
             if response is None:
                 self.ai_drawer.display_error(_('ai_series_lookup.error_network'))
@@ -183,7 +184,7 @@ class StampsManagerPage(ui.column, BasePage):
             self.log.error(f'AI extraction error: {e}')
             self.ai_drawer.display_error(_('ai_series_lookup.error_unknown'))
     
-    def _handle_save_ai_issue(self, data: dict) -> None:
+    async def _handle_save_ai_issue(self, data: dict) -> None:
         """
         Handles saving AI extracted data as a new issue.
         
@@ -192,20 +193,33 @@ class StampsManagerPage(ui.column, BasePage):
         Args:
             data: The AI response data dictionary
         """
-        self.notify(_('ai_series_lookup.save_not_implemented'), 'info')
-        # Convert AI data to issue format
-        # issue_data = {
-        #     'name': data.get('issue_name').split('\n')[0][:200],
-        #     'date': data.get('issue_date'),
-        #     'total_printed': data.get('total_printed'),
-        #     'market_value': data.get('market_value_mnh'),
-        #     'print_type': data.get('print_type'),
-        #     'perforation': data.get('perforation'),
-        #     'paper_type': data.get('paper_type'),
-        #     'stamp_type': data.get('stamp_type'),
-        #     'printer': data.get('printer'),
-        #     'notes': data.get('notes'),
-        # }
+        self.ai_drawer.show_loading()
+        
+        try:
+            response = await self.stamps_service.issues_collections(data)
+            
+            if response is None:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_network'))
+                return
+                
+            status = response.status_code
+            
+            if status == 201:
+                self.ai_drawer.close()
+                self.notify(_('ai_series_lookup.save_success'), 'positive')
+                # Refresh the issues list
+                await self.get_issues()
+            elif status == 400:
+                error_data = response.json().get('errors', {})
+                self.ai_drawer.display_error(error_data[0].get('message', _('ai_series_lookup.save_error_validation')))
+            elif status == 500:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_service'))
+            else:
+                self.ai_drawer.display_error(_('ai_series_lookup.save_error_unknown'))
+                
+        except Exception as e:
+            self.log.error(f'Save AI issue error: {e}')
+            self.ai_drawer.display_error(_('ai_series_lookup.save_error_unknown'))
     
     async def handle_pagination_change(self, event_data: dict) -> None:
         """

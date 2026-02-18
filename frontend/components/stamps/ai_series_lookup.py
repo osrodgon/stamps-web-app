@@ -196,7 +196,7 @@ class AISeriesLookupDrawer(ui.right_drawer, BaseUI):
     async def _handle_save(self, data: dict):
         """Handles save button click - calls parent's callback."""
         if self._on_save:
-            self._on_save(data)
+            await self._on_save(data)
     
     def display_error(self, message: str):
         """

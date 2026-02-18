@@ -2,33 +2,36 @@
 
 ## Current Work Status
 
-**Task**: Code tidying and cleanup of stamps_manager_page.py
+**Task**: Separate error messages for AI extraction vs. save operations
 **Status**: ✅ **COMPLETED**
 
 ### What We Just Accomplished
 
-1. **Added Missing Attribute Declarations**: Added proper type hints and declarations to `StampsManagerPage` class:
-   - `years_label`, `feedback_label`, `slider_container` - UI components
-   - `all_issues: list` - cached issues data
-   - `print_types: list`, `stamp_types: list` - metadata caches
+1. **Added New Translation Keys**: Added save-specific error messages to both locale files:
+   - English (`en.json`): `save_error_network`, `save_error_validation`, `save_error_service`, `save_error_unknown`
+   - Spanish (`es.json`): Same keys with Spanish translations
 
-2. **Fixed Async Callback Warning**: In `ai_series_lookup.py`, wrapped the async callback in a lambda to avoid NiceGUI async callback warnings:
-   - Changed: `on_click=self._handle_extract`
-   - To: `on_click=lambda: self._handle_extract()`
+2. **Updated Error Handling in stamps_manager_page.py**: Modified `_handle_save_ai_issue` method to use the new save-specific error keys:
+   - Changed from `error_network` to `save_error_network`
+   - Changed from `error_validation` to `save_error_validation`
+   - Changed from `error_service` to `save_error_service`
+   - Changed from `error_unknown` to `save_error_unknown`
 
-3. **Loading Spinner**: Already previously removed (changed from `self.loading_spinner = ui.spinner(...)` to just `ui.spinner(...)`)
+### Why This Change Was Needed
 
-4. **all_issues Evaluation**: After analysis, `all_issues` IS actively used in the codebase:
-   - Set in `_process_paginated_response`: `self.all_issues = issues`
-   - Used in `handle_expand` to synchronize expanded row data across pagination
-   - Cannot be removed without breaking functionality
+Previously, both AI extraction (`_handle_ai_extraction`) and save operations (`_handle_save_ai_issue`) used the same error messages. This was confusing for users because:
+- Error messages about "AI service unavailable" when trying to save didn't make sense
+- Error messages about "network error" during save should be different from extraction errors
+
+Now users get contextually appropriate error messages depending on whether the error occurred during AI extraction or during the save operation.
 
 ### Recent Changes Summary
 
 | File | Change |
 |------|--------|
-| `stamps_manager_page.py` | Added missing attribute declarations |
-| `ai_series_lookup.py` | Fixed async callback warning |
+| `frontend/assets/locales/en.json` | Added save_error translation keys |
+| `frontend/assets/locales/es.json` | Added save_error translation keys |
+| `frontend/pages/admin/stamps_manager_page.py` | Updated `_handle_save_ai_issue` to use new keys |
 
 ### Key Technical Context
 
@@ -40,5 +43,4 @@
 ### Next Steps
 
 - Run the application to verify the changes work correctly
-- Continue with Phase 2 features (error handling, validation, search)
-- Consider additional code cleanup if other issues arise
+- Consider if any other error messages need to be differentiated
