@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-
 class StampDetailSerializer(serializers.Serializer):
     """
     Serializer for individual stamp details within the series extraction response.

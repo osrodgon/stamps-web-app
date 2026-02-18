@@ -27,7 +27,7 @@ class Stamp(models.Model):
     edifil_code = models.CharField(max_length=255, null=True, blank=True)
     face_value = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='stamps/', null=True, blank=True)
     
     # This is the many-to-many relationship field.

@@ -204,8 +204,9 @@ class StampsManagerPage(ui.column, BasePage):
             status = response.status_code
             
             if status == 201:
-                self.ai_drawer.close()
-                self.notify(_('ai_series_lookup.save_success'), 'positive')
+                self.ai_drawer.result_container.clear()
+                # TODO. Fix the notification (the parent element this slot bolongs to has been deleted)
+                # self.ai_drawer.notify(_('ai_series_lookup.save_success'), 'positive')
                 # Refresh the issues list
                 await self.get_issues()
             elif status == 400:
