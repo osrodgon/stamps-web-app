@@ -9,11 +9,13 @@ def stamps_table(db, issues_table, colors_table):
     stamp1 = Stamp.objects.create(
         issue=issues_table[0],
         edifil_code="E-1980-001",
+        fesofi_code="F-1980-001",
         face_value="10 Ptas",
         name="Rey Juan Carlos I",
         description="Scott-1234",
         image="/static/images/stamp1.jpg",
-        market_value=5.75,
+        market_value_mnh=5.75,
+        market_value_used=3.50,
         total_printed=1000000
     )
     stamp1.colors.set([colors_table[0], colors_table[1]])
@@ -21,11 +23,13 @@ def stamps_table(db, issues_table, colors_table):
     stamp2 = Stamp.objects.create(
         issue=issues_table[1],
         edifil_code="F-1985-001",
+        fesofi_code="F-1985-001",
         face_value="5 Francs",
         name="Ciclismo",
         description="Scott-5678",
         image="/static/images/stamp2.jpg",
-        market_value=8.50,
+        market_value_mnh=8.50,
+        market_value_used=5.25,
         total_printed=500000
     )
     stamp2.colors.set([colors_table[0]])
@@ -37,9 +41,12 @@ def stamp_post_payload_ok(issues_table, colors_table):
     return {
         'issue': issues_table[0].id, 
         'edifil_code': 'NEW-2024-001', 
+        'fesofi_code': 'NEW-F-2024-001',
         'name': 'New Stamp', 
         'colors': [colors_table[0].id],
-        'face_value': '1.00'
+        'face_value': '1.00',
+        'market_value_mnh': 10.00,
+        'market_value_used': 5.00
     }
 
 @pytest.fixture

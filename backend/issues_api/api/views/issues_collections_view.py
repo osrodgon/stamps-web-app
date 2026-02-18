@@ -173,6 +173,12 @@ class IssuesCollectionsView(Logger, APIView):
                             edifil_code_value = "n/a"
                         edifil_code_value = edifil_code_value.strip().capitalize()
                         
+                        #validate fesofi_code
+                        fesofi_code_value = stamp.get('fesofi_code')
+                        if not fesofi_code_value:
+                            fesofi_code_value = "n/a"
+                        fesofi_code_value = fesofi_code_value.strip().capitalize()
+                        
                         # Validate motive
                         motive_value = stamp.get('motive')
                         if not motive_value:
@@ -199,6 +205,13 @@ class IssuesCollectionsView(Logger, APIView):
                         if market_value_mnh_value is None:
                             market_value_mnh_value = 0.0
                             
+                        # Validate market_value_used
+                        market_value_used_value = stamp.get('market_value_used')
+                        if market_value_used_value is not None and market_value_used_value < 0:
+                            market_value_used_value = 0.0
+                        if market_value_used_value is None:
+                            market_value_used_value = 0.0
+                            
                         # Validate description
                         description_value = stamp.get('description')
                         if not description_value:
@@ -209,14 +222,18 @@ class IssuesCollectionsView(Logger, APIView):
                         image_path_value = f"{year_value}/{edifil_code_value}.webp" 
                         
                         stamp, _ = Stamp.objects.get_or_create(
-                            name = motive_value,
-                            issue = issue,
                             edifil_code = edifil_code_value,
-                            face_value = face_value_value,
-                            description = description_value,
-                            market_value = market_value_mnh_value,
-                            total_printed = amount_printed_value,
-                            image = image_path_value
+                            fesofi_code = fesofi_code_value,
+                            defaults = {
+                                'name': motive_value,
+                                'issue': issue,
+                                'face_value': face_value_value,
+                                'description': description_value,
+                                'market_value_mnh': market_value_mnh_value,
+                                'market_value_used': market_value_used_value,
+                                'total_printed': amount_printed_value,
+                                'image': image_path_value
+                            }
                         )
                         
                         color_objects = []

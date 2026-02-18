@@ -705,5 +705,48 @@ class TestStampsAPI(AbstractApiUnitTest):
 
         assert str(stamp) == f"{test_edifil_code} - {test_name}"
 
+    def test_post_stamp_returns_201_created_with_market_value_used(self, api_client, stamp_post_payload_ok):
+        self.permission(granted=True)
+        response = api_client.post(self.__get_url(), stamp_post_payload_ok, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.created_successfully()
+        assert response.json()['errors'] == None
+        # Check that the market values are returned (Decimal serialization format may differ)
+        assert response.json()['data']['market_value_mnh'] is not None
+        assert response.json()['data']['market_value_used'] is not None
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_post_stamp_returns_201_created_with_fesofi_code(self, api_client, stamp_post_payload_ok):
+        self.permission(granted=True)
+        response = api_client.post(self.__get_url(), stamp_post_payload_ok, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.created_successfully()
+        assert response.json()['errors'] == None
+        assert response.json()['data']['fesofi_code'] == stamp_post_payload_ok["fesofi_code"]
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_get_all_stamps_returns_market_value_used(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(self.__get_url())
+
+        original = StampResponseSerializer(stamps_table, many=True)
+
+        assert response.json()['success'] == True
+        assert response.json()['data'][0]['market_value_mnh'] == original.data[0]['market_value_mnh']
+        assert response.json()['data'][0]['market_value_used'] == original.data[0]['market_value_used']
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_get_all_stamps_returns_fesofi_code(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(self.__get_url())
+
+        original = StampResponseSerializer(stamps_table, many=True)
+
+        assert response.json()['success'] == True
+        assert response.json()['data'][0]['fesofi_code'] == original.data[0]['fesofi_code']
+        assert response.status_code == status.HTTP_200_OK
+
     def __get_url(self):
         return f"/{STAMPS_URL_V1}"

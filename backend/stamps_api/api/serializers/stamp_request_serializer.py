@@ -15,12 +15,14 @@ class StampRequestSerializer(GenericSerializer, serializers.ModelSerializer):
         fields = [
             'issue',
             'edifil_code',
+            'fesofi_code',
             'face_value',
             'name',
             'description',
             'image',
             'colors',
-            'market_value',
+            'market_value_mnh',
+            'market_value_used',
             'total_printed'
         ]
         
