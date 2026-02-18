@@ -13,11 +13,11 @@ Act as a professional philatelic expert and data architect specialized in Spanis
 
 ### REQUIRED OUTPUT FORMAT (JSON ONLY). Fields content must be in spanish:
 {
-  "issue_name": "Name of the issue (titulo serie).",
+  "issue_name": "Name of the issue (issue_name).",
   "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission.",
   "issue_date": "YYYY-MM-DD",
-  "artist": "Artist name if mentioned in context, otherwise null",
-  "printer": "Name of the printing house",
+  "artist": "Engraver if mentioned in context, otherwise null",
+  "printer": "Name of the printing house (printer) or null if not specified",
   "print_type": "The technical method used (e.g., Huecograbado)",
   "perforation": "The perforation measurement (e.g., 13 1/4)",
   "paper_type": "The type of paper used (e.g., Estucado, mate, etc.)",
@@ -29,6 +29,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
   "stamps": [
     {
       "edifil_code": "edifil of null",
+      "fesofi_code": "fesofi code or null",
       "motive": "The stamp motive or null",
       "face_value": "facial or null",
       "description": "Corrected and expanded description of the desc_snippet.",

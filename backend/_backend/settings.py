@@ -95,7 +95,7 @@ USERS_ENDPOINT = "users/"
 HEALTH_ENDPOINT = "health/"
 LOGIN_ENDPOINT = "login/"
 LOGOFF_ENDPOINT = "logoff/"
-AI_SERIES_EXTRACTION = "series/extraction/"
+AI_SERIES_EXTRACTION = "issues/extraction/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
