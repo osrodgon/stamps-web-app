@@ -168,6 +168,7 @@ class AISeriesLookupDrawer(ui.right_drawer, BaseUI):
                             
                         with ui.grid().classes('w-full grid-cols-2 gap-2 text-sm'):
                             self._add_result_field(_('ai_series_lookup.field_edifil_code'), stamp.get('edifil_code', 'N/A'))
+                            self._add_result_field(_('ai_series_lookup.field_fesofi_code'), stamp.get('fesofi_code', 'N/A'))
                             self._add_result_field(_('ai_series_lookup.field_face_value'), stamp.get('face_value', 'N/A'))
                             amount_printed = stamp.get('amount_printed', 'N/A')
                             if amount_printed != data.get('total_printed'):

@@ -29,6 +29,7 @@
         "field_face_value": "Valor facial",
         "field_color": "Color",
         "field_edifil_code": "Código Edifil",
+        "field_fesofi_code": "Código FESOFI",
         "stamps_title": "Sellos en la serie",
         "save_button": "Guardar serie",
         "close_button": "Cerrar",

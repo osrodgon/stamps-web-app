@@ -29,6 +29,7 @@
         "field_face_value": "Face Value",
         "field_color": "Color",
         "field_edifil_code": "Edifil Code",
+        "field_fesofi_code": "FESOFI Code",
         "stamps_title": "Stamps in Series",
         "save_button": "Save issue",
         "close_button": "Close",

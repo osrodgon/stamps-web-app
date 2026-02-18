@@ -47,7 +47,7 @@ class Translations:
                                 language codes (e.g., 'en', 'es') and the inner
                                 dictionaries map translation keys to strings.
     """
-    DEFAULT_LANGUAGE = DEFAULT_LANGUAGE
+    DEFAULT_LANGUAGE = 'en'
     translations = {}
 
     @staticmethod
