@@ -205,6 +205,7 @@ class LLMService(Logger):
             )
             
             if not response or not response.text:
+                self.log.warning("Received empty response from Google Gemini API")
                 raise ValueError(Messages.AI.empty_response())
             
             self.log.debug(f"Received AI response (length: {len(response.text)})")

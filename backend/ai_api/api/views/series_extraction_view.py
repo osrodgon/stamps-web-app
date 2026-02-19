@@ -154,14 +154,14 @@ class SeriesExtractionView(Logger, APIView):
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
             
-            self.log.info(f"AI series extraction completed successfully for series: {name}")
+            self.log.debug(f"AI series extraction completed successfully for series: {name}")
             return Response(
                 data=response_serializer.data,
                 status=status.HTTP_200_OK
             )
         
         except ValueError as e:
-            self.log.warning(f"AI series extraction validation error: {str(e)}")
+            self.log.error(f"AI series extraction validation error: {str(e)}")
             return Response(
                 data=GenericResponseSerializer(GenericResponse({
                     "error": Messages.AI.validation_error(),
