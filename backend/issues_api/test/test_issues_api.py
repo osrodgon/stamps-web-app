@@ -783,7 +783,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         issue = issues_table[0]
         assert str(issue) == f"{issue.name} ({issue.year.year})"
         
-    # Tests for IssuesCollectionsView (POST /issues/collections/)
     def test_post_issue_collection_returns_201_created(self, api_client, issue_collection_post_payload_ok):
         """Test successful creation of issue collection with all related entities."""
         self.permission(granted=True)
@@ -1045,12 +1044,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response1.status_code == status.HTTP_201_CREATED
         assert response2.status_code == status.HTTP_201_CREATED
         
-        # Verify only one of each entity was created
-        from years_api.models import Year
-        from countries_api.models import Country
-        from stamp_types_api.models import StampType
-        from print_types_api.models import PrintType
-        
         assert Year.objects.filter(year=1992).count() == 1
         assert Country.objects.filter(name="España").count() == 1
         assert StampType.objects.filter(name="Definitiva").count() == 1
@@ -1063,10 +1056,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         response = api_client.post(f"{self.__get_url()}{ISSUES_COLLECTIONS_ENDPOINT}", issue_collection_post_payload_ok, format='json')
         
         assert response.status_code == status.HTTP_201_CREATED
-        
-        # Verify colors were created and associated correctly
-        from colors_api.models import Color
-        from stamps_api.models import Stamp
         
         # Check that colors were created with proper capitalization
         assert Color.objects.filter(name="Rojo").exists()
@@ -1103,9 +1092,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         
         assert response.status_code == status.HTTP_201_CREATED
         
-        # Verify image paths were generated correctly
-        from stamps_api.models import Stamp
-        
         stamp1 = Stamp.objects.get(edifil_code='1234')
         assert stamp1.image == "1992/1234.webp"
         
@@ -1126,10 +1112,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
         response = api_client.post(f"{self.__get_url()}{ISSUES_COLLECTIONS_ENDPOINT}", payload, format='json')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        
-        # Verify no entities were created
-        from issues_api.models import Issue
-        from stamps_api.models import Stamp
         
         assert Issue.objects.filter(name="").count() == 0
         assert Stamp.objects.count() == 0
