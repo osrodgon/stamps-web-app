@@ -11,10 +11,10 @@ Act as a professional philatelic expert and data architect specialized in Spanis
 ### INPUT DATA:
 {{ input_data }}
 
-### REQUIRED OUTPUT FORMAT (JSON ONLY). Fields content must be in spanish:
+### REQUIRED OUTPUT FORMAT (JSON ONLY). Output the final JSON as a single-line string. Remove all indentation, newlines, and carriage returns (minify the JSON). Do not wrap the response in markdown code blocks like ```json. Fields content must be in spanish:
 {
   "issue_name": "Name of the issue (issue_name).",
-  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission.",
+  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Limited to 500 characters.",
   "issue_date": "YYYY-MM-DD",
   "artist": "Engraver if mentioned in context, otherwise null",
   "printer": "Name of the printing house (printer) or null if not specified",
@@ -32,7 +32,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
       "fesofi_code": "fesofi code or null",
       "motive": "The stamp motive or null",
       "face_value": "facial or null",
-      "description": "Corrected and expanded description of the desc_snippet.",
+      "description": "Corrected and expanded description of the desc_snippet. Limited to 200 characters.",
       "amount_printed": Integer,
       "color": "color or null",
       "market_value_mnh": Float,

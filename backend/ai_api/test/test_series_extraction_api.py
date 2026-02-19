@@ -249,6 +249,107 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.AI.validation_error()
         assert response.json()['errors'][0]['code'] == Messages.Code.other()
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_post_series_extraction_with_url_and_zero_date_skips_search(
+        self, 
+        api_client, 
+        series_extraction_response_data,
+        series_extraction_cleaned_data
+    ):
+        """Test that providing a URL with date=0 skips search service and uses URL directly."""
+        self.permission(granted=True)
+        
+        # Mock the AI service response
+        mock_search_service = Mock()
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+        
+        mock_service = Mock()
+        mock_service.series_extract.return_value = series_extraction_response_data
+        
+        # Test data with URL and zero date
+        test_data = {
+            "name": "https://example.com/series/123",
+            "date": "0"
+        }
+        
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+            response = api_client.post(self.__get_url(), test_data, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.success()
+        assert response.json()['errors'] == None
+        assert response.json()['data']['description'] == "Castillos de España series"
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify search service was NOT called (URL bypassed)
+        mock_search_service.find_series_url.assert_not_called()
+        
+        # Verify scraping service was called with the direct URL
+        mock_scraping_service.extract_links.assert_called_once_with("https://example.com/series/123")
+        
+        # Verify service was called with correct parameters
+        mock_service.series_extract.assert_called_once_with(
+            name="Castillos",
+            date="2007-09-10",
+            clean_data=str(series_extraction_cleaned_data)
+        )
+        
+    def test_post_series_extraction_with_url_and_non_zero_date_uses_search(
+        self, 
+        api_client, 
+        series_extraction_request_payload_ok, 
+        series_extraction_response_data,
+        series_extraction_cleaned_data
+    ):
+        """Test that providing a URL with non-zero date still uses search service."""
+        self.permission(granted=True)
+        
+        # Mock the AI service response
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = "some test value for search"
+        
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "some test value for scrape links"
+        mock_scraping_service.scrape_content.return_value = "some test value for scrape data"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+        
+        mock_service = Mock()
+        mock_service.series_extract.return_value = series_extraction_response_data
+        
+        # Test data with URL and non-zero date
+        test_data = {
+            "name": "https://example.com/series/123",
+            "date": "2023"
+        }
+        
+        with patch('ai_api.api.views.series_extraction_view.SearchService', return_value=mock_search_service), \
+            patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+            response = api_client.post(self.__get_url(), test_data, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.success()
+        assert response.json()['errors'] == None
+        assert response.json()['data']['description'] == "Castillos de España series"
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify search service WAS called (URL not bypassed due to non-zero date)
+        mock_search_service.find_series_url.assert_called_once_with("https://example.com/series/123", "2023")
+        
+        # Verify scraping service was called with the search result URL
+        mock_scraping_service.extract_links.assert_called_once_with("some test value for search")
+        
+        # Verify service was called with correct parameters
+        mock_service.series_extract.assert_called_once_with(
+            name="Castillos",
+            date="2007-09-10",
+            clean_data=str(series_extraction_cleaned_data)
+        )
     
     def __get_url(self):
         """Get the base URL for AI Manager API endpoints."""
