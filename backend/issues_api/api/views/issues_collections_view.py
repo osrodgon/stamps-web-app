@@ -71,8 +71,8 @@ class IssuesCollectionsView(Logger, APIView):
                     data=IssueCollectionResponseSerializer(issue_collection).data,
                     status=status.HTTP_201_CREATED
                 )
-            except Exception as e:
-                self.log.error(Messages.failed())
+            except ValueError as e:
+                self.log.warning(f"Invalid data for creating issue collection: {e}")
                 return Response(
                     data=GenericResponseSerializer(GenericResponse([str(e)])).data,
                     status=status.HTTP_400_BAD_REQUEST
