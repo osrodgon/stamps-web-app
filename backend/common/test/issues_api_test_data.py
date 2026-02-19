@@ -193,20 +193,3 @@ def issue_collection_post_payload_invalid_negative():
             }
         ]
     }
-
-@pytest.fixture
-def issue_collection_post_payload_invalid_colors():
-    """Pytest fixture for issue collection payload with invalid color formats."""
-    return {
-        'issue_name': 'Emisión con Colores',
-        'issue_date': '2024-01-01',
-        'stamps': [
-            {
-                'edifil_code': 'COL001',
-                'fesofi_code': 'FCOL001',
-                'motive': 'Sello con Colores Variados',
-                'face_value': '0.10',
-                'color': 'rojo, verde, azul, amarillo, morado, naranja, rosa, gris, negro, blanco'
-            }
-        ]
-    }

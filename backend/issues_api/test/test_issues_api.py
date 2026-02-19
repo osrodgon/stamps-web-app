@@ -1,3 +1,4 @@
+from os import error
 import pytest
 from _backend.settings import ISSUES_URL_V1, ISSUES_COLLECTIONS_ENDPOINT
 from stamps_api.models import Stamp
@@ -24,6 +25,16 @@ from rest_framework import status
 
 from issues_api.api.serializers.issue_paginated_response_serializer import IssuePaginatedResponseSerializer
 from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
+from issues_api.models import Issue
+from years_api.models import Year
+from countries_api.models import Country
+from stamp_types_api.models import StampType
+from print_types_api.models import PrintType
+from artists_api.models import Artist
+from printers_api.models import Printer
+from paper_types_api.models import PaperType
+from stamps_api.models import Stamp
+from colors_api.models import Color
 from issues_api.models import Issue
 
 
@@ -830,7 +841,7 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
         assert response.json()['errors'][0]['field'] is None
-        assert response.json()['errors'][0]['message'] == "issue_date is required to create a Year record"
+        assert response.json()['errors'][0]['message'].strip("[]").strip("'") == "issue_date is required to create a Year record"
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_post_issue_collection_returns_400_bad_request_missing_stamps(self, api_client, issue_collection_post_payload_ok):
@@ -995,18 +1006,6 @@ class TestIssuesAPI(AbstractApiUnitTest):
     def test_post_issue_collection_creates_related_entities(self, api_client, issue_collection_post_payload_ok):
         """Test that all related entities are created correctly."""
         self.permission(granted=True)
-        
-        # Count entities before
-        from years_api.models import Year
-        from countries_api.models import Country
-        from stamp_types_api.models import StampType
-        from print_types_api.models import PrintType
-        from artists_api.models import Artist
-        from printers_api.models import Printer
-        from paper_types_api.models import PaperType
-        from stamps_api.models import Stamp
-        from colors_api.models import Color
-        from issues_api.models import Issue
         
         initial_years = Year.objects.count()
         initial_countries = Country.objects.count()
