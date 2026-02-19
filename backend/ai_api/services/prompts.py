@@ -4,17 +4,17 @@ Act as a professional philatelic expert and data architect specialized in Spanis
 ### CONSTRAINTS:
 1. DATA INTEGRITY: Use the provided input data as the primary source. Do not invent Edifil codes or technical specs.
 2. CLEANING: Correct any grammatical errors or typos in the source text. If a piece of data is logically inconsistent (e.g., a year that doesn't match the series), mark it as null.
-3. VALUATION: Based on the "tirada" (amount printed), year of emission (1967), and the popularity of the series (e.g., "Paisajes y Monumentos"), provide a realistic market value estimate in Euros for both MNH (Mint Never Hinged/Nuevo) and Used (Usado) states. 
+3. VALUATION: Based on the "tirada" (amount printed), year of emission (1967), and the popularity of the series (e.g., "Paisajes y Monumentos"), provide a realistic market value estimate in Euros for both MNH (Mint Never Hinged/Nuevo) and Used (Usado) states. Ignore inflated catalog values. Use a 'floor' price based on current bulk auction rates.  
     - Note: The market value of a complete series is typically lower than the sum of individual stamps.
 4. EXPANSION: Use your internal knowledge of Spanish philately to expand on the "desc_snippet" and provide a full historical context for the series and specific details for each stamp.
 
 ### INPUT DATA:
 {{ input_data }}
 
-### REQUIRED OUTPUT FORMAT (JSON ONLY). Fields content must be in spanish:
+### REQUIRED OUTPUT FORMAT (JSON ONLY). Output the final JSON as a single-line string. Remove all indentation, newlines, and carriage returns (minify the JSON). Do not wrap the response in markdown code blocks like ```json. Fields content must be in spanish:
 {
   "issue_name": "Name of the issue (issue_name).",
-  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission.",
+  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Limited to 500 characters.",
   "issue_date": "YYYY-MM-DD",
   "artist": "Engraver if mentioned in context, otherwise null",
   "printer": "Name of the printing house (printer) or null if not specified",
@@ -32,7 +32,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
       "fesofi_code": "fesofi code or null",
       "motive": "The stamp motive or null",
       "face_value": "facial or null",
-      "description": "Corrected and expanded description of the desc_snippet.",
+      "description": "Corrected and expanded description of the desc_snippet. Limited to 200 characters.",
       "amount_printed": Integer,
       "color": "color or null",
       "market_value_mnh": Float,

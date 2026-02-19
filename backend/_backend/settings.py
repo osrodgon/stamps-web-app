@@ -42,6 +42,13 @@ JWT_ALGORITHM = 'HS256'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
 GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', None)
 
+# Groq API Key
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', None)
+GROQ_MODEL_NAME = os.getenv('GROQ_MODEL_NAME', None)
+
+# LLM Provider Selection
+LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'gemini')
+
 # Serper API Key
 SERPER_API_KEY = os.getenv('SERPER_API_KEY', None)
 SERPER_URL = os.getenv('SERPER_URL', None)

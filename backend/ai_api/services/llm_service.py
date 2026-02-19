@@ -1,55 +1,46 @@
 """
 LLM service for AI-powered stamp series extraction.
 
-This module provides integration with Google Gemini API to perform AI-powered
-research and extraction of stamp series information. It processes stamp issue
-data and extracts structured information using large language models.
+This module provides a unified interface for AI-powered research and extraction
+of stamp series information using multiple LLM providers (Google Gemini, Groq, etc.).
 
-The service is designed to work in conjunction with the SearchService and 
-ScrapingService to gather comprehensive data about stamp series for the 
-philatelic collection management application.
+The service acts as a facade that delegates to the appropriate LLM provider based
+on configuration, providing a consistent interface regardless of the underlying
+AI service being used.
 
 Dependencies:
-    - google.genai: Google Gemini API client for AI processing
+    - ai_api.services.provider_factory: For provider instantiation
+    - ai_api.services.base_llm_provider: For the base provider interface
     - common.api.messages: For standardized error messages
     - common.log.logger: For consistent application logging
-    - ai_api.services.prompts: For prompt templates
 
 Integration:
     - Used by SeriesExtractionView in the AI workflow
     - Part of the ai_api.services module
-    - Works with SearchService for complete series extraction
+    - Works with SearchService and ScrapingService for complete series extraction
 """
 
-import json
-import re
 from typing import Dict, Any
-from _backend.settings import GEMINI_API_KEY, GEMINI_MODEL_NAME
-from google import genai
-from google.genai import types
-
 from common.api.messages import Messages
 from common.log.logger import Logger
-from ai_api.services.prompts import SERIES_EXTRACTION_PROMPT_TEMPLATE
+from ai_api.services.provider_factory import ProviderFactory
+from ai_api.services.base_llm_provider import BaseLLMProvider
 
 
 class LLMService(Logger):
     """
-    Service for performing AI-powered research on stamp series using Google Gemini.
+    Service for performing AI-powered research on stamp series using configurable LLM providers.
     
-    This service handles the integration with Google Gemini API to research
+    This service handles the integration with various LLM APIs to research
     stamp series information based on issue name, date, and optional Edifil number.
     
     The service provides methods for:
-    - Initializing and configuring the Google Gemini API client
-    - Formatting prompts for series extraction
-    - Cleaning and validating AI responses
-    - Performing complete series extraction workflows
+    - Initializing and configuring the appropriate LLM provider based on environment
+    - Delegating series extraction to the configured provider
+    - Handling provider-specific error handling and logging
     
     Attributes:
-        client: Google Gemini API client instance
-        generation_config: Configuration for AI content generation
-        prompt_template: Template for series extraction prompts
+        provider: The configured LLM provider instance
         
     Usage:
         llm_service = LLMService()
@@ -60,85 +51,18 @@ class LLMService(Logger):
         """
         Initialize the LLMService.
         
-        Sets up Google Gemini API configuration and loads the series extraction prompt template.
+        Sets up the provider factory and loads the configured LLM provider.
         """
         super().__init__()
         
-        # Configure Google Gemini API
-        api_key = GEMINI_API_KEY
-        if not api_key:
-            raise ValueError(Messages.AI.missing_api_key())
+        # Initialize the provider factory
+        self.provider_factory = ProviderFactory()
         
-        if not GEMINI_MODEL_NAME:
-            raise ValueError(Messages.AI.missing_model_name())
+        # Get the configured provider
+        self.provider = self.provider_factory.create_provider()
         
-        self.client = genai.Client(api_key=api_key)
-        
-        # Create the configuration  
-        self.generation_config = types.GenerateContentConfig(
-            temperature=0.0,
-            top_p=1.0,
-            top_k=1,
-            max_output_tokens=8192,
-            response_mime_type="application/json"
-        )
-        
-        # Load the series extraction prompt template
-        self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
+        self.log.debug(f"LLMService initialized with provider: {type(self.provider).__name__}")
     
-    def _format_prompt(self, input_data: str) -> str:
-        """
-        Format the prompt template with the provided input data.
-        
-        This method replaces the placeholder {{ input_data }} in the prompt template
-        with the actual cleaned data to be processed by the AI model.
-        
-        Args:
-            input_data (str):   The cleaned input data to be inserted into the prompt template.
-                                This should be the processed stamp issue information.
-
-        Returns:
-            str: The formatted prompt with the input data inserted into the template.
-            
-        Example:
-            >>> service = LLMService()
-            >>> formatted = service._format_prompt("Olimpiadas 1992 data")
-            >>> print(formatted)  # Returns template with "Olimpiadas 1992 data" inserted
-            
-        Note:
-            This is a private method used internally by the series_extract method.
-            The prompt template is loaded during initialization from the prompts module.
-        """
-        formatted_prompt = self.prompt_template.replace(
-            "{{ input_data }}", input_data
-        )
-        
-        return formatted_prompt
-    
-    def _clean_json_response(self, response_text: str) -> str:
-        """
-        Clean the AI response text by removing markdown code blocks.
-        
-        Args:
-            response_text: Raw response text from the AI model.
-            
-        Returns:
-            Cleaned JSON string.
-        """
-        # Use regex to find the JSON block within markdown code fences or standalone
-        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response_text, re.DOTALL)
-        if match:
-            return match.group(1)
-        
-        # Fallback: find the first '{' and the last '}'
-        start = response_text.find('{')
-        end = response_text.rfind('}')
-        
-        if start != -1 and end != -1:
-            return response_text[start:end+1]
-            
-        return response_text.strip()
-
     def series_extract(
         self,
         name: str,
@@ -146,11 +70,11 @@ class LLMService(Logger):
         clean_data: str
     ) -> Dict[str, Any]:
         """
-        Perform AI-powered extraction of stamp series information using Google Gemini.
+        Perform AI-powered extraction of stamp series information using the configured LLM provider.
         
-        This is the main method that orchestrates the complete AI extraction workflow.
-        It takes stamp issue parameters and cleaned data, formats them into a prompt,
-        sends the request to Google Gemini API, and processes the response.
+        This is the main method that delegates to the appropriate LLM provider
+        based on the current configuration. It takes stamp issue parameters and
+        cleaned data, and processes them using the selected AI model.
         
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
@@ -180,40 +104,17 @@ class LLMService(Logger):
             >>> print(result)  # Returns structured data about the stamp series
             
         Note:
-            This method includes comprehensive error handling and logging. It validates
-            input parameters, formats prompts using the internal template, makes the
-            API call to Google Gemini, cleans the response, and parses it as JSON.
-            Any errors during this process are logged and re-raised with descriptive messages.
+            This method delegates to the configured provider's series_extract method.
+            The actual AI service used depends on the LLM_PROVIDER environment variable.
         """
-        self.log.debug(f"Starting AI extraction for series: {name} ({date})")
-        
-        # Validate input parameters
-        if not clean_data or not clean_data.strip():
-            raise ValueError(Messages.AI.missing_input_data())
-        
+        self.log.debug(f"Starting AI extraction for series: {name} ({date}) using {type(self.provider).__name__}")
         
         try:
-            # Format the prompt with the provided parameters
-            prompt = self._format_prompt(clean_data)
-                        
-            # Call the AI model
-            self.log.debug("Sending request to Google Gemini API")
-            response = self.client.models.generate_content(
-                model=GEMINI_MODEL_NAME,
-                contents=prompt,
-                config=self.generation_config
-            )
-            
-            if not response or not response.text:
-                raise ValueError(Messages.AI.empty_response())
-            
-            self.log.debug(f"Received AI response (length: {len(response.text)})")
-            
-            # Validate and parse the response
-            self._clean_json_response(response.text)
+            # Delegate to the configured provider
+            result = self.provider.series_extract(name, date, clean_data)
             
             self.log.debug(f"AI extraction completed successfully for series: {name}")
-            return json.loads(response.text)
+            return result
             
         except Exception as e:
             self.log.error(f"AI extraction failed for series {name}: {str(e)}")
