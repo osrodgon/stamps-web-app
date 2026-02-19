@@ -25,7 +25,7 @@ Usage:
             # Implementation specific to the provider
             pass
 """
-
+import re
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 from common.log.logger import Logger
@@ -79,13 +79,13 @@ class BaseLLMProvider(Logger, ABC):
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
             date (str): The publication date of the stamp issue (e.g., "1992", "2023")
-            clean_data (str): The cleaned and processed data about the stamp issue
-                             that will be used as input for the AI model
+            clean_data (str):   The cleaned and processed data about the stamp issue
+                                that will be used as input for the AI model
         
         Returns:
             Dict[str, Any]: A dictionary containing the extracted stamp series
-                           information in structured format as returned by the AI model.
-                           The exact structure depends on the prompt template and model response.
+                            information in structured format as returned by the AI model.
+                            The exact structure depends on the prompt template and model response.
         
         Raises:
             ValueError: If clean_data is empty or None
@@ -145,8 +145,6 @@ class BaseLLMProvider(Logger, ABC):
             This is a common implementation that can be used by all providers.
             Providers can override this method if they need provider-specific cleaning.
         """
-        import re
-        
         # Use regex to find the JSON block within markdown code fences or standalone
         match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response_text, re.DOTALL)
         if match:

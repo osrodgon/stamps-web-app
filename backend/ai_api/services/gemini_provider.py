@@ -27,7 +27,6 @@ Usage:
 """
 
 import json
-import re
 from typing import Dict, Any
 from _backend.settings import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from google import genai

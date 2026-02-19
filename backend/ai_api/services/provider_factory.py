@@ -27,8 +27,7 @@ Usage:
     result = provider.series_extract("Olimpiadas", "1992", "cleaned_data")
 """
 
-from typing import Union
-from common.api.messages import Messages
+import os
 from common.log.logger import Logger
 from ai_api.services.base_llm_provider import BaseLLMProvider
 from ai_api.services.gemini_provider import GeminiProvider
@@ -92,7 +91,6 @@ class ProviderFactory(Logger):
             Supported values: 'gemini', 'groq'
             Default: 'gemini' if not specified
         """
-        import os
         
         provider_type = os.getenv('LLM_PROVIDER', 'gemini').lower()
         

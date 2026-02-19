@@ -27,6 +27,8 @@ Usage:
     result = provider.series_extract("Olimpiadas", "1992", "cleaned_data")
 """
 
+import os
+import json
 from typing import Dict, Any
 from groq import Groq
 from common.api.messages import Messages
@@ -93,7 +95,6 @@ class GroqProvider(BaseLLMProvider):
         Raises:
             ValueError: If GROQ_API_KEY environment variable is not set
         """
-        import os
         api_key = os.getenv('GROQ_API_KEY')
         if not api_key:
             self.log.error("GROQ_API_KEY environment variable is required")
@@ -109,7 +110,6 @@ class GroqProvider(BaseLLMProvider):
         Raises:
             ValueError: If GROQ_MODEL_NAME environment variable is not set
         """
-        import os
         model_name = os.getenv('GROQ_MODEL_NAME', 'llama3-8b-8192')
         return model_name
     
@@ -129,11 +129,11 @@ class GroqProvider(BaseLLMProvider):
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
             date (str): The publication date of the stamp issue (e.g., "1992", "2023")
-            clean_data (str): The cleaned and processed data about the stamp issue
-                             that will be used as input for the AI model. This should
-                             contain relevant information extracted from previous
-                             processing steps.
-                             
+            clean_data (str):   The cleaned and processed data about the stamp issue
+                                that will be used as input for the AI model. This should
+                                contain relevant information extracted from previous
+                                processing steps.
+
         Returns:
             Dict[str, Any]: A dictionary containing the extracted stamp series information
                             in structured format as returned by the AI model. The exact
@@ -214,8 +214,6 @@ class GroqProvider(BaseLLMProvider):
         Raises:
             ValueError: If the response cannot be parsed as JSON
         """
-        import json
-        
         try:
             return json.loads(response_text)
         except json.JSONDecodeError as e:
