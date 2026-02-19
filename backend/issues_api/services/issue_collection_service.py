@@ -296,3 +296,4 @@ class IssueCollectionService:
         
         # Filter out empty strings
         return [c for c in colors if c]
+    

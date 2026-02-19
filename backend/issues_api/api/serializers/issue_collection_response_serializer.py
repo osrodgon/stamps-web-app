@@ -9,3 +9,4 @@ class IssueCollectionResponseSerializer(serializers.Serializer):
         required=False, 
         allow_null=True
     )
+    

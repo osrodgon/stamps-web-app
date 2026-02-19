@@ -8,4 +8,3 @@ class ArtistApiConfig(AppConfig):
 
     def ready(self):
         log_setup()
-        

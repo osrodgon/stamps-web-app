@@ -7,3 +7,4 @@ class PaperTypesApiConfig(AppConfig):
 
     def ready(self):
         log_setup()
+        

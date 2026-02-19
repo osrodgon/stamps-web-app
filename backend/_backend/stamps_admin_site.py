@@ -1,4 +1,3 @@
-from turtle import st
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User, Group
 from rest_framework_api_key.models import APIKey

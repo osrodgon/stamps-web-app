@@ -8,5 +8,6 @@ class PrintTypesApiConfig(AppConfig):
     name = "print_types_api"
     
     def ready(self):
-        log_setup()        
+        log_setup()
+        
 
