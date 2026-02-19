@@ -76,190 +76,158 @@ class IssuesCollectionsView(Logger, APIView):
                 with transaction.atomic():
                     # Extract year
                     issue_date_value = validated_data.get('issue_date')
-                    if issue_date_value:
-                        year_value = issue_date_value.year
-                        year, _ = Year.objects.get_or_create(year=year_value)
-                    else:
-                        # Cannot continue wit a yearless issue, return error response
-                        raise ValueError("issue_date")
+                    if not issue_date_value:
+                        raise ValueError("issue_date is required to create a Year record")
+                    year_value = issue_date_value.year
+                    year_obj, _ = Year.objects.get_or_create(year=year_value)
                     
                     # Extract country
-                    country_value = validated_data.get('country')
-                    if not country_value or country_value.lower() == "n/a":
-                        country_value = "españa"
-                    country_value = country_value.strip().capitalize()
-                    country, _ = Country.objects.get_or_create(name=country_value)
+                    country_value = (validated_data.get('country') or "españa").strip()
+                    country_value = "españa" if country_value.lower() == "n/a" else country_value.capitalize()
+                    country_obj, _ = Country.objects.get_or_create(name=country_value)
                         
                     
                     # Extract stamp type
-                    stamp_type_value = validated_data.get('stamp_type')
+                    stamp_type_value = (validated_data.get('stamp_type') or 'n/a').strip()
                     if stamp_type_value and stamp_type_value.lower() != "n/a":
-                        stamp_type_value = stamp_type_value.strip().capitalize()
-                        stamp_type, _ = StampType.objects.get_or_create(name=stamp_type_value)
+                        stamp_type_value = stamp_type_value.capitalize()
+                        stamp_type_obj, _ = StampType.objects.get_or_create(name=stamp_type_value)
                     else:
-                        stamp_type = None
+                        stamp_type_obj = None
                         
                     # Extract print type
-                    print_type_value = validated_data.get('print_type')
+                    print_type_value = (validated_data.get('print_type') or 'n/a').strip()
                     if print_type_value and print_type_value.lower() != "n/a":
-                        print_type_value = print_type_value.strip().capitalize()   
-                        print_type, _ = PrintType.objects.get_or_create(name=print_type_value)
+                        print_type_value = print_type_value.capitalize()   
+                        print_type_obj, _ = PrintType.objects.get_or_create(name=print_type_value)
                     else:
-                        print_type = None
+                        print_type_obj = None
                         
                     #Extract issue data
                     
                     # Validate issue_name
-                    issue_name_value = validated_data.get('issue_name')
+                    issue_name_value = (validated_data.get('issue_name') or ('n/a')).strip()
                     if not issue_name_value or issue_name_value.lower() == "n/a":
                         raise ValueError("issue_name")
-                    issue_name_value = issue_name_value.strip()
                     
                     # Validate total_printed
-                    total_printed_value = validated_data.get('total_printed')
-                    if total_printed_value is not None and total_printed_value < 0:
+                    total_printed_value = validated_data.get('total_printed') or 0
+                    if total_printed_value < 0:
                         raise ValueError("total_printed")
-                    if total_printed_value is None:
-                        total_printed_value = 0
                         
                     # Validate perforation
-                    perforation_value = validated_data.get('perforation')
-                    if not perforation_value or perforation_value.lower() == "n/a":
-                        raise ValueError("perforation")
-                    perforation_value = perforation_value.strip().capitalize()
+                    perforation_value = (validated_data.get('perforation') or "n/a").strip()
+                    if perforation_value.lower() != "n/a":
+                        perforation_value = perforation_value.capitalize()
                     
                     # Validate description
-                    description_value = validated_data.get('description')
-                    if description_value is None or description_value.lower() == "n/a":
-                        description_value
+                    description_value = (validated_data.get('description') or "n/a").strip()
+                    if description_value.lower() == "n/a":
+                        description_value = None
                             
                     # Validate notes
-                    notes_value = validated_data.get('notes')
-                    if notes_value is not None and notes_value.lower() == "n/a":
+                    notes_value = (validated_data.get('notes') or "n/a").strip()
+                    if notes_value.lower() == "n/a":
                         notes_value = None
                         
                     # Validate market_value_mnh
-                    market_value_mnh_value = validated_data.get('market_value_mnh')
-                    if market_value_mnh_value is not None and market_value_mnh_value < 0:
+                    market_value_mnh_value = validated_data.get('market_value_mnh') or 0
+                    if market_value_mnh_value < 0:
                         raise ValueError("market_value")
-                    if market_value_mnh_value is None:
-                        market_value_mnh_value = 0.0
                         
                     # Validate market_value_used
-                    market_value_used_value = validated_data.get('market_value_used')
-                    if market_value_used_value is not None and market_value_used_value < 0:
-                        raise ValueError("market_value_used")
-                    if market_value_used_value is None:
-                        market_value_used_value = 0.0
+                    market_value_used_value = validated_data.get('market_value_used') or 0
+                    if market_value_used_value < 0:
+                        raise ValueError("market_value")
                         
                     # Validate artist
-                    artist_value = validated_data.get('artist', 'n/a')
+                    artist_value = (validated_data.get('artist') or "n/a").strip()
                     if artist_value and artist_value.lower() != "n/a":
-                        artist_value = artist_value.strip()
-                        artist, _ = Artist.objects.get_or_create(name=artist_value) 
+                        artist_obj, _ = Artist.objects.get_or_create(name=artist_value) 
                     else:
-                        artist = None
+                        artist_obj = None
                         
                     # Validate printer
-                    printer_value = validated_data.get('printer', 'n/a')
+                    printer_value = (validated_data.get('printer') or "n/a").strip()
                     if printer_value and printer_value.lower() != "n/a":
-                        printer_value = printer_value.strip()
-                        printer, _ = Printer.objects.get_or_create(name=printer_value)
+                        printer_obj, _ = Printer.objects.get_or_create(name=printer_value)
                     else:
-                        printer = None
+                        printer_obj = None
                         
                     # Validate paper_type
-                    paper_type_value = validated_data.get('paper_type', 'n/a')
+                    paper_type_value = (validated_data.get('paper_type') or "n/a").strip()
                     if paper_type_value and paper_type_value.lower() != "n/a":
                         paper_type_value = paper_type_value.strip().capitalize()
-                        paper_type, _ = PaperType.objects.get_or_create(name=paper_type_value)
+                        paper_type_obj, _ = PaperType.objects.get_or_create(name=paper_type_value)
                     else:
-                        paper_type = None
+                        paper_type_obj = None
                         
-                    # Create issue only if combination og year, name and date is unique
+                    # Create issue only if combination of year, name and date is unique
                     # Otherwise update the existing one with the new data (except for 
                     # the name, date and year that will remain unchanged)
                     issue, created = Issue.objects.get_or_create(
                         name=issue_name_value,
                         date=issue_date_value,
-                        year=year,
+                        year=year_obj,
                         defaults={
-                            'stamp_type': stamp_type,
-                            'print_type': print_type,
-                            'country': country,
+                            'stamp_type': stamp_type_obj,
+                            'print_type': print_type_obj,
+                            'country': country_obj,
                             'total_printed': total_printed_value,
                             'perforation': perforation_value,
                             'description': description_value,
                             'note': notes_value,
                             'market_value_mnh': market_value_mnh_value,
                             'market_value_used': market_value_used_value,
-                            'artist': artist,
-                            'printer': printer,
-                            'paper_type': paper_type
+                            'artist': artist_obj,
+                            'printer': printer_obj,
+                            'paper_type': paper_type_obj
                         }
                     )
                     
                     # Validate stamps
-                    for stamp in validated_data.get('stamps', []):
+                    for stamp_obj in validated_data.get('stamps', []):
                         # Validate colors and create list of color entities
-                        color_value = stamp.get('color')
+                        color_value = stamp_obj.get('color') or "n/a"
                         color_names = self._parse_colors(color_value)
                         
                         # Validate edifil_code
-                        edifil_code_value = stamp.get('edifil_code')
-                        if not edifil_code_value:
-                            edifil_code_value = "n/a"
-                        edifil_code_value = edifil_code_value.strip()
+                        edifil_code_value = (stamp_obj.get('edifil_code') or "n/a").strip()
                         
                         #validate fesofi_code
-                        fesofi_code_value = stamp.get('fesofi_code')
-                        if not fesofi_code_value:
-                            fesofi_code_value = "n/a"
-                        fesofi_code_value = fesofi_code_value.strip()
+                        fesofi_code_value = (stamp_obj.get('fesofi_code') or "n/a").strip()
                         
                         # Validate motive
-                        motive_value = stamp.get('motive')
-                        if not motive_value:
-                            motive_value = "n/a"
-                        motive_value = motive_value.strip()
+                        motive_value = (stamp_obj.get('motive') or "n/a").strip()
                         
                         # Validate face_value
-                        face_value_value = stamp.get('face_value')
-                        if not face_value_value:
-                            face_value_value = "n/a"
-                        face_value_value = face_value_value.strip()
+                        face_value_value = (stamp_obj.get('face_value') or "n/a").strip()
                         
                         # Validate amount_printed
-                        amount_printed_value = stamp.get('amount_printed')
-                        if amount_printed_value is not None and amount_printed_value < 0:
+                        amount_printed_value = stamp_obj.get('amount_printed') or 0
+                        if amount_printed_value < 0:
                             raise ValueError("amount_printed")
-                        if amount_printed_value is None:
-                            amount_printed_value = 0
                             
                         # Validate market_value_mnh
-                        market_value_mnh_value = stamp.get('market_value_mnh')
-                        if market_value_mnh_value is not None and market_value_mnh_value < 0:
+                        market_value_mnh_value = stamp_obj.get('market_value_mnh') or 0
+                        if market_value_mnh_value < 0:
                             market_value_mnh_value = 0.0
-                        if market_value_mnh_value is None:
-                            market_value_mnh_value = 0.0
-                            
+
                         # Validate market_value_used
-                        market_value_used_value = stamp.get('market_value_used')
-                        if market_value_used_value is not None and market_value_used_value < 0:
+                        market_value_used_value = stamp_obj.get('market_value_used') or 0
+                        if market_value_used_value < 0:
                             market_value_used_value = 0.0
-                        if market_value_used_value is None:
-                            market_value_used_value = 0.0
-                            
+                        
                         # Validate description
-                        description_value = stamp.get('description')
-                        if not description_value:
-                            description_value = "n/a"
-                        description_value = description_value.strip()
+                        description_value = (stamp_obj.get('description') or "n/a").strip()
+                        if description_value == 'n/a':
+                            description_value = None
                         
                         # Create image path
                         image_path_value = f"{year_value}/{edifil_code_value}.webp" 
                         
-                        stamp, _ = Stamp.objects.get_or_create(
+                        # Create stamp
+                        stamp_obj, _ = Stamp.objects.get_or_create(
                             edifil_code = edifil_code_value,
                             fesofi_code = fesofi_code_value,
                             defaults = {
@@ -274,12 +242,13 @@ class IssuesCollectionsView(Logger, APIView):
                             }
                         )
                         
+                        # Create color entities and associate them with the stamp
                         color_objects = []
                         for color_name in color_names:
-                            color, _ = Color.objects.get_or_create(name=color_name)
-                            color_objects.append(color)
+                            color_obj, _ = Color.objects.get_or_create(name=color_name)
+                            color_objects.append(color_obj)
                         
-                        stamp.colors.set(color_objects)    
+                        stamp_obj.colors.set(color_objects)    
 
                     # Final step: create the issue with all related entities
                     self.log.debug(Messages.Post.created_one("issue collection", issue_name_value))
