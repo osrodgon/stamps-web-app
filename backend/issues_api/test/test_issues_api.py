@@ -829,8 +829,8 @@ class TestIssuesAPI(AbstractApiUnitTest):
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['data'] == None
-        assert response.json()['errors'][0]['field'] == None
-        assert response.json()['errors'][0]['message'] == "['issue_date is required to create a Year record']"
+        assert response.json()['errors'][0]['field'] is None
+        assert response.json()['errors'][0]['message'] == "issue_date is required to create a Year record"
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         
     def test_post_issue_collection_returns_400_bad_request_missing_stamps(self, api_client, issue_collection_post_payload_ok):
