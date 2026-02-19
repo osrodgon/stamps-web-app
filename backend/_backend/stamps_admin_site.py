@@ -3,6 +3,9 @@ from django.contrib.auth.models import User, Group
 from rest_framework_api_key.models import APIKey
 from rest_framework_api_key.admin import APIKeyModelAdmin
 
+from artists_api.models import Artist
+from paper_types_api.models import PaperType
+from printers_api.models import Printer
 from colors_api.models import Color
 from config_api.models import Config
 from countries_api.models import Country
@@ -39,6 +42,9 @@ CATEGORIES = {
     "Collection": COLLECTION_SITE_NAME,
     "CollectionItem": COLLECTION_SITE_NAME,
     "ConditionType": COLLECTION_SITE_NAME,
+    "Artist": STAMPS_SITE_NAME,
+    "PaperType": STAMPS_SITE_NAME,
+    "Printer": STAMPS_SITE_NAME,
 }
 
 class StampsAdminSite(AdminSite):
@@ -110,6 +116,9 @@ stamps_admin_site.register(Stamp)
 stamps_admin_site.register(Year)
 stamps_admin_site.register(UserCollection)
 stamps_admin_site.register(UserToken)
+stamps_admin_site.register(Artist)
+stamps_admin_site.register(PaperType)
+stamps_admin_site.register(Printer)
 
 # Register collections database models
 stamps_admin_site.register(Location)

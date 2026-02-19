@@ -25,9 +25,10 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     edifil_code = models.CharField(max_length=255, null=True, blank=True)
+    fesofi_code = models.CharField(max_length=255, null=True, blank=True)
     face_value = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='stamps/', null=True, blank=True)
     
     # This is the many-to-many relationship field.
@@ -36,7 +37,8 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     
-    market_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    market_value_mnh = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    market_value_used = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     total_printed = models.BigIntegerField(null=True, blank=True)
     
     class Meta:

@@ -164,6 +164,9 @@ INSTALLED_APPS = [
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
     "users_api",            # All APIs for the table user
+    "artists_api",          # All APIs for the table artist
+    "paper_types_api",      # All APIs for the table paper type
+    "printers_api",         # All APIs for the table printer
     "ai_api",               # All APIs for the AI service
     "health_api"            # All APIs for checking the system health
 ]
