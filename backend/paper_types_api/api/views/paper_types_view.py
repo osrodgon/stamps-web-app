@@ -79,11 +79,11 @@ class PaperTypesView(Logger, APIView):
                 description="The request payload was invalid (e.g., missing a required field)."
                 ),
             status.HTTP_403_FORBIDDEN: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="PaperTypeCreateForbidden",
                 success=False,
                 description="Permission denied."
-                )   
+                )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
