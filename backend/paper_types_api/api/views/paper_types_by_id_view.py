@@ -172,11 +172,11 @@ class PaperTypesByIdView(Logger, APIView):
                 description="The paper type was deleted successfully."
                 ),
             status.HTTP_403_FORBIDDEN: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="PaperTypeDeleteForbidden",
                 success=False,
                 description="Permission denied."
-                ),   
+                ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeDeleteNotFound",
