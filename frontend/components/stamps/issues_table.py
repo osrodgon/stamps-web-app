@@ -90,8 +90,21 @@ class IssuesTable(ui.table):
                 .issues-table thead th:nth-child(9) { width: 90px; }   /* market_value */
                 .issues-table thead th:nth-child(10) { width: 60px; }  /* delete */
                 
-                /* Apply truncation to all body cells */
-                .issues-table tbody td {
+                /* Apply same widths to body cells */
+                .issues-table tbody td:nth-child(1) { width: 50px; max-width: 50px; }
+                .issues-table tbody td:nth-child(2) { width: 70px; max-width: 70px; }
+                .issues-table tbody td:nth-child(3) { width: 110px; max-width: 110px; }
+                .issues-table tbody td:nth-child(4) { width: 250px; max-width: 250px; }
+                .issues-table tbody td:nth-child(5) { width: 90px; max-width: 90px; }
+                .issues-table tbody td:nth-child(6) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(7) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(8) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(9) { width: 90px; max-width: 90px; }
+                .issues-table tbody td:nth-child(10) { width: 60px; max-width: 60px; }
+                
+                /* Text truncation for table cells */
+                .truncate-cell {
+                    display: block;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
@@ -234,7 +247,7 @@ class IssuesTable(ui.table):
                     <span class="truncate-cell">{{{{ props.row.market_value_mnh }}}} €</span>
                     <q-popup-edit v-model="props.row.market_value_mnh" v-slot="scope" buttons
                         label-set="{'ok'}" label-cancel="{'close'}"
-                        @save="(val) => $parent.$emit('save', {id: props.row.id, key: 'market_value_mnh', value: val})">
+                        @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value_mnh', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
                     </q-popup-edit>
                 </q-td>
