@@ -585,6 +585,10 @@ class StampsManagerPage(ui.column, BasePage):
                 .compact-slider .q-slider__thumb:after {
                     display: none !important;
                 }
+                .q-tooltip {
+                    font-size: 14px !important;
+                    line-height: 1.5;
+                }
             </style>
         ''')
 
