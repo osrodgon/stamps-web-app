@@ -22,7 +22,7 @@ class ArtistsByIdView(Logger, APIView):
     provided in the URL.
     """
     serializer_class = ArtistResponseSerializer
-    def __get_artist(self, pk: int) -> Artist:
+    def __get_artist(self, pk: int) -> Artist | None:
         """Retrieves an Artist instance by its primary key.
 
         Args:
