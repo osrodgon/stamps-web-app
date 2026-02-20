@@ -248,7 +248,7 @@ class IssuesTable(ui.table):
                     <span class="truncate-cell">{{{{ props.row.market_value_mnh }}}} €</span>
                     <q-popup-edit v-model="props.row.market_value_mnh" v-slot="scope" buttons
                         label-set="{'ok'}" label-cancel="{'close'}"
-                        @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value', value: val}})">
+                        @save="(val) => $parent.$emit('save', {id: props.row.id, key: 'market_value_mnh', value: val})">
                         <q-input v-model="scope.value" dense autofocus />
                     </q-popup-edit>
                 </q-td>
