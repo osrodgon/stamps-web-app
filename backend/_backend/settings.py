@@ -112,6 +112,9 @@ ISSUES_COLLECTIONS_ENDPOINT = "collections/"    # This is a sub-endpoint of issu
                                                 # related entities in a single request. 
                                                 # It is not used for the retrieval of collections, 
                                                 # which is handled by the collections endpoint.
+ARTISTS_ENDPOINT = "artists/"
+PRINTERS_ENDPOINT = "printers/"
+PAPER_TYPES_ENDPOINT = "paper_types/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -138,6 +141,9 @@ USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
 AI_ISSUES_EXTRACTION_URL_V1=f"{SERVER_URL_V1}{AI_ISSUES_EXTRACTION_ENDPOINT}"
+ARTISTS_URL_V1=f"{SERVER_URL_V1}{ARTISTS_ENDPOINT}"
+PRINTERS_URL_V1=f"{SERVER_URL_V1}{PRINTERS_ENDPOINT}"
+PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
 
 # Application definition
 

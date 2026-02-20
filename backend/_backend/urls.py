@@ -16,7 +16,9 @@ from _backend.settings import (
     HEALTH_ENDPOINT,
     ISSUES_ENDPOINT,
     LOCATIONS_ENDPOINT,
+    PAPER_TYPES_ENDPOINT,
     PRINT_TYPES_ENDPOINT,
+    PRINTERS_ENDPOINT,
     REDOC_ENDPOINT,
     SCHEMA_ENDPOINT, 
     SERVER_URL_V1,
@@ -27,7 +29,8 @@ from _backend.settings import (
     YEARS_ENDPOINT,
     LOGIN_ENDPOINT,
     LOGOFF_ENDPOINT,
-    AI_ISSUES_EXTRACTION_ENDPOINT
+    AI_ISSUES_EXTRACTION_ENDPOINT,
+    ARTISTS_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
 from health_api.api.views.health_view import HealthView
@@ -45,6 +48,9 @@ urlpatterns = [
             path(LOCATIONS_ENDPOINT, include('locations_api.urls')),
             path(COUNTRIES_ENDPOINT, include('countries_api.urls')),
             path(COLORS_ENDPOINT, include('colors_api.urls')),
+            path(PAPER_TYPES_ENDPOINT, include('paper_types_api.urls')),
+            path(ARTISTS_ENDPOINT, include('artists_api.urls')),
+            path(PRINTERS_ENDPOINT, include('printers_api.urls')),
             path(ISSUES_ENDPOINT, include('issues_api.urls')),
             path(STAMPS_ENDPOINT, include('stamps_api.urls')),
             path(COLLECTIONS_ENDPOINT, include('collections_api.urls')),
