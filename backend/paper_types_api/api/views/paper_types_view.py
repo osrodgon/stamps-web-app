@@ -33,11 +33,11 @@ class PaperTypesView(Logger, APIView):
                 many=True
                 ),
             403: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="PaperTypesForbidden",
                 success=False,
                 description="Permission denied."
-                )   
+                )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
