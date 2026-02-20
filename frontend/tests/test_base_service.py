@@ -230,4 +230,4 @@ class TestBaseService(AbstractUnitTest):
         # Verify that the request was made with timeout=5
         mock_request.assert_called_once()
         call_args = mock_request.call_args
-        assert call_args[1]['timeout'] == 60
+        assert call_args[1]['timeout'] == 180

@@ -2,45 +2,47 @@
 
 ## Current Work Status
 
-**Task**: Separate error messages for AI extraction vs. save operations
+**Task**: LLM Batch Processing for Large Stamp Series
 **Status**: ✅ **COMPLETED**
 
 ### What We Just Accomplished
 
-1. **Added New Translation Keys**: Added save-specific error messages to both locale files:
-   - English (`en.json`): `save_error_network`, `save_error_validation`, `save_error_service`, `save_error_unknown`
-   - Spanish (`es.json`): Same keys with Spanish translations
+Implemented batch processing for LLM extraction to handle large stamp series that exceed the output token limit (8192 tokens).
 
-2. **Updated Error Handling in stamps_manager_page.py**: Modified `_handle_save_ai_issue` method to use the new save-specific error keys:
-   - Changed from `error_network` to `save_error_network`
-   - Changed from `error_validation` to `save_error_validation`
-   - Changed from `error_service` to `save_error_service`
-   - Changed from `error_unknown` to `save_error_unknown`
-
-### Why This Change Was Needed
-
-Previously, both AI extraction (`_handle_ai_extraction`) and save operations (`_handle_save_ai_issue`) used the same error messages. This was confusing for users because:
-- Error messages about "AI service unavailable" when trying to save didn't make sense
-- Error messages about "network error" during save should be different from extraction errors
-
-Now users get contextually appropriate error messages depending on whether the error occurred during AI extraction or during the save operation.
-
-### Recent Changes Summary
+### Changes Summary
 
 | File | Change |
 |------|--------|
-| `frontend/assets/locales/en.json` | Added save_error translation keys |
-| `frontend/assets/locales/es.json` | Added save_error translation keys |
-| `frontend/pages/admin/stamps_manager_page.py` | Updated `_handle_save_ai_issue` to use new keys |
+| `backend/_backend/settings.py` | Added `LLM_BATCH_SIZE = 5` configuration |
+| `backend/ai_api/services/prompts.py` | Added `SERIES_HEADER_EXTRACTION_PROMPT_TEMPLATE` and `SERIES_BATCH_EXTRACTION_PROMPT_TEMPLATE` |
+| `backend/ai_api/services/base_llm_provider.py` | Added batch helper methods (`_should_batch`, `_split_into_batches`, `_format_header_prompt`, `_format_batch_prompt`) |
+| `backend/ai_api/services/gemini_provider.py` | Implemented batch processing logic with `_batch_extract`, `_extract_header`, `_extract_batch` |
+| `backend/ai_api/services/groq_provider.py` | Implemented same batch processing logic |
+| `backend/ai_api/test/test_batch_processing.py` | Created comprehensive tests for batch processing |
 
-### Key Technical Context
+### How Batch Processing Works
 
-- **Architecture**: Django REST Framework backend with NiceGUI frontend
-- **Authentication**: JWT tokens + API Key system
-- **Frontend Pattern**: Component-based with service layer
-- **Internationalization**: English/Spanish via JSON translation files
+1. **Detection**: When `clean_data` contains more stamps than `LLM_BATCH_SIZE` (default: 5), batch processing is triggered
+2. **Header Extraction**: First LLM call extracts series-level information (issue_name, description, market values, etc.)
+3. **Batch Processing**: Stamps are split into batches of 5, each processed with a separate LLM call
+4. **Merge**: All stamp results are merged with the header to form the final response
+
+### Key Benefits
+
+- **Avoids token limits**: Large series (e.g., 20+ stamps) no longer fail due to output truncation
+- **Configurable**: `LLM_BATCH_SIZE` can be adjusted via environment variable
+- **Provider-agnostic**: Works with both Gemini and Groq providers
+- **Sequential processing**: Batches are processed one-by-one to avoid rate limiting
+- **Fail-fast**: If any batch fails, the entire extraction fails (no partial results)
+
+### Technical Details
+
+- **Batch threshold**: Series with > 5 stamps trigger batch processing
+- **Batch size**: 5 stamps per batch
+- **Prompt templates**: Separate prompts for header extraction vs. batch extraction
+- **Error handling**: Any batch failure propagates to caller
 
 ### Next Steps
 
-- Run the application to verify the changes work correctly
-- Consider if any other error messages need to be differentiated
+- Monitor token usage in production to fine-tune `LLM_BATCH_SIZE` if needed
+- Consider adding metrics/logging for batch processing performance

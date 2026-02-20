@@ -9,6 +9,13 @@ The Groq provider is designed to work as a drop-in replacement for other LLM
 providers, maintaining the same interface while leveraging Groq's optimized
 inference capabilities for faster response times.
 
+The provider supports batch processing for large stamp series to avoid
+output token limits. When a series has more stamps than the configured
+LLM_BATCH_SIZE threshold, the extraction is split into:
+1. A header extraction for series-level information
+2. Multiple batch extractions for stamp data
+3. A final merge of all results
+
 Dependencies:
     - groq: Groq API client for AI processing
     - common.api.messages: For standardized error messages
@@ -29,12 +36,16 @@ Usage:
 
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 from groq import Groq
 from common.api.messages import Messages
 from common.log.logger import Logger
 from ai_api.services.base_llm_provider import BaseLLMProvider
-from ai_api.services.prompts import SERIES_EXTRACTION_PROMPT_TEMPLATE
+from ai_api.services.prompts import (
+    SERIES_EXTRACTION_PROMPT_TEMPLATE,
+    SERIES_HEADER_EXTRACTION_PROMPT_TEMPLATE,
+    SERIES_BATCH_EXTRACTION_PROMPT_TEMPLATE
+)
 
 
 class GroqProvider(BaseLLMProvider):
@@ -80,8 +91,10 @@ class GroqProvider(BaseLLMProvider):
         self.client = Groq(api_key=api_key)
         self.model_name = model_name
         
-        # Load the series extraction prompt template
+        # Load the series extraction prompt templates
         self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
+        self.header_prompt_template = SERIES_HEADER_EXTRACTION_PROMPT_TEMPLATE
+        self.batch_prompt_template = SERIES_BATCH_EXTRACTION_PROMPT_TEMPLATE
         
         self.log.debug(f"GroqProvider initialized with model: {model_name}")
     
@@ -126,6 +139,12 @@ class GroqProvider(BaseLLMProvider):
         It takes stamp issue parameters and cleaned data, formats them into a prompt,
         sends the request to Groq API, and processes the response.
         
+        For large series (more than LLM_BATCH_SIZE stamps), this method automatically
+        splits the extraction into batches:
+        1. Extract series-level information (header)
+        2. Process stamps in batches
+        3. Merge all results into a single response
+        
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
             date (str): The publication date of the stamp issue (e.g., "1992", "2023")
@@ -166,56 +185,134 @@ class GroqProvider(BaseLLMProvider):
             raise ValueError(Messages.AI.missing_input_data())
         
         try:
-            # Format the prompt with the provided parameters
-            prompt = self._format_prompt(clean_data)
-                        
-            # Call the Groq model
-            self.log.debug(f"Sending request to Groq API with model: {self.model_name}")
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.0,
-                max_tokens=8192,
-                response_format={"type": "json_object"}
-            )
+            # Parse the clean_data to check if batching is needed
+            parsed_data = self._parse_clean_data(clean_data)
+            stamps = parsed_data.get("stamps", [])
+            serie_info = parsed_data.get("serie_info", {})
             
-            if not response or not response.choices or not response.choices[0].message:
-                self.log.warning("Received empty response from Groq API")
-                raise ValueError(Messages.AI.empty_response())
+            # Check if batch processing is needed
+            if self._should_batch(len(stamps)):
+                self.log.debug(f"Batch processing required for {len(stamps)} stamps")
+                return self._batch_extract(name, date, serie_info, stamps)
             
-            response_text = response.choices[0].message.content
-            self.log.debug(f"Received Groq response (length: {len(response_text)})")
-            
-            # Clean and validate the response
-            cleaned_response = self._clean_json_response(response_text)
-            
-            self.log.debug(f"Groq extraction completed successfully for series: {name}")
-            return self._parse_json_response(cleaned_response)
+            # Single extraction for small series
+            self.log.debug(f"Single extraction for {len(stamps)} stamps")
+            return self._single_extract(clean_data)
             
         except Exception as e:
             self.log.error(f"Groq extraction failed for series {name}: {str(e)}")
             raise Exception(Messages.AI.service_error(str(e)))
     
-    def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
+    def _single_extract(self, clean_data: str) -> Dict[str, Any]:
         """
-        Parse the cleaned JSON response into a dictionary.
+        Perform a single extraction for small series.
         
         Args:
-            response_text (str): The cleaned JSON response text
+            clean_data (str): The cleaned data to process.
             
         Returns:
-            Dict[str, Any]: Parsed JSON as a dictionary
-            
-        Raises:
-            ValueError: If the response cannot be parsed as JSON
+            Dict[str, Any]: The extracted series information.
         """
-        try:
-            return json.loads(response_text)
-        except json.JSONDecodeError as e:
-            self.log.error(f"Failed to parse JSON response: {str(e)}")
-            raise ValueError(f"Invalid JSON response: {str(e)}")
+        # Format the prompt with the provided parameters
+        prompt = self._format_prompt(clean_data)
+                    
+        # Call the Groq model
+        self.log.debug(f"Sending request to Groq API with model: {self.model_name}")
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.0,
+            max_tokens=8192,
+            response_format={"type": "json_object"}
+        )
+        
+        if not response or not response.choices or not response.choices[0].message:
+            self.log.warning("Received empty response from Groq API")
+            raise ValueError(Messages.AI.empty_response())
+        
+        response_text = response.choices[0].message.content
+        self.log.debug(f"Received Groq response (length: {len(response_text)})")
+        
+        # Validate and parse the response
+        cleaned_response = self._clean_json_response(response_text)
+        return self._parse_json_response(cleaned_response)
+    
+    def _extract_header(self, serie_info: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract series-level information (header).
+        
+        Args:
+            serie_info (Dict[str, Any]): The series information to process.
+            
+        Returns:
+            Dict[str, Any]: Extracted series-level data.
+        """
+        prompt = self._format_header_prompt(serie_info)
+        
+        self.log.debug("Sending header extraction request to Groq API")
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.0,
+            max_tokens=8192,
+            response_format={"type": "json_object"}
+        )
+        
+        if not response or not response.choices or not response.choices[0].message:
+            self.log.warning("Received empty response for header extraction")
+            raise ValueError(Messages.AI.empty_response())
+        
+        cleaned_response = self._clean_json_response(response.choices[0].message.content)
+        return self._parse_json_response(cleaned_response)
+    
+    def _extract_batch(
+        self,
+        serie_info: Dict[str, Any],
+        stamp_batch: List[Dict[str, Any]],
+        batch_number: int,
+        total_batches: int
+    ) -> Dict[str, Any]:
+        """
+        Extract a batch of stamps.
+        
+        Args:
+            serie_info (Dict[str, Any]): Series context for the extraction.
+            stamp_batch (List[Dict[str, Any]]): The batch of stamps to process.
+            batch_number (int): Current batch number (1-indexed).
+            total_batches (int): Total number of batches.
+            
+        Returns:
+            Dict[str, Any]: Extracted stamp data for this batch.
+        """
+        prompt = self._format_batch_prompt(serie_info, stamp_batch, batch_number, total_batches)
+        
+        self.log.debug(f"Sending batch {batch_number}/{total_batches} extraction request to Groq API")
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.0,
+            max_tokens=8192,
+            response_format={"type": "json_object"}
+        )
+        
+        if not response or not response.choices or not response.choices[0].message:
+            self.log.warning(f"Received empty response for batch {batch_number}")
+            raise ValueError(Messages.AI.empty_response())
+        
+        cleaned_response = self._clean_json_response(response.choices[0].message.content)
+        return self._parse_json_response(cleaned_response)
