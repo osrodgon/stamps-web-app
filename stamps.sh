@@ -84,16 +84,16 @@ do_start() {
             docker compose $BACKEND_COMPOSE up -d --build $BACKEND_SVC
             docker compose $FRONTEND_COMPOSE up -d --build $FRONTEND_SVC
             ;;
-        "stamps-db")
+        "stamps-db" | "db")
             echo "🚀 Starting stamps-db..."
             docker compose $BACKEND_COMPOSE up -d --build db
             ;;
-        "stamps-backend")
+        "stamps-backend" | "backend")
             echo "🚀 Starting stamps-db and stamps-backend..."
             docker compose $BACKEND_COMPOSE up -d --build db
             docker compose $BACKEND_COMPOSE up -d --build $BACKEND_SVC
             ;;
-        "stamps-frontend")
+        "stamps-frontend" | "frontend")
             echo "🚀 Starting stamps-db, stamps-backend and stamps-frontend..."
             docker compose $BACKEND_COMPOSE up -d --build db
             docker compose $BACKEND_COMPOSE up -d --build $BACKEND_SVC
