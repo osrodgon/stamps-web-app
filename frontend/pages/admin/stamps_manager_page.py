@@ -301,8 +301,11 @@ class StampsManagerPage(ui.column, BasePage):
         if self._is_valid_response(response):
             data = response.json()['data']
         
-            min_year = data[0]['year']
+            min_year = (data[0]['year'] // 5) * 5  # Round down to nearest multiple of 5
             max_year = data[-1]['year']
+            if max_year % 5 != 0:
+                max_year += 5 - (max_year % 5) # Round up to nearest multiple of 5
+            
             
             self.slider_container.clear()
             self.slider_container.delete()
@@ -451,7 +454,7 @@ class StampsManagerPage(ui.column, BasePage):
                 
                 # Format numbers for display
                 row['total_printed'] = Numbers.format_localized(row.get('total_printed'), lang, 0, 0)
-                row['market_value'] = Numbers.format_localized(row.get('market_value'), lang, 2, 2, ' €')
+                row['market_value_mnh'] = Numbers.format_localized(row.get('market_value_mnh'), lang, 2, 2)
                 row['perforation'] = Numbers.format_localized(row.get('perforation'), lang, 0, 2)
                 
             self.all_issues = issues

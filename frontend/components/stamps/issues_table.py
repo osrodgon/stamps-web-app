@@ -28,15 +28,15 @@ class IssuesTable(ui.table):
         """
         columns = [
             {'name': 'expand', 'label': _('ui.details'), 'field': 'expand', 'align': 'center'},
-            {'name': 'country', 'label': _('stamps.country'), 'field': 'country', 'align': 'left', 'width': '1px'},
-            {'name': 'date', 'label': _('ui.date'), 'field': 'date', 'align': 'left', 'sortable': True, 'width': '1px'},
-            {'name': 'name', 'label': _('stamps.issue_name'), 'field': 'name', 'align': 'left', 'sortable': True, 'width': '1px'},
-            {'name': 'perforation', 'label': _('stamps.perforation'), 'field': 'perforation', 'align': 'left', 'width': '1px'},
-            {'name': 'stamp_type', 'label': _('stamps.stamp_type'), 'field': 'stamp_type', 'align': 'left','width': '1px'},
-            {'name': 'print_type', 'label': _('stamps.print_type'), 'field': 'print_type', 'align': 'left','width': '1px'},
-            {'name': 'total_printed', 'label': _('stamps.total_printed'), 'field': 'total_printed', 'align': 'left','width': '1px'},
-            {'name': 'market_value', 'label': _('ui.value'), 'field': 'market_value', 'align': 'right', 'width': '1px'},
-            {'name': 'delete', 'label': _('ui.actions'), 'field': 'delete', 'align': 'right', 'width': '100%'},
+            {'name': 'country', 'label': _('stamps.country'), 'field': 'country', 'align': 'left'},
+            {'name': 'date', 'label': _('ui.date'), 'field': 'date', 'align': 'left', 'sortable': True},
+            {'name': 'name', 'label': _('stamps.issue_name'), 'field': 'name', 'align': 'left', 'sortable': True},
+            {'name': 'perforation', 'label': _('stamps.perforation'), 'field': 'perforation', 'align': 'left'},
+            {'name': 'stamp_type', 'label': _('stamps.stamp_type'), 'field': 'stamp_type', 'align': 'left'},
+            {'name': 'print_type', 'label': _('stamps.print_type'), 'field': 'print_type', 'align': 'left'},
+            {'name': 'total_printed', 'label': _('stamps.total_printed'), 'field': 'total_printed', 'align': 'left'},
+            {'name': 'market_value', 'label': _('ui.value'), 'field': 'market_value', 'align': 'right'},
+            {'name': 'delete', 'label': _('ui.actions'), 'field': 'delete', 'align': 'right'},
         ]
         
         super().__init__(columns=columns, rows=[], row_key='id', pagination={'rowsPerPage': 15})
@@ -77,6 +77,38 @@ class IssuesTable(ui.table):
                 }
                 .issues-table .q-table__control {
                     font-size: 0.875rem;
+                }
+                /* Text truncation for table cells */
+                /* Fixed column widths - applied to header cells */
+                .issues-table thead th:nth-child(1) { width: 50px; }   /* expand */
+                .issues-table thead th:nth-child(2) { width: 70px; }   /* country */
+                .issues-table thead th:nth-child(3) { width: 110px; }  /* date */
+                .issues-table thead th:nth-child(4) { width: 250px; }  /* name */
+                .issues-table thead th:nth-child(5) { width: 90px; }   /* perforation */
+                .issues-table thead th:nth-child(6) { width: 100px; }  /* stamp_type */
+                .issues-table thead th:nth-child(7) { width: 100px; }  /* print_type */
+                .issues-table thead th:nth-child(8) { width: 100px; }  /* total_printed */
+                .issues-table thead th:nth-child(9) { width: 90px; }   /* market_value */
+                .issues-table thead th:nth-child(10) { width: 60px; }  /* delete */
+                
+                /* Apply same widths to body cells */
+                .issues-table tbody td:nth-child(1) { width: 50px; max-width: 50px; }
+                .issues-table tbody td:nth-child(2) { width: 70px; max-width: 70px; }
+                .issues-table tbody td:nth-child(3) { width: 110px; max-width: 110px; }
+                .issues-table tbody td:nth-child(4) { width: 250px; max-width: 250px; }
+                .issues-table tbody td:nth-child(5) { width: 90px; max-width: 90px; }
+                .issues-table tbody td:nth-child(6) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(7) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(8) { width: 100px; max-width: 100px; }
+                .issues-table tbody td:nth-child(9) { width: 90px; max-width: 90px; }
+                .issues-table tbody td:nth-child(10) { width: 60px; max-width: 60px; }
+                
+                /* Text truncation for table cells */
+                .truncate-cell {
+                    display: block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }
             </style>
         ''')
@@ -129,11 +161,13 @@ class IssuesTable(ui.table):
                         :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" />
                 </q-td>
                 
-                <q-td key="country" :props="props">{{{{ props.row.country }}}}</q-td>
+                <q-td key="country" :props="props">
+                    <span class="truncate-cell">{{{{ props.row.country }}}}</span>
+                </q-td>
                 
                 <q-td key="date" :props="props">
                     <div class="row items-center q-gutter-x-sm cursor-pointer">
-                        <span>{{{{ props.row.date }}}}</span>
+                        <span class="truncate-cell">{{{{ props.row.date }}}}</span>
                         
                         <q-icon name="event" color="primary" size="xs">
                             <q-menu transition-show="scale" transition-hide="scale">
@@ -158,7 +192,7 @@ class IssuesTable(ui.table):
                 </q-td>
                                                                 
                 <q-td key="name" :props="props">
-                    {{{{ props.row.name }}}}
+                    <span class="truncate-cell">{{{{ props.row.name }}}}</span>
                     <q-popup-edit v-model="props.row.name" v-slot="scope" buttons
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'name', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
@@ -166,7 +200,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="perforation" :props="props">
-                    {{{{ props.row.perforation }}}}
+                    <span class="truncate-cell">{{{{ props.row.perforation }}}}</span>
                     <q-popup-edit v-model="props.row.perforation" v-slot="scope" buttons
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'perforation', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
@@ -174,7 +208,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="stamp_type" :props="props">
-                    {{{{ props.row.stamp_type }}}}
+                    <span class="truncate-cell">{{{{ props.row.stamp_type }}}}</span>
                     <q-popup-edit v-model="props.row.stamp_type" v-slot="scope" buttons
                         label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'stamp_type', value: val}})">
@@ -188,7 +222,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="print_type" :props="props">
-                    {{{{ props.row.print_type }}}}
+                    <span class="truncate-cell">{{{{ props.row.print_type }}}}</span>
                     <q-popup-edit v-model="props.row.print_type" v-slot="scope" buttons
                         label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'print_type', value: val}})">
@@ -202,7 +236,7 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="total_printed" :props="props">
-                    {{{{ props.row.total_printed }}}}
+                    <span class="truncate-cell">{{{{ props.row.total_printed }}}}</span>
                     <q-popup-edit v-model="props.row.total_printed" v-slot="scope" buttons
                         label-set="{_('ui.ok')}" label-cancel="{_('ui.close')}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'total_printed', value: val}})">
@@ -211,8 +245,8 @@ class IssuesTable(ui.table):
                 </q-td>
                 
                 <q-td key="market_value" :props="props">
-                    {{{{ props.row.market_value }}}}
-                    <q-popup-edit v-model="props.row.market_value" v-slot="scope" buttons
+                    <span class="truncate-cell">{{{{ props.row.market_value_mnh }}}} €</span>
+                    <q-popup-edit v-model="props.row.market_value_mnh" v-slot="scope" buttons
                         label-set="{'ok'}" label-cancel="{'close'}"
                         @save="(val) => $parent.$emit('save', {{id: props.row.id, key: 'market_value', value: val}})">
                         <q-input v-model="scope.value" dense autofocus />
@@ -236,7 +270,7 @@ class IssuesTable(ui.table):
                                     {_('ui.description')}
                                     <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                                 </div>
-                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
+                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm text-justify">
                                     {{{{ props.row.description || '{_('messages.no_description')}' }}}}
                                 </div>
                                 <q-popup-edit v-model="props.row.description" v-slot="scope" buttons
@@ -252,7 +286,7 @@ class IssuesTable(ui.table):
                                     {_('ui.notes')}
                                     <q-icon name="edit" size="xs" class="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400" />
                                 </div>
-                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm">
+                                <div class="text-slate-700 leading-relaxed min-h-[3rem] whitespace-pre-line text-sm text-justify">
                                     {{{{ props.row.note || '{_('messages.no_notes')}' }}}}
                                 </div>
                                 <q-popup-edit v-model="props.row.note" v-slot="scope" buttons

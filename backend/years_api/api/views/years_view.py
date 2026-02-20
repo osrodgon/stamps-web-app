@@ -56,7 +56,7 @@ class YearsView(Logger, APIView):
             with a 200 OK status.
         """
         self.log.debug(Messages.Get.retrieve_all("years"))
-        years = Year.objects.all()
+        years = Year.objects.all().order_by('year')
         self.log.debug(Messages.Get.retrieved_all("years", len(years)))
         response = YearResponseSerializer(years, many=True)
         
