@@ -261,3 +261,143 @@ class BaseLLMProvider(Logger, ABC):
         except json.JSONDecodeError as e:
             self.log.error(f"Failed to parse JSON response: {str(e)}")
             raise ValueError(f"Invalid JSON response: {str(e)}")
+    
+    def _parse_clean_data(self, clean_data: str) -> Dict[str, Any]:
+        """
+        Parse the clean_data string into a dictionary.
+        
+        This method attempts to parse the cleaned data string, which may be
+        in JSON format or Python literal format, into a dictionary structure.
+        
+        Args:
+            clean_data (str): The cleaned data as a string (may be JSON or dict string).
+            
+        Returns:
+            Dict[str, Any]: Parsed data as a dictionary with 'serie_info' and 'stamps' keys.
+        
+        Note:
+            If parsing fails, returns an empty structure with 'serie_info' and 'stamps' keys.
+        """
+        try:
+            # Try JSON parse first
+            return json.loads(clean_data)
+        except json.JSONDecodeError:
+            # Try evaluating as Python literal
+            try:
+                import ast
+                return ast.literal_eval(clean_data)
+            except (ValueError, SyntaxError):
+                # Return empty structure if parsing fails
+                self.log.warning("Could not parse clean_data, using empty structure")
+                return {"serie_info": {}, "stamps": []}
+    
+    @abstractmethod
+    def _single_extract(self, clean_data: str) -> Dict[str, Any]:
+        """
+        Perform a single extraction for small series.
+        
+        This method must be implemented by all LLM providers to handle
+        the provider-specific API call for series extraction.
+        
+        Args:
+            clean_data (str): The cleaned data to process.
+            
+        Returns:
+            Dict[str, Any]: The extracted series information.
+        """
+        pass
+    
+    @abstractmethod
+    def _extract_header(self, serie_info: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract series-level information (header).
+        
+        This method must be implemented by all LLM providers to handle
+        the provider-specific API call for header extraction during batch processing.
+        
+        Args:
+            serie_info (Dict[str, Any]): The series information to process.
+            
+        Returns:
+            Dict[str, Any]: Extracted series-level data.
+        """
+        pass
+    
+    @abstractmethod
+    def _extract_batch(
+        self,
+        serie_info: Dict[str, Any],
+        stamp_batch: List[Dict[str, Any]],
+        batch_number: int,
+        total_batches: int
+    ) -> Dict[str, Any]:
+        """
+        Extract a batch of stamps.
+        
+        This method must be implemented by all LLM providers to handle
+        the provider-specific API call for batch extraction during batch processing.
+        
+        Args:
+            serie_info (Dict[str, Any]): Series context for the extraction.
+            stamp_batch (List[Dict[str, Any]]): The batch of stamps to process.
+            batch_number (int): Current batch number (1-indexed).
+            total_batches (int): Total number of batches.
+            
+        Returns:
+            Dict[str, Any]: Extracted stamp data for this batch.
+        """
+        pass
+    
+    def _batch_extract(
+        self,
+        name: str,
+        date: str,
+        serie_info: Dict[str, Any],
+        stamps: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Perform batch extraction for large series.
+        
+        This method provides the orchestration logic for batch processing,
+        delegating the actual API calls to the provider-specific implementations
+        of _extract_header and _extract_batch.
+        
+        The process is:
+        1. Extract header (series-level information)
+        2. Process stamps in batches
+        3. Merge all results
+        
+        Args:
+            name (str): The name of the stamp issue.
+            date (str): The publication date.
+            serie_info (Dict[str, Any]): Series-level information.
+            stamps (List[Dict[str, Any]]): List of stamp dictionaries.
+            
+        Returns:
+            Dict[str, Any]: Merged extraction results.
+            
+        Raises:
+            Exception: If any batch extraction fails.
+        """
+        # Step 1: Extract header (series-level information)
+        self.log.debug("Extracting series header information")
+        header_result = self._extract_header(serie_info)
+        
+        # Step 2: Process stamps in batches
+        batches = self._split_into_batches(stamps)
+        total_batches = len(batches)
+        all_stamps = []
+        
+        self.log.debug(f"Processing {total_batches} batches")
+        
+        for i, batch in enumerate(batches, start=1):
+            self.log.debug(f"Processing batch {i}/{total_batches} with {len(batch)} stamps")
+            batch_result = self._extract_batch(serie_info, batch, i, total_batches)
+            batch_stamps = batch_result.get("stamps", [])
+            all_stamps.extend(batch_stamps)
+        
+        # Step 3: Merge results
+        header_result["stamps"] = all_stamps
+        self.log.debug(f"Batch extraction completed with {len(all_stamps)} stamps total")
+        
+        return header_result

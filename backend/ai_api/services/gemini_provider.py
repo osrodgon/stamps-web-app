@@ -182,29 +182,6 @@ class GeminiProvider(BaseLLMProvider):
             self.log.error(f"Gemini extraction failed for series {name}: {str(e)}")
             raise Exception(Messages.AI.service_error(str(e)))
     
-    def _parse_clean_data(self, clean_data: str) -> Dict[str, Any]:
-        """
-        Parse the clean_data string into a dictionary.
-        
-        Args:
-            clean_data (str): The cleaned data as a string (may be JSON or dict string).
-            
-        Returns:
-            Dict[str, Any]: Parsed data as a dictionary.
-        """
-        try:
-            # Try JSON parse first
-            return json.loads(clean_data)
-        except json.JSONDecodeError:
-            # Try evaluating as Python literal
-            try:
-                import ast
-                return ast.literal_eval(clean_data)
-            except (ValueError, SyntaxError):
-                # Return empty structure if parsing fails
-                self.log.warning("Could not parse clean_data, using empty structure")
-                return {"serie_info": {}, "stamps": []}
-    
     def _single_extract(self, clean_data: str) -> Dict[str, Any]:
         """
         Perform a single extraction for small series.
@@ -235,56 +212,6 @@ class GeminiProvider(BaseLLMProvider):
         # Validate and parse the response
         cleaned_response = self._clean_json_response(response.text)
         return self._parse_json_response(cleaned_response)
-    
-    def _batch_extract(
-        self,
-        name: str,
-        date: str,
-        serie_info: Dict[str, Any],
-        stamps: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """
-        Perform batch extraction for large series.
-        
-        This method splits the extraction into:
-        1. A header extraction for series-level information
-        2. Multiple batch extractions for stamp data
-        3. Merges all results
-        
-        Args:
-            name (str): The name of the stamp issue.
-            date (str): The publication date.
-            serie_info (Dict[str, Any]): Series-level information.
-            stamps (List[Dict[str, Any]]): List of stamp dictionaries.
-            
-        Returns:
-            Dict[str, Any]: Merged extraction results.
-            
-        Raises:
-            Exception: If any batch extraction fails.
-        """
-        # Step 1: Extract header (series-level information)
-        self.log.debug("Extracting series header information")
-        header_result = self._extract_header(serie_info)
-        
-        # Step 2: Process stamps in batches
-        batches = self._split_into_batches(stamps)
-        total_batches = len(batches)
-        all_stamps = []
-        
-        self.log.debug(f"Processing {total_batches} batches")
-        
-        for i, batch in enumerate(batches, start=1):
-            self.log.debug(f"Processing batch {i}/{total_batches} with {len(batch)} stamps")
-            batch_result = self._extract_batch(serie_info, batch, i, total_batches)
-            batch_stamps = batch_result.get("stamps", [])
-            all_stamps.extend(batch_stamps)
-        
-        # Step 3: Merge results
-        header_result["stamps"] = all_stamps
-        self.log.debug(f"Batch extraction completed with {len(all_stamps)} stamps total")
-        
-        return header_result
     
     def _extract_header(self, serie_info: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -346,22 +273,3 @@ class GeminiProvider(BaseLLMProvider):
         
         cleaned_response = self._clean_json_response(response.text)
         return self._parse_json_response(cleaned_response)
-    
-    def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
-        """
-        Parse the cleaned JSON response into a dictionary.
-        
-        Args:
-            response_text (str): The cleaned JSON response text
-            
-        Returns:
-            Dict[str, Any]: Parsed JSON as a dictionary
-            
-        Raises:
-            ValueError: If the response cannot be parsed as JSON
-        """
-        try:
-            return json.loads(response_text)
-        except json.JSONDecodeError as e:
-            self.log.error(f"Failed to parse JSON response: {str(e)}")
-            raise ValueError(f"Invalid JSON response: {str(e)}")
