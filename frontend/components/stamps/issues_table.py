@@ -78,7 +78,6 @@ class IssuesTable(ui.table):
                 .issues-table .q-table__control {
                     font-size: 0.875rem;
                 }
-                /* Text truncation for table cells */
                 /* Fixed column widths - applied to header cells */
                 .issues-table thead th:nth-child(1) { width: 50px; }   /* expand */
                 .issues-table thead th:nth-child(2) { width: 70px; }   /* country */
@@ -91,21 +90,8 @@ class IssuesTable(ui.table):
                 .issues-table thead th:nth-child(9) { width: 90px; }   /* market_value */
                 .issues-table thead th:nth-child(10) { width: 60px; }  /* delete */
                 
-                /* Apply same widths to body cells */
-                .issues-table tbody td:nth-child(1) { width: 50px; max-width: 50px; }
-                .issues-table tbody td:nth-child(2) { width: 70px; max-width: 70px; }
-                .issues-table tbody td:nth-child(3) { width: 110px; max-width: 110px; }
-                .issues-table tbody td:nth-child(4) { width: 250px; max-width: 250px; }
-                .issues-table tbody td:nth-child(5) { width: 90px; max-width: 90px; }
-                .issues-table tbody td:nth-child(6) { width: 100px; max-width: 100px; }
-                .issues-table tbody td:nth-child(7) { width: 100px; max-width: 100px; }
-                .issues-table tbody td:nth-child(8) { width: 100px; max-width: 100px; }
-                .issues-table tbody td:nth-child(9) { width: 90px; max-width: 90px; }
-                .issues-table tbody td:nth-child(10) { width: 60px; max-width: 60px; }
-                
-                /* Text truncation for table cells */
-                .truncate-cell {
-                    display: block;
+                /* Apply truncation to all body cells */
+                .issues-table tbody td {
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
