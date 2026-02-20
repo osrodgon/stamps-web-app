@@ -110,11 +110,11 @@ class PaperTypesByIdView(Logger, APIView):
                 description="The request payload was invalid."
                 ),
             status.HTTP_403_FORBIDDEN: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="PaperTypeUpdateForbidden",
                 success=False,
                 description="Permission denied."
-                ),    
+                ),
             status.HTTP_404_NOT_FOUND: standardized_response(
                 GenericResponseSerializer,
                 name="PaperTypeUpdateNotFound",
