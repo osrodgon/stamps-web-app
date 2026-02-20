@@ -26,9 +26,11 @@ Usage:
             pass
 """
 import re
+import json
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, List
 from common.log.logger import Logger
+from _backend.settings import LLM_BATCH_SIZE
 
 
 class BaseLLMProvider(Logger, ABC):
@@ -158,3 +160,104 @@ class BaseLLMProvider(Logger, ABC):
             return response_text[start:end+1]
             
         return response_text.strip()
+    
+    def _should_batch(self, stamps_count: int) -> bool:
+        """
+        Determine if batch processing is needed based on stamp count.
+        
+        Args:
+            stamps_count (int): The number of stamps in the series.
+        
+        Returns:
+            bool: True if the stamp count exceeds the batch threshold, False otherwise.
+        """
+        return stamps_count > LLM_BATCH_SIZE
+    
+    def _split_into_batches(self, stamps: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+        """
+        Split a list of stamps into batches for processing.
+        
+        Args:
+            stamps (List[Dict[str, Any]]): The list of stamp dictionaries to split.
+        
+        Returns:
+            List[List[Dict[str, Any]]]: A list of batches, where each batch contains
+                                        at most LLM_BATCH_SIZE stamps.
+        """
+        batches = []
+        for i in range(0, len(stamps), LLM_BATCH_SIZE):
+            batches.append(stamps[i:i + LLM_BATCH_SIZE])
+        return batches
+    
+    def _format_header_prompt(self, serie_info: Dict[str, Any]) -> str:
+        """
+        Format the header extraction prompt with series info.
+        
+        Args:
+            serie_info (Dict[str, Any]): The series-level information dictionary.
+        
+        Returns:
+            str: The formatted prompt for header extraction.
+        
+        Raises:
+            ValueError: If the header prompt template is not set.
+        """
+        if not self.header_prompt_template:
+            raise ValueError("Header prompt template not set. Please set self.header_prompt_template in __init__.")
+        
+        input_data = json.dumps(serie_info, ensure_ascii=False)
+        return self.header_prompt_template.replace("{{ input_data }}", input_data)
+    
+    def _format_batch_prompt(
+        self,
+        serie_info: Dict[str, Any],
+        stamp_batch: List[Dict[str, Any]],
+        batch_number: int,
+        total_batches: int
+    ) -> str:
+        """
+        Format the batch extraction prompt with stamp data and series context.
+        
+        Args:
+            serie_info (Dict[str, Any]): The series-level information for context.
+            stamp_batch (List[Dict[str, Any]]): The batch of stamps to process.
+            batch_number (int): The current batch number (1-indexed).
+            total_batches (int): The total number of batches.
+        
+        Returns:
+            str: The formatted prompt for batch extraction.
+        
+        Raises:
+            ValueError: If the batch prompt template is not set.
+        """
+        if not self.batch_prompt_template:
+            raise ValueError("Batch prompt template not set. Please set self.batch_prompt_template in __init__.")
+        
+        series_context = json.dumps(serie_info, ensure_ascii=False)
+        input_data = json.dumps({"stamps": stamp_batch}, ensure_ascii=False)
+        
+        prompt = self.batch_prompt_template.replace("{{ series_context }}", series_context)
+        prompt = prompt.replace("{{ batch_number }}", str(batch_number))
+        prompt = prompt.replace("{{ total_batches }}", str(total_batches))
+        prompt = prompt.replace("{{ input_data }}", input_data)
+        
+        return prompt
+    
+    def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
+        """
+        Parse the cleaned JSON response into a dictionary.
+        
+        Args:
+            response_text (str): The cleaned JSON response text.
+            
+        Returns:
+            Dict[str, Any]: Parsed JSON as a dictionary.
+            
+        Raises:
+            ValueError: If the response cannot be parsed as JSON.
+        """
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError as e:
+            self.log.error(f"Failed to parse JSON response: {str(e)}")
+            raise ValueError(f"Invalid JSON response: {str(e)}")

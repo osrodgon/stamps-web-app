@@ -8,6 +8,13 @@ data and extracts structured information using Google's Gemini models.
 This provider is a refactored version of the original LLMService, now implementing
 the BaseLLMProvider interface to support the multi-provider architecture.
 
+The provider supports batch processing for large stamp series to avoid
+output token limits. When a series has more stamps than the configured
+LLM_BATCH_SIZE threshold, the extraction is split into:
+1. A header extraction for series-level information
+2. Multiple batch extractions for stamp data
+3. A final merge of all results
+
 Dependencies:
     - google.genai: Google Gemini API client for AI processing
     - common.api.messages: For standardized error messages
@@ -27,14 +34,18 @@ Usage:
 """
 
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 from _backend.settings import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from google import genai
 from google.genai import types
 from common.api.messages import Messages
 from common.log.logger import Logger
 from ai_api.services.base_llm_provider import BaseLLMProvider
-from ai_api.services.prompts import SERIES_EXTRACTION_PROMPT_TEMPLATE
+from ai_api.services.prompts import (
+    SERIES_EXTRACTION_PROMPT_TEMPLATE,
+    SERIES_HEADER_EXTRACTION_PROMPT_TEMPLATE,
+    SERIES_BATCH_EXTRACTION_PROMPT_TEMPLATE
+)
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -87,8 +98,10 @@ class GeminiProvider(BaseLLMProvider):
             response_mime_type="application/json"
         )
         
-        # Load the series extraction prompt template
+        # Load the series extraction prompt templates
         self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
+        self.header_prompt_template = SERIES_HEADER_EXTRACTION_PROMPT_TEMPLATE
+        self.batch_prompt_template = SERIES_BATCH_EXTRACTION_PROMPT_TEMPLATE
         
         self.log.debug(f"GeminiProvider initialized with model: {GEMINI_MODEL_NAME}")
     
@@ -104,6 +117,12 @@ class GeminiProvider(BaseLLMProvider):
         This is the main method that implements the BaseLLMProvider interface.
         It takes stamp issue parameters and cleaned data, formats them into a prompt,
         sends the request to Google Gemini API, and processes the response.
+        
+        For large series (more than LLM_BATCH_SIZE stamps), this method automatically
+        splits the extraction into batches:
+        1. Extract series-level information (header)
+        2. Process stamps in batches
+        3. Merge all results into a single response
         
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
@@ -145,32 +164,188 @@ class GeminiProvider(BaseLLMProvider):
             raise ValueError(Messages.AI.missing_input_data())
         
         try:
-            # Format the prompt with the provided parameters
-            prompt = self._format_prompt(clean_data)
-                        
-            # Call the AI model
-            self.log.debug("Sending request to Google Gemini API")
-            response = self.client.models.generate_content(
-                model=GEMINI_MODEL_NAME,
-                contents=prompt,
-                config=self.generation_config
-            )
+            # Parse the clean_data to check if batching is needed
+            parsed_data = self._parse_clean_data(clean_data)
+            stamps = parsed_data.get("stamps", [])
+            serie_info = parsed_data.get("serie_info", {})
             
-            if not response or not response.text:
-                self.log.warning("Received empty response from Google Gemini API")
-                raise ValueError(Messages.AI.empty_response())
+            # Check if batch processing is needed
+            if self._should_batch(len(stamps)):
+                self.log.debug(f"Batch processing required for {len(stamps)} stamps")
+                return self._batch_extract(name, date, serie_info, stamps)
             
-            self.log.debug(f"Received Gemini response (length: {len(response.text)})")
-            
-            # Validate and parse the response
-            cleaned_response = self._clean_json_response(response.text)
-            
-            self.log.debug(f"Gemini extraction completed successfully for series: {name}")
-            return self._parse_json_response(cleaned_response)
+            # Single extraction for small series
+            self.log.debug(f"Single extraction for {len(stamps)} stamps")
+            return self._single_extract(clean_data)
             
         except Exception as e:
             self.log.error(f"Gemini extraction failed for series {name}: {str(e)}")
             raise Exception(Messages.AI.service_error(str(e)))
+    
+    def _parse_clean_data(self, clean_data: str) -> Dict[str, Any]:
+        """
+        Parse the clean_data string into a dictionary.
+        
+        Args:
+            clean_data (str): The cleaned data as a string (may be JSON or dict string).
+            
+        Returns:
+            Dict[str, Any]: Parsed data as a dictionary.
+        """
+        try:
+            # Try JSON parse first
+            return json.loads(clean_data)
+        except json.JSONDecodeError:
+            # Try evaluating as Python literal
+            try:
+                import ast
+                return ast.literal_eval(clean_data)
+            except (ValueError, SyntaxError):
+                # Return empty structure if parsing fails
+                self.log.warning("Could not parse clean_data, using empty structure")
+                return {"serie_info": {}, "stamps": []}
+    
+    def _single_extract(self, clean_data: str) -> Dict[str, Any]:
+        """
+        Perform a single extraction for small series.
+        
+        Args:
+            clean_data (str): The cleaned data to process.
+            
+        Returns:
+            Dict[str, Any]: The extracted series information.
+        """
+        # Format the prompt with the provided parameters
+        prompt = self._format_prompt(clean_data)
+                    
+        # Call the AI model
+        self.log.debug("Sending request to Google Gemini API")
+        response = self.client.models.generate_content(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
+            config=self.generation_config
+        )
+        
+        if not response or not response.text:
+            self.log.warning("Received empty response from Google Gemini API")
+            raise ValueError(Messages.AI.empty_response())
+        
+        self.log.debug(f"Received Gemini response (length: {len(response.text)})")
+        
+        # Validate and parse the response
+        cleaned_response = self._clean_json_response(response.text)
+        return self._parse_json_response(cleaned_response)
+    
+    def _batch_extract(
+        self,
+        name: str,
+        date: str,
+        serie_info: Dict[str, Any],
+        stamps: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Perform batch extraction for large series.
+        
+        This method splits the extraction into:
+        1. A header extraction for series-level information
+        2. Multiple batch extractions for stamp data
+        3. Merges all results
+        
+        Args:
+            name (str): The name of the stamp issue.
+            date (str): The publication date.
+            serie_info (Dict[str, Any]): Series-level information.
+            stamps (List[Dict[str, Any]]): List of stamp dictionaries.
+            
+        Returns:
+            Dict[str, Any]: Merged extraction results.
+            
+        Raises:
+            Exception: If any batch extraction fails.
+        """
+        # Step 1: Extract header (series-level information)
+        self.log.debug("Extracting series header information")
+        header_result = self._extract_header(serie_info)
+        
+        # Step 2: Process stamps in batches
+        batches = self._split_into_batches(stamps)
+        total_batches = len(batches)
+        all_stamps = []
+        
+        self.log.debug(f"Processing {total_batches} batches")
+        
+        for i, batch in enumerate(batches, start=1):
+            self.log.debug(f"Processing batch {i}/{total_batches} with {len(batch)} stamps")
+            batch_result = self._extract_batch(serie_info, batch, i, total_batches)
+            batch_stamps = batch_result.get("stamps", [])
+            all_stamps.extend(batch_stamps)
+        
+        # Step 3: Merge results
+        header_result["stamps"] = all_stamps
+        self.log.debug(f"Batch extraction completed with {len(all_stamps)} stamps total")
+        
+        return header_result
+    
+    def _extract_header(self, serie_info: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract series-level information (header).
+        
+        Args:
+            serie_info (Dict[str, Any]): The series information to process.
+            
+        Returns:
+            Dict[str, Any]: Extracted series-level data.
+        """
+        prompt = self._format_header_prompt(serie_info)
+        
+        self.log.debug("Sending header extraction request to Google Gemini API")
+        response = self.client.models.generate_content(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
+            config=self.generation_config
+        )
+        
+        if not response or not response.text:
+            self.log.warning("Received empty response for header extraction")
+            raise ValueError(Messages.AI.empty_response())
+        
+        cleaned_response = self._clean_json_response(response.text)
+        return self._parse_json_response(cleaned_response)
+    
+    def _extract_batch(
+        self,
+        serie_info: Dict[str, Any],
+        stamp_batch: List[Dict[str, Any]],
+        batch_number: int,
+        total_batches: int
+    ) -> Dict[str, Any]:
+        """
+        Extract a batch of stamps.
+        
+        Args:
+            serie_info (Dict[str, Any]): Series context for the extraction.
+            stamp_batch (List[Dict[str, Any]]): The batch of stamps to process.
+            batch_number (int): Current batch number (1-indexed).
+            total_batches (int): Total number of batches.
+            
+        Returns:
+            Dict[str, Any]: Extracted stamp data for this batch.
+        """
+        prompt = self._format_batch_prompt(serie_info, stamp_batch, batch_number, total_batches)
+        
+        self.log.debug(f"Sending batch {batch_number}/{total_batches} extraction request to Google Gemini API")
+        response = self.client.models.generate_content(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
+            config=self.generation_config
+        )
+        
+        if not response or not response.text:
+            self.log.warning(f"Received empty response for batch {batch_number}")
+            raise ValueError(Messages.AI.empty_response())
+        
+        cleaned_response = self._clean_json_response(response.text)
+        return self._parse_json_response(cleaned_response)
     
     def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
         """

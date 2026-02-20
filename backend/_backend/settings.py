@@ -49,6 +49,10 @@ GROQ_MODEL_NAME = os.getenv('GROQ_MODEL_NAME', None)
 # LLM Provider Selection
 LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'gemini')
 
+# LLM Batch Processing
+# Number of stamps to process per LLM call when batch processing is needed
+LLM_BATCH_SIZE = int(os.getenv('LLM_BATCH_SIZE', '5'))
+
 # Serper API Key
 SERPER_API_KEY = os.getenv('SERPER_API_KEY', None)
 SERPER_URL = os.getenv('SERPER_URL', None)
