@@ -23,6 +23,8 @@ This directory contains the Django backend for the Stamps Web App. It exposes a 
 
 The project is modularized into several Django apps. Please refer to the README files in each app folder for specific documentation.
 
+*   [**AI API**](ai_api/README.md) - Manages AI-powered data enrichment.
+*   [**Artists API**](artists_api/README.md) - Master data for artists (also known as engravers).
 *   [**Collections API**](collections_api/README.md) - Manages user collections.
 *   [**Collection Items API**](collection_items_api/README.md) - Manages individual items within collections.
 *   [**Colors API**](colors_api/README.md) - Master data for stamp colors.
@@ -32,6 +34,8 @@ The project is modularized into several Django apps. Please refer to the README 
 *   [**Health API**](health_api/README.md) - System health check endpoints.
 *   [**Issues API**](issues_api/README.md) - Master data for stamp issues (series).
 *   [**Locations API**](locations_api/README.md) - Master data for storage locations.
+*   [**Paper Types API**](paper_types_api/README.md) - Master data for paper types.
+*   [**Printers API**](printers_api/README.md) - Master data for printers (also known as publishers).
 *   [**Print Types API**](print_types_api/README.md) - Master data for printing methods.
 *   [**Stamp Types API**](stamp_types_api/README.md) - Master data for types of stamps.
 *   [**Stamps API**](stamps_api/README.md) - Master data for individual stamps.
