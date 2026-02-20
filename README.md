@@ -65,6 +65,10 @@ stamps-web-app/
 │   ├── print_types_api/       # Print type reference data
 │   ├── locations_api/         # Storage location management
 │   ├── condition_types_api/   # Condition type reference data
+|   ├── ai_api/                # AI-based stamp recognition
+|   ├── artists_api/           # Artists references (engravers)
+|   ├── printers_api/          # Printers references (publishers)
+|   ├── paper_types_api/       # Paper type reference data
 │   ├── health_api/            # System health checks
 │   ├── common/                # Shared utilities and middleware
 │   ├── resources/             # Static resources and data files
@@ -123,6 +127,9 @@ The application manages several key entities:
 - **Colors**: Color reference for stamps
 - **Stamp Types**: Type classification for stamps
 - **Print Types**: Printing method reference
+- **Artists**: Artists (engravers) reference
+- **Printers**: Printers (publishers) reference
+- **Paper Types**: Paper type reference for stamps
 - **Locations**: Storage location reference
 - **Condition Types**: Condition reference for collection items
 
@@ -147,6 +154,25 @@ CSRF_TRUSTED_ORIGINS=http://localhost:8000
 
 # API
 API_MASTER_KEY=your_master_api_key
+
+# Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL_NAME=your_gemini_model_name
+
+
+# Groq API Key
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL_NAME=your_groq_model_name
+
+# SERPER API Key
+SERPER_API_KEY=your_serper_api_key
+SERPER_URL=your_serper_url
+
+# LLM Provider Selection
+LLM_PROVIDER=llm_provider_to_use
+
+# LLM Batch Size
+LLM_BATCH_SIZE=batch_size
 ```
 
 #### Frontend
@@ -205,10 +231,9 @@ python -m pytest
 
 ## 📚 API Documentation
 
-The API is documented using Swagger/OpenAPI. Access the documentation at:
+The API is documented using Swagger/OpenAPI. Access the documentation at (the application must be deployed in your local environment):
 
 - **Development**: http://localhost:8000/stamps-backend/api/v1/swagger/
-- **Production**: http://your-domain.com/stamps-backend/api/v1/swagger/
 
 ### Key Endpoints
 
@@ -258,7 +283,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Backend Documentation](backend/README.md)
 - [Frontend Documentation](frontend/README.md)
-- [API Documentation](http://localhost:8000/stamps-backend/api/v1/swagger/)
 
 ---
 
