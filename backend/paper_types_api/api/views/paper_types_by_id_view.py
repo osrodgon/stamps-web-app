@@ -55,11 +55,11 @@ class PaperTypesByIdView(Logger, APIView):
                 description="No paper type was found for the provided ID."
                 ),
             403: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="RetrievePaperTypeForbidden",
                 success=False,
                 description="Permission denied."
-                )   
+                )
         }
     )    
     def get(self, request: Request, pk: int, *args, **kwargs) -> Response:
