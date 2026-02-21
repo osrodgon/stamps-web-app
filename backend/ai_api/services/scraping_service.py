@@ -281,6 +281,14 @@ class ScrapingService(Logger):
             # If the value is the same in all stamps, it's a constant
             if all(s.get(key) == first_stamp.get(key) for s in scraped_data):
                 common_fields[new_keys[index]] = first_stamp.get(key)
+            else:
+                # Special case for 'fecha de emisión' - if it varies, we can still take the 
+                # earliest date as a common field
+                if key == 'fecha de emisión':
+                    self.log.debug(f"Field '{key}' varies across stamps, checking for earliest date.")
+                    dates = [s.get(key) for s in scraped_data if s.get(key)]
+                    if dates:
+                        common_fields['issue_date'] = min(dates)  # Take the earliest date
 
         # 2. Extract unique stamp data
         unique_stamps = []
