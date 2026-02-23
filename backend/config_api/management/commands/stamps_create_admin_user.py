@@ -17,7 +17,7 @@ class Command(BaseCommand):
         password = getpass("Password: ")
         
         
-        if not email: email = "admin@example.com"
+        if not email: email = f"{username}@example.com"
         if not first_name: first_name = username.capitalize()
         if not last_name: last_name = "User"
         if not password:
@@ -34,6 +34,7 @@ class Command(BaseCommand):
                 is_admin = True
             )
             self.stdout.write(self.style.SUCCESS(f"Successfully created admin user '{username}'."))
-        except Exception:
+        except Exception as e:
             self.stderr.write(self.style.ERROR("A user with this username or email already exists."))
+            self.stderr.write(self.style.ERROR(str(e)))
         

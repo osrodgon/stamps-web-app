@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from core.log_setup import log_setup
 from core.urls import URLs
@@ -14,7 +13,7 @@ from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
 from services.config_service import ConfigService
 from settings import (
-    APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN,
+    FAV_ICON, APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN,
     USER_IS_ADMIN, USER_JWT_TOKEN, DEFAULT_LANGUAGE, USER_LANGUAGE
 )
 from core.translations import get_browser_language
@@ -189,7 +188,12 @@ class StampsApp:
         Args:
             storage_secret (str): The secret key for session storage.
         """
-        ui.run(title=APP_NAME, storage_secret=storage_secret)
+        # This is a hack to ensure the route to the fav icon can be found
+        APP_DIR = os.path.dirname(os.path.abspath(__file__))
+        StampsApp.setup_static_logging_and_routes(APP_DIR)
+        
+        # Run the NiceGUI application with the specified title and favicon
+        ui.run(title=APP_NAME, favicon=f"{APP_DIR}{FAV_ICON}", storage_secret=storage_secret)
                 
 if __name__ in {"__main__", "__mp_main__"}:
     """
