@@ -20,7 +20,7 @@ class Config(models.Model):
         blank=True
     )
     property = models.CharField(
-        unique=True, 
+        unique=False, 
         max_length=255, 
         help_text="The name of the configuration property (e.g., 'theme', 'language').")
     value = models.CharField(

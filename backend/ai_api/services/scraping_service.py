@@ -300,6 +300,7 @@ class ScrapingService(Logger):
                 "face_value": s.get("facial"),
                 "color": s.get("color"),
                 "perforation": s.get("dentado"),
+                "total_print_run": s.get("tirada"),
                 "format": s.get("formato"),
                 # Truncate description to save ~70% of tokens
                 "desc_snippet": (s.get("descripcion", "")[:180] + "...") if s.get("descripcion") else "N/A"
