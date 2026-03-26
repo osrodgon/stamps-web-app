@@ -90,13 +90,22 @@ class GeminiProvider(BaseLLMProvider):
         self.client = genai.Client(api_key=api_key)
         
         # Create the configuration  
-        self.generation_config = types.GenerateContentConfig(
-            temperature=0.0,
-            top_p=1.0,
-            top_k=1,
-            max_output_tokens=8192,
-            response_mime_type="application/json"
-        )
+        # self.generation_config = types.GenerateContentConfig(
+        #     temperature=0.0,
+        #     top_p=1.0,
+        #     top_k=1,
+        #     max_output_tokens=8192,
+        #     response_mime_type="application/json"
+        # )
+        
+        self.generation_config = {
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "top_k": 1,
+            "max_output_tokens": 8192,
+            # "thinking_config": {"include_thoughts": False},
+            "response_mime_type": "application/json"
+        }
         
         # Load the series extraction prompt templates
         self.prompt_template = SERIES_EXTRACTION_PROMPT_TEMPLATE
@@ -200,7 +209,7 @@ class GeminiProvider(BaseLLMProvider):
         response = self.client.models.generate_content(
             model=GEMINI_MODEL_NAME,
             contents=prompt,
-            config=self.generation_config
+            config=self.generation_config,
         )
         
         if not response or not response.text:
@@ -208,6 +217,9 @@ class GeminiProvider(BaseLLMProvider):
             raise ValueError(Messages.AI.empty_response())
         
         self.log.debug(f"Received Gemini response (length: {len(response.text)})")
+        self.log.debug(f"Finish Reason: {response.candidates[0].finish_reason}")
+        self.log.debug(f"Safety Ratings: {response.candidates[0].safety_ratings}")
+        self.log.debug(response.text)   
         
         # Validate and parse the response
         cleaned_response = self._clean_json_response(response.text)
@@ -235,6 +247,11 @@ class GeminiProvider(BaseLLMProvider):
         if not response or not response.text:
             self.log.warning("Received empty response for header extraction")
             raise ValueError(Messages.AI.empty_response())
+
+        self.log.debug(f"Received Gemini header response (length: {len(response.text)})")
+        self.log.debug(f"Finish Reason: {response.candidates[0].finish_reason}")
+        self.log.debug(f"Safety Ratings: {response.candidates[0].safety_ratings}")
+        self.log.debug(response.text)
         
         cleaned_response = self._clean_json_response(response.text)
         return self._parse_json_response(cleaned_response)
@@ -266,6 +283,11 @@ class GeminiProvider(BaseLLMProvider):
             contents=prompt,
             config=self.generation_config
         )
+        
+        self.log.debug(f"Received Gemini batch response (length: {len(response.text)})")
+        self.log.debug(f"Finish Reason: {response.candidates[0].finish_reason}")
+        self.log.debug(f"Safety Ratings: {response.candidates[0].safety_ratings}")
+        self.log.debug(response.text)
         
         if not response or not response.text:
             self.log.warning(f"Received empty response for batch {batch_number}")

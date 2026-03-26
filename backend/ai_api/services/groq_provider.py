@@ -237,6 +237,7 @@ class GroqProvider(BaseLLMProvider):
         
         response_text = response.choices[0].message.content
         self.log.debug(f"Received Groq response (length: {len(response_text)})")
+        self.log.debug(response_text)
         
         # Validate and parse the response
         cleaned_response = self._clean_json_response(response_text)
@@ -273,6 +274,10 @@ class GroqProvider(BaseLLMProvider):
             raise ValueError(Messages.AI.empty_response())
         
         cleaned_response = self._clean_json_response(response.choices[0].message.content)
+        
+        self.log.debug(f"Received Groq header response (length: {len(cleaned_response)})")
+        self.log.debug(cleaned_response)
+        
         return self._parse_json_response(cleaned_response)
     
     def _extract_batch(
@@ -315,4 +320,8 @@ class GroqProvider(BaseLLMProvider):
             raise ValueError(Messages.AI.empty_response())
         
         cleaned_response = self._clean_json_response(response.choices[0].message.content)
+        
+        self.log.debug(f"Received Groq batch response (length: {len(cleaned_response)})")
+        self.log.debug(cleaned_response)
+        
         return self._parse_json_response(cleaned_response)

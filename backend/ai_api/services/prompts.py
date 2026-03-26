@@ -16,6 +16,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
     - Retail Minimum: If the stamp is common but tradeable, use a Retail Minimum of €0.20 – €0.50 (to reflect individual sale value rather than bulk).
   - Note on Condition: You must provide separate estimates for MNH (Mint Never Hinged) and Used. For classics, "Used" is the standard; MNH requires a "Rare/Auction" disclaimer.
 4. EXPANSION: Use your internal knowledge of Spanish philately to expand on the "desc_snippet" and provide a full historical context for the series and specific details for each stamp.
+5. IMPORTANT: Your output limit is 8192 tokens. Do not truncate the JSON. Ensure every stamp in the batch is fully described before closing the JSON object.
 
 ### INPUT DATA:
 {{ input_data }}
@@ -23,7 +24,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
 ### REQUIRED OUTPUT FORMAT (JSON ONLY). Output the final JSON as a single-line string. Remove all indentation, newlines, and carriage returns (minify the JSON). Do not wrap the response in markdown code blocks like ```json. Fields content must be in spanish:
 {
   "issue_name": "Name of the issue (issue_name).",
-  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Use the issue name and date to provide context about the historical background of the series, its significance in Spanish philately, and any notable events or themes associated with it.",
+  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Leverage the issue name and date to provide context about the historical background of the series, its significance in Spanish philately, and any notable events or themes associated with it, based on available data.",
   "issue_date": "YYYY-MM-DD", if day is missing, use "YYYY-MM-01". If month is also missing, use "YYYY-01-01". If year is missing, use null.
   "artist": "Engraver if mentioned in context, otherwise null",
   "printer": "Name of the printing house (printer) or null if not specified",
@@ -68,6 +69,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
     - Output VALUATION: N/A ONLY if the stamp cannot be identified or no listings exist across all three platforms.
     - Retail Minimum: If the stamp is common but tradeable, use a Retail Minimum of €0.20 – €0.50 (to reflect individual sale value rather than bulk).
   - Note on Condition: You must provide separate estimates for MNH (Mint Never Hinged) and Used. For classics, "Used" is the standard; MNH requires a "Rare/Auction" disclaimer.
+4. IMPORTANT: Your output limit is 8192 tokens. Do not truncate the JSON. Ensure every stamp in the batch is fully described before closing the JSON object.
 
 ### INPUT DATA (Series Info Only):
 {{ input_data }}
@@ -75,7 +77,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
 ### REQUIRED OUTPUT FORMAT (JSON ONLY). Output the final JSON as a single-line string. Remove all indentation, newlines, and carriage returns (minify the JSON). Do not wrap the response in markdown code blocks like ```json. Fields content must be in spanish:
 {
   "issue_name": "Name of the issue.",
-  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Use the issue name and date to provide context about the historical background of the series, its significance in Spanish philately, and any notable events or themes associated with it.",
+  "description": "A comprehensive description of the specific issue, including historical context and the purpose of the emission. Leverage the issue name and date to provide context about the historical background of the series, its significance in Spanish philately, and any notable events or themes associated with it, based on available data.",
   "issue_date": "YYYY-MM-DD", if day is missing, use "YYYY-MM-01". If month is also missing, use "YYYY-01-01". If year is missing, use null.
   "artist": "Engraver if mentioned in context, otherwise null",
   "printer": "Name of the printing house or null if not specified",
@@ -108,6 +110,7 @@ Act as a professional philatelic expert and data architect specialized in Spanis
     - Retail Minimum: If the stamp is common but tradeable, use a Retail Minimum of €0.20 – €0.50 (to reflect individual sale value rather than bulk).
   - Note on Condition: You must provide separate estimates for MNH (Mint Never Hinged) and Used. For classics, "Used" is the standard; MNH requires a "Rare/Auction" disclaimer.
 4. EXPANSION: Use your internal knowledge of Spanish philately to expand on the "desc_snippet" and provide detailed descriptions for each stamp.
+5. IMPORTANT: Your output limit is 8192 tokens. Do not truncate the JSON. Ensure every stamp in the batch is fully described before closing the JSON object.
 
 ### SERIES CONTEXT:
 {{ series_context }}

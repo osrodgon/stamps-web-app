@@ -32,7 +32,8 @@
 				"njpwerner.autodocstring",
 				"google.geminicodeassist",
 				"daelonsuzuka.nicegui",
-				"saoudrizwan.claude-dev"
+				"saoudrizwan.claude-dev",
+				"lakefs.lakefs-dvc"
 			]
 		}
 	},

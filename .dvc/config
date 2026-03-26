@@ -1,0 +1,5 @@
+[core]
+    remote = google drive
+    autostage = true
+['remote "google drive"']
+    url = https://drive.google.com/drive/u/1/folders/1TLR8bCwChcPoezsJgVYHLJzaSE_StGC2

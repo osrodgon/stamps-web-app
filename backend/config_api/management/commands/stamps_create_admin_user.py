@@ -34,7 +34,6 @@ class Command(BaseCommand):
                 is_admin = True
             )
             self.stdout.write(self.style.SUCCESS(f"Successfully created admin user '{username}'."))
-        except Exception as e:
+        except Exception:
             self.stderr.write(self.style.ERROR("A user with this username or email already exists."))
-            self.stderr.write(self.style.ERROR(str(e)))
         

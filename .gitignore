@@ -215,3 +215,4 @@ __marimo__/
 dataset/
 stamps-data/
 full_project_export.json
+eda/00*.csv
