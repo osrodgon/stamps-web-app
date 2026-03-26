@@ -1,0 +1,5 @@
+outs:
+- md5: 57b5e61ed1d54b03075745ad12c1d166
+  size: 2624991
+  hash: md5
+  path: stamps_data_raw.csv
