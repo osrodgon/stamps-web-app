@@ -1,0 +1,5 @@
+outs:
+- md5: b539319ffea372145576dccb78a9cd0f
+  size: 1898
+  hash: md5
+  path: 00_unique_stamp_types_mapping.csv
