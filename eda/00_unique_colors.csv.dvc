@@ -1,0 +1,5 @@
+outs:
+- md5: 202c63a30f51af934c720d985dec9cb1
+  size: 17050
+  hash: md5
+  path: 00_unique_colors.csv

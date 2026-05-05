@@ -1,0 +1,5 @@
+outs:
+- md5: 4d64cf4f72d09fff3ee58ef8fed8707e
+  size: 579
+  hash: md5
+  path: 00_unique_paper_types.csv

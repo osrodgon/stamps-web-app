@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class Printer(models.Model):
     name = models.CharField(
-        max_length=100,
+        max_length=255,
         unique=True,
         help_text="The name of the printer. Must be unique."
     )

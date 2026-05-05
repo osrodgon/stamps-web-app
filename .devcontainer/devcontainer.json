@@ -30,9 +30,12 @@
 				"kevinrose.vsc-python-indent",
 				"shamanu4.django-intellisense",
 				"njpwerner.autodocstring",
-				"google.geminicodeassist",
+				// "google.geminicodeassist",
 				"daelonsuzuka.nicegui",
-				"saoudrizwan.claude-dev"
+				// "saoudrizwan.claude-dev",
+				// "lakefs.lakefs-dvc",
+				"sst-dev.opencode",
+				"tanishqkancharla.opencode-vscode"
 			]
 		}
 	},

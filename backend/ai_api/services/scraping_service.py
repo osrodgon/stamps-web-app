@@ -191,7 +191,7 @@ class ScrapingService(Logger):
                 
                 # Get Title
                 title = soup.find('h1', class_='product_title')
-                stamp_data['titulo'] = title.get_text(strip=True) if title else "N/A"
+                stamp_data['titulo'] = title.get_text(strip=True) if title else None
 
                 # Get Description (from paneldescription)
                 desc_panel = soup.find('div', id='paneldescription')
@@ -266,6 +266,9 @@ class ScrapingService(Logger):
         """
         if not scraped_data:
             return {}
+        
+        self.log.debug("Cleaning scraped data")
+        self.log.debug(scraped_data)
 
         # 1. Identify common fields (constants)
         # We compare the first stamp to the rest
@@ -289,6 +292,15 @@ class ScrapingService(Logger):
                     dates = [s.get(key) for s in scraped_data if s.get(key)]
                     if dates:
                         common_fields['issue_date'] = min(dates)  # Take the earliest date
+                        
+                # Sepcial case for 'título serie'. If it varies, we can still take the
+                # earliest name as common field
+                if key == 'título serie':
+                    self.log.debug(f"Field '{key} varies across stamps, checking for earliest issue name.")
+                    names = [s.get(key) for s in scraped_data if s.get(key)]
+                    if names:
+                        common_fields['issue_name'] = min(names)  # Take the earliest issue name
+        
 
         # 2. Extract unique stamp data
         unique_stamps = []

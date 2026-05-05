@@ -137,9 +137,10 @@ class TestLLMServiceFacadeBehavior:
         mock_client = Mock()
         mock_response = Mock()
         mock_response.text = json.dumps({"issue_name": "Test", "stamps": []})
+        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_client.models.generate_content.return_value = mock_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
         # User only interacts with simple LLMService interface
         service = LLMService()
         result = service.series_extract("Test", "1992", '{"serie_info": {}, "stamps": []}')
@@ -157,6 +158,7 @@ class TestLLMServiceFacadeBehavior:
         mock_gemini_client = Mock()
         mock_gemini_response = Mock()
         mock_gemini_response.text = json.dumps({"issue_name": "Gemini Result", "stamps": []})
+        mock_gemini_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_gemini_client.models.generate_content.return_value = mock_gemini_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_gemini_client)
         

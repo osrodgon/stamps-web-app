@@ -260,6 +260,7 @@ class BaseLLMProvider(Logger, ABC):
             return json.loads(response_text)
         except json.JSONDecodeError as e:
             self.log.error(f"Failed to parse JSON response: {str(e)}")
+            self.log.error(f"Response text: {response_text}")
             raise ValueError(f"Invalid JSON response: {str(e)}")
     
     def _parse_clean_data(self, clean_data: str) -> Dict[str, Any]:

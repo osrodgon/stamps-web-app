@@ -1,17 +1,22 @@
 import os
 import re
 from datetime import datetime
+from turtle import st, stamp
 
 import pandas as pd
+from pyparsing import col
+from printers_api.models import Printer
 from colors_api.models import Color
 from countries_api.models import Country
 from django.conf import settings
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from issues_api.models import Issue
+from artists_api.models import Artist
 from print_types_api.models import PrintType
 from stamp_types_api.models import StampType
+from paper_types_api.models import PaperType
 from stamps_api.models import Stamp
 from years_api.models import Year
 
@@ -19,16 +24,29 @@ from years_api.models import Year
 class Command(BaseCommand):
     help = 'Imports data from csv file.'
     
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--csv-file',
+            type=str,
+            required=True,
+            help='Path to the CSV file (e.g., /path/to/stamps.csv)'
+        )
+    
     def clean_and_get_colors(self,color_string):
         if pd.isna(color_string) or str(color_string).strip() == "":
             return []
         
-        colors_names = [c.strip() for c in re.split(r',| y | Y ', color_string) if c.strip()]
+        if  str(color_string).find('Multicolor (') != -1 or \
+            str(color_string).find('Policromía (') != -1 or \
+            str(color_string).find('Policromático (') != -1: 
+                colors_names = [color_string]
+        else: 
+            colors_names = [c.strip() for c in re.split(r',| y | Y ', color_string) if c.strip()]
         
         color_objects = []
         for name in colors_names:
             final_name = name.strip(' ').strip(',')
-            final_name = self.clean_string(final_name).title()
+            final_name = self.clean_string(final_name).capitalize()
             if final_name and final_name.lower() != 'nan': 
                 color_obj, _ = Color.objects.get_or_create(name=final_name)
                 color_objects.append(color_obj)
@@ -109,16 +127,16 @@ class Command(BaseCommand):
             return name if name else None
         return None
     
-    def get_edifil_code(self, text):
-        val = self.clean_string(text)
+    # def get_edifil_code(self, text):
+    #     val = self.clean_string(text)
         
-        if val:
-            match = re.search(r"Edi:,\s*(.*?)(?=\s*,,|$)", val)
+    #     if val:
+    #         match = re.search(r"Edi:,\s*(.*?)(?=\s*,,|$)", val)
             
-            if match:
-                return match.group(1).strip()
+    #         if match:
+    #             return match.group(1).strip()
                     
-        return None
+    #     return None
     
     def export_to_json(self, *args, **options):
         # Define the output file path
@@ -143,97 +161,112 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Successfully exported all data!'))
 
     def handle(self, *args, **options):
-        csv_file_path = os.path.join(settings.BASE_DIR, 'resources', 'stamps.csv')
+        csv_file_path = options['csv_file']
+        
+        # Validate file exists before processing
+        if not os.path.exists(csv_file_path):
+            raise CommandError(f"CSV file not found: {csv_file_path}")
+            
         df = pd.read_csv(csv_file_path, sep='|')
         df = df.dropna(how='all')
         
-        country_obj, _ = Country.objects.get_or_create(name="España")
+        country_row, _ = Country.objects.get_or_create(name="España")
         
         with transaction.atomic():
             for index, row in df.iterrows():
                 try:
-                    issue_year = row['issue_year']
-
-                    try:
-                        temp_edifil_code = int(row['edifil_code'])
-                    except ValueError:
-                        temp_edifil_code = row['edifil_code']
-                        
-                    edifil_code = self.clean_string(temp_edifil_code)
-                    issue_date = self.clean_date(row['issue_date'])
-                    temp_issue_name = self.clean_string(row['issue_name'])
-                    if temp_issue_name:
-                        issue_name = temp_issue_name
-                    issue_amount_printed = self.clean_number(row['issue_amount_printed'])
-                    issue_description = self.clean_string(row['issue_description'])
-                    issue_notes = self.clean_string(row['issue_notes'])
-                    issue_market_value = self.clean_number(row['issue_market_value'])
+                    # Clean and prepare data.
+                    # - date
+                    date_cleaned = self.clean_date(row.get('issue_date'))
                     
-                    stamp_print_type = self.clean_string(row['stamp_print_type'])
-                    stamp_type = self.clean_string(row['stamp_type'])
-                    stamp_perforation = self.clean_string(row['stamp_perforation'])
-                    stamp_colors_raw = self.clean_string(row['stamp_color'])
-                    stamp_name = self.clean_string(row['stamp_name'])
-                    stamp_face_value = self.clean_string(row['stamp_face_value'])
-                    stamp_market_value = self.clean_number(row['stamp_market_value'])
-                    stamp_description = self.clean_string(row['stamp_description'])
-                    stamp_amount_printed = self.clean_number(row['stamp_amount_printed'])
-                    
-                    issue_year_obj = None
-                    if pd.notna(issue_year):
-                        issue_year_obj, _ = Year.objects.get_or_create(year=int(issue_year))
-                        
-                    issue_print_type_obj = None
-                    if pd.notna(row['stamp_print_type']):
-                        issue_print_type_obj, _ = PrintType.objects.get_or_create(name=stamp_print_type)
-                        
-                    stamp_type_obj = None
-                    if pd.notna(stamp_type):
-                        stamp_type_obj, _ = StampType.objects.get_or_create(name=stamp_type)
-                        
-                        
-                    issue_obj, created = Issue.objects.get_or_create(
-                        name=issue_name,
-                        date=issue_date,
-                        defaults={
-                            'year': issue_year_obj,
-                            'perforation': stamp_perforation,
-                            'print_type': issue_print_type_obj,
-                            'market_value': issue_market_value,
-                            'total_printed': issue_amount_printed,
-                            'description': issue_description,
-                            'note': issue_notes,
-                            'country': country_obj,
-                            'stamp_type': stamp_type_obj
-                        }
-                    )
-
-                    if edifil_code:
-                        image = f"{int(issue_year)}/{edifil_code}.jpg"
+                    # Create or get related objects
+                    # - year
+                    # - color
+                    # - stamp type
+                    # - paper type
+                    # - print type
+                    # - artist
+                    # - printer
+                    if date_cleaned:
+                        year_row, _ = Year.objects.get_or_create(year=date_cleaned[0:4])
                     else:
-                        image = f"{int(issue_year)}/{stamp_name.replace(' ','-')}.jpg"
-                    stamp_obj, _ = Stamp.objects.get_or_create(
-                        issue = issue_obj,
-                        name = stamp_name,
-                        face_value = stamp_face_value,
-                        image = image,
-                        edifil_code = edifil_code,
-                        market_value = stamp_market_value,
-                        description = stamp_description,
-                        total_printed = stamp_amount_printed,
-                    )
+                        year_row = None
+                    color_rows = self.clean_and_get_colors(row.get('color'))
+                    stamp_type = self.clean_string(row.get('stamp_type'))
+                    if stamp_type:
+                        stamp_type_row, _ = StampType.objects.get_or_create(name=self.clean_string(row.get('stamp_type')))
+                    paper_type = self.clean_string(row.get('paper_type'))
+                    if paper_type:
+                        paper_type_row, _ = PaperType.objects.get_or_create(name=paper_type)
+                    print_type = self.clean_string(row.get('print_type'))
+                    if print_type:
+                        print_type_row, _ = PrintType.objects.get_or_create(name=print_type)
+                    artist_name = self.clean_string(row.get('artist'))
+                    if artist_name:
+                        artist_row, _ = Artist.objects.get_or_create(name=artist_name)
+                    printer_name = self.clean_string(row.get('printer'))
+                    if printer_name:
+                        printer_row, _ = Printer.objects.get_or_create(name=printer_name)
                         
-                    if stamp_colors_raw:
-                        color_objects = self.clean_and_get_colors(stamp_colors_raw)
-                        stamp_obj.colors.set(color_objects)
-
-                    if index % 500 == 0 and index:
-                        self.stdout.write(f"{index} rows processed...")
+                    # Create the issue object
+                    total_printed = self.clean_number(row.get('total_printed_issue'))
+                    market_value_mnh = self.clean_number(row.get('market_value_mnh_issue'))
+                    market_value_used = self.clean_number(row.get('market_value_used_issue'))
+                    description = self.clean_string(row.get('description_issue'))
+                    note = self.clean_string(row.get('note_issue'))
+                    perforation = self.clean_string(row.get('perforation'))
+                    issue_row, _ = Issue.objects.get_or_create(
+                        name=self.clean_string(row.get('issue_name')),
+                        country=country_row,
+                        year=year_row,
+                        date=date_cleaned,
+                        stamp_type=stamp_type_row if stamp_type else None,
+                        paper_type=paper_type_row if paper_type else None,
+                        print_type=print_type_row if print_type else None,
+                        artist=artist_row if artist_name else None,
+                        printer=printer_row if printer_name else None,
+                        total_printed=total_printed if total_printed else None,
+                        market_value_mnh=market_value_mnh if market_value_mnh else None,
+                        market_value_used=market_value_used if market_value_used else None,
+                        description=description if description else None,
+                        note=note if note else None,
+                        perforation=perforation if perforation else None
+                    )
                     
+                    # Create the stamp object
+                    edifil_code = self.clean_string(row.get('edifil_code'))
+                    fesofi_code = self.clean_string(row.get('fesofi_code'))
+                    name = self.clean_string(row.get('motive'))
+                    face_value = self.clean_string(row.get('face_value'))
+                    description = self.clean_string(row.get('description_stamp'))
+                    market_value_mnh = self.clean_number(row.get('market_value_mnh_stamp'))
+                    market_value_used = self.clean_number(row.get('market_value_used_stamp'))
+                    total_printed = self.clean_number(row.get('total_printed_stamp'))
+                    stamp_row = Stamp.objects.create(
+                        issue=issue_row,
+                        edifil_code=edifil_code if edifil_code else None,
+                        fesofi_code=fesofi_code if fesofi_code else None,
+                        name=name if name else "Falta nombre del sello",
+                        face_value=face_value if face_value else "Falta valor facial",
+                        description=description if description else None,
+                        market_value_mnh=market_value_mnh if market_value_mnh else None,
+                        market_value_used=market_value_used if market_value_used else None,
+                        total_printed=total_printed if total_printed else None
+                    )
+                    stamp_row.colors.set(color_rows)
+                    
+                    if (index + 1) % 100 == 0:
+                        self.stdout.write(f"{index +1} rows processed...")
+                    
+                    # if index == 100:
+                    #     break
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"❌ Error in row {index + 2} ({row.get('stamp_name')}): {e}"))
+                    self.stdout.write(self.style.ERROR(f"❌ Error in row {index + 2} ({row.get('issue_name')} - {row.get('motive')} ): {e}"))
+                    print(color_rows)
+                    break
             
         self.stdout.write(self.style.SUCCESS(f"Migration completed. {index} rows processed.\n"))
+        transaction.commit()
         
-        self.stdout.write("Exporting data to json...")
-        self.export_to_json()
+        # self.stdout.write("Exporting data to json...")
+        # self.export_to_json()
