@@ -168,7 +168,7 @@ do_reset() {
     cat admin_backup_reset.json | docker exec -i $BACKEND_SVC python manage.py loaddata --format=json -
     rm admin_backup_reset.json
     
-    docker exec -t $BACKEND_SVC python manage.py stamps_import_csv
+    #docker exec -t $BACKEND_SVC python manage.py stamps_import_csv
     echo "✅ Reset complete!"
 }
 

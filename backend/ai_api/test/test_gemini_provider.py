@@ -91,11 +91,12 @@ class TestGeminiSeriesExtract:
             "description": "Test description",
             "stamps": []
         })
+        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_client.models.generate_content.return_value = mock_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
         provider = GeminiProvider()
-        
+
         clean_data = json.dumps({"serie_info": {"name": "Test"}, "stamps": []})
         result = provider.series_extract("Test Series", "1992", clean_data)
         
@@ -134,9 +135,10 @@ class TestGeminiSingleExtract:
             "issue_name": "Test Series",
             "stamps": [{"edifil_code": "1234"}]
         })
+        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_client.models.generate_content.return_value = mock_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
         provider = GeminiProvider()
         clean_data = json.dumps({"serie_info": {}, "stamps": []})
         
@@ -175,24 +177,27 @@ class TestGeminiBatchExtract:
         mocker.patch('ai_api.services.base_llm_provider.LLM_BATCH_SIZE', 2)
         
         mock_client = Mock()
-        
+
         # Mock header response
         header_response = Mock()
         header_response.text = json.dumps({
             "issue_name": "Test Series",
             "description": "Test"
         })
-        
+        header_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
+
         # Mock batch responses
         batch_response_1 = Mock()
         batch_response_1.text = json.dumps({
             "stamps": [{"edifil_code": "1"}, {"edifil_code": "2"}]
         })
+        batch_response_1.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         batch_response_2 = Mock()
         batch_response_2.text = json.dumps({
             "stamps": [{"edifil_code": "3"}]
         })
-        
+        batch_response_2.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
+
         mock_client.models.generate_content.side_effect = [
             header_response, batch_response_1, batch_response_2
         ]
@@ -228,9 +233,10 @@ class TestGeminiExtractHeader:
             "description": "Test description",
             "issue_date": "1992-01-01"
         })
+        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_client.models.generate_content.return_value = mock_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
         provider = GeminiProvider()
         serie_info = {"name": "Test Series", "year": "1992"}
         
@@ -256,9 +262,10 @@ class TestGeminiExtractBatch:
                 {"edifil_code": "1235", "motive": "Test 2"}
             ]
         })
+        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
         mock_client.models.generate_content.return_value = mock_response
         mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
         provider = GeminiProvider()
         serie_info = {"name": "Test Series"}
         stamp_batch = [{"id": 1}, {"id": 2}]

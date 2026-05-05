@@ -15,6 +15,8 @@ class Command(BaseCommand):
             model._meta.db_table for model in apps.get_models() 
             if model._meta.app_label not in EXCLUDED_APPS
         ]
+        
+        print(table_names)
 
         if not table_names:
             self.stdout.write("No tables found to clear.")
