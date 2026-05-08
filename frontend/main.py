@@ -1,212 +1,138 @@
-import os
+"""
+Main entry point for the Stamps web application (Flet frontend).
 
-from core.log_setup import log_setup
-from core.urls import URLs
-from fastapi import Request, Response
-from nicegui import app, ui
-from nicegui.client import Client
-from nicegui.page import page
-from pages.admin.stamps_manager_page import StampsManagerPage
+This module initializes the Flet application, sets up routing, and
+configures the initial page state including language preferences.
+
+The application uses client_storage for persisting user session data
+and supports dynamic language switching via the translation module.
+"""
+
+import flet as ft
+from base.base_ui import BaseUI
 from pages.auth.login_page import LoginPage
-from pages.auth.signup_page import SignUpPage
-from pages.collection.collections_page import CollectionsPage
 from pages.not_found_page import NotFoundPage
-from services.config_service import ConfigService
-from settings import (
-    FAV_ICON, APP_NAME, ASSETS_DIR, ASSETS_FOLDER_NAME, MOCK_LOGIN,
-    USER_IS_ADMIN, USER_JWT_TOKEN, DEFAULT_LANGUAGE, USER_LANGUAGE
-)
-from core.translations import get_browser_language
+from core.urls import URLs
+from core.log_setup import log_setup
+from core.translations import init_language
+from settings import    APP_NAME, ASSETS_DIR, FONT_REGULAR, FONT_BOLD, FONT_BLACK, FRONTEND_PORT, \
+                        USER_JWT_TOKEN, USER_IS_ADMIN, FAV_ICON
+
+# Route handlers for implemented pages
+ROUTE_HANDLERS = {
+    URLs.Frontend.login: LoginPage,
+    # TODO: Implement these pages
+    # URLs.Frontend.signup: SignupPage,
+    # URLs.Frontend.logout: LogoutPage,
+    # URLs.Frontend.collections: CollectionsPage,
+    # URLs.Frontend.stamps_manager: StampsManagerPage,
+}
 
 
-class StampsApp:    
-    """
-    Main application class for the Stamps web application.
-    Handles static file setup, logging, route registration, and authentication.
-    """
+def configure_page(page: ft.Page):
+    """Configure page title, fonts, and expansion."""
+    page.title = APP_NAME
+    page.expand = True
+    page.fonts = {
+        "Roboto": FONT_REGULAR,
+        "Roboto-Bold": FONT_BOLD,
+        "Roboto-Black": FONT_BLACK
+    }
     
-    @staticmethod
-    def set_background_image(image_url: str) -> None:
-        """
-        Applies a background image to the NiceGUI page body.
-
-        Args:
-            image_url (str): The URL of the image to be used as the background.
-        """
-        ui.query('body').style(
-            f'background-image: url("{image_url}");'
-            'background-size: cover;'
-            'background-position: center;'
-            'background-repeat: no-repeat;'
-            'height: 100vh;'
-            'overflow: hidden;'
-        )
-        
-    @staticmethod
-    def setup_static_logging_and_routes(root_dir: str) -> None:
-        """
-        Sets up logging, static files, and routes for the NiceGUI application.
-
-        Args:
-            root_dir (str): The root directory of the application, used to locate assets.
-        """
-        assets_path = os.path.join(root_dir, ASSETS_FOLDER_NAME)
-        
-        app.add_static_files(ASSETS_DIR, assets_path)
-        log_setup()
-        StampsApp.register_routes()
-        
-    @staticmethod
-    def check_authentication(request: Request) -> bool:
-        """
-        Checks if the current request is authenticated.
-
-        Args:
-            request (Request): The FastAPI request object containing session information.
-
-        Returns:
-            bool: True if authenticated, False otherwise.
-        """
-        return app.storage.user.get(USER_JWT_TOKEN) is not None
+    # Remove the "Zoom" animation for Linux
+    page.theme = ft.Theme(
+        page_transitions=ft.PageTransitionsTheme(
+            linux=ft.PageTransitionTheme.NONE
+        ),
+        font_family="Roboto"
+    )
     
-    @staticmethod
-    def register_routes() -> None:
-        """
-        Registers all application routes using NiceGUI's `@page` decorator.
-        """
-        @page(URLs.Frontend.collections)
-        def collections_page() -> None:
-            """
-            Displays the collections page.
-            """
-            CollectionsPage()
+    page.window.icon = FAV_ICON
+
+
+async def route_change(e: ft.RouteChangeEvent):
+    """Handle route changes and render the appropriate view."""
+    page = e.page
+    route = page.route
+    prefs = ft.SharedPreferences()
+        
+    if route == URLs.Frontend.root:
+        auth_token = await prefs.get(USER_JWT_TOKEN)
+        if auth_token:
+            user_is_admim = await prefs.get(USER_IS_ADMIN)
+            if user_is_admim:
+                await page.push_route(URLs.Frontend.stamps_manager)
+            else:
+                await page.push_route(URLs.Frontend.collections)
+        else:
+            await page.push_route(URLs.Frontend.login)
+        return
+
+    page.views.clear()
+    handler = ROUTE_HANDLERS.get(route)
+
+    if handler:
+        page.views.append(handler(page))
+    else:
+        if route == URLs.Frontend.logout:
+            logout = BaseUI()
             
-        @page(URLs.Frontend.login)
-        def login_page(request: Request) -> None:
-            """
-            Displays the login page.
+            await logout._delete_user()
+            await page.push_route(URLs.Frontend.login)
+        else:
+            page.views.append(NotFoundPage(page))
 
-            Args:
-                request (Request): The FastAPI request object.
-            """
-            LoginPage()
-        
-        @page(URLs.Frontend.signup)
-        def signup_page(request: Request) -> None:
-            """
-            Displays the signup page.
+    page.update()
 
-            Args:
-                request (Request): The FastAPI request object.
-            """
-            SignUpPage()
-        
-        @page(URLs.Frontend.logout)    
-        async def logout(request: Request) -> None:
-            """
-            Logs out the user and redirects to the login page.
 
-            Args:
-                request (Request): The FastAPI request object.
-            """
-            await ConfigService().save_user_config()
-            app.storage.user.clear()
-            ui.navigate.to(URLs.Frontend.login)
-            
-        @page(URLs.Frontend.stamps_manager)
-        async def stamps_manager(request: Request) -> None:
-            """
-            Displays the stamp manager page.
+async def view_pop(e: ft.ViewPopEvent):
+    """Handle browser back button navigation."""
+    page = e.page
+    if e.view is not None:
+        page.views.remove(e.view)
+        if page.views:
+            top_view = page.views[-1]
+            await page.push_route(top_view.route)
 
-            Args:
-                request (Request): The FastAPI request object.
-            """
-            StampsManagerPage()
-            
-        @page(URLs.Frontend.root)
-        async def main_page(request: Request, client: Client) -> None:
-            """
-            The main entry point of the application.
-            Redirects to dashboard if authenticated, otherwise to login.
 
-            Args:
-                request (Request): The FastAPI request object.
-            """
-            if MOCK_LOGIN:
-                """
-                This is just for testing and developing purposes.
-                
-                To avoid manual login, if test mode is enabled, it will autologin
-                using the test user name and password defined in the environment variables.
-                
-                THIS MUST BE ALWAYS DISABLED IN PRODUCTION.
-                """
-                test = LoginPage()
-                await test.mock_login()
-            else :
-                
-                if USER_LANGUAGE not in app.storage.user:
-                    await client.connected()
-                    app.storage.user[USER_LANGUAGE] = await get_browser_language()
-                
-                if StampsApp.check_authentication(request): 
-                    if app.storage.user.get(USER_IS_ADMIN, False):
-                        ui.navigate.to(URLs.Frontend.stamps_manager)
-                    else:
-                        ui.navigate.to(URLs.Frontend.collections)
-                else:
-                    ui.navigate.to(URLs.Frontend.login)
-                
-        @app.exception_handler(404)
-        async def exception_handler_404(request: Request, exception: Exception) -> Response:
-            """
-            Custom 404 error handler that avoids launching NotFoundPage for asset requests.
-            
-            Args:
-                request (Request): The FastAPI request object.
-                exception (Exception): The exception that triggered the 404.
-                
-            Returns:
-                Response: The appropriate response for the request.
-            """
-            # Check if it's a request for an image or other asset to avoid launching NotFoundPage multiple times
-            path = request.url.path.lower()
-            asset_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.css', '.js')
-            if path.endswith(asset_extensions):
-                return Response(status_code=404)
+async def main(page: ft.Page):
+    """Main async entry point for the Flet application."""
+    configure_page(page)
 
-            with Client(page(URLs.Frontend.root), request=request) as client:
-                NotFoundPage()
+    try:
+        await init_language()
+    except Exception as e:
+        page.add(ft.Text(f"Failed to initialize language: {e}"))
+        page.update()
 
-            return client.build_response(request, 404)
+    page.on_route_change = route_change
+    page.on_view_pop = view_pop
     
-    @staticmethod            
-    def run(storage_secret: str) -> None:
-        """
-        Runs the NiceGUI application with a specified title.
+    # Handle initial route directly
+    route = URLs.Frontend.root
+    prefs = ft.SharedPreferences()
 
-        Args:
-            storage_secret (str): The secret key for session storage.
-        """
-        # This is a hack to ensure the route to the fav icon can be found
-        APP_DIR = os.path.dirname(os.path.abspath(__file__))
-        StampsApp.setup_static_logging_and_routes(APP_DIR)
-        
-        # Run the NiceGUI application with the specified title and favicon
-        ui.run(title=APP_NAME, favicon=f"{APP_DIR}{FAV_ICON}", storage_secret=storage_secret)
-                
-if __name__ in {"__main__", "__mp_main__"}:
-    """
-    Entry point for the Stamps frontend application.
-    Initializes the application, sets up static files, logging, and routes,
-    then creates an instance of the App and runs it.
-    """
-    APP_DIR = os.path.dirname(os.path.abspath(__file__))
-    StampsApp.setup_static_logging_and_routes(APP_DIR)
-    
-    storage_secret = os.getenv("APP_STORAGE_SECRET")
-    if not storage_secret:
-        raise ValueError("APP_STORAGE_SECRET environment variable must be set")
-    
-    StampsApp.run(storage_secret)
-    
+    if route == URLs.Frontend.root:
+        auth_token = await prefs.get(USER_JWT_TOKEN)
+        if auth_token:
+            user_is_admin = await prefs.get(USER_IS_ADMIN)
+            if user_is_admin:
+                route = URLs.Frontend.stamps_manager
+            else:
+                route = URLs.Frontend.collections
+        else:
+            route = URLs.Frontend.login
+
+    page.route = route
+    handler = ROUTE_HANDLERS.get(route)
+    if handler:
+        page.views.append(handler(page))
+    else:
+        page.views.append(NotFoundPage(page))
+    page.update()
+
+
+if __name__ == "__main__":
+    """Script entry point - sets up logging and launches the app."""
+    log_setup()
+    ft.run(main, assets_dir=ASSETS_DIR, view=ft.AppView.WEB_BROWSER, port=FRONTEND_PORT)

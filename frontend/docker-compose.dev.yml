@@ -11,8 +11,8 @@ services:
     ports:
       # Map container port 8080 to host port 8080
       - "8080:8080"
-    # Run NiceGUI with the --reload flag for automatic development updates
-    command: python main.py --reload --port 8080
+    # Run Flet
+    command: python main.py 
     networks:
       - stamps-network
 

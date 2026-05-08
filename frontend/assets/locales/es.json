@@ -117,7 +117,6 @@
         "stamps_manager_title": "Gestión de Sellos"
     },
     "collections": {
-        "collectibles": "COLECCIONABLES",
         "collections_tile": "Colecciones",
         "no_issues_found": "No se encontraron emisiones con los criterios proporcionados."
     },
@@ -134,6 +133,7 @@
         "today": "Hoy",
         "language_en": "Inglés",
         "language_es": "Español",
+        "collectibles": "COLECCIONABLES",
         "your_stamps_world": "Tu Mundo De Sellos"
     }
 }

@@ -1,46 +1,67 @@
-from base.base_page import BasePage
+import asyncio
+
+import flet as ft
+from base.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
-from nicegui import ui
+from core.components.primary_button import PrimaryButton
 
 
-class NotFoundPage(ui.column, BasePage):
+class NotFoundPage(ft.View, BaseUI):
+    """A 404 Not Found page displayed for unknown routes.
+
+    Shows a centered layout with a 404 message, descriptive text,
+    and a button to navigate back to the home page.
     """
-    A '404 Not Found' page for the application.
 
-    This class creates a visually centered and informative page that is displayed
-    when a user navigates to a URL that does not exist. It includes a clear
-    404 message and a button to return to the application's home page.
-    """
-    PAGE_TITLE = "404 - Lost in the UI" 
-    NICEGUI_COLOR = '#1976D2'
-    
-    def __init__(self):
-        """
-        Initializes the NotFoundPage.
-
-        This constructor builds the user interface for the 404 error page,
-        setting the page title and arranging the '404' error message, a
-        descriptive text, and a navigation button to go back to the home page.
-        """
+    def __init__(self, main_page: ft.Page):
+        """Initialize the 404 page with centered message and home button."""
         super().__init__()
-        
-        ui.page_title = self.PAGE_TITLE
-        with ui.column().classes('absolute-center items-center'):
-            ui.label('404') \
-                .classes('text-[150px] font-extrabold') \
-                .style(f'color: {self.NICEGUI_COLOR}; line-height: 1.0;')
+        self.main_page = main_page
+        self.route = URLs.Frontend.not_found
+        self.padding = 20
+        self.alignment = ft.Alignment.CENTER
 
-            ui.label(_('errors.you_are_lost')) \
-                .classes('text-2xl font-semibold mt-[-20px] mb-4')
-            
-            ui.markdown(_('errors.page_not_found')) \
-                .classes('text-lg text-gray-600 mb-8')
+        self.controls = [
+            ft.Column(
+                alignment=ft.CrossAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Text(
+                        "404",
+                        size=150,
+                        font_family="Roboto-Black",
+                        color=ft.Colors.BLUE_700,
+                    ),
+                    ft.Text(
+                        _('errors.you_are_lost'),
+                        size=24,
+                        font_family="Roboto-Bold",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Container(
+                        ft.Markdown(_('errors.page_not_found')),
+                        alignment=ft.Alignment.CENTER,
+                        margin=30
+                    ),
+                    PrimaryButton(
+                        _('errors.take_me_home'),
+                        icon=ft.Icons.HOME,
+                        on_click=self._go_home,
+                        expand=False
+                    ),
+                    ft.Text(
+                        "Stamps App",
+                        size=14,
+                        color=ft.Colors.GREY_400,
+                    ),
+                ],
+                spacing=10,
+                tight=True,
+                expand=True
+            ),
+        ]
 
-            ui.button(_('errors.take_me_home'), 
-                    on_click=lambda: ui.navigate.to(URLs.Frontend.root),
-                    icon='home') \
-                    .props('size=md color=primary')
-            
-            ui.label('Stamps App') \
-                .classes('text-sm text-gray-400 mt-10')
+    def _go_home(self, e):
+        """Navigate to root page."""
+        asyncio.create_task(self.main_page.push_route(URLs.Frontend.root))

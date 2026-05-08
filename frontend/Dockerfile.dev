@@ -16,7 +16,7 @@ RUN pip install -r requirements.dev.txt
 # Copy only the needed files
 COPY . .
 
-# Expose the NiceGUI default port
+# Expose Flet default port
 EXPOSE 8080
 
 # Default command: run NiceGUI with reload enabled (overridden by compose)

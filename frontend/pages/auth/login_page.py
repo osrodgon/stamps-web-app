@@ -1,192 +1,212 @@
+import flet as ft
 import requests
-from base.base_page import BasePage
+
 from components.auth.login_card import LoginCard
-from components.branding.footer_branding import FooterBranding
-from core.translations import _
 from core.urls import URLs
-from nicegui import app, ui
-from settings import (
-    BACKGROUND_IMG, MOCK_PASSWORD, MOCK_USER, 
-    USER_NAME, USER_IS_ADMIN, USER_FIRST_NAME, USER_LANGUAGE,
-    USER_LAST_NAME, USER_EMAIL, USER_JWT_TOKEN, USER_ID, DEFAULT_LANGUAGE
-)
+from core.translations import _, set_language, get_language
+from core.severity import Severity
+from core.components.text_button import TextButton
+from core.components.brand_collectibles import BrandCollectibles
 from services.auth_service import AuthService
-from services.config_service import ConfigService
+from base.base_ui import BaseUI
+from settings import BACKGROUND_IMG, USER_LANGUAGE
 
-
-class LoginPage(ui.column, BasePage):
+class LoginPage(ft.View, BaseUI):
     """
-    Represents the user login page.
+    The login page view for the Stamps web application.
 
-    This class builds a full-screen login page, including a background image,
-    a central login card for user input, and footer branding. It handles user
-    authentication by making API calls to the backend.
+    This page provides the user interface for authentication, featuring:
+    -   A background image (if available)
+    -   A centered login card with username/password fields
+    -   A language selector button (top-right) for switching between
+        English and Spanish
+
+    The page extends both ft.View (for routing) and BaseUI (for logging
+    and common utilities). Language changes are persisted to SharedPreferences
+    and synchronized with the translation module.
+
+    Attributes:
+        background (ft.Container): The background image container.
+        lang_button (ft.Container): The language selector button container.
+        login_container (ft.Container): The container holding the LoginCard.
+        prefs (ft.SharedPreferences): SharedPreferences instance for
+            persisting language preferences.
     """
-    login_card: LoginCard = None
-    footer_branding: FooterBranding = None
-    auth_service: AuthService = None
+
+    background: ft.Container
+    lang_button: ft.Container
+    login_container: ft.Container
+    prefs: ft.SharedPreferences
+    auth_service: AuthService
     
-    def __init__(self):
+    def __init__(self, main_page: ft.Page):
         """
-        Initializes the LoginPage.
+        Initializes the LoginPage with UI components and layout.
 
-        This constructor sets up the visual components of the login page,
-        including applying a background image, centering the `LoginCard`,
-        and adding `FooterBranding`.
-        """
-        self.log.debug('Initializing LoginPage...')
-        super().__init__()
-        self.auth_service = AuthService()
-        self.config = ConfigService()
-            
-        with self.classes('w-full h-screen p-4'):
-            self.set_background(BACKGROUND_IMG)
-            
-            with ui.column().classes('w-full flex-grow justify-center items-center'):
-                self.login_card = LoginCard(on_sign_in=self.call_rest_method)
-            
-            with ui.row().classes('absolute top-4 right-4 items-center gap-2 text-sm font-medium'):
-                if app.storage.user.get(USER_LANGUAGE, DEFAULT_LANGUAGE) == 'en':
-                    ui.link(_('branding.language_es', _language='es'), '#') \
-                        .on('click', lambda: self._set_language('es')) \
-                        .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
-                else:
-                    ui.link(_('branding.language_en', _language='en'), '#') \
-                        .on('click', lambda: self._set_language('en')) \
-                        .classes('text-gray-500 hover:text-primary no-underline transition-colors uppercase track-wide')
-                        
-            self.footer_branding = FooterBranding()
-        
-    async def _set_language(self, lang: str):
-        """
-        Sets the application language and persists this preference.
-        
+        Sets up the background, language selector, and login card.
+        The language button text is determined by the current language
+        (shows 'EN' if Spanish is active, 'ES' if English is active).
+
         Args:
-            lang (str): The language code (en/es)
+            main_page (ft.Page): The root Flet page instance, used for
+                navigation and page-level operations.
         """
-        app.storage.user[USER_LANGUAGE] = lang
-        ui.navigate.reload()
+        self.log.debug("Initializing LoginPage...")
+        self.main_page = main_page
+        self.prefs = ft.SharedPreferences()
+        self.auth_service = AuthService()
+        
+        # Background Image (only if file exists)
+        self.background = self._set_background(BACKGROUND_IMG)
 
-    async def call_rest_method(self):
-        """
-        Processes a login attempt by calling the backend API.
-
-        This method first validates the user input from the `LoginCard`. If valid,
-        it sends the credentials to the backend. It then handles the API response,
-        triggering either the success flow or displaying an error notification.
-        """
-        self.log.debug('Handling login attempt...')
-        if self.login_card.is_valid():
-            self.log.debug("Login data valid. Attempting login...")
-            payload = self.login_card.get_data()
-            
-            response = await self.auth_service.login(payload=payload)
-            
-            if response is None:
-                error_msg = _('messages.no_response')
-                self.log.error(error_msg)
-                self.notify(error_msg, 'negative')
-                return error_msg
-
-            if response.status_code == requests.codes.ok:
-                data = response.json()['data']
-                self.log.debug(f"User Info: {data}")                
-                
-                if await self.login_success(data):
-                    self.log.debug('Login successful')
-                    return response
-                else:
-                    error_msg = _('messages.response_issue')
-                    self.log.error(error_msg)
-                    self.notify(error_msg, 'negative')
-                    return error_msg
-
-            else:
-                data = response.json()
-                error_msg = data['errors'][0]['message']
-                self.log.error(f'Login failed: {error_msg}')
-                self.login_card.notify(f'Error: {error_msg}', 'negative')
-                return response
+        # Language Selector (Top Right)
+        self.log.debug("Loading language selector control...")
+        if get_language() == "es":
+            lang_text = _("branding.language_en").upper()
         else:
-            error_msg = _('auth.username_password_required')
-            self.log.debug("Login data invalid. Showing error message...")
-            self.login_card.notify(error_msg, 'negative')
+            lang_text = _("branding.language_es").upper()
+        self.lang_button = ft.Container(
+            content = TextButton(
+                text=lang_text,
+                size=14,
+                font_family="Roboto-Bold",
+                on_click=self._handle_language_change
+            ),
+            padding=10,
+            top=0,
+            right=0
+        )
+
+        # Login Card - Centered
+        self.log.debug("Loading Login Card...")
+        self.login_container = ft.Container(
+            content=LoginCard(on_login_click=self._handle_login, on_sign_up_click=self._handle_sign_up),
+            alignment=ft.Alignment.CENTER,
+            expand=True
+        )
+        
+        # Branding - Always bottom center
+        self.log.debug("Loading Collectibles branding...")
+        self.collectibles = BrandCollectibles()
+        
+        # Stack with all controls
+        self.stack = ft.Stack(
+            controls=[
+                self.background,
+                self.login_container,
+                self.lang_button,
+                self.collectibles
+            ],
+            expand=True
+        )
+
+        super().__init__(
+            route=URLs.Frontend.login,
+            padding=0,
+            controls=[self.stack]
+        )
+        
+    async def _handle_login(self, e):
+        """
+        Handles the login button click event.
+
+        Extracts the username and password from the login card's data,
+        validates that neither field is empty, and logs the attempt.
+
+        Args:
+            e (ft.ControlEvent): The click event from the login button.
+                e.control.data is expected to be a dict containing
+                'username' and 'password' TextField references.
+
+        Note:
+            This is a placeholder implementation. Actual authentication
+            logic (e.g., API call, session creation) should be added.
+        """
+        if not self.login_container.content.is_valid():
+            message = _('auth.username_password_required')
+            self.log.debug(message)
+            self.show_notification(message, severity=Severity.WARNING, duration=1500)
+            return message
+        
+        self.log.debug("Login data valid. Attempting login...")
+        payload = self.login_container.content.get_payload()
+        response = await self.auth_service.login(payload)
+        
+        # No response from backend
+        if response is None:
+            error_msg = _('messages.no_response')
+            self.log.error(error_msg)
+            self.show_notification(error_msg, severity=Severity.ERROR, duration=1500)
             return error_msg
         
-    async def login_success(self, data: dict):
-        """
-        Handles a successful login response from the backend API.
+        data = response.json()
+        # Login failed
+        if response.status_code != requests.codes.ok:
+            error_msg = data['errors'][0]['message']
+            self.log.error(f'Login failed: {error_msg}')
+            self.show_notification(f'Error: {error_msg}', severity=Severity.ERROR, duration=1500)
+            return response
+        
+        # Login Success. Store auth token and user data in SharedPreferences
+        self.log.debug("Login successful")
+        token = data["data"].get("token", None)
+        user_data = data["data"].get("payload", None)
+        if token and user_data:
+            self.log.debug("Auth token and user data stored in SharedPreferences")
+            await self._save_user(token, user_data)
+            
 
-        This method stores user and session information (like JWT token) in the
-        application's user storage. It then removes the login page content and
-        redirects the user to the appropriate page based on their role (admin or user).
+        # Redirect based on user type
+        if user_data.get("is_admin"):
+            await self.main_page.push_route(URLs.Frontend.stamps_manager)
+        else:
+            await self.main_page.push_route(URLs.Frontend.collections)
+
+
+    async def _handle_sign_up(self, e):
+        """Navigate to the sign-up page."""
+        self.log.debug("Navigating to Sign Up page")
+        await self.main_page.push_route(URLs.Frontend.signup)
+        
+    async def _handle_language_change(self, e):
+        """
+        Handles the language selector button click event.
+
+        Toggles the application language between English ('en') and
+        Spanish ('es'). The button text updates to show the language
+        that will be switched to when clicked (e.g., shows 'EN' when
+        Spanish is active).
+
+        Persists the language choice to SharedPreferences and updates
+        the translation module. Also refreshes the LoginCard to display
+        translated text.
 
         Args:
-            data (dict):    A dictionary containing the successful login response data,
-                            including 'token' and user details.
+            e (ft.ControlEvent): The click event from the language button.
+                e.control.content.value contains the current button text.
 
-        Returns:
-            bool: True if the login process completes successfully, False otherwise.
+        Note:
+            After this method, call page.update() to reflect UI changes
+            if not already triggered.
         """
-        token = data.get('token', None)
-        is_admin = data.get('payload', {}).get('is_admin', False)
-        username = data.get('payload', {}).get('username', "Missing username")
-        first_name = data.get('payload', {}).get('first_name', "No name")
-        last_name = data.get('payload', {}).get('last_name', "No last name")
-        email = data.get('payload', {}).get('email', "No email")
-        user_id = data.get('payload', {}).get('user_id', None)
+        current_text = e.control.content.value
         
-        if token is None:
-            error_msg = _('messages.token_missing')
-            self.log.error(error_msg)
-            return False
-        
-        app.storage.user[USER_JWT_TOKEN] = token
-        app.storage.user[USER_IS_ADMIN] = is_admin
-        app.storage.user[USER_NAME] = username
-        app.storage.user[USER_FIRST_NAME] = first_name
-        app.storage.user[USER_LAST_NAME] = last_name
-        app.storage.user[USER_EMAIL] = email
-        app.storage.user[USER_ID] = user_id
-        await self.config.load_user_config()
-        
-        self.log.debug(f"Token: {token[:10]}...")
-        
-        self.delete()
-        
-        if is_admin:
-            ui.navigate.to(URLs.Frontend.stamps_manager)
+        if current_text == _("branding.language_es").upper():
+            await self.prefs.set(USER_LANGUAGE, "es")
+            set_language("es")  # Update the language in the translations module
+            e.control.content.value = _("branding.language_en").upper()
+            
+            self.log.debug("Language changed to Spanish.")
         else:
-            ui.navigate.to(URLs.Frontend.collections)
+            await self.prefs.set(USER_LANGUAGE, "en")
+            set_language("en")  # Update the language in the translations module
+            e.control.content.value = _("branding.language_es").upper()
             
-        return True
-    
-    async def mock_login(self):
-        """
-        Performs a mock login for development or testing purposes.
-
-        This method uses credentials from environment variables (`MOCK_LOGIN_USER`
-        and `MOCK_LOGIN_PASSWORD`) to log in. It is intended for automated
-        testing or development scenarios where manual login is not desired.
-        If the mock login fails, an error is displayed.
-        """
-        self.log.debug('Starting test mode...')
+            self.log.debug("Language changed to English.")
         
-        if MOCK_USER and MOCK_PASSWORD:
-            payload = {
-                'username': MOCK_USER,
-                'password': MOCK_PASSWORD,
-            }
-            
-            response = await self.auth_service.login(payload=payload)
-            
-            if response and response.status_code == requests.codes.ok:
-                data = response.json()['data']
-                self.log.debug(f"User Info: {data}")
-                await self.login_success(data)
-            else:
-                error_msg = _('messages.response_mock_login')
-                self.log.error(error_msg)
-                self.notify(error_msg, 'negative', timeout=0, close_button=_('ui.close'))
-        else:
-            self.log.debug("Test mode failed. Review environment variables.")
+        # Update branding
+        self.collectibles.update()
+        
+        # Update login card
+        self.login_container.content.update() 
+        
