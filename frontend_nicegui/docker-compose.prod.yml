@@ -1,0 +1,16 @@
+services:
+  stamps-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: stamps-frontend
+    image: osrogon/stamps-frontend
+    env_file:
+      - .env
+    command: python main.py
+    networks:
+      - stamps-network
+
+networks:
+  stamps-network:
+    external: true

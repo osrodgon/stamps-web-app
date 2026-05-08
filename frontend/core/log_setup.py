@@ -6,6 +6,7 @@ from settings import LOG_BASE_DIR, LOG_FILE_NAME, LOG_LEVEL
 
 
 def log_setup():
+    """Configure logging with file and console handlers."""
     # Ensure the log directory exists
     log_path = Path(LOG_FILE_NAME)
     if not log_path.is_absolute():
@@ -76,7 +77,39 @@ def log_setup():
                 'handlers': ['console'],
                 'level': 'WARNING',
                 'propagate': False,
-            }
+            },
+            # asyncio
+            'asyncio': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            # Flet framework - suppress debug messages
+            'flet': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'flet_core': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'flet_transport': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'flet_controls': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'flet_web': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
         }
     }
 

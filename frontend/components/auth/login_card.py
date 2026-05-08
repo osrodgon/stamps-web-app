@@ -1,67 +1,130 @@
-from base.base_ui import BaseUI
+import flet as ft
 from core.translations import _
-from core.urls import URLs
-from nicegui import ui
+from core.components.primary_button import PrimaryButton
+from core.components.text_field import TextField
+from core.components.link_button import LinkButton
+from core.components.colors import GREY_700
+from base.base_ui import BaseUI
 
 
-class LoginCard(ui.card, BaseUI):
-    """A UI component representing a login card with username and password fields."""
-    username: ui.input = None
-    password: ui.input = None
+class LoginCard(ft.Container, BaseUI):
+    """A login card with username/password fields, sign-in button, and sign-up link.
+
+    Composes text fields, buttons, and labels into a styled card layout.
+    All translatable text is refreshed via update() when the locale changes.
+
+    Attributes:
+        username: Input field for the username.
+        password: Input field for the password (with reveal toggle).
+        sign_in: Button to trigger the login action.
+        sign_in_header: Header text displaying 'Sign In'.
+        sign_in_desc: Description text prompting username/password entry.
+        sign_up_text: Text prompting users without an account.
+        sign_up_button: Link button navigating to sign-up.
+        size: Default font size for text elements.
+    """
+
+    username: TextField
+    password: TextField
+    sign_in: PrimaryButton
+    sign_in_header: ft.Text
+    sign_in_desc: ft.Text
+    sign_up_text: ft.Text
+    sign_up_button: LinkButton
+    size = 14
     
-    def __init__(self, on_sign_in: callable = None):
-        """
-        Initializes the LoginCard component.
+    def __init__(self, on_login_click, on_sign_up_click):
+        """Build the login card with text fields, buttons, and layout.
+
+        The sign-in button's data property holds references to the username
+        and password fields so the handler can read their values via
+        ``e.control.data``.
 
         Args:
-            on_sign_in (callable, optional):    A callback function to be executed 
-                                                when the 'Sign In' button is clicked. Defaults to None.
+            on_login_click: Called when the sign-in button is clicked.
+            on_sign_up_click: Called when the sign-up link is clicked.
         """
         super().__init__()
-        self.log.debug('Initializing LoginCard...')
-        with self.classes('w-auto p-6 shadow-xl rounded-lg'):
-            ui.label(_('auth.sign_in')).classes('text-2xl font-semibold')
-                
-            ui.label(_('auth.username_and_password')).classes('text-gray-600')
-            
-            self.username = ui.input(
-                label=_('auth.username'),
-            ).classes('w-full').on('keydown.enter', on_sign_in)
+        
+        # Assign the on_login_click callback to an instance variable so it can be used in the button
+        self.on_login_click = on_login_click
+        self.on_sign_up_click = on_sign_up_click
+        
+        # Create the UI elements
+        self.sign_in_header = ft.Text(
+            _("auth.sign_in"),
+            size=24,
+            font_family="Roboto-Bold",
+            color=ft.Colors.BLACK,
+        )
+        self.sign_in_desc = ft.Text(
+            _("auth.username_and_password"),
+            size=self.size,
+            font_family="Roboto",
+            color=GREY_700,
+            no_wrap=True
+        )
+        self.username = TextField(label=_('auth.username'))
+        self.password = TextField(label=_('auth.password'), password=True, can_reveal_password=True)
+        self.sign_in = PrimaryButton(
+            text=_("auth.sign_in").upper(),
+            on_click=self.on_login_click,
+            data={
+                "username": self.username,
+                "password": self.password
+            }
+        )
+        self.sign_up_text = ft.Text(_("auth.no_account"), color=GREY_700, size=self.size, font_family="Roboto")
+        self.sign_up_button = LinkButton(_("auth.sign_up"), on_click=self.on_sign_up_click, size=self.size)
+        
+        # Layout the elements in a column
+        self.content = ft.Column(
+            controls=[
+                ft.Row(controls=[self.sign_in_header], tight=True),
+                ft.Row(controls=[self.sign_in_desc], tight=True),
+                ft.Row(controls=[self.username], tight=True),
+                ft.Row(controls=[self.password], tight=True),
+                ft.Row(controls=[self.sign_in], tight=True),
+                ft.Row(controls=[self.sign_up_text, self.sign_up_button], 
+                        alignment=ft.MainAxisAlignment.CENTER
+                )
+            ],
+            spacing=15,
+            tight=True,
+            intrinsic_width=True,
+        )
+        
+        # Style the container
+        self.bgcolor = ft.Colors.WHITE
+        self.padding = 20
+        self.border_radius = 8
+        self.shadow = ft.BoxShadow(blur_radius=15, color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK))
+        
+    def update(self):
+        """Refresh all translatable text to match the current locale.
 
-            self.password = ui.input(
-                label=_('auth.password'), 
-                password=True, 
-                password_toggle_button=True
-            ).classes('w-full').on('keydown.enter', on_sign_in)
-            
-            ui.button(_('auth.sign_in'), on_click=on_sign_in).classes('w-full')
-
+        Updates labels, button text, header, description, and sign-up prompt.
+        Call ``page.update()`` afterward to re-render the component.
+        """
+        self.username.label = _('auth.username')
+        self.password.label = _('auth.password')
+        self.sign_in.content = _("auth.sign_in").upper()
+        self.sign_in_header.value = _("auth.sign_in")
+        self.sign_in_desc.value = _("auth.username_and_password")
+        self.sign_up_text.value = _("auth.no_account")
+        self.sign_up_button.content = _("auth.sign_up")
                 
-            with ui.row().classes('w-full justify-center'):
-                ui.label(_('auth.no_account')).classes('text-sm text-gray-600')
-                ui.link(_('auth.sign_up'), URLs.Frontend.signup).classes('text-blue-600 hover:text-blue-800 text-sm')
-                
+        self.log.debug("LoginCard updated.")
+    
     def is_valid(self):
-        """
-        Validates that both username and password fields are filled.
-
-        Returns:
-            bool: True if both fields have values, False otherwise.
-        """
+        """Check that both username and password are filled in."""
         valid = bool(self.username.value) and bool(self.password.value)
         self.log.debug(f"Login form validation result: {valid}")
         return valid
     
-    def get_data(self):
-        """
-        Retrieves the current data from the login form fields.
-
-        Returns:
-            dict: A dictionary containing the username and password.
-        """
-        data = {
-            'username': self.username.value,
-            'password': self.password.value,
+    def get_payload(self):
+        """Return the current username and password as a dict."""
+        return {
+            "username": self.username.value,
+            "password": self.password.value
         }
-        self.log.debug("Retrieving data from login form.")
-        return data

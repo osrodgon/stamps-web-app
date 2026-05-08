@@ -1,7 +1,13 @@
+"""URL definitions for backend API and frontend routes."""
+
 from settings import BACKEND_URL
 
+
 class URLs:
+    """Container for backend and frontend URL constants."""
+
     class Backend:
+        """Backend API endpoint URLs."""
         login =                 f"{BACKEND_URL}/login/"
         logout =                f"{BACKEND_URL}/logoff/"
         issues =                f"{BACKEND_URL}/issues/"
@@ -15,9 +21,12 @@ class URLs:
         issues_collections =    f"{BACKEND_URL}/issues/collections/"
         
     class Frontend:
+        """Frontend route paths."""
+
         collections =           "/collections"
         login =                 "/login"
         logout =                "/logout"
         root =                  "/"
         signup =                "/signup"
         stamps_manager =        "/admin/stamps/manager"
+        not_found =             "/404"

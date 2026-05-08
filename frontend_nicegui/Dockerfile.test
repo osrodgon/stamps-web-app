@@ -1,0 +1,17 @@
+# Use a slim Python image
+FROM python:3.13-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+
+# Create the working directory
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY requirements.base.txt .
+COPY requirements.dev.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.dev.txt
+
+# Copy the files to frontend (otherwise tests will fail)
+COPY . frontend
