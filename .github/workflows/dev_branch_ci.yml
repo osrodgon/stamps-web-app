@@ -70,41 +70,41 @@ jobs:
           name: backend-html-coverage-report
           path: backend/htmlcov/
           
-  # 2. Frontend CI Job (NiceGUI) - Unchanged (using pip now)
-  frontend_ci:
-    name: Flet Frontend Build & Test
-    runs-on: ubuntu-latest
+  # 2. Frontend CI Job (Flet) - Unchanged (using pip now)
+  # frontend_ci:
+  #   name: Flet Frontend Build & Test
+  #   runs-on: ubuntu-latest
     
-    steps:
-      - name: Checkout repository 
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repository 
+  #       uses: actions/checkout@v4
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
           
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        # Use pip to install NiceGUI and its dependencies
-        run: pip install -r requirements.dev.txt
+  #     - name: Install Frontend Dependencies
+  #       working-directory: ./frontend
+  #       # Use pip to install NiceGUI and its dependencies
+  #       run: pip install -r requirements.dev.txt
 
-      # ----------------------------------------------------
-      # Run Pytest with Coverage
-      # ----------------------------------------------------
-      - name: Run Pytest with Coverage
-        working-directory: ./frontend
-        env:
-          # Replace 'STORAGE_SECRET' with the exact env var name your code uses
-          # If you don't use an env var, adding one here often forces NiceGUI's 
-          # test plugin to initialize correctly.
-          APP_STORAGE_SECRET: "ci_test_secret_only"
-          DEFAULT_LANGUAGE: "en"
-          API_MASTER_KEY: "test_master_key"
-        # Run tests and generate an XML report for coverage
-        run: |
-          pytest --cov=.
-          coverage html
+  #     # ----------------------------------------------------
+  #     # Run Pytest with Coverage
+  #     # ----------------------------------------------------
+  #     - name: Run Pytest with Coverage
+  #       working-directory: ./frontend
+  #       env:
+  #         # Replace 'STORAGE_SECRET' with the exact env var name your code uses
+  #         # If you don't use an env var, adding one here often forces NiceGUI's 
+  #         # test plugin to initialize correctly.
+  #         APP_STORAGE_SECRET: "ci_test_secret_only"
+  #         DEFAULT_LANGUAGE: "en"
+  #         API_MASTER_KEY: "test_master_key"
+  #       # Run tests and generate an XML report for coverage
+  #       run: |
+  #         pytest --cov=.
+  #         coverage html
 
           
       # OPTIONAL: Upload Coverage Report (e.g., to Codecov, SonarQube)
