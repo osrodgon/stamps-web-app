@@ -59,8 +59,8 @@ async def route_change(e: ft.RouteChangeEvent):
     if route == URLs.Frontend.root:
         auth_token = await prefs.get(USER_JWT_TOKEN)
         if auth_token:
-            user_is_admim = await prefs.get(USER_IS_ADMIN)
-            if user_is_admim:
+            user_is_admin = await prefs.get(USER_IS_ADMIN)
+            if user_is_admin:
                 await page.push_route(URLs.Frontend.stamps_manager)
             else:
                 await page.push_route(URLs.Frontend.collections)
