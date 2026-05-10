@@ -26,7 +26,7 @@ class AppHeader(ft.Container, Logger):
     center_area: ft.Container
     right_area: ft.Container
     
-    def __init__(self, left_content=None, center_content=None, right_content=None, height: int=60):
+    def __init__(self, left_content=None, center_content=None, right_content=None, height: int=80):
         """
         Initialize AppHeader with three areas.
         
@@ -34,6 +34,7 @@ class AppHeader(ft.Container, Logger):
             title (str, optional): Page title to display in center area.
             left_content (ft.Control, optional): Control for left area.
             right_content (ft.Control, optional): Control for right area.
+            height (int, optional): Height of the header (default 80)
         """
         super().__init__()
         self.height = height
