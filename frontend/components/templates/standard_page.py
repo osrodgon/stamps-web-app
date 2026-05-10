@@ -44,6 +44,7 @@ class StandardPage(ft.View, BaseUI):
         )
         
         super().__init__(
+            route=page.route,
             padding=0,
             controls=[
                 ft.Column(
