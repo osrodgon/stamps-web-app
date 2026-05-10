@@ -10,7 +10,7 @@ class StandardPage(ft.View, BaseUI):
     - Collections Page
     
     Layout:
-    - Header: Contains AppHeader (to be created), fixed height (60px), expands horizontally
+    - Header: Contains AppHeader (to be created), fixed height (80px), expands horizontally
     - Main: Expands to fill remaining space (vertical & horizontal)
     
     Attributes:
