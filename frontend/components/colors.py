@@ -80,4 +80,9 @@ SLATE_DARK = "#364153"
 #: Light silver-grey (#99a1af) - used for decorative horizontal lines.
 SILVER_LIGHT = "#99a1af"
 
+HEADER_BG = "#1e2b3c"
+PRIMARY_ACCENT = "#00bfa5" # The teal lightbulb icon
+TEXT_BLUE = "#1976d2"      # Blue text for issue names
+DELETE_RED = "#ef5350"     # Red for the action buttons
+BG_LIGHT = "#f5f5f5"
 

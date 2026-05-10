@@ -117,7 +117,7 @@
         "stamps_manager_title": "Stamps Manager"
     },
     "collections": {
-        "collections_tile": "Collections",
+        "title": "Collections",
         "no_issues_found": "No issues found with the provided criteria."
     },
     "pagination": {

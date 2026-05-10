@@ -117,7 +117,7 @@
         "stamps_manager_title": "Gestión de Sellos"
     },
     "collections": {
-        "collections_tile": "Colecciones",
+        "title": "Colecciones",
         "no_issues_found": "No se encontraron emisiones con los criterios proporcionados."
     },
     "pagination": {

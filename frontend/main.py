@@ -13,6 +13,8 @@ from core.base_ui import BaseUI
 from pages.auth.signup_page import SignupPage
 from pages.auth.login_page import LoginPage
 from pages.not_found_page import NotFoundPage
+from pages.collection.collections_page import CollectionsPage
+from pages.admin.stamps_manager_page import StampsManagerPage
 from core.urls import URLs
 from core.log_setup import log_setup
 from core.translations import init_language
@@ -23,10 +25,10 @@ from settings import    APP_NAME, ASSETS_DIR, FONT_REGULAR, FONT_BOLD, FONT_BLAC
 ROUTE_HANDLERS = {
     URLs.Frontend.login: LoginPage,
     URLs.Frontend.signup: SignupPage,
+    URLs.Frontend.collections: CollectionsPage,
+    URLs.Frontend.stamps_manager: StampsManagerPage,
     # TODO: Implement these pages
     # URLs.Frontend.logout: LogoutPage,
-    # URLs.Frontend.collections: CollectionsPage,
-    # URLs.Frontend.stamps_manager: StampsManagerPage,
 }
 
 
