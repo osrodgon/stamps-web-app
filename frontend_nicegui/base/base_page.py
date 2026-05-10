@@ -1,5 +1,5 @@
 import requests
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from nicegui import ui
 
 

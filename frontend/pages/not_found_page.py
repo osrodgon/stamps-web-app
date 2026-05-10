@@ -1,10 +1,10 @@
 import asyncio
 
 import flet as ft
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
-from core.components.primary_button import PrimaryButton
+from components.buttons.primary_button import PrimaryButton
 
 
 class NotFoundPage(ft.View, BaseUI):
@@ -14,10 +14,10 @@ class NotFoundPage(ft.View, BaseUI):
     and a button to navigate back to the home page.
     """
 
-    def __init__(self, main_page: ft.Page):
+    def __init__(self, page: ft.Page):
         """Initialize the 404 page with centered message and home button."""
         super().__init__()
-        self.main_page = main_page
+        self.page = page
         self.route = URLs.Frontend.not_found
         self.padding = 20
         self.alignment = ft.Alignment.CENTER
@@ -64,4 +64,4 @@ class NotFoundPage(ft.View, BaseUI):
 
     def _go_home(self, e):
         """Navigate to root page."""
-        asyncio.create_task(self.main_page.push_route(URLs.Frontend.root))
+        asyncio.create_task(self.page.push_route(URLs.Frontend.root))

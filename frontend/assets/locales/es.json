@@ -49,7 +49,7 @@
         "logout": "Cerrar sesión",
         "username": "Usuario",
         "password": "Contraseña",
-        "confirm_password": "Confirmar Contraseña",
+        "confirm_password": "Confirmar contraseña",
         "email": "Correo electrónico",
         "first_name": "Nombre",
         "last_name": "Apellidos",

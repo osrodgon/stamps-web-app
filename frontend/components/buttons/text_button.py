@@ -1,5 +1,5 @@
 import flet as ft
-from core.components.colors import SLATE_GREY, SLATE_GREY_HOVER
+from components.colors import SLATE_GREY, SLATE_GREY_HOVER
 
 
 class TextButton(ft.TextButton):

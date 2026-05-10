@@ -5,10 +5,10 @@ from components.auth.login_card import LoginCard
 from core.urls import URLs
 from core.translations import _, set_language, get_language
 from core.severity import Severity
-from core.components.text_button import TextButton
-from core.components.brand_collectibles import BrandCollectibles
+from components.buttons.text_button import TextButton
+from components.layout.brand import Brand
 from services.auth_service import AuthService
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from settings import BACKGROUND_IMG, USER_LANGUAGE
 
 class LoginPage(ft.View, BaseUI):
@@ -33,13 +33,15 @@ class LoginPage(ft.View, BaseUI):
             persisting language preferences.
     """
 
+    main_page: ft.Page
     background: ft.Container
     lang_button: ft.Container
     login_container: ft.Container
     prefs: ft.SharedPreferences
     auth_service: AuthService
+    login_card: LoginCard
     
-    def __init__(self, main_page: ft.Page):
+    def __init__(self, page: ft.Page):
         """
         Initializes the LoginPage with UI components and layout.
 
@@ -48,11 +50,11 @@ class LoginPage(ft.View, BaseUI):
         (shows 'EN' if Spanish is active, 'ES' if English is active).
 
         Args:
-            main_page (ft.Page): The root Flet page instance, used for
+            page (ft.Page): The root Flet page instance, used for
                 navigation and page-level operations.
         """
         self.log.debug("Initializing LoginPage...")
-        self.main_page = main_page
+        self.main_page = page
         self.prefs = ft.SharedPreferences()
         self.auth_service = AuthService()
         
@@ -79,15 +81,16 @@ class LoginPage(ft.View, BaseUI):
 
         # Login Card - Centered
         self.log.debug("Loading Login Card...")
+        self.login_card = LoginCard(on_login_click=self.on_login, on_sign_up_click=self._handle_sign_up)
         self.login_container = ft.Container(
-            content=LoginCard(on_login_click=self._handle_login, on_sign_up_click=self._handle_sign_up),
+            content=self.login_card,
             alignment=ft.Alignment.CENTER,
             expand=True
         )
         
         # Branding - Always bottom center
         self.log.debug("Loading Collectibles branding...")
-        self.collectibles = BrandCollectibles()
+        self.collectibles = Brand()
         
         # Stack with all controls
         self.stack = ft.Stack(
@@ -106,7 +109,7 @@ class LoginPage(ft.View, BaseUI):
             controls=[self.stack]
         )
         
-    async def _handle_login(self, e):
+    async def on_login(self, e):
         """
         Handles the login button click event.
 
@@ -122,21 +125,21 @@ class LoginPage(ft.View, BaseUI):
             This is a placeholder implementation. Actual authentication
             logic (e.g., API call, session creation) should be added.
         """
-        if not self.login_container.content.is_valid():
+        if not self.login_card.is_valid():
             message = _('auth.username_password_required')
             self.log.debug(message)
-            self.show_notification(message, severity=Severity.WARNING, duration=1500)
+            await self.show_notification(message, severity=Severity.WARNING, duration=1500)
             return message
         
         self.log.debug("Login data valid. Attempting login...")
-        payload = self.login_container.content.get_payload()
+        payload = self.login_card.get_payload()
         response = await self.auth_service.login(payload)
         
         # No response from backend
         if response is None:
             error_msg = _('messages.no_response')
             self.log.error(error_msg)
-            self.show_notification(error_msg, severity=Severity.ERROR, duration=1500)
+            await self.show_notification(error_msg, severity=Severity.ERROR, duration=1500)
             return error_msg
         
         data = response.json()
@@ -144,7 +147,7 @@ class LoginPage(ft.View, BaseUI):
         if response.status_code != requests.codes.ok:
             error_msg = data['errors'][0]['message']
             self.log.error(f'Login failed: {error_msg}')
-            self.show_notification(f'Error: {error_msg}', severity=Severity.ERROR, duration=1500)
+            await self.show_notification(f'Error: {error_msg}', severity=Severity.ERROR, duration=1500)
             return response
         
         # Login Success. Store auth token and user data in SharedPreferences

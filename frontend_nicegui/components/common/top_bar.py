@@ -1,4 +1,4 @@
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from core.translations import _
 from core.urls import URLs
 from nicegui import app, ui

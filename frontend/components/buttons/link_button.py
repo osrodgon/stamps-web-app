@@ -1,6 +1,6 @@
 import flet as ft
 
-from core.components.colors import SKY_BLUE, SKY_BLUE_HOVER
+from components.colors import SKY_BLUE, SKY_BLUE_HOVER
 
 
 class LinkButton(ft.TextButton):

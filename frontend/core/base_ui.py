@@ -1,4 +1,6 @@
+import asyncio
 import os
+
 import flet as ft
 
 from core.logger import Logger
@@ -73,18 +75,19 @@ class BaseUI(Logger):
         await prefs.remove(USER_FIRST_NAME)
         await prefs.remove(USER_LAST_NAME)
         await prefs.remove(USER_EMAIL)
-        self.log.debug("User preferences removed")
+        self.log.debug("User preferences removed")    
     
-    def show_notification(self, message: str, severity: Severity = Severity.INFO, duration=2000):
+    async def show_notification(self, message: str, severity: Severity = Severity.INFO, duration=2000, wait=False):
         """Show a SnackBar notification with color based on severity.
 
         Args:
             message: The notification text.
             severity: Severity level determining the background color.
             duration: Milliseconds to show the notification.
+            wait: If true will wait for the notification to be dismissed
 
         Note:
-            Requires `self.main_page` to be set (the root ft.Page instance).
+            Requires `self.page` to be set (the root ft.Page instance).
         """
         severity_colors = {
             Severity.INFO: ft.Colors.BLUE_300,
@@ -94,7 +97,7 @@ class BaseUI(Logger):
         }
         bgcolor = severity_colors.get(severity, ft.Colors.BLUE_300)
         
-        self.main_page.show_dialog(
+        self.page.show_dialog(
             ft.SnackBar(
                 content=ft.Text(
                     message, 
@@ -106,4 +109,7 @@ class BaseUI(Logger):
                 duration=duration
             )
         )
+        self.page.update()
         
+        if wait:
+            await asyncio.sleep(duration/1000)

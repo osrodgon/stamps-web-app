@@ -1,4 +1,4 @@
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from core.translations import _
 from nicegui import app, ui
 from settings import USER_LANGUAGE

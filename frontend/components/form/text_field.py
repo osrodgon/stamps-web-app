@@ -1,6 +1,6 @@
 import flet as ft
 
-from core.components.colors import BLUE_GREY_100, BLUE_700
+from components.colors import BLUE_GREY_100, BLUE_700
 
 class TextField(ft.TextField):
     """
@@ -17,6 +17,8 @@ class TextField(ft.TextField):
     Attributes:
         (Inherited from ft.TextField)
     """
+    
+    is_focused = False
 
     def __init__(self, label, password=False, can_reveal_password=False):
         """
@@ -40,3 +42,4 @@ class TextField(ft.TextField):
         self.expand = True
         self.border = ft.InputBorder.UNDERLINE
         self.font_family = "Roboto"
+        

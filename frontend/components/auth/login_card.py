@@ -1,10 +1,10 @@
 import flet as ft
 from core.translations import _
-from core.components.primary_button import PrimaryButton
-from core.components.text_field import TextField
-from core.components.link_button import LinkButton
-from core.components.colors import GREY_700
-from base.base_ui import BaseUI
+from components.buttons.primary_button import PrimaryButton
+from components.form.text_field import TextField
+from components.buttons.link_button import LinkButton
+from components.colors import GREY_700
+from core.base_ui import BaseUI
 
 
 class LoginCard(ft.Container, BaseUI):

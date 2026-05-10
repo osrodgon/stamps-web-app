@@ -1,6 +1,6 @@
 import re
 
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
 from core.translations import _
 from nicegui import ui
 
