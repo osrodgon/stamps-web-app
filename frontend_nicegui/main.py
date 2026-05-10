@@ -124,7 +124,7 @@ class StampsApp:
             StampsManagerPage()
             
         @page(URLs.Frontend.root)
-        async def main_page(request: Request, client: Client) -> None:
+        async def page(request: Request, client: Client) -> None:
             """
             The main entry point of the application.
             Redirects to dashboard if authenticated, otherwise to login.

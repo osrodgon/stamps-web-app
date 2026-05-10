@@ -6,12 +6,12 @@ text with decorative horizontal lines, positioned at the bottom center of the sc
 """
 
 import flet as ft
-from core.components.horizontal_line import HorizontalLine
-from core.components.colors import NAVY_DARK, SLATE_DARK, SILVER_LIGHT
+from components.layout.horizontal_line import HorizontalLine
+from components.colors import NAVY_DARK, SLATE_DARK, SILVER_LIGHT
 from core.translations import _
 
 
-class BrandCollectibles(ft.Container):
+class Brand(ft.Container):
     """
     A branding component that displays the application's brand text with decorative elements.
     

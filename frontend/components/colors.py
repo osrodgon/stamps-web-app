@@ -12,7 +12,7 @@ The module includes:
 - Brand-specific colors for decorative elements
 
 Colors can be imported directly by other components
-(e.g., `from core.components.colors import SKY_BLUE`).
+(e.g., `from components.colors import SKY_BLUE`).
 """
 
 import flet as ft
@@ -47,13 +47,15 @@ def lighten_color(hex_color, amount=0.2):
 
 #: Medium sky blue (#5898d4) - used for primary buttons and links.
 SKY_BLUE = "#5898d4"
+#: Lighter variant of SKY_BLUE for hover states (10% lightened).
+SKY_BLUE_HOVER = lighten_color(SKY_BLUE, 0.1)
 #: Lighter variant of SKY_BLUE for hover states (30% lightened).
-SKY_BLUE_HOVER = lighten_color(SKY_BLUE, 0.3)
+SKY_BLUE_DISABLED = lighten_color(SKY_BLUE, 0.3)
 
 #: Cool slate grey (#707282) - used for secondary/text buttons.
 SLATE_GREY = "#707282"
-#: Lighter variant of SLATE_GREY for hover states (30% lightened).
-SLATE_GREY_HOVER = lighten_color(SLATE_GREY, 0.3)
+#: Lighter variant of SLATE_GREY for hover states (20% lightened).
+SLATE_GREY_HOVER = lighten_color(SLATE_GREY, 0.2)
 
 
 # --- Text Colors ---

@@ -9,7 +9,8 @@ and supports dynamic language switching via the translation module.
 """
 
 import flet as ft
-from base.base_ui import BaseUI
+from core.base_ui import BaseUI
+from pages.auth.signup_page import SignupPage
 from pages.auth.login_page import LoginPage
 from pages.not_found_page import NotFoundPage
 from core.urls import URLs
@@ -21,8 +22,8 @@ from settings import    APP_NAME, ASSETS_DIR, FONT_REGULAR, FONT_BOLD, FONT_BLAC
 # Route handlers for implemented pages
 ROUTE_HANDLERS = {
     URLs.Frontend.login: LoginPage,
+    URLs.Frontend.signup: SignupPage,
     # TODO: Implement these pages
-    # URLs.Frontend.signup: SignupPage,
     # URLs.Frontend.logout: LogoutPage,
     # URLs.Frontend.collections: CollectionsPage,
     # URLs.Frontend.stamps_manager: StampsManagerPage,
@@ -30,7 +31,17 @@ ROUTE_HANDLERS = {
 
 
 def configure_page(page: ft.Page):
-    """Configure page title, fonts, and expansion."""
+    """Configure page properties including title, fonts, theme, and icon.
+
+    Sets up the fundamental page configuration:
+    - Page title from APP_NAME setting
+    - Custom fonts (Roboto variants)
+    - Theme with Linux page transition disabled
+    - Window favicon icon
+
+    Args:
+        page (ft.Page): The Flet page instance to configure.
+    """
     page.title = APP_NAME
     page.expand = True
     page.fonts = {

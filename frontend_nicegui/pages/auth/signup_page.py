@@ -1,7 +1,7 @@
 import asyncio
 
 import requests
-from base.base_page import BasePage
+from core.base_page import BasePage
 from components.auth.signup_card import SignUpCard
 from components.branding.footer_branding import FooterBranding
 from core.translations import _

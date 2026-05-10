@@ -62,7 +62,7 @@ class TestCollectionsPage(AbstractUnitTest):
         collections_page, top_bar = collections_page_components
         
         # Verify inheritance
-        from base.base_page import BasePage
+        from core.base_page import BasePage
         from nicegui import ui
         
         assert isinstance(collections_page, BasePage)

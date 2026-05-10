@@ -1,5 +1,5 @@
 import flet as ft
-from core.components.colors import SKY_BLUE, SKY_BLUE_HOVER
+from components.colors import SKY_BLUE, SKY_BLUE_HOVER, SKY_BLUE_DISABLED
 
 
 class PrimaryButton(ft.Button):
@@ -34,7 +34,10 @@ class PrimaryButton(ft.Button):
         super().__init__()
         self.content = ft.Text(text, size=14)
         self.color = ft.Colors.WHITE
-        self.bgcolor = SKY_BLUE
+        self.bgcolor = {
+            ft.ControlState.DEFAULT: SKY_BLUE,
+            ft.ControlState.DISABLED: SKY_BLUE_DISABLED
+        }
         self.height = 40
         self.data = data
         self.on_click = on_click
@@ -60,8 +63,14 @@ class PrimaryButton(ft.Button):
                 in e.data (string 'true' when hovered, 'false' otherwise).
         """
         if e.data:  # Hovered
-            self.bgcolor = SKY_BLUE_HOVER
+            self.bgcolor = {
+                ft.ControlState.DEFAULT: SKY_BLUE_HOVER,
+                ft.ControlState.DISABLED: SKY_BLUE_DISABLED
+            }
         else:  # Not hovered
-            self.bgcolor = SKY_BLUE
+            self.bgcolor = {
+                ft.ControlState.DEFAULT: SKY_BLUE,
+                ft.ControlState.DISABLED: SKY_BLUE_DISABLED
+            }
         self.update()
     
