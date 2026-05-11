@@ -57,6 +57,9 @@ SLATE_GREY = "#707282"
 #: Lighter variant of SLATE_GREY for hover states (20% lightened).
 SLATE_GREY_HOVER = lighten_color(SLATE_GREY, 0.2)
 
+RED = "#E53935"
+RED_HOVER = "#C62828"
+RED_DISABLED = "#BDBDBD"
 
 # --- Text Colors ---
 
@@ -80,7 +83,7 @@ SLATE_DARK = "#364153"
 #: Light silver-grey (#99a1af) - used for decorative horizontal lines.
 SILVER_LIGHT = "#99a1af"
 
-HEADER_BG = "#1e2b3c"
+DARK_BLUE_GREY = "#1e2b3c"
 PRIMARY_ACCENT = "#00bfa5" # The teal lightbulb icon
 TEXT_BLUE = "#1976d2"      # Blue text for issue names
 DELETE_RED = "#ef5350"     # Red for the action buttons
