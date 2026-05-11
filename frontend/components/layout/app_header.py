@@ -1,7 +1,6 @@
 import flet as ft
-
 from core.logger import Logger
-from components.colors import HEADER_BG
+from components.colors import DARK_BLUE_GREY
 
 class AppHeader(ft.Container, Logger):
     """
@@ -36,26 +35,31 @@ class AppHeader(ft.Container, Logger):
             right_content (ft.Control, optional): Control for right area.
             height (int, optional): Height of the header (default 80)
         """
-        super().__init__()
+        super().__init__(padding=ft.Padding.only(left=10, right=10))
         self.height = height
-        self.bgcolor = HEADER_BG
+
+        self.bgcolor = DARK_BLUE_GREY
         
-        # Left area - left aligned
-        self.left_area = ft.Container(
-            alignment=ft.Alignment.CENTER_LEFT,
+        # Left area
+        self.left_area = ft.Row(
+            controls=[],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER
+        )
+        
+        # Center area  
+        self.center_area = ft.Row(
+            controls=[],
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True
         )
         
-        # Center area - Centered
-        self.center_area = ft.Container(
-            alignment=ft.Alignment.CENTER,
-            expand=True
-        )
-        
-        # Right area - right aligned
-        self.right_area = ft.Container(
-            alignment=ft.Alignment.CENTER_RIGHT,
-            expand=True
+        # Right area
+        self.right_area = ft.Row(
+            controls=[],
+            alignment=ft.MainAxisAlignment.END,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER
         )
         
         self.content = ft.Row(
@@ -64,53 +68,30 @@ class AppHeader(ft.Container, Logger):
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             expand=True
         )
-        
-        # Set initial content if provided
-        if left_content:
-            self.left_area.content = left_content
-        if center_content:
-            self.center_area.content = center_content
-        if right_content:
-            self.right_area.content = right_content
     
-    # --- Left Area Methods ---
-    
+    # --- Left Area ---
     def add_left(self, control: ft.Control):
-        """Add a control to the left area.
-        
-        Args:
-            control: The Flet control to add.
-        """
-        self.left_area.content = control
+        """Add a control to the left area."""
+        self.left_area.controls = self.left_area.controls + [control]
     
     def clear_left(self):
-        """Remove all content from the left area."""
-        self.left_area.content = None
+        """Remove all controls from the left area."""
+        self.left_area.controls = []
     
-    # --- Center Area Methods ---
-    
+    # --- Center Area ---
     def add_center(self, control: ft.Control):
-        """Add a control to the center area.
-        
-        Args:
-            control: The Flet control to add.
-        """
-        self.center_area.content = control
+        """Add a control to the center area."""
+        self.center_area.controls = self.center_area.controls + [control]
     
     def clear_center(self):
-        """Remove all content from the center area."""
-        self.center_area.content = None
+        """Remove all controls from the center area."""
+        self.center_area.controls = []
     
-    # --- Right Area Methods ---
-    
+    # --- Right Area ---
     def add_right(self, control: ft.Control):
-        """Add a control to the right area.
-        
-        Args:
-            control: The Flet control to add.
-        """
-        self.right_area.content = control
+        """Add a control to the right area."""
+        self.right_area.controls = self.right_area.controls + [control]
     
     def clear_right(self):
-        """Remove all content from the right area."""
-        self.right_area.content = None
+        """Remove all controls from the right area."""
+        self.right_area.controls = []

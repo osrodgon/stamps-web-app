@@ -13,11 +13,12 @@ class NotFoundPage(ft.View, BaseUI):
     Shows a centered layout with a 404 message, descriptive text,
     and a button to navigate back to the home page.
     """
+    main_page: ft.Page
 
     def __init__(self, page: ft.Page):
         """Initialize the 404 page with centered message and home button."""
         super().__init__()
-        self.page = page
+        self.main_page = page
         self.route = URLs.Frontend.not_found
         self.padding = 20
         self.alignment = ft.Alignment.CENTER
@@ -64,4 +65,4 @@ class NotFoundPage(ft.View, BaseUI):
 
     def _go_home(self, e):
         """Navigate to root page."""
-        asyncio.create_task(self.page.push_route(URLs.Frontend.root))
+        asyncio.create_task(self.main_page.push_route(URLs.Frontend.root))

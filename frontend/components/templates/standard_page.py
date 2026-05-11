@@ -1,5 +1,9 @@
 import flet as ft
 from core.base_ui import BaseUI
+from core.urls import URLs
+from core.translations import _
+from components.buttons.alert_button import AlertButton
+from components.buttons.default_button import DefaultButton
 
 class StandardPage(ft.View, BaseUI):
     """
@@ -62,4 +66,52 @@ class StandardPage(ft.View, BaseUI):
             app_header: The AppHeader control to display in the header.
         """
         self.header.content = app_header
+        return app_header
+    
+    def update_header(self):
+        """Update the header to reflect any changes made via add_* methods.
         
+        Call this AFTER the page is fully initialized and after using
+        add_left(), add_center(), or add_right() methods on the AppHeader.
+        """
+        if self.header.content and self.page:
+            self.page.update()
+            
+    async def logout(self):
+        self.log.debug("Loggin out...")
+        await self.main_page.push_route(URLs.Frontend.logout)
+
+    def request_logout(self, e):
+        self.log.debug("Logout requested.")
+        
+        # 1. Create the 'Yes' action
+        async def confirm_action(e):
+            self.confirm_dialog.open = False
+            self.main_page.update()
+            await self.logout() # Call your existing async method
+
+        # 2. Create the 'No' action
+        def cancel_action(e):
+            self.confirm_dialog.open = False
+            self.main_page.update()
+
+        # 3. Define the Dialog
+        self.confirm_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(_("auth.logout_confirm"), font_family="Roboto-Bold"),
+            content=ft.Text(_("auth.logout_confirm_message"), font_family="Roboto"),
+            shape=ft.RoundedRectangleBorder(radius=8),
+            actions=[
+                DefaultButton(_("ui.cancel"), on_click=cancel_action),
+                AlertButton(_("auth.logout"), on_click=confirm_action)
+            ],
+            actions_alignment="end",
+        )
+        
+        if self.confirm_dialog not in self.page.overlay:
+            self.page.overlay.append(self.confirm_dialog)
+
+        # 4. Show the Dialog
+        self.main_page.dialog = self.confirm_dialog
+        self.confirm_dialog.open = True
+        self.main_page.update()
