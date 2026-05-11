@@ -102,8 +102,8 @@ class StandardPage(ft.View, BaseUI):
             content=ft.Text(_("auth.logout_confirm_message"), font_family="Roboto"),
             shape=ft.RoundedRectangleBorder(radius=8),
             actions=[
-                DefaultButton(_("ui.cancel"), on_click=cancel_action),
-                AlertButton(_("auth.logout"), on_click=confirm_action)
+                DefaultButton(_("ui.cancel").upper(), on_click=cancel_action),
+                AlertButton(_("auth.logout").upper(), on_click=confirm_action)
             ],
             actions_alignment="end",
         )

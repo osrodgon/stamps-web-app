@@ -41,13 +41,13 @@ class CollectionsPage(StandardPage):
         self.header.add_left(separator)
         
         # Create the drawer
-        self.drawer = AppDrawer()
+        self.drawer = AppDrawer(on_logout=self.request_logout)
         
         # Create the content area
         self.content_area = ft.Column(
             [
-                ft.Text(_("stamps.stamps_manager_title"), size=24, weight="bold"),
-            # You can add your StampsTable() here later
+                ft.Text(_("collections.title"), size=24, weight="bold"),
+            # You can add other controls here later
             ], 
             expand=True, 
             scroll=ft.ScrollMode.ADAPTIVE,
