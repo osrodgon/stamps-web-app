@@ -1,11 +1,35 @@
+"""
+Default button component for secondary actions.
+
+This module provides the DefaultButton component for secondary actions
+in the UI. It uses SKY_BLUE color and is suitable for non-primary actions.
+"""
+
 import flet as ft
+from typing import Any, Callable, Optional
 
 from components.colors import SKY_BLUE
 
+
 class DefaultButton(ft.Button):
-    def __init__(self, text, on_click=None, data=None, icon=None, expand=True):
-        """
-        Initializes a PrimaryButton with the specified text and behavior.
+    """A secondary action button component for Flet applications.
+
+    This component represents a secondary action button (e.g., 'Cancel', 'Back').
+    It features SKY_BLUE text color, rounded corners, and optional icon support.
+
+    Attributes:
+        (Inherited from ft.Button)
+    """
+
+    def __init__(
+        self,
+        text: str,
+        on_click: Optional[Callable[..., None]] = None,
+        data: Optional[Any] = None,
+        icon: Optional[str] = None,
+        expand: bool = True,
+    ) -> None:
+        """Initializes a DefaultButton with the specified text and behavior.
 
         Args:
             text (str): The text to display on the button.
@@ -16,6 +40,9 @@ class DefaultButton(ft.Button):
                 accessible via e.control.data in the click handler.
                 Useful for passing context such as form field references.
                 Defaults to None.
+            icon (ft.Icon, optional): Icon to display on the button.
+            expand (bool, optional): Whether button expands to fill available
+                horizontal space. Defaults to True.
         """
         super().__init__()
         self.content = ft.Text(text, size=14)

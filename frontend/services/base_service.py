@@ -1,9 +1,43 @@
+"""
+Base service class for RESTful API communication.
+
+This module provides the BaseService class that serves as the foundation
+for all API service classes in the application. It provides:
+- Asynchronous HTTP request handling (GET, POST, PUT, DELETE)
+- Thread-based request execution to avoid blocking
+- Logging of requests and responses
+- Error handling with graceful fallback to None
+
+Example:
+    from services.base_service import BaseService
+    
+    class MyService(BaseService):
+        async def fetch_data(self):
+            response = await self._make_request(
+                request_type=self.GET,
+                url="https://api.example.com/data"
+            )
+            return response.json() if response else None
+"""
+
 import asyncio
 import requests
 from core.logger import Logger
 
+
 class BaseService(Logger):
-    """A base class for handling RESTful API requests with common HTTP methods."""
+    """A base class for handling RESTful API requests with common HTTP methods.
+    
+    This class provides the foundational methods for making asynchronous HTTP
+    requests to backend services. Subclasses should implement specific API
+    operations (like login, fetch_stamps, etc.) using the _make_request method.
+    
+    Attributes:
+        GET: Constant for HTTP GET requests (value: 1)
+        POST: Constant for HTTP POST requests (value: 2)
+        PUT: Constant for HTTP PUT requests (value: 3)
+        DELETE: Constant for HTTP DELETE requests (value: 4)
+    """
     GET=1
     POST=2
     PUT=3

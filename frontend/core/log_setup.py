@@ -1,3 +1,14 @@
+"""
+Logging configuration for the Stamps web application.
+
+This module sets up the application's logging system with:
+- File handler using RotatingFileHandler (5MB max, 5 backups)
+- Colored console handler for development debugging
+- Separate log levels for different modules (root, watchfiles, uvicorn, etc.)
+
+The configuration uses dictionary-based logging config for flexibility.
+"""
+
 import logging
 import logging.config
 from pathlib import Path
@@ -5,8 +16,17 @@ from pathlib import Path
 from settings import LOG_BASE_DIR, LOG_FILE_NAME, LOG_LEVEL
 
 
-def log_setup():
-    """Configure logging with file and console handlers."""
+def log_setup() -> None:
+    """Configure logging with file and console handlers.
+    
+    Sets up the logging system with:
+    - File output to LOG_BASE_DIR/LOG_FILE_NAME (rotates at 5MB, keeps 5 backups)
+    - Colored console output for DEBUG/INFO/WARNING/ERROR/CRITICAL levels
+    - Suppressed verbose logs from third-party libraries (flet, uvicorn, etc.)
+    
+    Returns:
+        None: This function configures logging in-place.
+    """
     # Ensure the log directory exists
     log_path = Path(LOG_FILE_NAME)
     if not log_path.is_absolute():

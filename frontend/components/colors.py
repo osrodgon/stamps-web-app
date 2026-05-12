@@ -17,23 +17,8 @@ Colors can be imported directly by other components
 
 import flet as ft
 
-
-def lighten_color(hex_color, amount=0.2):
-    """
-    Creates a lighter shade of a given hex color.
-
-    Mixes the input color with white based on the specified amount,
-    producing a lighter variant useful for hover states or disabled
-    appearances.
-
-    Args:
-        hex_color (str): The base color in hex format (e.g., '#5898d4' or '5898d4').
-        amount (float, optional): The amount of white to blend in, as a value
-            between 0 and 1. Defaults to 0.2 (20% lighter).
-
-    Returns:
-        str: The lightened color as a hex string (e.g., '#7fb3e0').
-    """
+def lighten_color(hex_color: str, amount: float = 0.2) -> str:
+    """Creates a lighter shade of a given hex color by blending with white."""
     hex_color = hex_color.lstrip('#')
     r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
     
@@ -46,46 +31,54 @@ def lighten_color(hex_color, amount=0.2):
 # --- Button Colors ---
 
 #: Medium sky blue (#5898d4) - used for primary buttons and links.
-SKY_BLUE = "#5898d4"
+SKY_BLUE: str = "#5898d4"
 #: Lighter variant of SKY_BLUE for hover states (10% lightened).
-SKY_BLUE_HOVER = lighten_color(SKY_BLUE, 0.1)
+SKY_BLUE_HOVER: str = lighten_color(SKY_BLUE, 0.1)
 #: Lighter variant of SKY_BLUE for hover states (30% lightened).
-SKY_BLUE_DISABLED = lighten_color(SKY_BLUE, 0.3)
+SKY_BLUE_DISABLED: str = lighten_color(SKY_BLUE, 0.3)
 
 #: Cool slate grey (#707282) - used for secondary/text buttons.
-SLATE_GREY = "#707282"
+SLATE_GREY: str = "#707282"
 #: Lighter variant of SLATE_GREY for hover states (20% lightened).
-SLATE_GREY_HOVER = lighten_color(SLATE_GREY, 0.2)
+SLATE_GREY_HOVER: str = lighten_color(SLATE_GREY, 0.2)
 
-RED = "#E53935"
-RED_HOVER = "#C62828"
-RED_DISABLED = "#BDBDBD"
+#: Red (#E53935) - used for destructive/danger actions.
+RED: str = "#E53935"
+#: Darker red (#C62828) - hover state for RED.
+RED_HOVER: str = "#C62828"
+#: Light grey (#BDBDBD) - disabled state for RED buttons.
+RED_DISABLED: str = "#BDBDBD"
 
 # --- Text Colors ---
 
 #: Standard body text color (Flet GREY_700).
-GREY_700 = ft.Colors.GREY_700
+GREY_700: str = ft.Colors.GREY_700
 
 
 # --- Text Field Colors ---
 
 #: Default border color for text fields (Flet BLUE_GREY_100).
-BLUE_GREY_100 = ft.Colors.BLUE_GREY_100
+BLUE_GREY_100: str = ft.Colors.BLUE_GREY_100
 #: Focused border color for text fields (Flet BLUE_700).
-BLUE_700 = ft.Colors.BLUE_700
+BLUE_700: str = ft.Colors.BLUE_700
 
 # --- Brand Colors ---
 
 #: Dark navy blue (#2c4869) - used for brand title text.
-NAVY_DARK = "#2c4869"
+NAVY_DARK: str = "#2c4869"
 #: Dark slate (#364153) - used for brand subtitle text.
-SLATE_DARK = "#364153"
+SLATE_DARK: str = "#364153"
 #: Light silver-grey (#99a1af) - used for decorative horizontal lines.
-SILVER_LIGHT = "#99a1af"
+SILVER_LIGHT: str = "#99a1af"
 
-DARK_BLUE_GREY = "#1e2b3c"
-PRIMARY_ACCENT = "#00bfa5" # The teal lightbulb icon
-TEXT_BLUE = "#1976d2"      # Blue text for issue names
-DELETE_RED = "#ef5350"     # Red for the action buttons
-BG_LIGHT = "#f5f5f5"
+#: Dark blue-grey (#1e2b3c) - used for dark UI backgrounds.
+DARK_BLUE_GREY: str = "#1e2b3c"
+#: Teal (#00bfa5) - used for accent icons (e.g., lightbulb icon).
+PRIMARY_ACCENT: str = "#00bfa5"
+#: Blue (#1976d2) - used for issue names and links.
+TEXT_BLUE: str = "#1976d2"
+#: Red (#ef5350) - used for delete/action buttons.
+DELETE_RED: str = "#ef5350"
+#: Light grey (#f5f5f5) - used for light backgrounds.
+BG_LIGHT: str = "#f5f5f5"
 

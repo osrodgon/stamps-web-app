@@ -1,6 +1,25 @@
+"""
+Vertical line component for visual separators.
+
+This module provides the VerticalLine component for creating vertical
+separator lines in the UI. Useful for creating visual separation
+between elements in headers and other layouts.
+"""
+
 import flet as ft
 
+
 class VerticalLine(ft.Container):
+    """A vertical line component implemented as a Flet Container.
+    
+    This component renders a simple vertical line with customizable thickness,
+    length, and color. It uses a Container with border radius for rounded edges.
+    
+    Attributes:
+        thickness: The width of the line in pixels.
+        length: The height of the line in pixels.
+        color: The color of the line.
+    """
     """
     A vertical line component implemented as a Flet Container.
     

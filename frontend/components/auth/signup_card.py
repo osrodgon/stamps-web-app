@@ -56,6 +56,8 @@ class SignupCard(ft.Container, BaseUI):
             on_sign_up_click: Called when the sign-up button is clicked.
             on_sign_up_cancel: Called when the cancel button is clicked.
         """
+        self.log.debug("Initializing SignupCard...")
+        
         super().__init__()
         
         self.on_sign_up_click = on_sign_up_click
@@ -140,8 +142,8 @@ class SignupCard(ft.Container, BaseUI):
         button only when all fields are filled. Called on every field's
         on_change event to provide real-time feedback.
         """
-        # Check absolute validity (Ignore focus for the button state)
-        # The button should only be enabled if every field has a valid value.
+        self.log.debug("Validating form fields...")
+        
         is_valid_form = all([
             self.first_name.value,
             self.last_name.value,
@@ -155,6 +157,7 @@ class SignupCard(ft.Container, BaseUI):
         self.sign_up.disabled = not is_valid_form
         self.page.update()
         
+        self.log.debug(f"Signup form validation result: {is_valid_form}")
         return is_valid_form
 
     def is_valid(self):
@@ -170,17 +173,12 @@ class SignupCard(ft.Container, BaseUI):
         Returns:
             bool: True if all fields are valid, False otherwise.
         """
-        # Handle UI Error Messages
-        # First name
+        self.log.debug("Validating form fields...")
+        
         self.first_name.error = _("ui.required") if not self.first_name.value else None
-        
-        # Last name
         self.last_name.error = _("ui.required") if not self.last_name.value else None
-        
-        # Username
         self.username.error = _("ui.required") if not self.username.value else None
         
-        # Email
         if not self.email.value:
             self.email.error = _("ui.required")
         elif self.email.value and not is_valid_email(self.email.value):
@@ -188,7 +186,6 @@ class SignupCard(ft.Container, BaseUI):
         else:
             self.email.error = None
 
-        # Password
         if not self.password.value:
             self.password.error = _("ui.required")
         elif self.password.value and not is_strong_password(self.password.value):
@@ -196,7 +193,6 @@ class SignupCard(ft.Container, BaseUI):
         else:
             self.password.error = None
 
-        # Confirm password
         if not self.confirm_password.value:
             self.confirm_password.error = _("ui.required")
         elif self.confirm_password.value != self.password.value:
@@ -214,6 +210,7 @@ class SignupCard(ft.Container, BaseUI):
         ])
         self.page.update()
         
+        self.log.debug(f"Signup form validation result: {form_validated}")
         return form_validated
     
     def get_payload(self):
@@ -224,6 +221,8 @@ class SignupCard(ft.Container, BaseUI):
             dict: User registration data with keys: username, email, 
                   password, first_name, last_name.
         """
+        self.log.debug("Getting signup form payload...")
+        
         return {
             "username": self.username.value,
             "email": self.email.value,

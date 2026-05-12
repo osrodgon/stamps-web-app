@@ -106,7 +106,7 @@ class AppDrawer(ft.Container):
                 ft.Image(
                     src=ORG_LOGO,  # Replace with your local assets path
                     width=None,
-                    height=None
+                    height=75
                 ),
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             alignment=ft.Alignment.BOTTOM_RIGHT,
