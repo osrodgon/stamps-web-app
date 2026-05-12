@@ -113,8 +113,9 @@ class IssueTableApp(ft.Container):
 
         if response and response.status_code == 200:
             body: dict = response.json()
-            self._data = body.get("data").get("issues", [])
-            pagination: dict = body.get("data").get("pagination", {})
+            data_payload = body.get("data") or {}
+            self._data = data_payload.get("issues", [])
+            pagination: dict = data_payload.get("pagination", {})
             self._total = pagination.get("total", 0)
             self._current_page = pagination.get("page", self._current_page)
             self._rows_per_page = pagination.get("page_size", self._rows_per_page)
