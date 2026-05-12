@@ -127,8 +127,10 @@ class LoginCard(ft.Container, BaseUI):
         
         if not self.is_valid():
             self._show_validation_errors()
+            self.update()
             return
         
+        self.update()
         await self.on_login_click(e)
 
     def _show_validation_errors(self) -> None:
