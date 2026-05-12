@@ -169,7 +169,8 @@ class LoginCard(ft.Container, BaseUI):
         self.sign_in_desc.value = _("auth.username_and_password")
         self.sign_up_text.value = _("auth.no_account")
         self.sign_up_button.content = ft.Text(_("auth.sign_up"))
-        self.page.update()
+        if self.page:
+            self.page.update()
     
     def is_valid(self) -> bool:
         """Check that both username and password are filled in."""
