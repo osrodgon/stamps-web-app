@@ -53,9 +53,8 @@
 |-------|------|-----------------|
 | `IssueTableApp` | `ft.Container` | Main container, state management, data fetching |
 | `TableHeader` | `ft.Container` | Column titles, sort indicators |
-| `IssueRow` | `ft.UserControl` | Single row with expansion, delete action |
+| `IssueRow` | `ft.Container` | Single row with expansion, delete action |
 | `TablePagination` | `ft.Container` | Footer with dropdown, navigation |
-| `IssueTableSearch` | `ft.Container` | Global search input field with debounce |
 
 ## 2. Data via API (no local models)
 
@@ -64,28 +63,30 @@ All data comes from the backend API. The service layer handles response parsing.
 **Expected API response format:**
 ```json
 {
-  "issues": [
-    {
-      "id": 1,
-      "country": "France",
-      "year": "2023",
-      "date": "2023-06-15",
-      "name": "Marianne Series",
-      "perforation": "Zebra",
-      "stamp_type": "Definitive",
-      "print_type": "Lithography",
-      "total_printed": 500000,
-      "market_value_mnh": "1.20",
-      "market_value_used": "0.80"
+  "data": {
+    "issues": [
+      {
+        "id": 1,
+        "country": "France",
+        "year": "2023",
+        "date": "2023-06-15",
+        "name": "Marianne Series",
+        "perforation": "Zebra",
+        "stamp_type": "Definitive",
+        "print_type": "Lithography",
+        "total_printed": 500000,
+        "market_value_mnh": "1.20",
+        "market_value_used": "0.80"
+      }
+    ],
+    "pagination": {
+      "sort_by": "name",
+      "order": "asc",
+      "page": 1,
+      "page_size": 15,
+      "total": 65,
+      "has_more": true
     }
-  ],
-  "pagination": {
-    "sort_by": "name",
-    "order": "asc",
-    "page": 1,
-    "page_size": 15,
-    "total": 65,
-    "has_more": true
   }
 }
 ```
@@ -110,55 +111,56 @@ class IssueTableApp(ft.Container):
         self._rows_per_page: int = 15
         self._sort_key: str = "date"
         self._sort_order: str = "asc"
-        self._expanded_rows: set[int] = set()
-        self._name_filter: str = ""
+        self._lang: str = "en"
 ```
 
 ## 4. Visual Design
 
-- **Header BG**: `#232F3E` (dark navy)
-- **Zebra striping**: Alternate between `None` and `"#F8F9FA"` bgcolor
-- **Row divider**: `ft.border.only(bottom=ft.BorderSide(1, "#EEEEEE"))`
-- **Font**: 12px data, 11px headers (uppercase, bold)
+- **Header BG**: `HEADER_BG` (#232F3E, dark navy)
+- **Zebra striping**: Even rows `BG_LIGHT` (#f5f5f5), odd rows white
+- **Hover**: `ROW_HOVER` (#E8E8E8) highlight
+- **Row divider**: `ROW_BORDER` (#EEEEEE)
+- **Font**: 12px data (Roboto), 12px headers (Roboto-Bold, white, uppercase)
 - **Value column**: `text_align=ft.TextAlign.RIGHT`
-- **Delete button**: Red circular with confirmation dialog
+- **Number formatting**: Locale-aware (en: 1,234.56 / es: 1.234,56)
+- **Delete button**: Red circular — TODO (not yet implemented)
+- **No text wrap**: `no_wrap=True`, `overflow=ELLIPSIS` on data cells
 
 ## 5. UI Components
 
-### IssueTableSearch
-- Container with `ft.TextField`
-- Search icon prefix
-- Debounce: wait 300ms after typing before API call
-- Name search: sends `name` query param to backend (name__icontains filter)
-- On change → call service → update `_name_filter` → reset to page 1
+### ColumnDef (`column_def.py`)
+- `ColumnDef` dataclass — `translation_key`, `api_key`, `width`, `text_align`, `sortable`, `fmt`
+- `COLUMNS` list — single source of truth (8 columns currently)
+- Locale-aware formatters: `fmt_currency()`, `fmt_number()`
 
 ### TableHeader
-- Dark background container (`#232F3E`)
-- Row with Text columns: "Country", "Date ▼", "Issue Name", "Type", "Value"
-- Date column has sort icon (arrow up/down based on `_sort_order`)
-- `on_click` triggers sort in parent
+- Dark background container (`HEADER_BG`)
+- Builds cells by iterating `COLUMNS`
+- Any `sortable=True` column gets sort arrow + click handler
+- Sort icon rebuilt from scratch on each sort change
 
 ### IssueRow
-- `ft.UserControl` with `build()` method
-- Fields: details button (chevron), country, date with calendar icon, issue name, type, value (right-aligned)
-- **Details expansion**: Hidden `Container` toggled by chevron - displays list of related `Stamp` objects
-- **Delete**: Red icon button → shows `ft.AlertDialog` confirmation first
+- `ft.Container` with nested controls
+- Builds cells by iterating `COLUMNS` with formatters
+- Chevron toggle expands details panel
+- Hover highlight via `_on_hover`
+- Delete button — TODO (no on_click handler yet)
 
 ### TablePagination
 - Bottom-right aligned
-- Dropdown: [5, 10, 15, 25] options
-- Text: "1-10 of 65"
-- Four IconButtons: first, prev, next, last (disabled when at bounds)
+- Dropdown: [10, 15, 20, 50, 100, All] options
+- Text: "1-15 of 65"
+- Four IconButtons: first, prev, next, last
+- `update_state(page, page_size, total)` method for external sync
 
 ## 6. Functionality
 
 | Feature | Implementation |
 |---------|-----------------|
-| Global search via API | Debounced TextField → service call with `name` param → update `_filtered_data` |
-| Sorting | Click header → toggle `_sort_key` + `_sort_order` → call API → update |
-| Pagination | `_displayed_data = _filtered_data[(page-1)*per_page : page*per_page]` |
-| Row expansion | Toggle row ID in `_expanded_rows` set → call `self.update()` |
-| Delete | Show AlertDialog → on_confirm → call API delete → refresh data |
+| Sorting | Click sortable column header → toggle `_sort_key` + `_sort_order` → call API → rebuild rows |
+| Pagination | Server-side via `page`/`pageSize` params → update state → rebuild rows |
+| Row expansion | Chevron toggles details panel with perf/print/total/value info |
+| Delete | TODO - not yet implemented |
 
 ## 7. Details Expansion - Stamps Data
 
@@ -171,11 +173,11 @@ frontend/
 ├── components/
 │   └── table/
 │       ├── __init__.py
+│       ├── column_def.py         # ColumnDef dataclass, COLUMNS list, formatters
 │       ├── issue_table_app.py    # IssueTableApp class
 │       ├── table_header.py       # TableHeader class
 │       ├── issue_row.py          # IssueRow class
-│       ├── table_pagination.py   # TablePagination class
-│       └── issue_table_search.py # IssueTableSearch class
+│       └── table_pagination.py   # TablePagination class
 └── services/
     └── stamp_issue_service.py    # API methods
 ```
@@ -183,9 +185,11 @@ frontend/
 ## 9. Deployment Order
 
 - [x] Step 1: Add `StampIssueService` in `frontend/services/stamp_issue_service.py`
-- [ ] Step 2: Build `IssueRow` (most complex, reusable)
-- [ ] Step 3: Build `TableHeader` and `TablePagination`
-- [ ] Step 4: Build `IssueTableSearch`
-- [ ] Step 5: Build `IssueTableApp` - assemble pieces, add state
-- [ ] Step 6: Add events: sort, pagination, expand, delete, search
-- [ ] Step 7: Add `__init__.py` exports
+- [x] Step 2: Build `IssueRow` (most complex, reusable)
+- [x] Step 3: Build `TableHeader` and `TablePagination`
+- [x] Step 4: Build `IssueTableApp` - assemble pieces, add state
+- [x] Step 5: Add events: sort, pagination, expand (delete still TODO)
+- [x] Step 6: Add `__init__.py` exports (skipped — not used elsewhere)
+- [x] Step 7: Integrate into StampsManagerPage content_area
+- [x] Step 8: Refactor to COLUMNS-driven architecture with column_def.py
+- [x] Step 9: Locale-aware number formatting (en/es)
