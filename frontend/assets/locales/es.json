@@ -114,7 +114,16 @@
         "total_printed": "Emisión",
         "loading_stamps": "Cargando sellos...",
         "no_stamps_found": "No se encontraron sellos para esta serie.",
-        "stamps_manager_title": "Gestión de Sellos"
+        "stamps_manager_title": "Gestión de Sellos",
+        "market_value": "Valor de mercado",
+        "artist": "Artista/Grabador",
+        "printer": "Impresor",
+        "paper_type": "Tipo de papel",
+        "face_value": "Valor facial",
+        "color": "Color",
+        "edifil_code": "Código Edifil",
+        "fesofi_code": "Código FESOFI",
+        "market_value_used": "Valor de mercado (Usado)"
     },
     "collections": {
         "title": "Colecciones",
@@ -122,7 +131,8 @@
     },
     "pagination": {
         "pagination_of": "de",
-        "pagination_rows_per_page": "Emisiones por página"
+        "pagination_rows_per_page": "Emisiones por página",
+        "pagination_all_rows": "Todas"
     },
     "errors": {
         "page_not_found": "La página que buscas **no se encuentra** en este servidor.",

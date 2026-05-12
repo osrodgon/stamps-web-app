@@ -54,6 +54,7 @@ class StampIssueService(BaseService):
         return await self._make_request(
             request_type=self.GET,
             url=url,
+            headers={"Authorization": f"Api-Key {API_MASTER_KEY}"},
         )
 
     async def delete_issue(self, issue_id: int) -> requests.Response | None:

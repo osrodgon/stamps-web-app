@@ -7,6 +7,8 @@ from components.buttons.icon_button import IconButton
 from components.colors import DARK_BLUE_GREY
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
+from components.table.issue_table_app import IssueTableApp
+from services.stamp_issue_service import StampIssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
 
 
@@ -60,13 +62,12 @@ class StampsManagerPage(StandardPage):
         self.drawer = AppDrawer(on_logout=self.request_logout)
         
         # Create the content area
+        self._table: IssueTableApp = IssueTableApp(service=StampIssueService())
         self.content_area = ft.Column(
-            [
-                ft.Text(_("stamps.stamps_manager_title"), size=24, weight="bold"),
-            # You can add your StampsTable() here later
-            ], 
-            expand=True, 
-            scroll=ft.ScrollMode.ADAPTIVE,
+            [self._table],
+            expand=True,
+            expand_loose=True,
+            margin=15
         )
         
         # Use self.main to hold both Drawer and Content in a Row
@@ -75,9 +76,9 @@ class StampsManagerPage(StandardPage):
                 self.content_area,
                 self.drawer
             ],
-            expand=True,
+            expand=True
         )
-        
+                
         page.run_task(self.read_prefs)
         
     async def menu_clicked(self, e):
@@ -92,11 +93,13 @@ class StampsManagerPage(StandardPage):
         self.drawer.update()
         
     async def read_prefs(self):
+        """Load user preferences and initialize table data."""
         prefs = ft.SharedPreferences()
-        
+
         user_first_name = await prefs.get(USER_FIRST_NAME)
         user_last_name = await prefs.get(USER_LAST_NAME)
         user_email = await prefs.get(USER_EMAIL)
-        
+
         self.drawer.update_data(user_first_name, user_last_name, user_email)
+        await self._table.load()
         

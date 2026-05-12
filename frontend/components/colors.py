@@ -80,5 +80,18 @@ TEXT_BLUE: str = "#1976d2"
 #: Red (#ef5350) - used for delete/action buttons.
 DELETE_RED: str = "#ef5350"
 #: Light grey (#f5f5f5) - used for light backgrounds.
-BG_LIGHT: str = "#f5f5f5"
+BG_LIGHT: str = "#f8fafc"
+
+# --- Table Colors ---
+
+#: Dark navy (#232F3E) - used for table header background.
+HEADER_BG: str = "#232F3E"
+#: Light grey (#EEEEEE) - used for table row dividers.
+ROW_BORDER: str = "#D0D0D0"
+#: Medium grey (#666666) - used for icon colors (calendar, navigation).
+ICON_GREY: str = "#666666"
+#: Near white (#FAFAFA) - used for expansion panel background.
+EXPANSION_BG: str = "#FAFAFA"
+#: Darker Grey (#E8E8E8) - Used for row hovering
+ROW_HOVER: str = "#E8E8E8"
 
