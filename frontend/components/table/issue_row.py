@@ -242,8 +242,9 @@ class IssueRow(ft.Container):
         self._details.visible = self._is_expanded
         self.update()
 
-        if self._on_expand and self._is_expanded:
-            self._on_expand(self._issue["id"])
+        issue_id = self._issue.get("id")
+        if self._on_expand and self._is_expanded and issue_id is not None:
+            self._on_expand(issue_id)
 
     def _on_hover(self, e: ft.HoverEvent) -> None:
         """Highlight row on hover."""
