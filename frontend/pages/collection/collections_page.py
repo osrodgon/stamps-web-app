@@ -1,3 +1,13 @@
+"""
+Collections page for viewing user stamp collections.
+
+This module provides the CollectionsPage view that displays a user's
+stamp collections. Features include:
+- App header with menu icon and page title
+- Slide-out navigation drawer
+- Scrollable content area for collection display
+"""
+
 import flet as ft
 
 from components.templates.standard_page import StandardPage
@@ -9,7 +19,24 @@ from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
 
-class CollectionsPage(StandardPage):    
+
+class CollectionsPage(StandardPage):
+    """The collections page for displaying user stamp collections.
+    
+    This page allows authenticated users to view their stamp collections.
+    It features:
+    - AppHeader with menu icon, title, and vertical separator
+    - Slide-out navigation drawer (AppDrawer) with user profile
+    - Main content area for displaying collections
+    
+    The page extends StandardPage which provides the base layout with
+    header and main content areas.
+    
+    Attributes:
+        header: The AppHeader containing menu, title, and separator.
+        drawer: The AppDrawer for navigation.
+        content_area: The main content column for collections display.
+    """    
     header: AppHeader
     
     def __init__(self, page: ft.Page):
@@ -83,3 +110,4 @@ class CollectionsPage(StandardPage):
         user_email = await prefs.get(USER_EMAIL)
         
         self.drawer.update_data(user_first_name, user_last_name, user_email)
+        

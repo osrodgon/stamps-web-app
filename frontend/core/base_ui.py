@@ -1,3 +1,23 @@
+"""
+Base UI class for Flet application components.
+
+This module provides the BaseUI class that serves as the foundation for all
+page and component classes in the application. It provides:
+- Logging capabilities via the Logger mixin
+- Background image handling with fallback to solid color
+- User session management (save/delete user data in SharedPreferences)
+- Notification system with severity-based color coding
+
+Example:
+    from core.base_ui import BaseUI
+
+    class MyPage(ft.View, BaseUI):
+        def __init__(self, page: ft.Page):
+            super().__init__()
+            self.page = page
+            await self.show_notification("Welcome!", Severity.SUCCESS)
+"""
+
 import asyncio
 import os
 

@@ -9,8 +9,8 @@
 
 ## Tech Stack
 - Backend: Django 6.0 + DRF 3.16.1, PostgreSQL
-- Frontend: NiceGUI 3.3.0, Quasar styling
-- Testing: pytest, NiceGUI testing plugin
+- Frontend: Flet 0.84.0, Python-native UI framework
+- Testing: pytest, pytest-asyncio
 - Docs: drf-spectacular
 - Auth: JWT + API Key
 
@@ -22,12 +22,23 @@
 - Django: models.py → services.py → views.py
 - verbose_name + db_index on FKs
 
-## Frontend Standards
-- Use ui.card(), ui.row(), ui.column()
-- Use @ui.refreshable for reactive components
-- Async def for event handlers with ORM
-- Check for circular imports with Django models
-- Session state: app.storage.user
+## Frontend Standards (Flet)
+- Use ft.Container(), ft.Column(), ft.Row()
+- Extend ft.Control or ft.View for custom components
+- Async def for event handlers
+- Use SharedPreferences for client-side storage
+- Color constants in components/colors.py
+
+## Frontend Conventions (Flet + Python)
+- **Type hints**: ALL function signatures MUST have type hints (Rule #2)
+- **Return types**: ALL functions MUST have return type annotations
+- **Classes**: PascalCase (e.g., `LoginCard`, `AlertButton`)
+- **Methods/vars**: snake_case (e.g., `_on_hover`, `clear_errors`)
+- **Private methods**: prefix with underscore (e.g., `_handle_login_click`)
+- **Constants**: UPPER_CASE (e.g., `GREY_700`, `RED_HOVER`)
+- **No unused code**: Remove unused methods, attributes, and imports
+- **Docstrings**: Required on all classes and public methods
+- **Event handlers**: Use `_private_method` pattern, assign to `on_click=self._handle_event`
 
 ## File Structure
 backend/{module}_api/    frontend/pages/ | components/ | services/
@@ -70,7 +81,8 @@ backend/{module}_api/    frontend/pages/ | components/ | services/
 ## Testing
 - Backend: pytest with fixtures
 - Test location: {module}_api/test/
-- Frontend: NiceGUI testing plugin
+- Frontend: pytest with pytest-asyncio, pytest-mock
+- Test location: frontend/tests/
 - Coverage: maintain reports
 
 ## Performance

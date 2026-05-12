@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "memory-bank/index.md",
+    "memory-bank/opencode_rules.md",
+    "memory-bank/productContext.md",
+    "memory-bank/techContext.md",
+    "memory-bank/activeContext.md",
+    "memory-bank/progress.md"
+  ]
+}

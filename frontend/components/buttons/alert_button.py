@@ -3,23 +3,28 @@ from components.colors import RED, RED_HOVER, RED_DISABLED
 
 
 class AlertButton(ft.Button):
-    """
-    A primary action button component for Flet applications.
+    """A danger/alert action button component for Flet applications.
 
-    This component represents the main call-to-action button (e.g., 'Sign In',
-    'Submit', 'Save'). It features a solid background color that lightens on
+    This component represents a destructive or alert action button (e.g., 'Delete',
+    'Cancel', 'Remove'). It features a solid red background color that darkens on
     hover, white text, and a rounded border.
 
     The button expands to fill available horizontal space. Colors are sourced 
-        from the centralized color module (SKY_BLUE, SKY_BLUE_HOVER).
+    from the centralized color module (RED, RED_HOVER, RED_DISABLED).
 
     Attributes:
         (Inherited from ft.Button)
     """
 
-    def __init__(self, text, on_click=None, data=None, icon=None, expand=True):
-        """
-        Initializes a PrimaryButton with the specified text and behavior.
+    def __init__(
+        self,
+        text: str,
+        on_click: callable = None,
+        data: any = None,
+        icon: str = None,
+        expand: bool = True
+    ) -> None:
+        """Initializes an AlertButton with the specified text and behavior.
 
         Args:
             text (str): The text to display on the button.
@@ -30,6 +35,9 @@ class AlertButton(ft.Button):
                 accessible via e.control.data in the click handler.
                 Useful for passing context such as form field references.
                 Defaults to None.
+            icon (str, optional): Icon to display on the button.
+            expand (bool, optional): Whether button expands to fill available
+                horizontal space. Defaults to True.
         """
         super().__init__()
         self.content = ft.Text(text, size=14)
@@ -50,9 +58,8 @@ class AlertButton(ft.Button):
         if icon:
             self.icon = icon
     
-    def _on_hover(self, e):
-        """
-        Handles the hover state change for the button.
+    def _on_hover(self, e: ft.HoverEvent) -> None:
+        """Handles the hover state change for the button.
 
         Changes the button's background color based on whether the mouse
         is currently hovering over the button. Lightens the color on hover

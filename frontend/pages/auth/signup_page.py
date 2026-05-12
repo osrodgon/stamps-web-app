@@ -1,3 +1,13 @@
+"""
+Sign up page for user registration.
+
+This module provides the SignupPage view for the Stamps web application,
+allowing new users to create an account. The page includes:
+- Background image (if available)
+- Signup card with form fields
+- Brand footer component
+"""
+
 import flet as ft
 import requests
 
@@ -10,7 +20,27 @@ from core.severity import Severity
 from services.auth_service import AuthService
 from settings import BACKGROUND_IMG
 
+
 class SignupPage(ft.View, BaseUI):
+    """The user registration page for the Stamps web application.
+    
+    This page provides the user interface for creating a new account,
+    featuring:
+    - A background image (if available in assets)
+    - A centered signup card with form fields (first name, last name, 
+      username, email, password, confirm password)
+    - Brand footer component
+    
+    The page extends both ft.View (for routing) and BaseUI (for logging
+    and common utilities like notifications).
+    
+    Attributes:
+        main_page: The Flet page instance.
+        background: The background image container.
+        signup_card: The SignupCard component with form fields.
+        collectibles: The Brand footer component.
+        auth_service: The AuthService for API calls.
+    """
     main_page: ft.Page
     background: ft.Container
     signup_card: SignupCard

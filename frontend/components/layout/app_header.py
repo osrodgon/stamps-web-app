@@ -1,3 +1,11 @@
+"""
+App header component for authenticated pages.
+
+This module provides the AppHeader component used in authenticated pages
+like Stamps Manager Page and Collections Page. It provides a three-area
+layout (left, center, right) for header content.
+"""
+
 import flet as ft
 from core.logger import Logger
 from components.colors import DARK_BLUE_GREY

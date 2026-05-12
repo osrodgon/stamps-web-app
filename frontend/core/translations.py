@@ -1,3 +1,25 @@
+"""
+Translation and localization support for the Stamps web application.
+
+This module provides internationalization (i18n) functionality through:
+- A translation function `_()` for easy text lookup
+- A Translations class for managing language dictionaries
+- Language switching (set_language, get_language)
+- Persistent language initialization from SharedPreferences
+
+Translations are loaded from JSON files in frontend/assets/locales/ directory.
+Each file is named with the language code (e.g., en.json, es.json).
+
+Example:
+    from core.translations import _, set_language, get_language
+    
+    # Translate text
+    print(_('welcome_message'))  # "Bienvenido" (if Spanish)
+    
+    # Change language
+    set_language('en')
+"""
+
 import json
 import flet as ft
 from pathlib import Path
