@@ -28,6 +28,22 @@ class TablePagination(ft.Container):
         font_size: int = 14,
         font_family: str = "Roboto-Bold",
     ) -> None:
+        """Initialize pagination controls with current state and callbacks.
+
+        Builds a bottom-right-aligned row containing:
+          - "Rows per page:" label + dropdown
+          - Range text (e.g. "1-15 of 65")
+          - Four nav buttons: first, prev, next, last
+
+        Args:
+            page: Current page number (1-indexed).
+            page_size: Number of items per page.
+            total: Total number of items across all pages.
+            on_page_change: Called when the user navigates to a different page.
+            on_page_size_change: Called when the user selects a new page size.
+            font_size: Font size for text elements.
+            font_family: Font family for text elements.
+        """
         super().__init__()
         self._page: int = page
         self._page_size: int = page_size
@@ -48,7 +64,6 @@ class TablePagination(ft.Container):
                 ft.dropdown.Option("20"),
                 ft.dropdown.Option("50"),
                 ft.dropdown.Option("100"),
-                ft.dropdown.Option("250"),
             ],
             width=50,
             height=None,
@@ -132,16 +147,13 @@ class TablePagination(ft.Container):
     def _update_nav_buttons(self) -> None:
         """Enable or disable navigation buttons based on current page."""
         total: int = self._total_pages()
-        # self._first_btn.disabled = self._page <= 1
-        # self._prev_btn.disabled = self._page <= 1
-        # self._next_btn.disabled = self._page >= total
-        # self._last_btn.disabled = self._page >= total
         self._set_button_state(self._first_btn, self._page <= 1)
         self._set_button_state(self._prev_btn, self._page <= 1)
         self._set_button_state(self._next_btn, self._page >= total)
         self._set_button_state(self._last_btn, self._page >= total)
-        
+
     def _set_button_state(self, btn: ft.IconButton, disabled: bool) -> None:
+        """Set a navigation button's enabled state and matching icon color."""
         btn.disabled = disabled
         btn.icon_color = ROW_BORDER if disabled else ICON_GREY
 

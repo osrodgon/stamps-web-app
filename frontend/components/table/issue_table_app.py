@@ -9,7 +9,7 @@ from typing import Optional
 
 import flet as ft
 
-from components.colors import EXPANSION_BG, HEADER_BG, ICON_GREY, ROW_BORDER
+from components.colors import HEADER_BG, ICON_GREY, ROW_BORDER, SKY_BLUE
 from components.table.column_def import COLUMNS
 from components.table.issue_row import IssueRow
 from components.table.table_header import TableHeader
@@ -26,6 +26,15 @@ class IssueTableApp(ft.Container):
     """
 
     def __init__(self, service: Optional[StampIssueService] = None) -> None:
+        """Initialize the table with sub-components, state, and default layout.
+
+        Sets up state for pagination, sorting, and the debounced name/year
+        filter. Builds the layout stack: progress bar overlay, scrollable
+        rows container, and pagination footer.
+
+        Args:
+            service: StampIssueService instance. Creates one if not provided.
+        """
         super().__init__()
         self._service: StampIssueService = service or StampIssueService()
         self.expand = True
@@ -36,12 +45,13 @@ class IssueTableApp(ft.Container):
         self._rows_per_page: int = 15
         self._sort_key: str = "date"
         self._sort_order: str = "asc"
+        self._name_filter: str = ""
         self._lang: str = get_language()
 
         self._progress_bar: ft.ProgressBar = ft.ProgressBar(
             visible=False,
             color=HEADER_BG,
-            bgcolor=EXPANSION_BG,
+            bgcolor=SKY_BLUE,
         )
         self._rows_container: ft.Column = ft.Column(spacing=0, scroll=ft.ScrollMode.AUTO, expand=True)
         self._empty_text: ft.Text = ft.Text(
@@ -98,8 +108,11 @@ class IssueTableApp(ft.Container):
         )
         self.bgcolor = ft.Colors.WHITE
 
-    async def load(self) -> None:
+    async def load(self, search: str = "") -> None:
         """Fetch data from the API and update all sub-components."""
+        self._name_filter = search
+        name, year = self._parse_filter(search)
+        filter_kwargs: dict
         self._progress_bar.visible = True
         self._lang = get_language()
         self.update()
@@ -109,7 +122,9 @@ class IssueTableApp(ft.Container):
             page_size=self._rows_per_page,
             sort_by=self._sort_key,
             order=self._sort_order,
-        )
+            name=name,
+            year=year
+    )
 
         if response and response.status_code == 200:
             body: dict = response.json()
@@ -178,4 +193,39 @@ class IssueTableApp(ft.Container):
 
     def _schedule_fetch(self) -> None:
         """Refresh data after a state change."""
-        self.page.run_task(self.load)
+        self.page.run_task(self.load, search=self._name_filter)
+        
+    @staticmethod
+    def _parse_filter(value: str) -> tuple[str, str]:
+        """Parse filter input into name and year query params.
+
+        Conversion rules:
+          - Empty input → ("", "")
+          - Plain digits (e.g. "2002") → ("", "2002") — single year
+          - Digit pattern N* (e.g. "19*") → ("", "1900-1999") — year range
+          - Digit pattern NN* (e.g. "200*") → ("", "2000-2009") — year range
+          - Everything else (e.g. "Marianne") → ("Marianne", "") — name search
+
+        Returns:
+            Tuple of (name_value, year_value) for the API call.
+        """
+        stripped = value.strip()
+        if not stripped:
+            return ("", "")
+
+        # nnn* or nn* → year range
+        if stripped.endswith("*"):
+            digits = stripped[:-1].strip()
+            if digits.isdigit():
+                d = len(digits)
+                z = 4 - d
+                start = digits + "0" * z
+                end = digits + "9" * z
+                return ("", f"{start}-{end}")
+
+        # Plain number → year
+        if stripped.isdigit():
+            return ("", stripped)
+
+        # Everything else → name
+        return (stripped, "")

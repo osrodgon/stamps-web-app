@@ -21,3 +21,5 @@
 - [Today] Integrated IssueTable into StampsManagerPage
 - [Today] Refactored to COLUMNS-driven architecture with column_def.py
 - [Today] Fixed circular import, UserControl, Dropdown, layout issues
+- [Today] Added TextField filter to AppHeader left area
+- [Today] Added AppHeader left_area expand=True for filter layout

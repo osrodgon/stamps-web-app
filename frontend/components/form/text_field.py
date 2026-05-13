@@ -1,6 +1,8 @@
 import flet as ft
+from typing import Any, Callable, Optional
 
 from components.colors import BLUE_GREY_100, BLUE_700
+
 
 class TextField(ft.TextField):
     """
@@ -18,28 +20,55 @@ class TextField(ft.TextField):
         (Inherited from ft.TextField)
     """
     
-    is_focused = False
+    is_focused: bool = False
 
-    def __init__(self, label, password=False, can_reveal_password=False):
+    def __init__(
+        self,
+        label: str,
+        password: bool = False,
+        can_reveal_password: bool = False,
+        border_color: str = BLUE_GREY_100,
+        focused_border_color: str = BLUE_700,
+        width: Optional[int] = None,
+        on_click: Optional[Callable[..., None]] = None,
+        on_change: Optional[Callable[..., None]] = None,
+        expand: bool = True,
+        border: ft.InputBorder = ft.InputBorder.UNDERLINE,
+        text_size: int = 14,
+        label_style: Optional[ft.TextStyle] = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initializes a TextField with the specified label and behavior.
 
         Args:
-            label (str): The label text displayed above or inside the field.
-            password (bool, optional): If True, the field masks input as a
-                password field. Defaults to False.
-            can_reveal_password (bool, optional): If True and password is True,
-                displays a toggle icon to reveal/hide the password. Only
-                applicable when password=True. Defaults to False.
+            label: The label text displayed above or inside the field.
+            password: If True, the field masks input as a password field.
+            can_reveal_password: If True and password is True, displays a
+                toggle icon to reveal/hide the password.
+            border_color: Border color when not focused.
+            focused_border_color: Border color when focused.
+            width: Fixed width of the field. None = auto/expand.
+            on_click: Callback for click events.
+            expand: Whether the field expands to fill available space.
+            border: Border style (UNDERLINE, OUTLINE, NONE, etc.).
+            text_size: Font size of the input text.
+            label_style: TextStyle for the label (color, size, font, etc.).
+            **kwargs: Additional ft.TextField properties (color, cursor_color,
+                border_width, content_padding, tooltip, etc.).
         """
-        super().__init__()
+        super().__init__(**kwargs)
         self.label = label
         self.password = password
         self.can_reveal_password = can_reveal_password
-        self.border_color = BLUE_GREY_100
-        self.focused_border_color = BLUE_700
-        self.text_size = 14
-        self.expand = True
-        self.border = ft.InputBorder.UNDERLINE
+        self.border_color = border_color
+        self.focused_border_color = focused_border_color
+        self.text_size = text_size
+        self.expand = expand
+        self.border = border
         self.font_family = "Roboto"
-        
+        self.on_click = on_click
+        self.on_change = on_change
+        self.width = width
+        if label_style:
+            self.label_style = label_style
