@@ -47,6 +47,8 @@ def fmt_number(value: Any, lang: str) -> str:
     return formatted
 
 
+# Single source of truth for all table columns.
+# To add/remove/reorder columns, edit this list — header and rows update automatically.
 COLUMNS: list[ColumnDef] = [
     ColumnDef("stamps.country", "country", width=100),
     ColumnDef("ui.date", "date", width=120, sortable=True),

@@ -52,7 +52,8 @@ class AppHeader(ft.Container, Logger):
         self.left_area = ft.Row(
             controls=[],
             alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True
         )
         
         # Center area  

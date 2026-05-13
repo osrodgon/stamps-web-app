@@ -27,6 +27,17 @@ class TableHeader(ft.Container):
         sort_order: str = "asc",
         on_sort: Optional[Callable[[str, str], None]] = None,
     ) -> None:
+        """Initialize the table header with column definitions and sort state.
+
+        Builds the header row by iterating COLUMNS. Sortable columns
+        display an arrow icon and respond to clicks.
+
+        Args:
+            columns: List of ColumnDef driving header cells and behavior.
+            sort_key: Currently sorted column API key.
+            sort_order: Current sort direction ("asc" or "desc").
+            on_sort: Called with (sort_key, sort_order) on header click.
+        """
         super().__init__()
         self._columns: list[ColumnDef] = columns
         self._sort_key: str = sort_key

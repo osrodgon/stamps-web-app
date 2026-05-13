@@ -38,6 +38,18 @@ class IssueRow(ft.Container):
         lang: str = "en",
         on_expand: Optional[Callable[[int], None]] = None,
     ) -> None:
+        """Initialize a single issue row with data cells and expandable details.
+
+        Builds the row layout from the COLUMNS definition, applies zebra
+        striping based on row_index, and wires the hover and expand events.
+
+        Args:
+            issue: Raw issue data dict from the API response.
+            row_index: Zero-based index for zebra striping.
+            columns: List of ColumnDef to build cells from.
+            lang: Language code for locale-aware formatting ("en" or "es").
+            on_expand: Called with issue ID when the chevron is toggled open.
+        """
         super().__init__()
         self._issue: dict = issue
         self._row_index: int = row_index
@@ -146,7 +158,11 @@ class IssueRow(ft.Container):
         )
 
     def _build_details(self) -> ft.Container:
-        """Hidden details panel shown when the chevron is clicked."""
+        """Hidden details panel shown when the chevron is clicked.
+
+        Displays the issue description, notes, and used market value.
+        These fields are rendered from the raw issue API data.
+        """
         issue: dict = self._issue
         used: float = float(issue.get("market_value_used", 0) or 0)
 
@@ -170,6 +186,7 @@ class IssueRow(ft.Container):
                                 f"{issue.get('description', '-')}",
                                 size=14,
                                 font_family="Roboto",
+                                text_align=ft.TextAlign.JUSTIFY,
                             ),
                         ],
                         spacing=20,
@@ -194,6 +211,7 @@ class IssueRow(ft.Container):
                                 f"{issue.get('note', '-')}",
                                 size=14,
                                 font_family="Roboto",
+                                text_align=ft.TextAlign.JUSTIFY,
                             ),
                         ],
                         spacing=20,
@@ -218,6 +236,7 @@ class IssueRow(ft.Container):
                     ),
                 ],
                 spacing=4,
+                margin=ft.Margin(right=50)
             ),
             padding=ft.Padding.only(left=52, top=8, bottom=8),
             bgcolor=EXPANSION_BG,

@@ -1,3 +1,13 @@
+"""
+Stamps manager page for administering the master stamp catalog.
+
+Provides a full-featured data table for browsing, filtering, and managing
+stamp issues. Includes a debounced search field, slide-out navigation drawer,
+and session-based user preferences.
+"""
+
+import asyncio
+
 import flet as ft
 
 from components.templates.standard_page import StandardPage
@@ -5,6 +15,7 @@ from components.layout.app_header import AppHeader
 from core.translations import _
 from components.buttons.icon_button import IconButton
 from components.colors import DARK_BLUE_GREY
+from components.form.text_field import TextField
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
@@ -18,19 +29,21 @@ class StampsManagerPage(StandardPage):
     
     Provides administrative access to manage the master stamp catalog.
     Features an AppHeader with menu icon, page title, and vertical separator.
+    Includes a debounced filter field that searches by name or year.
     
     The page uses StandardPage as its base, providing:
-    - AppHeader with left-aligned controls (menu, title, separator)
-    - Main content area for stamp management interface
+    - AppHeader with left-aligned controls (menu, title, separator, filter)
+    - Main content area for the IssueTable
+    - Slide-out AppDrawer navigation
     
     Attributes:
-        header: The AppHeader containing menu, title, and separator.
+        header: The AppHeader containing menu, title, separator, and filter.
     """
     
     header: AppHeader
         
     def __init__(self, page: ft.Page):
-        """Initialize the StampsManagerPage.
+        """Initialize the StampsManagerPage with header, filter, table, and drawer.
         
         Args:
             page: The Flet page instance.
@@ -39,6 +52,8 @@ class StampsManagerPage(StandardPage):
             page=page,
             header_height=80,
         )
+        
+        self._filter_task: asyncio.Task | None = None
         
         # Set AppHeader first
         self.header = self.set_app_header(AppHeader())
@@ -52,11 +67,42 @@ class StampsManagerPage(StandardPage):
             size=20
         )
         separator = VerticalLine(thickness=1, length=30, color=ft.Colors.GREY_700)
+        filter = TextField(
+            label=_("filter.series_year"),
+            label_style=ft.TextStyle(
+                color=ft.Colors.GREY_500,
+                font_family="Roboto"
+            ),
+            text_size=14,
+            border = ft.InputBorder.UNDERLINE,
+            # Color when not focused
+            border_color=ft.Colors.GREY_500,
+            # Color when the user clicks/tabs into it
+            focused_border_color=ft.Colors.GREY_500,
+            # Text color while typing
+            color=ft.Colors.WHITE,
+            # Cursor color
+            cursor_color=ft.Colors.GREY_500,
+            # Adjusting thickness to match the clean look
+            border_width=1,
+            focused_border_width=2,
+            # Remove default padding to align with the "Stamps Manager" text
+            content_padding=ft.Padding(bottom=0, top=0),
+            expand=False,
+            width=200,
+            tooltip=  _("filter.series_year_tooltip_header") + "\n"  + "\n" \
+                    + _("filter.series_year_tooltip_1") + "\n" \
+                    + _("filter.series_year_tooltip_2") + "\n" \
+                    + _("filter.series_year_tooltip_3") + "\n" \
+                    + _("filter.series_year_tooltip_4"),
+            on_change=self._filter_series_year
+        )
         
         # Add controls to header
         self.header.add_left(menu_icon)
         self.header.add_left(menu_text)
         self.header.add_left(separator)
+        self.header.add_left(filter)
         
         # Create the drawer
         self.drawer = AppDrawer(on_logout=self.request_logout)
@@ -81,7 +127,8 @@ class StampsManagerPage(StandardPage):
                 
         page.run_task(self.read_prefs)
         
-    async def menu_clicked(self, e):
+    async def menu_clicked(self, e: ft.ControlEvent) -> None:
+        """Toggle the slide-out navigation drawer open or closed."""
         self.log.debug("Hamburger menu clicked")
         
         if self.drawer.offset.x == 0:
@@ -92,8 +139,8 @@ class StampsManagerPage(StandardPage):
             self.drawer.offset = ft.Offset(0, 0)
         self.drawer.update()
         
-    async def read_prefs(self):
-        """Load user preferences and initialize table data."""
+    async def read_prefs(self) -> None:
+        """Load user preferences from SharedPreferences and initialize table data."""
         prefs = ft.SharedPreferences()
 
         user_first_name = await prefs.get(USER_FIRST_NAME)
@@ -103,3 +150,24 @@ class StampsManagerPage(StandardPage):
         self.drawer.update_data(user_first_name, user_last_name, user_email)
         await self._table.load()
         
+    async def _filter_series_year(self, e: ft.ControlEvent) -> None:
+        """Handle filter text changes with 300ms debounce.
+
+        Cancels any pending search task and starts a new debounced one,
+        ensuring only the final value triggers an API call.
+        Args:
+            e: Control event containing the new filter value.
+        """
+        if self._filter_task:
+            self._filter_task.cancel()
+        self._filter_task = asyncio.create_task(self._debounced_search(e.control.value))
+
+    async def _debounced_search(self, value: str) -> None:
+        """Wait 300ms then trigger a table reload with the current filter.
+        
+        Args:
+            value: The raw filter string (text, number, or pattern).
+        """
+        await asyncio.sleep(0.3)
+        self.log.debug(f"Aplying filter: {value}")
+        await self._table.load(search=value)

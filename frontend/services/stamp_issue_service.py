@@ -24,12 +24,13 @@ class StampIssueService(BaseService):
         sort_by: str = "date",
         order: str = "asc",
         name: str = "",
+        year: str = "",
     ) -> requests.Response | None:
         """
         Fetch a paginated, sorted list of stamp issues.
 
         Query params match the backend IssuesView GET endpoint:
-          - sortBy, order, page, pageSize, name (issue name filter)
+          - sortBy, order, page, pageSize, name, year
 
         Args:
             page: Page number (1-indexed).
@@ -37,6 +38,7 @@ class StampIssueService(BaseService):
             sort_by: Field to sort by ("date" or "name").
             order: Sort order ("asc" or "desc").
             name: Filter by issue name (case-insensitive).
+            year: Filter by year or year range (e.g. "2002" or "2000-2010").
 
         Returns:
             Raw requests.Response, or None on network error.
@@ -49,6 +51,8 @@ class StampIssueService(BaseService):
         }
         if name:
             params["name"] = name
+        if year:
+            params["year"] = year
 
         url = f"{URLs.Backend.issues}?{urlencode(params)}"
         return await self._make_request(
