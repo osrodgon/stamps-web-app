@@ -11,6 +11,7 @@ import flet.canvas as cv
 from typing import Callable, Optional
 
 from components.colors import SLIDER_INACTIVE
+from core.translations import _
 
 
 class YearRangeSelector(ft.Container):
@@ -83,7 +84,7 @@ class YearRangeSelector(ft.Container):
         self._label: ft.Text = ft.Text(
             spans=[
                 ft.TextSpan(
-                    "Years: ",
+                    f"{_("filter.years_available")}: ",
                     ft.TextStyle(
                         color=ft.Colors.GREY_500, 
                         size=14, 
