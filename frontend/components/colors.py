@@ -94,4 +94,6 @@ ICON_GREY: str = "#666666"
 EXPANSION_BG: str = "#FAFAFA"
 #: Darker Grey (#E8E8E8) - Used for row hovering
 ROW_HOVER: str = "#E8E8E8"
+#: Muted blue-grey (#3d4c5d) - used for RangeSlider inactive track.
+SLIDER_INACTIVE: str = "#3d4c5d"
 
