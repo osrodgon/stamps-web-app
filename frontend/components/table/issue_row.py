@@ -12,14 +12,13 @@ from vine import wrap
 from components.colors import (
     BG_LIGHT,
     DARK_BLUE_GREY,
-    DELETE_RED,
     EXPANSION_BG,
-    ICON_GREY,
     ROW_BORDER,
     ROW_HOVER,
     TEXT_BLUE,
 )
-from components.table.column_def import ColumnDef, fmt_currency, fmt_date
+from components.table.column_def import ColumnDef
+from components.table.issue_detail_card import IssueDetailCard
 from core.translations import _
 
 
@@ -37,6 +36,7 @@ class IssueRow(ft.Container):
         columns: Optional[list[ColumnDef]] = None,
         lang: str = "en",
         on_expand: Optional[Callable[[int], None]] = None,
+        expanded: bool = False,
     ) -> None:
         """Initialize a single issue row with data cells and expandable details.
 
@@ -49,6 +49,7 @@ class IssueRow(ft.Container):
             columns: List of ColumnDef to build cells from.
             lang: Language code for locale-aware formatting ("en" or "es").
             on_expand: Called with issue ID when the chevron is toggled open.
+            expanded: If True, start with details expanded (used for first row on page 1).
         """
         super().__init__()
         self._issue: dict = issue
@@ -56,15 +57,20 @@ class IssueRow(ft.Container):
         self._columns: list[ColumnDef] = columns or []
         self._lang: str = lang
         self._on_expand: Optional[Callable[[int], None]] = on_expand
-        self._is_expanded: bool = False
+        self._is_expanded: bool = expanded
         self._original_bgcolor: str | None = BG_LIGHT if row_index % 2 == 0 else None
+        self._stamps: list[dict] = []
+        self._loading_stamps: bool = False
 
         self._chevron_icon: ft.Icon = ft.Icon(
-            icon=ft.Icons.KEYBOARD_ARROW_DOWN,
+            icon=ft.Icons.KEYBOARD_ARROW_UP if expanded else ft.Icons.KEYBOARD_ARROW_DOWN,
             size=16,
             color=ft.Colors.WHITE,
         )
-        self._details: ft.Container = ft.Container(visible=False)
+        self._details: ft.Container = ft.Container(
+            content=self._build_details() if expanded else None,
+            visible=expanded,
+        )
 
         self.content = ft.Column(
             controls=[self._build_main_row(), self._details],
@@ -88,14 +94,12 @@ class IssueRow(ft.Container):
                 color=TEXT_BLUE if is_name else None,
             ))
 
-        cells.append(self._build_delete_button())
-
         return ft.Container(
             content=ft.Row(
                 controls=cells,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.Padding.symmetric(horizontal=10, vertical=8),
+            padding=ft.Padding(left=10, right=25, top=8, bottom=8),
             border=ft.Border.only(bottom=ft.BorderSide(1, ROW_BORDER)),
         )
 
@@ -138,126 +142,40 @@ class IssueRow(ft.Container):
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
 
-    def _build_delete_button(self) -> ft.Container:
-        """Red circular delete button.
-
-        TODO: Implement delete with AlertDialog confirmation.
-        """
-        return ft.Container(
-            content=ft.Icon(
-                icon=ft.Icons.DELETE,
-                size=18,
-                color=ft.Colors.WHITE,
-            ),
-            width=32,
-            height=32,
-            bgcolor=DELETE_RED,
-            border_radius=4,
-            alignment=ft.Alignment.CENTER,
+    def _build_details(self) -> IssueDetailCard:
+        """Build the expanded detail card with full issue and stamp info."""
+        return IssueDetailCard(
+            issue=self._issue,
+            stamps=self._stamps,
+            lang=self._lang,
+            loading=self._loading_stamps,
         )
 
-    def _build_details(self) -> ft.Container:
-        """Hidden details panel shown when the chevron is clicked.
+    def set_loading(self) -> None:
+        """Set the details card to loading state.
 
-        Displays the issue description, notes, and used market value.
-        These fields are rendered from the raw issue API data.
+        Used when the row is auto-expanded (e.g. rows_per_page=1)
+        to show a loading indicator while stamps are fetched asynchronously.
+        Does not call update() — parent is responsible for that.
         """
-        issue: dict = self._issue
-        used: float = float(issue.get("market_value_used", 0) or 0)
-        description:str = issue.get("description") or _("ui.no_text_value")
-        notes: str = issue.get("note") or _("ui.no_text_value")
-        date: str = fmt_date(issue.get("date"), self._lang)
-        issue_name: str = issue.get("name") or _("ui.no_text_value")
+        if not self._is_expanded:
+            return
+        self._loading_stamps = True
+        self._details.content = self._build_details()
 
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                f"{date} - {issue_name}",
-                                size=22,
-                                font_family="Roboto-Black",
-                            )
-                        ],
-                        spacing=20,
-                    ),
-                    # Description
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                f"{_('ui.description')}:",
-                                size=14,
-                                font_family="Roboto-Bold",
-                            )
-                        ],
-                        spacing=20,
-                    ),
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                description,
-                                size=14,
-                                font_family="Roboto",
-                                text_align=ft.TextAlign.JUSTIFY,
-                            ),
-                        ],
-                        spacing=20,
-                        wrap=True,
-                        margin= ft.Margin(bottom=10)
-                    ),
-                    # Notes
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                f"{_('ui.notes')}:",
-                                size=14,
-                                font_family="Roboto-Bold",
-                            )
-                        ],
-                        spacing=20,
-                        wrap=True,
-                    ),
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                notes,
-                                size=14,
-                                font_family="Roboto",
-                                text_align=ft.TextAlign.JUSTIFY,
-                            ),
-                        ],
-                        spacing=20,
-                        wrap=True,
-                        margin= ft.Margin(bottom=10)
-                    ),
-                    # Market value used
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                f"{_('stamps.market_value_used')}:",
-                                size=14,
-                                font_family="Roboto-Bold",
-                            ),
-                            ft.Text(
-                                fmt_currency(used, self._lang),
-                                size=14,
-                                font_family="Roboto",
-                            ),
-                        ],
-                        spacing=20,
-                    ),
-                ],
-                spacing=4,
-                margin=ft.Margin(right=50)
-            ),
-            padding=ft.Padding.only(left=52, top=8, bottom=8),
-            bgcolor=EXPANSION_BG,
-            border=ft.Border.only(
-                top=ft.BorderSide(1, ROW_BORDER),
-                bottom=ft.BorderSide(1, ROW_BORDER),
-            ),
-        )
+    def set_stamps(self, stamps: list[dict]) -> None:
+        """Update stamps data and rebuild the details card.
+
+        Called by the parent IssueTableApp after async stamp fetch.
+
+        Args:
+            stamps: List of stamp dicts from the API.
+        """
+        self._stamps = stamps
+        self._loading_stamps = False
+        if self._is_expanded:
+            self._details.content = self._build_details()
+            self.update()
 
     def _toggle_expand(self, e: ft.ControlEvent) -> None:
         """Toggle the details section visibility."""
@@ -270,6 +188,7 @@ class IssueRow(ft.Container):
         )
 
         if self._is_expanded:
+            self._loading_stamps = self._stamps == []
             self._details.content = self._build_details()
         self._details.visible = self._is_expanded
         self.update()

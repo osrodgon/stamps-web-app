@@ -42,6 +42,35 @@
 - Frontend framework: Flet (not NiceGUI)
 - Testing: pytest with pytest-asyncio
 - All docstring updates completed for Priority 1-4 files
+- IssueTable fully implemented with IssueDetailCard expansion
+
+### YearRangeSelector Implementation (2025-05-12)
+- [x] Created YearRangeSelector with Canvas-drawn two-thumb slider
+- [x] Added configurable track_height, thumb_radius, step, padding params
+- [x] Added hover aura, drag focus (thumb enlarges), tap-to-move support
+- [x] Added async callback support in _notify_change (sync/async transparent)
+- [x] Added set_range() public method for post-construction API initialization
+- [x] Added sel_min_year / sel_max_year properties for external range reads
+- [x] Added get_years() method to IssueService (GET /years/)
+- [x] Integrated into StampsManagerPage header with round-to-nearest-5 init
+- [x] Added debounced year range filter (300ms) → updates table via set_year_filter()
+- [x] Added SLIDER_INACTIVE color constant to colors.py
+- [x] Locale-aware number formatting in TablePagination range text
+- [x] Renamed StampIssueService → IssueService
+- [x] Docstring audit across all modified files
+
+### IssueDetailCard Implementation (2025-05-14)
+- [x] Created IssueDetailCard component (issue_detail_card.py) with 4 modules:
+  - Module A: Identity & Header (series name 32px bold + emission date)
+  - Module B: Technical Specification Matrix (ResponsiveRow 4→2 cols, GREY_50 bg)
+  - Module C: Description & Notes (between specs and valuation)
+  - Module D: Financial Valuation Summary (mint GREEN_700, used BLUE_700, total printed)
+  - Module E: Stamp Inventory DataTable (name, edifil, fesofi, face_value, color, total_printed, market_value_mnh, market_value_used, image)
+- [x] Added async stamp fetch in IssueTableApp._on_expand → _fetch_stamps_for_row
+- [x] Added set_stamps() method on IssueRow to update details after async fetch
+- [x] Added loading/empty states in stamp table section
+- [x] Added 7 new translation keys: year, mint, used, market_value_mnh, technical_specifications, valuation, image
+- [x] Fixed _kv_cell to properly set container.col property (not as kwargs)
 
 ---
 
@@ -53,7 +82,7 @@
 |-------|------|-----------------|
 | `IssueTableApp` | `ft.Container` | Main container, state management, data fetching |
 | `TableHeader` | `ft.Container` | Column titles, sort indicators |
-| `IssueRow` | `ft.Container` | Single row with expansion, delete action |
+| `IssueRow` | `ft.Container` | Single row with expansion (IssueDetailCard) |
 | `TablePagination` | `ft.Container` | Footer with dropdown, navigation |
 
 ## 2. Data via API (no local models)
@@ -97,6 +126,7 @@ All data comes from the backend API. The service layer handles response parsing.
 - `get_issues(page, page_size, sort_by, order, name) -> requests.Response | None`
 - `delete_issue(id) -> requests.Response | None`
 - `get_issue_stamps(id) -> requests.Response | None`
+- `get_years() -> requests.Response | None`
 
 All return raw response objects — caller handles parsing and status checks (same pattern as AuthService).
 
@@ -123,7 +153,6 @@ class IssueTableApp(ft.Container):
 - **Font**: 12px data (Roboto), 12px headers (Roboto-Bold, white, uppercase)
 - **Value column**: `text_align=ft.TextAlign.RIGHT`
 - **Number formatting**: Locale-aware (en: 1,234.56 / es: 1.234,56)
-- **Delete button**: Red circular — TODO (not yet implemented)
 - **No text wrap**: `no_wrap=True`, `overflow=ELLIPSIS` on data cells
 
 ## 5. UI Components
@@ -142,9 +171,9 @@ class IssueTableApp(ft.Container):
 ### IssueRow
 - `ft.Container` with nested controls
 - Builds cells by iterating `COLUMNS` with formatters
-- Chevron toggle expands details panel
+- Chevron toggle expands details panel with IssueDetailCard
 - Hover highlight via `_on_hover`
-- Delete button — TODO (no on_click handler yet)
+- `set_stamps()` method updates card with async stamp data
 
 ### TablePagination
 - Bottom-right aligned
@@ -159,8 +188,7 @@ class IssueTableApp(ft.Container):
 |---------|-----------------|
 | Sorting | Click sortable column header → toggle `_sort_key` + `_sort_order` → call API → rebuild rows |
 | Pagination | Server-side via `page`/`pageSize` params → update state → rebuild rows |
-| Row expansion | Chevron toggles details panel with perf/print/total/value info |
-| Delete | TODO - not yet implemented |
+| Row expansion | Chevron toggles IssueDetailCard with specs, description, valuation, stamp table (async) |
 
 ## 7. Details Expansion - Stamps Data
 
@@ -171,20 +199,23 @@ class IssueTableApp(ft.Container):
 ```
 frontend/
 ├── components/
+│   ├── form/
+│   │   ├── text_field.py          # FieldStyle, TextField class
+│   │   └── year_range_selector.py # YearRangeSelector class
 │   └── table/
-│       ├── __init__.py
 │       ├── column_def.py         # ColumnDef dataclass, COLUMNS list, formatters
+│       ├── issue_detail_card.py  # IssueDetailCard class (expanded detail view)
 │       ├── issue_table_app.py    # IssueTableApp class
-│       ├── table_header.py       # TableHeader class
 │       ├── issue_row.py          # IssueRow class
+│       ├── table_header.py       # TableHeader class
 │       └── table_pagination.py   # TablePagination class
 └── services/
-    └── stamp_issue_service.py    # API methods
+    └── issue_service.py          # IssueService class
 ```
 
 ## 9. Deployment Order
 
-- [x] Step 1: Add `StampIssueService` in `frontend/services/stamp_issue_service.py`
+- [x] Step 1: Add `IssueService` in `frontend/services/issue_service.py`
 - [x] Step 2: Build `IssueRow` (most complex, reusable)
 - [x] Step 3: Build `TableHeader` and `TablePagination`
 - [x] Step 4: Build `IssueTableApp` - assemble pieces, add state

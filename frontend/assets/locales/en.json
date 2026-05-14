@@ -125,7 +125,14 @@
         "color": "Color",
         "edifil_code": "Edifil Code",
         "fesofi_code": "FESOFI Code",
-        "market_value_used": "Market Value (Used)"
+        "market_value_used": "Market Value (Used)",
+        "year": "Year",
+        "mint": "Mint (MNH)",
+        "used": "Used",
+        "market_value_mnh": "Market Value (MNH)",
+        "technical_specifications": "Technical Specifications",
+        "valuation": "Valuation",
+        "image": "Image"
     },
     "collections": {
         "title": "Collections",

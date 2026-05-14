@@ -51,7 +51,7 @@ class TableHeader(ft.Container):
         )
 
         self.bgcolor = HEADER_BG
-        self.padding = ft.Padding.symmetric(horizontal=10, vertical=8)
+        self.padding = ft.Padding(left=10, right=25, top=8, bottom=8)
         self.height=50
         self._rebuild()
 
@@ -64,7 +64,7 @@ class TableHeader(ft.Container):
 
     def _build_columns(self) -> list[ft.Control]:
         """Build the header column list from COLUMNS definition."""
-        cells: list[ft.Control] = [ft.Container(width=32)]
+        cells: list[ft.Control] = [ft.Container(width=24)]
 
         for col in self._columns:
             if col.sortable:
@@ -76,7 +76,6 @@ class TableHeader(ft.Container):
                     text_align=col.text_align,
                 ))
 
-        cells.append(ft.Container(width=32))
         return cells
 
     def _header_cell(
