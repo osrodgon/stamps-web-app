@@ -9,7 +9,8 @@ from typing import Callable, Optional
 import flet as ft
 
 from components.colors import BG_LIGHT, ICON_GREY, ROW_BORDER
-from core.translations import _
+from components.table.column_def import fmt_number
+from core.translations import _, get_language
 
 class TablePagination(ft.Container):
     """Footer pagination controls.
@@ -136,7 +137,8 @@ class TablePagination(ft.Container):
             return "0 of 0"
         start: int = (self._page - 1) * self._page_size + 1
         end: int = min(self._page * self._page_size, self._total)
-        return f"{start:,}-{end:,} {_('pagination.pagination_of')} {self._total:,}"
+        lang: str = get_language()
+        return f"{fmt_number(start, lang)}-{fmt_number(end, lang)} {_('pagination.pagination_of')} {fmt_number(self._total, lang)}"
 
     def _total_pages(self) -> int:
         """Calculate total pages."""

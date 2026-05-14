@@ -2,13 +2,15 @@
 Stamps manager page for administering the master stamp catalog.
 
 Provides a full-featured data table for browsing, filtering, and managing
-stamp issues. Includes a debounced search field, slide-out navigation drawer,
-and session-based user preferences.
+stamp issues. Includes a debounced search field, a YearRangeSelector for
+year-range filtering, slide-out navigation drawer, and session-based user
+preferences.
 """
 
 import asyncio
 
 import flet as ft
+import requests
 
 from components.templates.standard_page import StandardPage
 from components.layout.app_header import AppHeader
@@ -29,16 +31,20 @@ class StampsManagerPage(StandardPage):
     The stamps manager page for the Stamps web application.
     
     Provides administrative access to manage the master stamp catalog.
-    Features an AppHeader with menu icon, page title, and vertical separator.
-    Includes a debounced filter field that searches by name or year.
+    Features an AppHeader with menu icon, page title, vertical separator,
+    debounced name filter and YearRangeSelector.
     
     The page uses StandardPage as its base, providing:
     - AppHeader with left-aligned controls (menu, title, separator, filter)
+    - YearRangeSelector for year-range filtering
     - Main content area for the IssueTable
     - Slide-out AppDrawer navigation
+    - Debounced (300ms) name/year text filter
+    - Debounced (300ms) year range slider
     
     Attributes:
         header: The AppHeader containing menu, title, separator, and filter.
+        drawer: The slide-out navigation drawer.
     """
     
     header: AppHeader
@@ -55,6 +61,8 @@ class StampsManagerPage(StandardPage):
         )
         
         self._filter_task: asyncio.Task | None = None
+        self._year_range_task: asyncio.Task | None = None
+        self._issue_service: IssueService = IssueService()
         
         # Set AppHeader first
         self.header = self.set_app_header(AppHeader())
@@ -79,7 +87,7 @@ class StampsManagerPage(StandardPage):
             on_change=self._filter_series_year,
             width=200
         )
-        year_range_selector = YearRangeSelector(
+        self._year_selector = YearRangeSelector(
             step=5, 
             track_height=1, 
             width=250, 
@@ -92,13 +100,13 @@ class StampsManagerPage(StandardPage):
         self.header.add_left(menu_text)
         self.header.add_left(separator)
         self.header.add_left(series_year_filter)
-        self.header.add_left(year_range_selector)
+        self.header.add_left(self._year_selector)
         
         # Create the drawer
         self.drawer = AppDrawer(on_logout=self.request_logout)
         
         # Create the content area
-        self._table: IssueTableApp = IssueTableApp(service=IssueService())
+        self._table: IssueTableApp = IssueTableApp(service=self._issue_service)
         self.content_area = ft.Column(
             [self._table],
             expand=True,
@@ -130,7 +138,7 @@ class StampsManagerPage(StandardPage):
         self.drawer.update()
         
     async def read_prefs(self) -> None:
-        """Load user preferences from SharedPreferences and initialize table data."""
+        """Load user preferences and initialize table and year selector data."""
         prefs = ft.SharedPreferences()
 
         user_first_name = await prefs.get(USER_FIRST_NAME)
@@ -139,6 +147,21 @@ class StampsManagerPage(StandardPage):
 
         self.drawer.update_data(user_first_name, user_last_name, user_email)
         await self._table.load()
+
+        # Fetch years and initialize the year range selector
+        response = await self._issue_service.get_years()
+        if response and response.status_code == requests.codes.ok:
+            years_data: list[dict] = response.json().get("data", [])
+            years: list[int] = [item["year"] for item in years_data]
+            if years:
+                raw_min: int = min(years)
+                raw_max: int = max(years)
+                self._year_selector.set_range(
+                    min_year=self._round_down(raw_min),
+                    max_year=self._round_up(raw_max),
+                    start=self._round_down(raw_min),
+                    end=self._round_up(raw_max),
+                )
         
     async def _filter_series_year(self, e: ft.ControlEvent) -> None:
         """Handle filter text changes with 300ms debounce.
@@ -154,14 +177,38 @@ class StampsManagerPage(StandardPage):
 
     async def _debounced_search(self, value: str) -> None:
         """Wait 300ms then trigger a table reload with the current filter.
-        
+
         Args:
             value: The raw filter string (text, number, or pattern).
         """
         await asyncio.sleep(0.3)
         self.log.debug(f"Aplying filter: {value}")
         await self._table.load(search=value)
-        
-    def _year_range_selector(self, start: int, end: int) -> None:
-        print(f"Year range selected: {start} - {end}")
+
+    @staticmethod
+    def _round_down(year: int) -> int:
+        """Round a year down to the nearest multiple of 5.
+
+        1852 → 1850, 1857 → 1855, 1840 → 1840
+        """
+        return (year // 5) * 5
+
+    @staticmethod
+    def _round_up(year: int) -> int:
+        """Round a year up to the nearest multiple of 5.
+
+        1852 → 1855, 1857 → 1860, 1840 → 1840
+        """
+        return ((year + 4) // 5) * 5
+
+    async def _year_range_selector(self, start: int, end: int) -> None:
+        """Handle year range changes with 300ms debounce."""
         self.log.debug(f"Year range selected: {start} - {end}")
+        if self._year_range_task:
+            self._year_range_task.cancel()
+        self._year_range_task = asyncio.create_task(self._debounced_year_range(start, end))
+
+    async def _debounced_year_range(self, start: int, end: int) -> None:
+        """Wait 300ms then apply the year range filter."""
+        await asyncio.sleep(0.3)
+        self._table.set_year_filter(f"{start}-{end}")

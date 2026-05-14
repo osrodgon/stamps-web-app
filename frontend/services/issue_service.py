@@ -2,7 +2,8 @@
 Service for stamp issue API communication.
 
 Provides methods to fetch, sort, search, and delete stamp issues
-via the backend REST API.
+via the backend REST API, as well as fetching the full list of
+available years from the /years/ endpoint.
 """
 
 from urllib.parse import urlencode
@@ -15,7 +16,14 @@ from settings import API_MASTER_KEY
 
 
 class IssueService(BaseService):
-    """Service for managing stamp issue data through the backend API."""
+    """Service for managing stamp issue data through the backend API.
+
+    Public methods:
+        get_issues:       Paginated issue list with sort, name, and year filters.
+        delete_issue:     Remove an issue by ID.
+        get_issue_stamps: Fetch stamps belonging to a specific issue.
+        get_years:        Fetch all available years for range selector initialization.
+    """
 
     async def get_issues(
         self,
@@ -92,4 +100,19 @@ class IssueService(BaseService):
         return await self._make_request(
             request_type=self.GET,
             url=url,
+        )
+
+    async def get_years(self) -> requests.Response | None:
+        """Fetch all available years from the backend.
+
+        GET /years/ returns a list of {"id": int, "year": int} objects
+        ordered ascending. The frontend computes min/max from the list.
+
+        Returns:
+            Raw requests.Response, or None on network error.
+        """
+        return await self._make_request(
+            request_type=self.GET,
+            url=URLs.Backend.years,
+            headers={"Authorization": f"Api-Key {API_MASTER_KEY}"},
         )

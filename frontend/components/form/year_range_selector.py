@@ -5,6 +5,7 @@ Draws the track bar and thumbs via ft.canvas primitives for full
 control over track height, colors, and thumb appearance.
 """
 
+import asyncio
 import flet as ft
 import flet.canvas as cv
 from typing import Callable, Optional
@@ -53,6 +54,7 @@ class YearRangeSelector(ft.Container):
             right_padding: Internal padding on the right in pixels (default 20).
             bottom_padding: Internal padding below the slider in pixels (default 0).
             on_change: Called with (start_year, end_year) when thumbs move via drag or tap.
+            Note: start_value/end_value default to min_year/max_year when set to None.
         """
         super().__init__()
         
@@ -160,9 +162,56 @@ class YearRangeSelector(ft.Container):
         return round(raw / self._step) * self._step
 
     def _notify_change(self) -> None:
-        """Fire the on_change callback with current start and end values."""
+        """Fire the on_change callback with current start and end values.
+
+        Supports both sync callbacks and async coroutines.
+        """
         if self._on_change:
-            self._on_change(int(self._start), int(self._end))
+            result = self._on_change(int(self._start), int(self._end))
+            if asyncio.iscoroutine(result):
+                asyncio.create_task(result)
+
+    def set_range(self, min_year: int, max_year: int, start: int, end: int) -> None:
+        """Update the year range and selected thumb positions in-place.
+
+        Called after construction when the available year range is
+        fetched from the API. Updates internal state, label, and
+        canvas without recreating the widget.
+
+        Args:
+            min_year: New minimum selectable year.
+            max_year: New maximum selectable year.
+            start: New left thumb position.
+            end: New right thumb position.
+        """
+        self._min_year = min_year
+        self._max_year = max_year
+        self._start = float(start)
+        self._end = float(end)
+        self._label.spans[1].text = f"{start} - {end}"
+        self._label.update()
+        self._draw()
+        self._canvas.update()
+    
+    @property
+    def sel_min_year(self) -> int:
+        """Return the current minimum year of the slider range.
+
+        This value is set at construction via min_year and may be
+        updated later via set_range(). Used by external code to
+        determine the full range bounds.
+        """
+        return self._min_year
+
+    @property
+    def sel_max_year(self) -> int:
+        """Return the current maximum year of the slider range.
+
+        This value is set at construction via max_year and may be
+        updated later via set_range(). Used by external code to
+        determine the full range bounds.
+        """
+        return self._max_year
 
     # -- Drawing --
 
