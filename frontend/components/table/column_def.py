@@ -1,28 +1,38 @@
 """
-Column definition and formatters for the issue table.
+Column definitions and formatters for the issue table.
 
-Shared module to avoid circular imports between table components.
+Provides the ColumnDef dataclass used as the single source of truth
+for all table columns, along with locale-aware formatters for
+currency, number, and date display.
+
+Shared module avoids circular imports between table components.
 """
 
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
+import datetime
 import flet as ft
 
 from core.translations import _
+
 
 @dataclass
 class ColumnDef:
     """Definition for a single table column.
 
     Attributes:
-        translation_key: Key for the header label translation.
-        api_key: Key used in the API response dict.
-        width: Column width in pixels (None = expand to fill space).
-        text_align: Text alignment within the cell.
-        sortable: Whether clicking the header sorts by this column.
-        fmt: Optional formatter (value, lang) -> display string.
+        translation_key: Dot-notation key for the header label translation
+            (e.g. "stamps.country", "ui.date").
+        api_key: Key used in the API response dict (e.g. "country", "date").
+        width: Fixed width in pixels. None means the column expands to fill
+            remaining horizontal space.
+        text_align: Text alignment within the cell (default LEFT).
+        sortable: When True, clicking the header toggles sort by this column.
+        fmt: Optional formatter function (value, lang) -> display string.
+            Used for locale-aware rendering (currency, numbers, dates).
     """
+
     translation_key: str
     api_key: str
     width: Optional[int] = None
@@ -32,7 +42,18 @@ class ColumnDef:
 
 
 def fmt_currency(value: Any, lang: str) -> str:
-    """Format a monetary value with locale-aware separators."""
+    """Format a monetary value with locale-aware separators.
+
+    en: "€1,234.56"
+    es: "€1.234,56"
+
+    Args:
+        value: Raw value (string or number). None/empty → "€0.00".
+        lang: Language code ("en" or "es").
+
+    Returns:
+        Formatted string with Euro symbol and two decimal places.
+    """
     val: float = float(value or 0)
     formatted: str = f"€{val:,.2f}"
     if lang == "es":
@@ -41,22 +62,41 @@ def fmt_currency(value: Any, lang: str) -> str:
 
 
 def fmt_number(value: Any, lang: str) -> str:
-    """Format an integer with locale-aware thousands separator."""
+    """Format an integer with locale-aware thousands separator.
+
+    en: "1,234,567"
+    es: "1.234.567"
+
+    Args:
+        value: Raw value (string or number). None/empty → "0".
+        lang: Language code ("en" or "es").
+
+    Returns:
+        Formatted integer string without decimals.
+    """
     val: int = int(value or 0)
     formatted: str = f"{val:,}"
     if lang == "es":
         formatted = formatted.replace(",", ".")
     return formatted
 
-import datetime
-
 
 def fmt_date(value: str, lang: str) -> str:
-    """
-    Format an ISO date string (YYYY-MM-DD) into a locale-aware display string.
+    """Format an ISO date string into a locale-aware display string.
+
+    Month names come from locale JSON files (date.months.1-12)
+    so they're fully translatable without hardcoding.
 
     en: "15 of June of 2023"
     es: "15 de junio de 2023"
+
+    Args:
+        value: ISO date string ("YYYY-MM-DD") or empty/null.
+        lang: Language code. Passed for interface consistency with other
+            formatters but unused internally (locale lookup via _()).
+
+    Returns:
+        Formatted date string, or "-" if empty, or raw value if unparseable.
     """
     if not value:
         return "-"
@@ -64,25 +104,18 @@ def fmt_date(value: str, lang: str) -> str:
         dt = datetime.date.fromisoformat(value)
     except (ValueError, TypeError):
         return value or "-"
-    if lang == "es":
-        months = [
-            "enero", "febrero", "marzo", "abril", "mayo", "junio",
-            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-        ]
-        return f"{dt.day} {_('ui.of')} {months[dt.month - 1]} {_('ui.of')} {dt.year}"
-    months_en = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
-    ]
-    return f"{dt.day} {_('ui.of')} {months_en[dt.month - 1]} {_("ui.of")} {dt.year}"
+    month_name: str = _(f"date.months.{dt.month}")
+    of_word: str = _("date.of")
+    return f"{dt.day} {of_word} {month_name} {of_word} {dt.year}"
 
 
 # Single source of truth for all table columns.
-# To add/remove/reorder columns, edit this list — header and rows update automatically.
+# To add, remove, or reorder columns, edit this list —
+# header and row components update automatically.
 COLUMNS: list[ColumnDef] = [
     ColumnDef("stamps.country", "country", width=100),
     ColumnDef("ui.date", "date", width=120, sortable=True),
-    ColumnDef("stamps.issue_name", "name", text_align=ft.TextAlign.LEFT, sortable=True), 
+    ColumnDef("stamps.issue_name", "name", text_align=ft.TextAlign.LEFT, sortable=True),
     ColumnDef("stamps.artist", "artist"),
     ColumnDef("stamps.printer", "printer"),
     ColumnDef("stamps.perforation", "perforation", width=100),
@@ -90,5 +123,5 @@ COLUMNS: list[ColumnDef] = [
     ColumnDef("stamps.print_type", "print_type", width=100),
     ColumnDef("stamps.paper_type", "paper_type", width=100),
     ColumnDef("stamps.total_printed", "total_printed", width=120, text_align=ft.TextAlign.RIGHT, fmt=fmt_number),
-    ColumnDef("ui.value", "market_value_mnh", width=100, text_align=ft.TextAlign.RIGHT, fmt=fmt_currency)
+    ColumnDef("ui.value", "market_value_mnh", width=100, text_align=ft.TextAlign.RIGHT, fmt=fmt_currency),
 ]

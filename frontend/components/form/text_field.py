@@ -1,3 +1,16 @@
+"""
+Custom styled TextField component with preset styling profiles.
+
+Provides a reusable text field built on ft.TextField with support for
+a FieldStyle dataclass that groups common styling attributes (border,
+colors, padding, label style). Two presets are available:
+
+  - DEFAULT:   Underline border, blue accents, expands to fill width.
+               Used in login/signup forms.
+  - APP_HEADER: Underline border, grey accents, no expand, white text.
+               Used in the page header filter.
+"""
+
 from dataclasses import dataclass
 
 import flet as ft
@@ -5,8 +18,30 @@ from typing import Any, Callable, Optional
 
 from components.colors import BLUE_GREY_100, BLUE_700
 
+
 @dataclass
 class FieldStyle:
+    """A set of styling parameters for a TextField.
+
+    All values default to None, meaning "use the ft.TextField default".
+    Non-None values are applied during TextField initialization.
+    FieldStyle values are overridable by passing the same attribute
+    as an explicit keyword argument to the TextField constructor.
+
+    Attributes:
+        border: Border style (UNDERLINE, OUTLINE, NONE).
+        expand: Whether the field expands to fill available width.
+        border_color: Border color hex when not focused.
+        focused_border_color: Border color hex when focused.
+        text_size: Font size for the input text.
+        color: Text color of the entered value.
+        cursor_color: Color of the text cursor.
+        border_width: Border thickness in pixels.
+        focused_border_width: Border thickness when focused.
+        content_padding: Internal padding around the input area.
+        label_style: TextStyle for the floating label.
+    """
+
     border: ft.InputBorder = ft.InputBorder.UNDERLINE
     expand: bool = True
     border_color: str = BLUE_GREY_100
@@ -20,8 +55,11 @@ class FieldStyle:
     label_style: ft.TextStyle | None = None
 
 
-DEFAULT = FieldStyle()
-APP_HEADER = FieldStyle(
+# Standard form fields — underline border, blue accents, auto-expands
+DEFAULT: FieldStyle = FieldStyle()
+
+# Page header filter — underline border, grey accents, fixed width
+APP_HEADER: FieldStyle = FieldStyle(
     expand=False,
     border_color=ft.Colors.GREY_500,
     focused_border_color=ft.Colors.GREY_500,
@@ -34,22 +72,24 @@ APP_HEADER = FieldStyle(
     label_style=ft.TextStyle(color=ft.Colors.GREY_500, font_family="Roboto"),
 )
 
+
 class TextField(ft.TextField):
-    """
-    A customized text input field component for Flet applications.
+    """A customized text input field component for Flet applications.
 
-    This component extends the standard Flet TextField with predefined
-    styling: underlined border, expanded width, and custom border colors
-    for default and focused states. It supports both standard text input
-    and password fields with optional reveal toggle.
+    Extends ft.TextField with a FieldStyle preset system for easy
+    styling. Supports password fields with reveal toggle, custom
+    border colors, and full ft.TextField compatibility via **kwargs.
 
-    Colors are sourced from the centralized color module
-    (BLUE_GREY_100, BLUE_700).
+    Styling resolution order:
+      1. field_style preset provides base values
+      2. Explicit keyword arguments override field_style
+      3. **kwargs catch any remaining ft.TextField properties
+         (color, cursor_color, border_width, tooltip, etc.)
 
     Attributes:
-        (Inherited from ft.TextField)
+        is_focused: Whether the field currently has keyboard focus.
     """
-    
+
     is_focused: bool = False
 
     def __init__(
@@ -57,36 +97,47 @@ class TextField(ft.TextField):
         label: str,
         password: bool = False,
         can_reveal_password: bool = False,
-        border_color: Optional[str] = None,            # was: = BLUE_GREY_100
-        focused_border_color: Optional[str] = None,      # was: = BLUE_700
+        border_color: Optional[str] = None,
+        focused_border_color: Optional[str] = None,
         width: Optional[int] = None,
         on_click: Optional[Callable[..., None]] = None,
         on_change: Optional[Callable[..., None]] = None,
-        expand: Optional[bool] = None,                   # was: = True
-        border: Optional[ft.InputBorder] = None,          # was: = UNDERLINE
-        text_size: Optional[int] = None,                 # was: = 14
+        expand: Optional[bool] = None,
+        border: Optional[ft.InputBorder] = None,
+        text_size: Optional[int] = None,
         label_style: Optional[ft.TextStyle] = None,
         field_style: FieldStyle = DEFAULT,
         **kwargs: Any,
     ) -> None:
-        """
-        Initializes a TextField with the specified label and behavior.
+        """Initializes a TextField with the specified label and behavior.
+
+        Styling is resolved from field_style first, then overridden
+        by any explicit argument.  This means:
+          TextField(label="X")                          → uses DEFAULT
+          TextField(label="X", field_style=APP_HEADER)  → uses APP_HEADER
+          TextField(label="X", border_color=RED)        → RED overrides DEFAULT
 
         Args:
             label: The label text displayed above or inside the field.
             password: If True, the field masks input as a password field.
             can_reveal_password: If True and password is True, displays a
                 toggle icon to reveal/hide the password.
-            border_color: Border color when not focused.
-            focused_border_color: Border color when focused.
+            border_color: Border color when not focused. Overrides field_style.
+            focused_border_color: Border color when focused. Overrides field_style.
             width: Fixed width of the field. None = auto/expand.
             on_click: Callback for click events.
-            expand: Whether the field expands to fill available space.
-            border: Border style (UNDERLINE, OUTLINE, NONE, etc.).
-            text_size: Font size of the input text.
-            label_style: TextStyle for the label (color, size, font, etc.).
+            on_change: Callback for text change events.
+            expand: Whether the field expands to fill available width.
+                Overrides field_style.
+            border: Border style (UNDERLINE, OUTLINE, NONE).
+                Overrides field_style.
+            text_size: Font size of the input text. Overrides field_style.
+            label_style: TextStyle for the label. Overrides field_style.
+            field_style: A FieldStyle preset providing default styling.
+                Overridable by any of the explicit params above.
             **kwargs: Additional ft.TextField properties (color, cursor_color,
-                border_width, content_padding, tooltip, etc.).
+                border_width, focused_border_width, content_padding, tooltip,
+                hint_text, suffix_icon, prefix_icon, etc.).
         """
         super().__init__(**kwargs)
         self.label = label
@@ -101,6 +152,7 @@ class TextField(ft.TextField):
         self.expand = expand if expand is not None else field_style.expand
         self.border = border if border is not None else field_style.border
 
+        # Non-conflicting field_style properties (no explicit param equivalent)
         if field_style.color:
             self.color = field_style.color
         if field_style.cursor_color:
