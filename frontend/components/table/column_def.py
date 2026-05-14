@@ -74,7 +74,7 @@ def fmt_date(value: str, lang: str) -> str:
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December",
     ]
-    return f"{dt.day} {_('ui.of')} {months_en[dt.month - 1]} {_("ui.of")} {dt.year}"
+    return f"{dt.day} {_('ui.of')} {months_en[dt.month - 1]} {_('ui.of')} {dt.year}"
 
 
 # Single source of truth for all table columns.
