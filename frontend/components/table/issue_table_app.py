@@ -8,6 +8,7 @@ data table with server-side sorting and pagination.
 from typing import Optional
 
 import flet as ft
+import requests
 
 from components.colors import HEADER_BG, ICON_GREY, ROW_BORDER, SKY_BLUE
 from components.table.column_def import COLUMNS
@@ -15,28 +16,35 @@ from components.table.issue_row import IssueRow
 from components.table.table_header import TableHeader
 from components.table.table_pagination import TablePagination
 from core.translations import _, get_language
-from services.stamp_issue_service import StampIssueService
+from services.issue_service import IssueService
 
 
 class IssueTableApp(ft.Container):
     """Main issue table with header, rows, and pagination.
 
     Manages state for pagination and sorting, fetches data from the
-    backend API, and coordinates all sub-components.
+    backend API, and coordinates all sub-components. Supports column
+    definitions via COLUMNS list, name/year text filtering, optional
+    year range slider filtering, and server-side pagination/sorting.
+
+    Public methods:
+        load(search):      Fetch data with optional name/year filter.
+        set_year_filter(): Apply a year range from an external slider.
     """
 
-    def __init__(self, service: Optional[StampIssueService] = None) -> None:
+    def __init__(self, service: Optional[IssueService] = None) -> None:
         """Initialize the table with sub-components, state, and default layout.
 
         Sets up state for pagination, sorting, and the debounced name/year
         filter. Builds the layout stack: progress bar overlay, scrollable
-        rows container, and pagination footer.
+        rows container, and pagination footer. Also initialises the year
+        range filter used by the external YearRangeSelector widget.
 
         Args:
-            service: StampIssueService instance. Creates one if not provided.
+            service: IssueService instance. Creates one if not provided.
         """
         super().__init__()
-        self._service: StampIssueService = service or StampIssueService()
+        self._service: IssueService = service or IssueService()
         self.expand = True
 
         self._data: list[dict] = []
@@ -47,6 +55,7 @@ class IssueTableApp(ft.Container):
         self._sort_order: str = "asc"
         self._name_filter: str = ""
         self._lang: str = get_language()
+        self._year_filter: str = ""
 
         self._progress_bar: ft.ProgressBar = ft.ProgressBar(
             visible=False,
@@ -112,9 +121,23 @@ class IssueTableApp(ft.Container):
         self.bgcolor = ft.Colors.WHITE
 
     async def load(self, search: str = "") -> None:
-        """Fetch data from the API and update all sub-components."""
+        """Fetch data from the API and update all sub-components.
+
+        Parses the search value via _parse_filter() to resolve name
+        vs. year filtering. If no year is extracted from the search
+        string, falls back to the active year range filter set by
+        set_year_filter() (e.g. from the YearRangeSelector widget).
+
+        Args:
+            search: Raw filter string from the text field. May be a name,
+                a year number (e.g. "2002"), or a year pattern (e.g. "19*").
+        """
         self._name_filter = search
-        name, year = self._parse_filter(search)
+        name_val, year_val = self._parse_filter(search)
+        # Text field year takes priority; slider year used as fallback
+        if not year_val and self._year_filter:
+            year_val = self._year_filter
+            
         self._progress_bar.visible = True
         self._lang = get_language()
         self.update()
@@ -124,11 +147,11 @@ class IssueTableApp(ft.Container):
             page_size=self._rows_per_page,
             sort_by=self._sort_key,
             order=self._sort_order,
-            name=name,
-            year=year
+            name=name_val,
+            year=year_val
     )
 
-        if response and response.status_code == 200:
+        if response and response.status_code == requests.codes.ok:
             body: dict = response.json()
             data_payload = body.get("data") or {}
             self._data = data_payload.get("issues", [])
@@ -150,6 +173,15 @@ class IssueTableApp(ft.Container):
             total=self._total,
         )
         self._table_header.update_sort_indicators(self._sort_key, self._sort_order)
+        
+    def set_year_filter(self, year_range: str) -> None:
+        """Set an active year range filter and reload the table.
+
+        Args:
+            year_range: e.g. "1840-2025". Empty string clears the filter.
+        """
+        self._year_filter = year_range
+        self._schedule_fetch()
 
     def _rebuild_rows(self) -> None:
         """Replace all IssueRow instances with current data."""
