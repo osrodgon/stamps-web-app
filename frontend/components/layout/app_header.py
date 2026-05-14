@@ -1,106 +1,112 @@
 """
 App header component for authenticated pages.
 
-This module provides the AppHeader component used in authenticated pages
-like Stamps Manager Page and Collections Page. It provides a three-area
-layout (left, center, right) for header content.
+Provides a three-area layout bar (left, center, right) used in
+StandardPage-based pages like Stamps Manager and Collections.
+Controls are added via add_left/add_center/add_right and rendered
+inside expandable Rows with SPACE_BETWEEN distribution.
 """
 
 import flet as ft
 from core.logger import Logger
 from components.colors import DARK_BLUE_GREY
 
+
 class AppHeader(ft.Container, Logger):
     """
     A header component with three alignment areas: left, center, and right.
-    
+
     Used in StandardPage for authenticated pages like:
     - Stamps Manager Page
     - Collections Page
-    
+
     Layout:
-    - Left area: Left-aligned content (e.g., back button)
-    - Center area: Center-aligned content (typically the page title)
-    - Right area: Right-aligned content (e.g., logout, user menu)
-    
+    - Left area:   Left-aligned controls (menu icon, title, filter, separator).
+                   Does NOT expand — wraps content.
+    - Center area: Center-aligned content (typically empty).
+                   Expands to fill remaining space.
+    - Right area:  Right-aligned controls (user menu, logout).
+                   Does NOT expand — wraps content.
+
+    After calling add_left/add_center/add_right, call update_header()
+    on the parent page to re-render.
+
     Attributes:
-        left (ft.Container): Container for left-aligned content.
-        center (ft.Container): Container for center-aligned content.
-        right (ft.Container): Container for right-aligned content.
+        left_area (ft.Row):  Row for left-aligned header controls.
+        center_area (ft.Row): Row for center-aligned header controls.
+        right_area (ft.Row):  Row for right-aligned header controls.
     """
-    
-    left_area: ft.Container
-    center_area: ft.Container
-    right_area: ft.Container
-    
-    def __init__(self, left_content=None, center_content=None, right_content=None, height: int=80):
-        """
-        Initialize AppHeader with three areas.
-        
+
+    left_area: ft.Row
+    center_area: ft.Row
+    right_area: ft.Row
+
+    def __init__(self, height: int = 80) -> None:
+        """Initialize AppHeader with three empty area Rows.
+
         Args:
-            title (str, optional): Page title to display in center area.
-            left_content (ft.Control, optional): Control for left area.
-            right_content (ft.Control, optional): Control for right area.
-            height (int, optional): Height of the header (default 80)
+            height: Height of the header in pixels (default 80).
         """
         super().__init__(padding=ft.Padding.only(left=10, right=10))
         self.height = height
 
         self.bgcolor = DARK_BLUE_GREY
-        
-        # Left area
+
+        # Left area — left-aligned, natural width
         self.left_area = ft.Row(
             controls=[],
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
         )
-        
-        # Center area  
+
+        # Center area — centered, expands to fill space
         self.center_area = ft.Row(
             controls=[],
             alignment=ft.MainAxisAlignment.CENTER,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
+            expand=True,
         )
-        
-        # Right area
+
+        # Right area — right-aligned, natural width
         self.right_area = ft.Row(
             controls=[],
             alignment=ft.MainAxisAlignment.END,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         self.content = ft.Row(
             controls=[self.left_area, self.center_area, self.right_area],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
+            expand=True,
         )
     
     # --- Left Area ---
-    def add_left(self, control: ft.Control):
-        """Add a control to the left area."""
+
+    def add_left(self, control: ft.Control) -> None:
+        """Append a control to the left area."""
         self.left_area.controls = self.left_area.controls + [control]
-    
-    def clear_left(self):
+
+    def clear_left(self) -> None:
         """Remove all controls from the left area."""
         self.left_area.controls = []
-    
+
     # --- Center Area ---
-    def add_center(self, control: ft.Control):
-        """Add a control to the center area."""
+
+    def add_center(self, control: ft.Control) -> None:
+        """Append a control to the center area."""
         self.center_area.controls = self.center_area.controls + [control]
-    
-    def clear_center(self):
+
+    def clear_center(self) -> None:
         """Remove all controls from the center area."""
         self.center_area.controls = []
-    
+
     # --- Right Area ---
-    def add_right(self, control: ft.Control):
-        """Add a control to the right area."""
+
+    def add_right(self, control: ft.Control) -> None:
+        """Append a control to the right area."""
         self.right_area.controls = self.right_area.controls + [control]
-    
-    def clear_right(self):
+
+    def clear_right(self) -> None:
         """Remove all controls from the right area."""
         self.right_area.controls = []

@@ -15,7 +15,7 @@ from components.layout.app_header import AppHeader
 from core.translations import _
 from components.buttons.icon_button import IconButton
 from components.colors import DARK_BLUE_GREY
-from components.form.text_field import TextField
+from components.form.text_field import APP_HEADER, TextField
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
@@ -67,42 +67,24 @@ class StampsManagerPage(StandardPage):
             size=20
         )
         separator = VerticalLine(thickness=1, length=30, color=ft.Colors.GREY_700)
-        filter = TextField(
+        series_year_filter = TextField(
             label=_("filter.series_year"),
-            label_style=ft.TextStyle(
-                color=ft.Colors.GREY_500,
-                font_family="Roboto"
-            ),
-            text_size=14,
-            border = ft.InputBorder.UNDERLINE,
-            # Color when not focused
-            border_color=ft.Colors.GREY_500,
-            # Color when the user clicks/tabs into it
-            focused_border_color=ft.Colors.GREY_500,
-            # Text color while typing
-            color=ft.Colors.WHITE,
-            # Cursor color
-            cursor_color=ft.Colors.GREY_500,
-            # Adjusting thickness to match the clean look
-            border_width=1,
-            focused_border_width=2,
-            # Remove default padding to align with the "Stamps Manager" text
-            content_padding=ft.Padding(bottom=0, top=0),
-            expand=False,
-            width=200,
+            field_style=APP_HEADER,
             tooltip=  _("filter.series_year_tooltip_header") + "\n"  + "\n" \
                     + _("filter.series_year_tooltip_1") + "\n" \
                     + _("filter.series_year_tooltip_2") + "\n" \
                     + _("filter.series_year_tooltip_3") + "\n" \
                     + _("filter.series_year_tooltip_4"),
-            on_change=self._filter_series_year
+            on_change=self._filter_series_year,
+            width=200
+            
         )
         
         # Add controls to header
         self.header.add_left(menu_icon)
         self.header.add_left(menu_text)
         self.header.add_left(separator)
-        self.header.add_left(filter)
+        self.header.add_left(series_year_filter)
         
         # Create the drawer
         self.drawer = AppDrawer(on_logout=self.request_logout)
