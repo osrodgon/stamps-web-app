@@ -60,6 +60,7 @@ class TablePagination(ft.Container):
         self._dropdown: ft.Dropdown = ft.Dropdown(
             value=str(page_size),
             options=[
+                ft.dropdown.Option("1"),
                 ft.dropdown.Option("10"),
                 ft.dropdown.Option("15"),
                 ft.dropdown.Option("20"),

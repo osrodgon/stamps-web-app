@@ -194,14 +194,19 @@ class IssueTableApp(ft.Container):
 
         self._empty_text.visible = False
         for index, issue in enumerate(self._data):
+            auto_expand: bool = index == 0 and self._rows_per_page == 1
             row: IssueRow = IssueRow(
                 issue=issue,
                 row_index=index,
                 columns=COLUMNS,
                 lang=self._lang,
                 on_expand=self._on_expand,
+                expanded=auto_expand,
             )
             self._rows_container.controls.append(row)
+            if auto_expand and issue.get("id") is not None:
+                row.set_loading()
+                self._on_expand(issue["id"])
         self.update()
 
     def _on_sort(self, sort_key: str, sort_order: str) -> None:
@@ -223,7 +228,17 @@ class IssueTableApp(ft.Container):
         self._schedule_fetch()
 
     def _on_expand(self, issue_id: int) -> None:
-        """Handle row expansion. Placeholder for future stamp fetch."""
+        """Fetch stamps for the expanded row."""
+        self.page.run_task(self._fetch_stamps_for_row, issue_id)
+
+    async def _fetch_stamps_for_row(self, issue_id: int) -> None:
+        """Fetch stamps from API and update the expanded IssueRow."""
+        response = await self._service.get_issue_stamps(issue_id)
+        stamps: list[dict] = response.json() if response and response.ok else []
+        for ctrl in self._rows_container.controls:
+            if isinstance(ctrl, IssueRow) and ctrl._issue.get("id") == issue_id:
+                ctrl.set_stamps(stamps)
+                break
 
     def _schedule_fetch(self) -> None:
         """Refresh data after a state change."""

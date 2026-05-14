@@ -100,6 +100,7 @@ class IssueService(BaseService):
         return await self._make_request(
             request_type=self.GET,
             url=url,
+            headers={"Authorization": f"Api-Key {API_MASTER_KEY}"},
         )
 
     async def get_years(self) -> requests.Response | None:

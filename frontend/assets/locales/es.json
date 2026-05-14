@@ -125,7 +125,14 @@
         "color": "Color",
         "edifil_code": "Código Edifil",
         "fesofi_code": "Código FESOFI",
-        "market_value_used": "Valor de mercado (Usado)"
+        "market_value_used": "Valor de mercado (Usado)",
+        "year": "Año",
+        "mint": "Sin usar (MNH)",
+        "used": "Usado",
+        "market_value_mnh": "Valor de mercado (MNH)",
+        "technical_specifications": "Especificaciones técnicas",
+        "valuation": "Valoración",
+        "image": "Imagen"
     },
     "collections": {
         "title": "Colecciones",
