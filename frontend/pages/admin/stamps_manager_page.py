@@ -76,6 +76,7 @@ class StampsManagerPage(StandardPage):
                     + _("filter.series_year_tooltip_3") + "\n" \
                     + _("filter.series_year_tooltip_4"),
             on_change=self._filter_series_year,
+            width=200
             
         )
         
