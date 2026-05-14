@@ -14,7 +14,7 @@ from core.urls import URLs
 from settings import API_MASTER_KEY
 
 
-class StampIssueService(BaseService):
+class IssueService(BaseService):
     """Service for managing stamp issue data through the backend API."""
 
     async def get_issues(

@@ -19,7 +19,8 @@ from components.form.text_field import APP_HEADER, TextField
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
-from services.stamp_issue_service import StampIssueService
+from components.form.year_range_selector import YearRangeSelector
+from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
 
 
@@ -77,7 +78,13 @@ class StampsManagerPage(StandardPage):
                     + _("filter.series_year_tooltip_4"),
             on_change=self._filter_series_year,
             width=200
-            
+        )
+        year_range_selector = YearRangeSelector(
+            step=5, 
+            track_height=1, 
+            width=250, 
+            top_padding=26,
+            on_change=self._year_range_selector
         )
         
         # Add controls to header
@@ -85,12 +92,13 @@ class StampsManagerPage(StandardPage):
         self.header.add_left(menu_text)
         self.header.add_left(separator)
         self.header.add_left(series_year_filter)
+        self.header.add_left(year_range_selector)
         
         # Create the drawer
         self.drawer = AppDrawer(on_logout=self.request_logout)
         
         # Create the content area
-        self._table: IssueTableApp = IssueTableApp(service=StampIssueService())
+        self._table: IssueTableApp = IssueTableApp(service=IssueService())
         self.content_area = ft.Column(
             [self._table],
             expand=True,
@@ -153,3 +161,7 @@ class StampsManagerPage(StandardPage):
         await asyncio.sleep(0.3)
         self.log.debug(f"Aplying filter: {value}")
         await self._table.load(search=value)
+        
+    def _year_range_selector(self, start: int, end: int) -> None:
+        print(f"Year range selected: {start} - {end}")
+        self.log.debug(f"Year range selected: {start} - {end}")

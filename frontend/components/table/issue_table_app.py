@@ -15,7 +15,7 @@ from components.table.issue_row import IssueRow
 from components.table.table_header import TableHeader
 from components.table.table_pagination import TablePagination
 from core.translations import _, get_language
-from services.stamp_issue_service import StampIssueService
+from services.issue_service import IssueService
 
 
 class IssueTableApp(ft.Container):
@@ -25,7 +25,7 @@ class IssueTableApp(ft.Container):
     backend API, and coordinates all sub-components.
     """
 
-    def __init__(self, service: Optional[StampIssueService] = None) -> None:
+    def __init__(self, service: Optional[IssueService] = None) -> None:
         """Initialize the table with sub-components, state, and default layout.
 
         Sets up state for pagination, sorting, and the debounced name/year
@@ -36,7 +36,7 @@ class IssueTableApp(ft.Container):
             service: StampIssueService instance. Creates one if not provided.
         """
         super().__init__()
-        self._service: StampIssueService = service or StampIssueService()
+        self._service: IssueService = service or IssueService()
         self.expand = True
 
         self._data: list[dict] = []
