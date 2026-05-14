@@ -19,7 +19,7 @@ from components.colors import (
     ROW_HOVER,
     TEXT_BLUE,
 )
-from components.table.column_def import ColumnDef, fmt_currency
+from components.table.column_def import ColumnDef, fmt_currency, fmt_date
 from core.translations import _
 
 
@@ -134,7 +134,6 @@ class IssueRow(ft.Container):
                 no_wrap=True,
                 overflow=ft.TextOverflow.ELLIPSIS,
             ),
-            tooltip=text,
             **kwargs,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
@@ -165,10 +164,24 @@ class IssueRow(ft.Container):
         """
         issue: dict = self._issue
         used: float = float(issue.get("market_value_used", 0) or 0)
+        description:str = issue.get("description") or _("ui.no_text_value")
+        notes: str = issue.get("note") or _("ui.no_text_value")
+        date: str = fmt_date(issue.get("date"), self._lang)
+        issue_name: str = issue.get("name") or _("ui.no_text_value")
 
         return ft.Container(
             content=ft.Column(
                 controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                f"{date} - {issue_name}",
+                                size=22,
+                                font_family="Roboto-Black",
+                            )
+                        ],
+                        spacing=20,
+                    ),
                     # Description
                     ft.Row(
                         controls=[
@@ -183,7 +196,7 @@ class IssueRow(ft.Container):
                     ft.Row(
                         controls=[
                             ft.Text(
-                                f"{issue.get('description', '-')}",
+                                description,
                                 size=14,
                                 font_family="Roboto",
                                 text_align=ft.TextAlign.JUSTIFY,
@@ -208,7 +221,7 @@ class IssueRow(ft.Container):
                     ft.Row(
                         controls=[
                             ft.Text(
-                                f"{issue.get('note', '-')}",
+                                notes,
                                 size=14,
                                 font_family="Roboto",
                                 text_align=ft.TextAlign.JUSTIFY,

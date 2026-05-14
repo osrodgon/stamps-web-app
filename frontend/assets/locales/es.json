@@ -20,7 +20,7 @@
         "save_error_unknown": "Ha ocurrido un error inesperado al guardar.",
         "field_issue_date": "Fecha de emisión",
         "field_artist": "Artista/Grabador",
-        "field_printer": "Impresor",
+        "field_printer": "Imprenta",
         "field_print_type": "Tipo de impresión",
         "field_perforation": "Dentado",
         "field_paper_type": "Tipo de papel",
@@ -103,7 +103,8 @@
         "notes": "Notas",
         "date": "Fecha",
         "value": "Valor",
-        "no_text_value": "Ninguno/a"
+        "no_text_value": "Ninguno/a.",
+        "of": "de"
     },
     "stamps": {
         "country": "País",
@@ -118,7 +119,7 @@
         "stamps_manager_title": "Gestión de Sellos",
         "market_value": "Valor de mercado",
         "artist": "Artista/Grabador",
-        "printer": "Impresor",
+        "printer": "Imprenta",
         "paper_type": "Tipo de papel",
         "face_value": "Valor facial",
         "color": "Color",

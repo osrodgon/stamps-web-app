@@ -74,8 +74,16 @@ class LoginCard(ft.Container, BaseUI):
             color=GREY_700,
             no_wrap=True
         )
-        self.username = TextField(label=_('auth.username'))
-        self.password = TextField(label=_('auth.password'), password=True, can_reveal_password=True)
+        self.username = TextField(
+            label=_('auth.username'),
+            on_submit=self._handle_login_click
+        )
+        self.password = TextField(
+            label=_('auth.password'), 
+            password=True, 
+            can_reveal_password=True,
+            on_submit=self._handle_login_click
+        )
         
         self.sign_in = PrimaryButton(
             text=_("auth.sign_in").upper(),

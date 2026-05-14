@@ -53,7 +53,7 @@ class AppHeader(ft.Container, Logger):
             controls=[],
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            expand=True
+            # expand=True
         )
         
         # Center area  

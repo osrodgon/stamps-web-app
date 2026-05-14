@@ -82,6 +82,7 @@ class IssueTableApp(ft.Container):
             controls=[
                 ft.Stack(
                     controls=[
+                        # Table header and progress bar
                         self._table_header,
                         ft.Container(
                             content=self._progress_bar,
@@ -93,6 +94,7 @@ class IssueTableApp(ft.Container):
                     ],
                 ),
                 ft.Container(
+                    # Table rows
                     content=ft.Column(
                         controls=[self._rows_container],
                         scroll=ft.ScrollMode.ADAPTIVE,
@@ -101,6 +103,7 @@ class IssueTableApp(ft.Container):
                     ),
                     expand=True,
                 ),
+                # Table footer (pagination)
                 self._pagination,
             ],
             spacing=0,
@@ -112,7 +115,6 @@ class IssueTableApp(ft.Container):
         """Fetch data from the API and update all sub-components."""
         self._name_filter = search
         name, year = self._parse_filter(search)
-        filter_kwargs: dict
         self._progress_bar.visible = True
         self._lang = get_language()
         self.update()
@@ -200,11 +202,11 @@ class IssueTableApp(ft.Container):
         """Parse filter input into name and year query params.
 
         Conversion rules:
-          - Empty input → ("", "")
-          - Plain digits (e.g. "2002") → ("", "2002") — single year
-          - Digit pattern N* (e.g. "19*") → ("", "1900-1999") — year range
-          - Digit pattern NN* (e.g. "200*") → ("", "2000-2009") — year range
-          - Everything else (e.g. "Marianne") → ("Marianne", "") — name search
+            - Empty input → ("", "")
+            - Plain digits (e.g. "2002") → ("", "2002") — single year
+            - Digit pattern N* (e.g. "19*") → ("", "1900-1999") — year range
+            - Digit pattern NN* (e.g. "200*") → ("", "2000-2009") — year range
+            - Everything else (e.g. "Marianne") → ("Marianne", "") — name search
 
         Returns:
             Tuple of (name_value, year_value) for the API call.

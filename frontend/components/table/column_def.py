@@ -9,6 +9,8 @@ from typing import Any, Callable, Optional
 
 import flet as ft
 
+from core.translations import _
+
 @dataclass
 class ColumnDef:
     """Definition for a single table column.
@@ -45,6 +47,34 @@ def fmt_number(value: Any, lang: str) -> str:
     if lang == "es":
         formatted = formatted.replace(",", ".")
     return formatted
+
+import datetime
+
+
+def fmt_date(value: str, lang: str) -> str:
+    """
+    Format an ISO date string (YYYY-MM-DD) into a locale-aware display string.
+
+    en: "15 of June of 2023"
+    es: "15 de junio de 2023"
+    """
+    if not value:
+        return "-"
+    try:
+        dt = datetime.date.fromisoformat(value)
+    except (ValueError, TypeError):
+        return value or "-"
+    if lang == "es":
+        months = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        ]
+        return f"{dt.day} {_('ui.of')} {months[dt.month - 1]} {_('ui.of')} {dt.year}"
+    months_en = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+    ]
+    return f"{dt.day} {_('ui.of')} {months_en[dt.month - 1]} {_("ui.of")} {dt.year}"
 
 
 # Single source of truth for all table columns.
