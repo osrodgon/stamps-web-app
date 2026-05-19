@@ -2,7 +2,10 @@
 Main issue table component.
 
 Assembles TableHeader, IssueRow, and TablePagination into a full-featured
-data table with server-side sorting and pagination.
+data table with server-side sorting and pagination. Coordinates data fetching
+from the backend API, manages filter state (name, year range), and handles
+row expansion with async stamp loading. Pagination is automatically reset
+to page 1 when filters or sort order change.
 """
 
 from typing import Optional
@@ -22,26 +25,27 @@ from services.issue_service import IssueService
 class IssueTableApp(ft.Container):
     """Main issue table with header, rows, and pagination.
 
-    Manages state for pagination and sorting, fetches data from the
-    backend API, and coordinates all sub-components. Supports column
-    definitions via COLUMNS list, name/year text filtering, optional
-    year range slider filtering, and server-side pagination/sorting.
+    Manages state for pagination, sorting, and filtering. Fetches data
+    from the backend API via IssueService and coordinates all sub-components.
+    Supports column definitions via the COLUMNS list, name/year text filtering,
+    optional year range slider filtering, and server-side pagination/sorting.
 
     Public methods:
-        load(search):      Fetch data with optional name/year filter.
+        load(search, reset_page): Fetch data with optional name/year filter.
         set_year_filter(): Apply a year range from an external slider.
     """
 
     def __init__(self, service: Optional[IssueService] = None) -> None:
         """Initialize the table with sub-components, state, and default layout.
 
-        Sets up state for pagination, sorting, and the debounced name/year
-        filter. Builds the layout stack: progress bar overlay, scrollable
-        rows container, and pagination footer. Also initialises the year
-        range filter used by the external YearRangeSelector widget.
+        Sets up internal state for pagination, sorting, and filtering.
+        Builds the layout stack: progress bar overlay, scrollable rows
+        container, and pagination footer. Initializes the year range
+        filter used by the external YearRangeSelector widget.
 
         Args:
-            service: IssueService instance. Creates one if not provided.
+            service: IssueService instance for API communication. Creates
+                a new instance if not provided.
         """
         super().__init__()
         self._service: IssueService = service or IssueService()
@@ -91,7 +95,6 @@ class IssueTableApp(ft.Container):
             controls=[
                 ft.Stack(
                     controls=[
-                        # Table header and progress bar
                         self._table_header,
                         ft.Container(
                             content=self._progress_bar,
@@ -103,7 +106,6 @@ class IssueTableApp(ft.Container):
                     ],
                 ),
                 ft.Container(
-                    # Table rows
                     content=ft.Column(
                         controls=[self._rows_container],
                         scroll=ft.ScrollMode.ADAPTIVE,
@@ -112,7 +114,6 @@ class IssueTableApp(ft.Container):
                     ),
                     expand=True,
                 ),
-                # Table footer (pagination)
                 self._pagination,
             ],
             spacing=0,
@@ -120,7 +121,7 @@ class IssueTableApp(ft.Container):
         )
         self.bgcolor = ft.Colors.WHITE
 
-    async def load(self, search: str = "") -> None:
+    async def load(self, search: str = "", reset_page: bool = False) -> None:
         """Fetch data from the API and update all sub-components.
 
         Parses the search value via _parse_filter() to resolve name
@@ -128,13 +129,19 @@ class IssueTableApp(ft.Container):
         string, falls back to the active year range filter set by
         set_year_filter() (e.g. from the YearRangeSelector widget).
 
+        When reset_page is True, pagination is reset to page 1 before
+        fetching, preventing empty result screens when filters reduce
+        the total number of available pages.
+
         Args:
             search: Raw filter string from the text field. May be a name,
                 a year number (e.g. "2002"), or a year pattern (e.g. "19*").
+            reset_page: If True, reset to page 1 before fetching.
         """
+        if reset_page:
+            self._current_page = 1
         self._name_filter = search
         name_val, year_val = self._parse_filter(search)
-        # Text field year takes priority; slider year used as fallback
         if not year_val and self._year_filter:
             year_val = self._year_filter
             
@@ -149,7 +156,7 @@ class IssueTableApp(ft.Container):
             order=self._sort_order,
             name=name_val,
             year=year_val
-    )
+        )
 
         if response and response.status_code == requests.codes.ok:
             body: dict = response.json()
@@ -177,14 +184,24 @@ class IssueTableApp(ft.Container):
     def set_year_filter(self, year_range: str) -> None:
         """Set an active year range filter and reload the table.
 
+        Resets pagination to page 1 before fetching to avoid empty
+        result pages when the filtered dataset is smaller.
+
         Args:
-            year_range: e.g. "1840-2025". Empty string clears the filter.
+            year_range: Year range string, e.g. "1840-2025". Empty
+                string clears the filter.
         """
         self._year_filter = year_range
+        self._current_page = 1
         self._schedule_fetch()
 
     def _rebuild_rows(self) -> None:
-        """Replace all IssueRow instances with current data."""
+        """Replace all IssueRow instances in the rows container with current data.
+
+        Clears existing rows, creates new IssueRow widgets from the loaded
+        data, and auto-expands the first row when rows_per_page equals 1.
+        Shows the empty state message if no data is available.
+        """
         self._rows_container.controls.clear()
 
         if not self._data:
@@ -210,29 +227,63 @@ class IssueTableApp(ft.Container):
         self.update()
 
     def _on_sort(self, sort_key: str, sort_order: str) -> None:
-        """Handle sort change from TableHeader."""
+        """Handle sort change from TableHeader.
+
+        Updates the sort key and order, resets pagination to page 1,
+        and triggers a data reload.
+
+        Args:
+            sort_key: The column field to sort by.
+            sort_order: Sort direction, "asc" or "desc".
+        """
         self._sort_key = sort_key
         self._sort_order = sort_order
         self._current_page = 1
         self._schedule_fetch()
 
     def _on_page_change(self, page: int) -> None:
-        """Handle page navigation from TablePagination."""
+        """Handle page navigation from TablePagination.
+
+        Args:
+            page: The target page number (1-indexed).
+        """
         self._current_page = page
         self._schedule_fetch()
 
     def _on_page_size_change(self, page_size: int) -> None:
-        """Handle page size change from TablePagination."""
+        """Handle page size change from TablePagination.
+
+        Resets pagination to page 1 since the total number of pages
+        changes when the page size is modified.
+
+        Args:
+            page_size: Number of rows to display per page.
+        """
         self._rows_per_page = page_size
         self._current_page = 1
         self._schedule_fetch()
 
     def _on_expand(self, issue_id: int) -> None:
-        """Fetch stamps for the expanded row."""
+        """Initiate async stamp fetch for the expanded issue row.
+
+        Schedules _fetch_stamps_for_row to run as a background task
+        on the page's event loop.
+
+        Args:
+            issue_id: The ID of the issue whose stamps should be fetched.
+        """
         self.page.run_task(self._fetch_stamps_for_row, issue_id)
 
     async def _fetch_stamps_for_row(self, issue_id: int) -> None:
-        """Fetch stamps from API and update the expanded IssueRow."""
+        """Fetch stamps from the API and update the expanded IssueRow.
+
+        Searches the rows container for the matching IssueRow by ID
+        and calls set_stamps() to rebuild the detail card with the
+        fetched stamp data.
+
+        Args:
+            issue_id: The ID of the issue whose stamps were fetched.
+        """
         response = await self._service.get_issue_stamps(issue_id)
         stamps: list[dict] = response.json() if response and response.ok else []
         for ctrl in self._rows_container.controls:
@@ -241,7 +292,11 @@ class IssueTableApp(ft.Container):
                 break
 
     def _schedule_fetch(self) -> None:
-        """Refresh data after a state change."""
+        """Schedule an asynchronous data reload after a state change.
+
+        Triggers load() via page.run_task() to fetch fresh data with
+        the current filter, sort, and pagination settings.
+        """
         self.page.run_task(self.load, search=self._name_filter)
         
     @staticmethod

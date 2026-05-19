@@ -80,7 +80,7 @@ API_MASTER_KEY = os.getenv("API_MASTER_KEY")
 
 
 # --- Asset Paths ---
-IMAGE_DIR = f"{ASSETS_DIR}/stamps-data/images"
+IMAGE_DIR = f"{ASSETS_DIR}/stamps"
 
 # Font files (relative to ASSETS_DIR)
 FONT_REGULAR = "fonts/Roboto-Regular.ttf"

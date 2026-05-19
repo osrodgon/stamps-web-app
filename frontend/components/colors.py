@@ -81,6 +81,14 @@ TEXT_BLUE: str = "#1976d2"
 DELETE_RED: str = "#ef5350"
 #: Light grey (#f5f5f5) - used for light backgrounds.
 BG_LIGHT: str = "#f8fafc"
+#: Very light grey-blue (#f0f4f8) - gradient start for page backgrounds.
+BG_GRADIENT_START: str = "#f0f4f8"
+#: Light grey-blue (#e2e8f0) - gradient end for page backgrounds.
+BG_GRADIENT_END: str = "#e2e8f0"
+
+
+#: Subtle grey (#f1f5f9) - used for alternating table row backgrounds.
+BG_ALT: str = "#f1f5f9"
 
 # --- Table Colors ---
 
@@ -96,4 +104,7 @@ EXPANSION_BG: str = "#FAFAFA"
 ROW_HOVER: str = "#E8E8E8"
 #: Muted blue-grey (#3d4c5d) - used for RangeSlider inactive track.
 SLIDER_INACTIVE: str = "#3d4c5d"
+
+#: Near black (#1a1a1a) - used for stamp image background in dialogs and thumbnails.
+DARK_IMG_BG: str = "#1a1a1a"
 

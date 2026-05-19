@@ -5,9 +5,12 @@ services:
     image: osrogon/dev-stamps-frontend
     env_file:
       - .env
-    # Mount the code for live reloading
-    # volumes:
-    #   - ./frontend:/usr/src/app
+    # Mount the code for live reloading and the stamps images for development
+    volumes:
+      - type: bind
+        source: ./assets/stamps
+        target: /usr/src/app/assets/stamps
+      # - ./frontend:/usr/src/app
     ports:
       # Map container port 8080 to host port 8080
       - "8080:8080"
