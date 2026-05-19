@@ -173,7 +173,12 @@ class IssuesView(Logger, APIView):
             self.log.debug(f"Adding name filter to query:{issue_name}")
             query_conditions &= Q(**{name_lookup: issue_name})
         
-        issues = issues.filter(query_conditions).order_by(sort_by if order == 'asc' else f"-{sort_by}")
+        # issues = issues.filter(query_conditions).order_by(sort_by if order == 'asc' else f"-{sort_by}")
+        if order == "asc":
+            order_fields = (sort_by, "id")
+        else:
+            order_fields = (f"-{sort_by}", "-id")
+        issues = issues.filter(query_conditions).order_by(*order_fields)
         total_count = issues.count()
         
         if (page >= 1) and (page_size > 0):

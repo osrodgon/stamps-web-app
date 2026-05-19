@@ -1,6 +1,3 @@
-import re
-
-from dulwich import F
 import flet as ft
 
 from core.base_ui import BaseUI

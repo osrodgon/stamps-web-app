@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir /tmp/wheels/* && \
 
 # Copy application source code
 COPY . .
+RUN mkdir -p assets/stamps
 RUN rm requirements.*
 
 # Change ownership of the /app directory to the non-root user

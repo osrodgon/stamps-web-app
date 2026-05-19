@@ -4,7 +4,7 @@ Stamps manager page for administering the master stamp catalog.
 Provides a full-featured data table for browsing, filtering, and managing
 stamp issues. Includes a debounced search field, a YearRangeSelector for
 year-range filtering, slide-out navigation drawer, and session-based user
-preferences.
+preferences. Pagination is automatically reset to page 1 when filters change.
 """
 
 import asyncio
@@ -16,7 +16,7 @@ from components.templates.standard_page import StandardPage
 from components.layout.app_header import AppHeader
 from core.translations import _
 from components.buttons.icon_button import IconButton
-from components.colors import DARK_BLUE_GREY
+from components.colors import BG_GRADIENT_END, BG_GRADIENT_START, DARK_BLUE_GREY
 from components.form.text_field import APP_HEADER, TextField
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
@@ -27,21 +27,20 @@ from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
 
 
 class StampsManagerPage(StandardPage):
-    """
-    The stamps manager page for the Stamps web application.
-    
+    """The stamps manager page for the Stamps web application.
+
     Provides administrative access to manage the master stamp catalog.
     Features an AppHeader with menu icon, page title, vertical separator,
-    debounced name filter and YearRangeSelector.
-    
+    debounced name filter, and YearRangeSelector.
+
     The page uses StandardPage as its base, providing:
     - AppHeader with left-aligned controls (menu, title, separator, filter)
     - YearRangeSelector for year-range filtering
     - Main content area for the IssueTable
     - Slide-out AppDrawer navigation
-    - Debounced (300ms) name/year text filter
-    - Debounced (300ms) year range slider
-    
+    - Debounced (300ms) name/year text filter with pagination reset
+    - Debounced (300ms) year range slider with pagination reset
+
     Attributes:
         header: The AppHeader containing menu, title, separator, and filter.
         drawer: The slide-out navigation drawer.
@@ -49,9 +48,14 @@ class StampsManagerPage(StandardPage):
     
     header: AppHeader
         
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page) -> None:
         """Initialize the StampsManagerPage with header, filter, table, and drawer.
-        
+
+        Constructs the AppHeader with menu icon, title, separator, text
+        filter field, and YearRangeSelector. Creates the AppDrawer for
+        navigation and the IssueTableApp for displaying stamp issues.
+        Schedules asynchronous loading of user preferences on startup.
+
         Args:
             page: The Flet page instance.
         """
@@ -114,7 +118,7 @@ class StampsManagerPage(StandardPage):
             margin=15
         )
         
-        # Use self.main to hold both Drawer and Content in a Row
+        # Stack content area and drawer for overlay behavior
         self.main.content = ft.Stack(
             controls=[
                 self.content_area,
@@ -122,11 +126,22 @@ class StampsManagerPage(StandardPage):
             ],
             expand=True
         )
+        self.main.gradient = ft.LinearGradient(
+            begin=ft.Alignment(-1, -1),
+            end=ft.Alignment(1, 1),
+            colors=[BG_GRADIENT_START, BG_GRADIENT_END],
+        )
                 
         page.run_task(self.read_prefs)
         
     async def menu_clicked(self, e: ft.ControlEvent) -> None:
-        """Toggle the slide-out navigation drawer open or closed."""
+        """Toggle the slide-out navigation drawer open or closed.
+
+        Animates the drawer offset between hidden (-1, 0) and visible (0, 0).
+
+        Args:
+            e: The click event from the menu IconButton.
+        """
         self.log.debug("Hamburger menu clicked")
         
         if self.drawer.offset.x == 0:
@@ -138,7 +153,12 @@ class StampsManagerPage(StandardPage):
         self.drawer.update()
         
     async def read_prefs(self) -> None:
-        """Load user preferences and initialize table and year selector data."""
+        """Load user preferences from SharedPreferences and initialize page data.
+
+        Fetches user profile data for the drawer, loads the initial issue
+        table data, and initializes the YearRangeSelector with the full
+        range of available years from the backend API.
+        """
         prefs = ft.SharedPreferences()
 
         user_first_name = await prefs.get(USER_FIRST_NAME)
@@ -167,7 +187,9 @@ class StampsManagerPage(StandardPage):
         """Handle filter text changes with 300ms debounce.
 
         Cancels any pending search task and starts a new debounced one,
-        ensuring only the final value triggers an API call.
+        ensuring only the final value triggers an API call. Resets
+        pagination to page 1 before fetching.
+
         Args:
             e: Control event containing the new filter value.
         """
@@ -178,12 +200,15 @@ class StampsManagerPage(StandardPage):
     async def _debounced_search(self, value: str) -> None:
         """Wait 300ms then trigger a table reload with the current filter.
 
+        Resets pagination to page 1 to avoid empty result pages
+        when the filtered dataset is smaller than the current page.
+
         Args:
             value: The raw filter string (text, number, or pattern).
         """
         await asyncio.sleep(0.3)
         self.log.debug(f"Aplying filter: {value}")
-        await self._table.load(search=value)
+        await self._table.load(search=value, reset_page=True)
 
     @staticmethod
     def _round_down(year: int) -> int:
@@ -202,13 +227,30 @@ class StampsManagerPage(StandardPage):
         return ((year + 4) // 5) * 5
 
     async def _year_range_selector(self, start: int, end: int) -> None:
-        """Handle year range changes with 300ms debounce."""
+        """Handle year range slider changes with 300ms debounce.
+
+        Cancels any pending year range task and starts a new debounced one,
+        ensuring only the final slider position triggers an API call.
+        Resets pagination to page 1 before fetching.
+
+        Args:
+            start: The selected minimum year.
+            end: The selected maximum year.
+        """
         self.log.debug(f"Year range selected: {start} - {end}")
         if self._year_range_task:
             self._year_range_task.cancel()
         self._year_range_task = asyncio.create_task(self._debounced_year_range(start, end))
 
     async def _debounced_year_range(self, start: int, end: int) -> None:
-        """Wait 300ms then apply the year range filter."""
+        """Wait 300ms then apply the year range filter.
+
+        Resets pagination to page 1 to avoid empty result pages
+        when the filtered dataset is smaller than the current page.
+
+        Args:
+            start: The selected minimum year.
+            end: The selected maximum year.
+        """
         await asyncio.sleep(0.3)
         self._table.set_year_filter(f"{start}-{end}")

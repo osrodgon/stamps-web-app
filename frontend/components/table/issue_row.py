@@ -7,9 +7,9 @@ Provides a single row displaying stamp issue data with expandable details.
 from typing import Callable, Optional
 
 import flet as ft
-from vine import wrap
 
 from components.colors import (
+    BG_ALT,
     BG_LIGHT,
     DARK_BLUE_GREY,
     EXPANSION_BG,
@@ -58,7 +58,7 @@ class IssueRow(ft.Container):
         self._lang: str = lang
         self._on_expand: Optional[Callable[[int], None]] = on_expand
         self._is_expanded: bool = expanded
-        self._original_bgcolor: str | None = BG_LIGHT if row_index % 2 == 0 else None
+        self._original_bgcolor: str | None = BG_LIGHT if row_index % 2 == 0 else BG_ALT
         self._stamps: list[dict] = []
         self._loading_stamps: bool = False
 
@@ -99,7 +99,7 @@ class IssueRow(ft.Container):
                 controls=cells,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.Padding(left=10, right=25, top=8, bottom=8),
+            padding=ft.Padding(left=14, right=25, top=12, bottom=12),
             border=ft.Border.only(bottom=ft.BorderSide(1, ROW_BORDER)),
         )
 

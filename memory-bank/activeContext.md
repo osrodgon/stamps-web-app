@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: TBD - awaiting new task assignment
+- **Task**: Frontend unit testing plan saved to memory-bank
 - **Priority**: medium
-- **Status**: waiting
+- **Status**: completed
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -17,6 +17,11 @@
 - StampIssueService renamed to IssueService, added get_years() method
 - IssueDetailCard: 4 modules (Header, Specs Grid, Valuation Bar, Stamp Table) + description/notes
 - Stamps fetched async via IssueTableApp._fetch_stamps_for_row → row.set_stamps()
+- 3 service files are Flet-free (base_service, auth_service, issue_service)
+- 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
+- Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
+- Spanish locale fixes applied: éxitO, caracteres, Tipo de sello, Tirada total
+- Duplicate ai_series_lookup keys removed from both en.json and es.json
 
 ## Session Log
 - [Today] Analyzed IconButton for readability improvements
@@ -39,3 +44,8 @@
 - [Today] Added async stamp fetch in IssueTableApp._on_expand → set_stamps()
 - [Today] Added 7 new translation keys (year, mint, used, market_value_mnh, etc.)
 - [Today] Fixed _kv_cell to properly set container.col property
+- [Today] Added DARK_IMG_BG to colors.py, replaced #1a1a1a references
+- [Today] Analyzed locale files: found typos, inconsistencies, dead keys
+- [Today] Fixed Spanish typos (éxito, caracteres), capitalization (Tipo de sello), Tirada total
+- [Today] Removed 17 duplicate keys from en.json and 16 from es.json (ai_series_lookup)
+- [Today] Created frontend-testing-plan.md in memory-bank (5 incremental steps)
