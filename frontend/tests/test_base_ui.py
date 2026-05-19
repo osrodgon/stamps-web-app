@@ -6,6 +6,15 @@ import pytest
 
 from core.base_ui import BaseUI
 from core.severity import Severity
+from settings import (
+    USER_JWT_TOKEN,
+    USER_ID,
+    USER_NAME,
+    USER_IS_ADMIN,
+    USER_FIRST_NAME,
+    USER_LAST_NAME,
+    USER_EMAIL,
+)
 
 
 class TestSetBackground:
@@ -71,64 +80,63 @@ class TestSaveUser:
     async def test_saves_jwt_token(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("test-token", {"user_id": 1, "username": "test"})
 
-            mock_prefs.set.assert_any_call("token", "test-token")
+            mock_prefs.set.assert_any_call(USER_JWT_TOKEN, "test-token")
 
     async def test_saves_user_id(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 42, "username": "test"})
 
-            id_calls = [call for call in mock_prefs.set.call_args_list if "id" in str(call)]
-            assert any("42" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_ID, 42)
 
     async def test_saves_username(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 1, "username": "admin"})
 
-            assert any("admin" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_NAME, "admin")
 
     async def test_saves_is_admin(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 1, "username": "test", "is_admin": True})
 
-            assert any("True" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_IS_ADMIN, True)
 
     async def test_saves_first_name(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 1, "username": "test", "first_name": "John"})
 
-            assert any("John" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_FIRST_NAME, "John")
 
     async def test_saves_last_name(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 1, "username": "test", "last_name": "Doe"})
 
-            assert any("Doe" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_LAST_NAME, "Doe")
 
     async def test_saves_email(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("token", {"user_id": 1, "username": "test", "email": "test@example.com"})
 
-            assert any("test@example.com" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call(USER_EMAIL, "test@example.com")
 
     async def test_saves_all_fields(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.set = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             user_data = {
                 "user_id": 1,
                 "username": "testuser",
@@ -152,34 +160,31 @@ class TestDeleteUser:
     async def test_removes_jwt_token(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            token_calls = [call for call in mock_prefs.remove.call_args_list if "token" in str(call)]
-            assert len(token_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_JWT_TOKEN)
 
     async def test_removes_user_id(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            id_calls = [call for call in mock_prefs.remove.call_args_list if "id" in str(call)]
-            assert len(id_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_ID)
 
     async def test_removes_username(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            name_calls = [call for call in mock_prefs.remove.call_args_list if "name" in str(call)]
-            assert len(name_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_NAME)
 
     async def test_removes_all_fields(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
             assert mock_prefs.remove.call_count == 7
@@ -187,35 +192,31 @@ class TestDeleteUser:
     async def test_removes_email(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            email_calls = [call for call in mock_prefs.remove.call_args_list if "email" in str(call)]
-            assert len(email_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_EMAIL)
 
     async def test_removes_is_admin(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            admin_calls = [call for call in mock_prefs.remove.call_args_list if "admin" in str(call)]
-            assert len(admin_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_IS_ADMIN)
 
     async def test_removes_first_name(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            first_calls = [call for call in mock_prefs.remove.call_args_list if "first" in str(call)]
-            assert len(first_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_FIRST_NAME)
 
     async def test_removes_last_name(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
         mock_prefs.remove = AsyncMock()
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
+        with patch("core.base_ui.ft.SharedPreferences", return_value=mock_prefs):
             await ui._delete_user()
 
-            last_calls = [call for call in mock_prefs.remove.call_args_list if "last" in str(call)]
-            assert len(last_calls) >= 1
+            mock_prefs.remove.assert_any_call(USER_LAST_NAME)
