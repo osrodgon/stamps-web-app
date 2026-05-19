@@ -31,8 +31,8 @@ class TestIssueServiceGetIssues:
             call_kwargs = mock_req.call_args[1]
             assert call_kwargs["request_type"] == service.GET
             expected_params = {"page": 1, "pageSize": 15, "sortBy": "date", "order": "asc"}
-            expected_url = f"{call_kwargs['url'].split('?')[0]}?{urlencode(expected_params)}"
-            assert call_kwargs["url"] == expected_url
+            from urllib.parse import parse_qs, urlparse
+            assert parse_qs(urlparse(call_kwargs["url"]).query) == {k: [str(v)] for k, v in expected_params.items()}
 
     async def test_get_issues_with_custom_pagination(
         self, service: IssueService, mock_response: MagicMock
