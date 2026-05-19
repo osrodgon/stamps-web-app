@@ -74,8 +74,7 @@ class TestSaveUser:
         with patch("flet.SharedPreferences", return_value=mock_prefs):
             await ui._save_user("test-token", {"user_id": 1, "username": "test"})
 
-            token_calls = [call for call in mock_prefs.set.call_args_list if "token" in str(call)]
-            assert any("test-token" in str(call) for call in mock_prefs.set.call_args_list)
+            mock_prefs.set.assert_any_call("token", "test-token")
 
     async def test_saves_user_id(self, ui: BaseUI) -> None:
         mock_prefs = MagicMock()
