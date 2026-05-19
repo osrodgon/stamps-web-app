@@ -66,7 +66,8 @@ class TestIssueServiceGetIssues:
             await service.get_issues(name="")
 
             call_kwargs = mock_req.call_args[1]
-            assert "name=" not in call_kwargs["url"].split("?")[1]
+            from urllib.parse import parse_qs, urlparse
+            assert "name" not in parse_qs(urlparse(call_kwargs["url"]).query)
 
     async def test_get_issues_with_year_filter(self, service: IssueService, mock_response: MagicMock) -> None:
         with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
