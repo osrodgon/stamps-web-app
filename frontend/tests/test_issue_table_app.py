@@ -163,3 +163,4 @@ class TestIssueTableAppRebuildRows:
 
             call_kwargs = mock_row.call_args[1]
             assert call_kwargs["expanded"] is True
+            app._on_expand.assert_called_once_with(1)
