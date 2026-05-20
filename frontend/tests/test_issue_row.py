@@ -104,7 +104,7 @@ class TestIssueRowExpand:
         with patch.object(row, "update"):
             row._toggle_expand(None)
 
-        callback.assert_called_once_with(1)
+        callback.assert_called_once_with(sample_issue["id"])
 
     def test_start_expanded(self, sample_issue: dict) -> None:
         with patch("components.table.issue_row.IssueDetailCard"), \
