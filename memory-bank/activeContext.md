@@ -1,17 +1,21 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-5 completed (303 tests)
+- **Task**: Frontend unit testing — Steps 1-5 + log_setup complete (320 tests)
 - **Priority**: medium
-- **Status**: in_progress (Step 6 next: main.py tests + remaining tiers)
+- **Status**: in_progress (Tier 3 next: button components ~30 tests)
 
-## Remaining Untested Files (26 files, ~210 tests planned)
+## Remaining Untested Files (26 files, ~193 tests planned)
 
-### Tier 1 — Pure utilities, zero mocking (~20 tests)
-- `core/severity.py` (4), `core/urls.py` (8), `settings.py` (8)
+### Tier 1 — Pure utilities (skipped, already covered)
+- `core/severity.py` — 100% covered
+- `core/urls.py` — 100% covered
+- `settings.py` — 95% covered (dotenv fallback)
 
-### Tier 2 — Core infrastructure, light mocking (~25 tests)
-- `core/logger.py` (5), `core/log_setup.py` (8), extend service tests (12)
+### Tier 2 — Core infrastructure (partially done)
+- `core/logger.py` — 100% covered
+- `core/log_setup.py` — ✅ 17 tests, 100% coverage
+- Extend service tests (12)
 
 ### Tier 3 — Button components, minimal mocking (~30 tests)
 - `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` (5 each)
@@ -37,7 +41,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 303 tests → Target: ~513 tests**
+**Current: 320 tests → Target: ~513 tests**
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -110,3 +114,7 @@
   - Key patterns: patch at `components.table.issue_table_app.IssueRow` (where used, not defined), mock `_schedule_fetch` to avoid page dependency, use `object.__setattr__` workaround for read-only `page` property
   - IssueDetailCard expects stamps as `{"data": [...]}` not plain list
   - Nav buttons start enabled; `_update_nav_buttons()` must be called explicitly to set disabled states
+- [Today] Implemented log_setup tests — 17 new tests (all passing)
+  - Created test_log_setup.py: dictConfig call, directory creation, path resolution, handlers (file/console), formatters (standard/colored), logger suppression (17 tests)
+  - Pattern: mock `logging.config.dictConfig` + `Path.mkdir` + `Path.is_absolute`, verify config dict structure
+  - Coverage: `core/log_setup.py` now at 100%

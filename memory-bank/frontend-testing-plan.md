@@ -1,7 +1,7 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **303 tests** exist for the frontend (Steps 1-5 complete)
+- **320 tests** exist for the frontend (Steps 1-5 + log_setup complete)
 - `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
@@ -28,11 +28,12 @@ frontend/
 │   ├── test_table_pagination.py         # ✅ Step 5: component (18 tests)
 │   ├── test_table_header.py             # ✅ Step 5: component (10 tests)
 │   ├── test_issue_row.py                # ✅ Step 5: component (10 tests)
-│   └── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
+│   ├── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
+│   └── test_log_setup.py                # ✅ log_setup (17 tests)
 └── pytest.ini                           # ✅ frontend-specific pytest config
 ```
 
-**Total: 303 tests, all passing**
+**Total: 320 tests, all passing**
 
 ## Incremental Steps
 
@@ -117,21 +118,17 @@ frontend/
 
 ---
 
-## Remaining Untested Files (26 files, ~210 tests planned)
+## Remaining Untested Files (26 files, ~193 tests planned)
 
-### Tier 1 — Pure utilities, zero mocking (~20 tests)
-| File | Est. tests |
-|------|------------|
-| `core/severity.py` | 4 |
-| `core/urls.py` | 8 |
-| `settings.py` | 8 |
+### Tier 1 — Pure utilities (skipped, already covered)
+- `core/severity.py` — 100% covered by existing tests
+- `core/urls.py` — 100% covered by existing tests
+- `settings.py` — 95% covered (lines 30-31: dotenv import fallback)
 
-### Tier 2 — Core infrastructure, light mocking (~25 tests)
-| File | Est. tests |
-|------|------------|
-| `core/logger.py` | 5 |
-| `core/log_setup.py` | 8 |
-| Extend service tests | 12 |
+### Tier 2 — Core infrastructure (partially done)
+- `core/logger.py` — 100% covered by existing tests
+- `core/log_setup.py` — ✅ 17 tests, 100% coverage
+- Extend service tests — 12 tests (remaining)
 
 ### Tier 3 — Button components, minimal mocking (~30 tests)
 | File | Est. tests |
@@ -173,7 +170,7 @@ frontend/
 |------|------------|
 | `main.py` | 25 |
 
-**Current: 303 tests → Target: ~513 tests**
+**Current: 320 tests → Target: ~513 tests**
 
 ## Running Tests
 
