@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+import flet as ft
 
 from components.table.issue_row import IssueRow
 from components.table.column_def import COLUMNS
@@ -81,8 +82,6 @@ class TestIssueRowExpand:
         assert row._details.visible is True
 
     def test_toggle_expand_changes_chevron(self, sample_issue: dict) -> None:
-        import flet as ft
-
         with patch("components.table.issue_row.IssueDetailCard"), \
              patch.object(IssueRow, "update"):
             row = IssueRow(issue=sample_issue, columns=COLUMNS)
