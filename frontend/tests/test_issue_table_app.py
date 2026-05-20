@@ -44,7 +44,7 @@ class TestIssueTableAppState:
     def mock_service(self) -> MagicMock:
         service = MagicMock(spec=IssueService)
         service.get_issues = AsyncMock(return_value=None)
-        service.get_issue_stamps = AsyncMock(return_value=None)
+        service.get_issue_stamps = AsyncMock(return_value=MagicMock(ok=True, json=lambda: {"data": []}))
         return service
 
     @pytest.fixture
