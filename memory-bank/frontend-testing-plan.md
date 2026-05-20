@@ -1,7 +1,7 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **320 tests** exist for the frontend (Steps 1-5 + log_setup complete)
+- **350 tests** exist for the frontend (Steps 1-5 + log_setup + Tier 3 buttons complete)
 - `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
@@ -29,11 +29,12 @@ frontend/
 │   ├── test_table_header.py             # ✅ Step 5: component (10 tests)
 │   ├── test_issue_row.py                # ✅ Step 5: component (10 tests)
 │   ├── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
-│   └── test_log_setup.py                # ✅ log_setup (17 tests)
+│   ├── test_log_setup.py                # ✅ log_setup (17 tests)
+│   └── test_buttons.py                  # ✅ Tier 3: buttons (30 tests)
 └── pytest.ini                           # ✅ frontend-specific pytest config
 ```
 
-**Total: 320 tests, all passing**
+**Total: 350 tests, all passing**
 
 ## Incremental Steps
 
@@ -118,7 +119,7 @@ frontend/
 
 ---
 
-## Remaining Untested Files (26 files, ~193 tests planned)
+## Remaining Untested Files (20 files, ~163 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered by existing tests
@@ -129,6 +130,9 @@ frontend/
 - `core/logger.py` — 100% covered by existing tests
 - `core/log_setup.py` — ✅ 17 tests, 100% coverage
 - Extend service tests — 12 tests (remaining)
+
+### Tier 3 — Button components ✅ COMPLETE
+- `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` — ✅ 30 tests
 
 ### Tier 3 — Button components, minimal mocking (~30 tests)
 | File | Est. tests |
@@ -170,7 +174,7 @@ frontend/
 |------|------------|
 | `main.py` | 25 |
 
-**Current: 320 tests → Target: ~513 tests**
+**Current: 350 tests → Target: ~513 tests**
 
 ## Running Tests
 
