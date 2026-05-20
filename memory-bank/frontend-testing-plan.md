@@ -1,8 +1,8 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **Zero tests** exist for the frontend
-- `pytest.ini` is backend-only (`DJANGO_SETTINGS_MODULE`, `testpaths = backend`)
+- **219 tests** exist for the frontend (Steps 1-4 complete)
+- `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
 - 5 core files have **zero Flet dependency** (utils, logger, severity, urls, log_setup)
@@ -12,22 +12,25 @@
 ```
 frontend/
 ├── tests/
-│   ├── __init__.py
-│   ├── conftest.py                  # shared fixtures, module-level setup
-│   ├── test_utils.py                # Step 1: pure functions
-│   ├── test_base_service.py         # Step 2: service layer
-│   ├── test_auth_service.py
-│   ├── test_issue_service.py
-│   ├── test_translations.py         # Step 3: translations
-│   ├── test_column_def.py           # Step 3: formatters
-│   ├── test_colors.py               # Step 4: colors
-│   └── test_base_ui.py              # Step 4: base UI
-└── pytest.ini                       # frontend-specific pytest config
+│   ├── __init__.py                      # ✅ Created
+│   ├── conftest.py                      # ✅ Created
+│   ├── pytest.ini                       # ✅ Created
+│   ├── test_utils.py                    # ✅ Step 1: pure functions (29 tests)
+│   ├── test_base_service.py             # ✅ Step 2: service layer (14 tests)
+│   ├── test_auth_service.py             # ✅ Step 2: service layer (9 tests)
+│   ├── test_issue_service.py            # ✅ Step 2: service layer (18 tests)
+│   ├── test_translations.py             # ✅ Step 3: translations (33 tests)
+│   ├── test_column_def.py               # ✅ Step 3: formatters (55 tests)
+│   ├── test_colors.py                   # ✅ Step 4: colors (43 tests)
+│   └── test_base_ui.py                  # ✅ Step 4: base UI (18 tests)
+└── pytest.ini                           # ✅ frontend-specific pytest config
 ```
+
+**Total: 219 tests, all passing**
 
 ## Incremental Steps
 
-### Step 1 — Pure functions, zero mocking
+### Step 1 — Pure functions, zero mocking ✅ COMPLETE
 
 | File | What to test |
 |------|-------------|
@@ -41,10 +44,11 @@ frontend/
 5. Run tests to validate infrastructure
 
 **Effort:** ~30 min • **No mocking needed** • **Provides immediate proof of test infrastructure**
+**Result:** 29 tests, all passing
 
 ---
 
-### Step 2 — Service layer (mocked HTTP)
+### Step 2 — Service layer (mocked HTTP) ✅ COMPLETE
 
 | File | What to test |
 |------|-------------|
@@ -55,10 +59,11 @@ frontend/
 **Test pattern:** Mock `requests.get/post/put/delete` at the `asyncio.to_thread` wrapper level, or mock at `BaseService._make_request` level for service-specific tests.
 
 **Effort:** ~2h • **Uses `pytest-mock` + `pytest-asyncio`** • **No Flet needed**
+**Result:** 41 tests, all passing (14 base_service + 9 auth_service + 18 issue_service)
 
 ---
 
-### Step 3 — Translation system + formatters
+### Step 3 — Translation system + formatters ✅ COMPLETE
 
 | File | What to test |
 |------|-------------|
@@ -68,10 +73,12 @@ frontend/
 **Note:** Both files `import flet as ft` at module level — `ft` must be **installed** (already in requirements.base.txt) but doesn't need a running Flet app. `translations.py` also calls `Translations.load_translations()` at import time which reads JSON files from disk — this works in test if cwd is `frontend/`.
 
 **Effort:** ~1.5h • **Flet must be pip-installed but no runtime needed** • **Uses pytest fixtures for test data**
+**Result:** 88 tests, all passing (33 translations + 55 column_def)
+**Note:** `fmt_date` uses global `current_language` via `_()`, not `lang` param — tests call `set_language()` explicitly
 
 ---
 
-### Step 4 — Colors + BaseUI (light Flet mocking)
+### Step 4 — Colors + BaseUI (light Flet mocking) ✅ COMPLETE
 
 | File | What to test |
 |------|-------------|
@@ -79,6 +86,8 @@ frontend/
 | `core/base_ui.py` | `_set_background()` with/without image file, `_save_user()`/`_delete_user()` with mocked `ft.SharedPreferences` |
 
 **Effort:** ~1h • **Requires basic Flet mocking** • `BaseUI._save_user` needs `ft.SharedPreferences` patched
+**Result:** 61 tests, all passing (43 colors + 18 base_ui)
+**Pattern:** mock `os.path.exists` + `ft.Container` for background, mock `ft.SharedPreferences` for user session
 
 ---
 
@@ -115,23 +124,23 @@ cd frontend && pytest --cov=. --cov-report=term-missing
 
 ## Config Notes
 
-Root `pytest.ini` needs `frontend` added to `testpaths`:
+Root `pytest.ini` — backend-only, unchanged:
 ```ini
-testpaths = backend frontend
+testpaths = backend
 ```
 
-Or create a separate `frontend/pytest.ini`:
+Frontend `pytest.ini` — created with isolated config:
 ```ini
 [pytest]
 testpaths = tests
-pythonpath = ..
+pythonpath = .
 asyncio_mode = auto
 ```
 
-## Dependencies Already Available
+## Dependencies Already Installed
 
-All test dependencies are in `frontend/requirements.dev.txt`:
-- `pytest==9.0.1`
-- `pytest-asyncio==1.3.0`
-- `pytest-mock==3.15.1`
-- `pytest-cov==7.0.0`
+All test dependencies are installed and working:
+- `pytest==9.0.1` ✅
+- `pytest-asyncio==1.3.0` ✅
+- `pytest-mock==3.15.1` ✅
+- `pytest-cov==7.0.0` ✅

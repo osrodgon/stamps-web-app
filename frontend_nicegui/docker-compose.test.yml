@@ -1,9 +1,0 @@
-services:
-  stamps-frontend:
-    build:
-      dockerfile: Dockerfile.test
-      args:
-        - PYTEST_ARGS=--no-header
-    image: osrogon/test-stamps-frontend
-    # Run tests
-    command: sh -c "pytest frontend $$PYTEST_ARGS"

@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing plan saved to memory-bank
+- **Task**: Frontend unit testing — Steps 1-4 completed
 - **Priority**: medium
-- **Status**: completed
+- **Status**: in_progress (Step 5 next: component tests)
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -49,3 +49,20 @@
 - [Today] Fixed Spanish typos (éxito, caracteres), capitalization (Tipo de sello), Tirada total
 - [Today] Removed 17 duplicate keys from en.json and 16 from es.json (ai_series_lookup)
 - [Today] Created frontend-testing-plan.md in memory-bank (5 incremental steps)
+- [Today] Implemented Step 1: frontend test infrastructure + 29 utils tests (all passing)
+  - Created frontend/tests/__init__.py, conftest.py, test_utils.py
+  - Created frontend/pytest.ini with isolated config
+  - Tests: is_valid_email (15 cases), is_strong_password (14 cases)
+- [Today] Implemented Step 2: service layer tests — 41 new tests (all passing)
+  - Created test_base_service.py: HTTP methods (GET/POST/PUT/DELETE), error handling, constants (14 tests)
+  - Created test_auth_service.py: login/signup endpoint validation, API key headers (9 tests)
+  - Created test_issue_service.py: get_issues filters, delete_issue, get_issue_stamps, get_years (18 tests)
+  - Pattern: mock asyncio.to_thread for BaseService, mock _make_request for subclasses
+- [Today] Implemented Step 3: translations + formatters — 88 new tests (all passing)
+  - Created test_translations.py: _get_nested_value dot keys, translate fallback/interpolation, _() function, set_language/get_language, JSON load verification (33 tests)
+  - Created test_column_def.py: fmt_currency en/es, fmt_number en/es, fmt_date valid/invalid/all months, ColumnDef dataclass, COLUMNS list structure (55 tests)
+  - Note: fmt_date uses global current_language via _(), not lang param — tests set_language() explicitly
+- [Today] Implemented Step 4: colors + BaseUI — 61 new tests (all passing)
+  - Created test_colors.py: lighten_color edge cases, hex validation, 30 color constant values/types (43 tests)
+  - Created test_base_ui.py: _set_background image/fallback, _save_user all fields, _delete_user all fields (18 tests)
+  - Pattern: mock os.path.exists + ft.Container for background, mock ft.SharedPreferences for user session

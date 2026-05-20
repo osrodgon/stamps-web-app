@@ -26,9 +26,21 @@
 ## Pending Tasks
 
 ### Testing
+- [x] Implement Step 1: pure function tests for core/utils.py (29 tests, all passing)
+- [x] Create frontend/tests/ directory with __init__.py, conftest.py
+- [x] Create frontend/pytest.ini with isolated config
+- [x] Implement Step 2: service layer tests (41 tests, all passing)
+  - test_base_service.py: 14 tests (HTTP methods, error handling, constants)
+  - test_auth_service.py: 9 tests (login, signup, API key headers)
+  - test_issue_service.py: 18 tests (get_issues filters, delete, stamps, years)
+- [x] Implement Step 3: translations + formatters tests (88 tests, all passing)
+  - test_translations.py: 33 tests (nested value, translate, _(), set/get_language, JSON load)
+  - test_column_def.py: 55 tests (fmt_currency, fmt_number, fmt_date, ColumnDef, COLUMNS)
+- [x] Implement Step 4: colors + BaseUI tests (61 tests, all passing)
+  - test_colors.py: 43 tests (lighten_color edge cases, hex validation, 30 color constants)
+  - test_base_ui.py: 18 tests (_set_background, _save_user, _delete_user)
+- [ ] Implement Step 5: component tests (IssueRow, TableHeader, TablePagination, etc.)
 - [ ] Implement unit tests for main.py (planned)
-- [ ] Create frontend/tests/ directory
-- [ ] Create conftest.py with shared fixtures
 
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
