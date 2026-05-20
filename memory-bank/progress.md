@@ -46,6 +46,8 @@
   - test_table_header.py: 10 tests (column count, sortable detection, toggle sort, indicators)
   - test_issue_row.py: 10 tests (cell count, zebra striping, name color, expand, set_stamps, loading)
   - test_issue_table_app.py: 19 tests (_parse_filter, state, filter/sort/page callbacks, _rebuild_rows)
+- [x] Implement log_setup tests (17 tests, all passing)
+  - test_log_setup.py: 17 tests (dictConfig, directory creation, path resolution, handlers, formatters, loggers)
 - [ ] Implement Step 6: main.py tests (planned, ~25 tests)
 - [ ] Implement Tier 1: pure utilities (~20 tests)
 - [ ] Implement Tier 2: core infrastructure (~25 tests)
