@@ -48,6 +48,9 @@
   - test_issue_table_app.py: 19 tests (_parse_filter, state, filter/sort/page callbacks, _rebuild_rows)
 - [x] Implement log_setup tests (17 tests, all passing)
   - test_log_setup.py: 17 tests (dictConfig, directory creation, path resolution, handlers, formatters, loggers)
+- [x] Implement Tier 3 button tests (30 tests, all passing)
+  - test_buttons.py: AlertButton (5), DefaultButton (5), PrimaryButton (5),
+    TextButton (5), LinkButton (5), IconButton (5)
 - [ ] Implement Step 6: main.py tests (planned, ~25 tests)
 - [ ] Implement Tier 1: pure utilities (~20 tests)
 - [ ] Implement Tier 2: core infrastructure (~25 tests)

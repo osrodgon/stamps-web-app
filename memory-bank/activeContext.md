@@ -1,11 +1,11 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-5 + log_setup complete (320 tests)
+- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3 buttons complete (350 tests)
 - **Priority**: medium
-- **Status**: in_progress (Tier 3 next: button components ~30 tests)
+- **Status**: in_progress (Tier 4 next: text_field ~15 tests)
 
-## Remaining Untested Files (26 files, ~193 tests planned)
+## Remaining Untested Files (20 files, ~163 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered
@@ -17,8 +17,8 @@
 - `core/log_setup.py` — ✅ 17 tests, 100% coverage
 - Extend service tests (12)
 
-### Tier 3 — Button components, minimal mocking (~30 tests)
-- `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` (5 each)
+### Tier 3 — Button components ✅ COMPLETE
+- `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` — ✅ 30 tests
 
 ### Tier 4 — Form components, moderate mocking (~15 tests)
 - `components/form/text_field.py` (15)
@@ -41,7 +41,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 320 tests → Target: ~513 tests**
+**Current: 350 tests → Target: ~513 tests**
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -118,3 +118,10 @@
   - Created test_log_setup.py: dictConfig call, directory creation, path resolution, handlers (file/console), formatters (standard/colored), logger suppression (17 tests)
   - Pattern: mock `logging.config.dictConfig` + `Path.mkdir` + `Path.is_absolute`, verify config dict structure
   - Coverage: `core/log_setup.py` now at 100%
+- [Today] Implemented Tier 3 button tests — 30 new tests (all passing)
+  - Created test_buttons.py: AlertButton (5), DefaultButton (5), PrimaryButton (5),
+    TextButton (5), LinkButton (5), IconButton (5)
+  - Pattern: mock ft.Text/ft.ButtonStyle/ft.TextButton/ft.Container, verify colors,
+    hover behavior, on_click/data assignment
+  - Key finding: Flet hover events use `e.data = "true"` for hovered and `e.data = ""`
+    (empty string) for not hovered — `"false"` is truthy in Python
