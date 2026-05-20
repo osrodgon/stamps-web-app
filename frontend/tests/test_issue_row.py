@@ -59,7 +59,8 @@ class TestIssueRowBuild:
             row = IssueRow(issue=sample_issue, columns=COLUMNS)
 
         main_row = row.content.controls[0]
-        name_cell = main_row.content.controls[3]
+        name_col_index = [c.api_key for c in COLUMNS].index("name") + 1
+        name_cell = main_row.content.controls[name_col_index]
         name_text = name_cell.content
         assert name_text.color == TEXT_BLUE
 
