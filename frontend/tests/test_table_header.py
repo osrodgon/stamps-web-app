@@ -111,9 +111,9 @@ class TestUpdateSortIndicators:
         with patch.object(TableHeader, "update"):
             header = TableHeader(columns=COLUMNS, sort_key="date", sort_order="asc")
 
-        original_controls = header.content.controls[:]
+        original_content = header.content
 
         with patch.object(header, "update"):
             header.update_sort_indicators("name", "desc")
 
-        assert header.content.controls is not original_controls
+        assert header.content is not original_content
