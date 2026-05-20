@@ -54,6 +54,8 @@
 - [x] Implement Tier 4 form component tests (34 tests, all passing)
   - test_text_field.py: FieldStyle (7), DEFAULT preset (3), APP_HEADER preset (9),
     TextField (15)
+- [x] Implement Tier 5 layout component tests (14 tests, all passing)
+  - test_layout.py: HorizontalLine (7), VerticalLine (7)
 - [ ] Implement Step 6: main.py tests (planned, ~25 tests)
 - [ ] Implement Tier 1: pure utilities (~20 tests)
 - [ ] Implement Tier 2: core infrastructure (~25 tests)
