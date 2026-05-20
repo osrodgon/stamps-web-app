@@ -1,4 +1,5 @@
 [core]
     remote = eda
+    autostage = true
 ['remote "eda"']
     url = gdrive://1-WhB_pO35He7jU5CPh3817RHuiOrDyYp

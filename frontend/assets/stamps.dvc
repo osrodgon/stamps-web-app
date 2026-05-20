@@ -1,0 +1,6 @@
+outs:
+- md5: 43150e25202b1783241aa6384d80d152.dir
+  size: 95668508
+  nfiles: 2500
+  hash: md5
+  path: stamps

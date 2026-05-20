@@ -1,7 +1,7 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **219 tests** exist for the frontend (Steps 1-4 complete)
+- **303 tests** exist for the frontend (Steps 1-5 complete)
 - `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
@@ -22,11 +22,17 @@ frontend/
 │   ├── test_translations.py             # ✅ Step 3: translations (33 tests)
 │   ├── test_column_def.py               # ✅ Step 3: formatters (55 tests)
 │   ├── test_colors.py                   # ✅ Step 4: colors (43 tests)
-│   └── test_base_ui.py                  # ✅ Step 4: base UI (18 tests)
+│   ├── test_base_ui.py                  # ✅ Step 4: base UI (20 tests)
+│   ├── test_app_header.py               # ✅ Step 5: component (13 tests)
+│   ├── test_year_range_selector.py      # ✅ Step 5: component (14 tests)
+│   ├── test_table_pagination.py         # ✅ Step 5: component (18 tests)
+│   ├── test_table_header.py             # ✅ Step 5: component (10 tests)
+│   ├── test_issue_row.py                # ✅ Step 5: component (10 tests)
+│   └── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
 └── pytest.ini                           # ✅ frontend-specific pytest config
 ```
 
-**Total: 219 tests, all passing**
+**Total: 303 tests, all passing**
 
 ## Incremental Steps
 
@@ -91,23 +97,83 @@ frontend/
 
 ---
 
-### Step 5 — Component unit tests (advanced)
+### Step 5 — Component unit tests (advanced) ✅ COMPLETE
 
-| Class | Strategy |
-|-------|----------|
-| `ColumnDef` + `COLUMNS` | Already covered in Step 3 |
-| `IssueRow` | Test data cell rendering: verify cells match COLUMNS order/formatters |
-| `TableHeader` | Test sort indicators, column render count matches COLUMNS |
-| `TablePagination` | Test page text formatting, button enable/disable states |
-| `IssueTableApp` | Test state management (page, sort, filter), data flow (requires Flet runtime) |
-| `AppHeader` | Test left_area content |
-| `YearRangeSelector` | Test year parsing, Canvas interaction simulation |
+| Class | Tests | Result |
+|-------|-------|--------|
+| `AppHeader` | 13 tests | ✅ Three-area layout, add/clear, default state |
+| `YearRangeSelector` | 14 tests | ✅ Coordinate conversion, set_range, properties, track width |
+| `TablePagination` | 18 tests | ✅ _format_range en/es, _total_pages, nav buttons, update_state |
+| `TableHeader` | 10 tests | ✅ Column count, sortable detection, toggle sort, indicators |
+| `IssueRow` | 10 tests | ✅ Cell count, zebra striping, name color, expand, set_stamps, loading |
+| `IssueTableApp` | 19 tests | ✅ _parse_filter, state, filter/sort/page callbacks, _rebuild_rows |
 
-**Challenge:** Flet components extend `ft.Container`/`ft.View` and use `self.page`, `self.update()`. These require either:
-- A running Flet test harness (no official Flet test plugin exists for 0.84.0)
-- Heavy mocking of `ft.Container`, `ft.Control`, `self.page`
+**Result:** 84 tests, all passing
+**Key patterns:**
+- Patch at `components.table.issue_table_app.IssueRow` (where used, not defined)
+- Mock `_schedule_fetch` to avoid `page.run_task` dependency
+- `IssueDetailCard` expects stamps as `{"data": [...]}` not plain list
+- Nav buttons start enabled; `_update_nav_buttons()` must be called explicitly
 
-**Recommendation:** Defer Step 5 until Steps 1-4 are solid. Focus unit tests on **logic extraction** rather than DOM-like assertions.
+---
+
+## Remaining Untested Files (26 files, ~210 tests planned)
+
+### Tier 1 — Pure utilities, zero mocking (~20 tests)
+| File | Est. tests |
+|------|------------|
+| `core/severity.py` | 4 |
+| `core/urls.py` | 8 |
+| `settings.py` | 8 |
+
+### Tier 2 — Core infrastructure, light mocking (~25 tests)
+| File | Est. tests |
+|------|------------|
+| `core/logger.py` | 5 |
+| `core/log_setup.py` | 8 |
+| Extend service tests | 12 |
+
+### Tier 3 — Button components, minimal mocking (~30 tests)
+| File | Est. tests |
+|------|------------|
+| `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` | 5 each |
+
+### Tier 4 — Form components, moderate mocking (~15 tests)
+| File | Est. tests |
+|------|------------|
+| `components/form/text_field.py` | 15 |
+
+### Tier 5 — Layout components, light mocking (~15 tests)
+| File | Est. tests |
+|------|------------|
+| `brand.py`, `app_drawer.py`, `horizontal_line.py`, `vertical_line.py` | 5, 5, 3, 3 |
+
+### Tier 6 — Auth components, moderate mocking (~20 tests)
+| File | Est. tests |
+|------|------------|
+| `login_card.py`, `signup_card.py` | 10 each |
+
+### Tier 7 — Table detail card, heavy mocking (~15 tests)
+| File | Est. tests |
+|------|------------|
+| `issue_detail_card.py` | 15 |
+
+### Tier 8 — Page templates, heavy mocking (~15 tests)
+| File | Est. tests |
+|------|------------|
+| `standard_page.py`, `not_found_page.py` | 10, 5 |
+
+### Tier 9 — Full pages, heaviest mocking (~30 tests)
+| File | Est. tests |
+|------|------------|
+| `login_page.py`, `signup_page.py`, `collections_page.py`, `stamps_manager_page.py` | 10, 10, 5, 10 |
+
+### Tier 10 — Entry point (~25 tests)
+| File | Est. tests |
+|------|------------|
+| `main.py` | 25 |
+
+**Current: 303 tests → Target: ~513 tests**
 
 ## Running Tests
 
