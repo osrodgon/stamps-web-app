@@ -58,17 +58,18 @@ class TestSortableColumns:
         assert len(non_sortable_cells) == len(non_sortable_defs)
 
     def test_active_sort_column_shows_icon(self, header: TableHeader) -> None:
-        date_cell = None
-        for ctrl in header.content.controls[1:]:
-            if hasattr(ctrl, "on_click") and ctrl.on_click is not None:
-                inner_row = ctrl.content
-                if isinstance(inner_row, type(header.content)):
-                    for inner_ctrl in inner_row.controls:
-                        if hasattr(inner_ctrl, "visible") and inner_ctrl.visible:
-                            date_cell = ctrl
-                            break
+        def get_icon_visibility(key: str) -> bool:
+            # +1 for the initial spacer control
+            col_index = [c.api_key for c in COLUMNS].index(key) + 1
+            cell = header.content.controls[col_index]
+            # The icon container is the second element in the cell's content row
+            icon_container = cell.content.controls[1]
+            return icon_container.visible
 
-        assert date_cell is not None
+        # The fixture sets 'date' as the active sort key
+        assert get_icon_visibility("date") is True
+        # 'name' is another sortable column and should be inactive
+        assert get_icon_visibility("name") is False
 
     def test_toggle_sort_reverses_order(self, header: TableHeader) -> None:
         with patch.object(header, "update"):
