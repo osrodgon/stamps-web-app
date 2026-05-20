@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3-4 complete (384 tests)
+- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3-4 + Tier 5 lines complete (398 tests)
 - **Priority**: medium
-- **Status**: in_progress (Tier 5 next: layout components ~15 tests)
+- **Status**: in_progress (Tier 6 next: auth components ~20 tests)
 
 ## Remaining Untested Files (20 files, ~163 tests planned)
 
@@ -23,8 +23,11 @@
 ### Tier 4 — Form components ✅ COMPLETE
 - `components/form/text_field.py` — ✅ 34 tests
 
-### Tier 5 — Layout components, light mocking (~15 tests)
-- `brand.py` (5), `app_drawer.py` (5), `horizontal_line.py` (3), `vertical_line.py` (3)
+### Tier 5 — Layout components (partially done)
+- `horizontal_line.py` — ✅ 7 tests
+- `vertical_line.py` — ✅ 7 tests
+- `brand.py` — deferred (heavy Flet mocking, needs integration test approach)
+- `app_drawer.py` — deferred (heavy Flet mocking, needs integration test approach)
 
 ### Tier 6 — Auth components, moderate mocking (~20 tests)
 - `login_card.py` (10), `signup_card.py` (10)
@@ -41,7 +44,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 384 tests → Target: ~513 tests**
+**Current: 398 tests → Target: ~513 tests**
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -132,3 +135,7 @@
     resolution order (field_style → explicit params → kwargs)
   - Key pattern: TextField extends ft.TextField, uses FieldStyle dataclass for presets,
     explicit params override field_style values
+- [Today] Implemented Tier 5 layout component tests — 14 new tests (all passing)
+  - Created test_layout.py: HorizontalLine (7), VerticalLine (7)
+  - Pattern: direct instantiation (no mocking needed), verify height/width/bgcolor/border_radius
+  - Note: Brand and AppDrawer deferred — heavy Flet mocking required, need integration test approach

@@ -1,7 +1,7 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **384 tests** exist for the frontend (Steps 1-5 + log_setup + Tier 3-4 complete)
+- **398 tests** exist for the frontend (Steps 1-5 + log_setup + Tier 3-5 lines complete)
 - `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
@@ -31,11 +31,12 @@ frontend/
 │   ├── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
 │   ├── test_log_setup.py                # ✅ log_setup (17 tests)
 │   ├── test_buttons.py                  # ✅ Tier 3: buttons (30 tests)
-│   └── test_text_field.py               # ✅ Tier 4: form (34 tests)
+│   ├── test_text_field.py               # ✅ Tier 4: form (34 tests)
+│   └── test_layout.py                   # ✅ Tier 5: layout lines (14 tests)
 └── pytest.ini                           # ✅ frontend-specific pytest config
 ```
 
-**Total: 384 tests, all passing**
+**Total: 398 tests, all passing**
 
 ## Incremental Steps
 
@@ -120,7 +121,7 @@ frontend/
 
 ---
 
-## Remaining Untested Files (19 files, ~129 tests planned)
+## Remaining Untested Files (17 files, ~115 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered by existing tests
@@ -137,6 +138,12 @@ frontend/
 
 ### Tier 4 — Form components ✅ COMPLETE
 - `components/form/text_field.py` — ✅ 34 tests
+
+### Tier 5 — Layout components (partially done)
+- `horizontal_line.py` — ✅ 7 tests
+- `vertical_line.py` — ✅ 7 tests
+- `brand.py` — deferred (heavy Flet mocking, needs integration test approach)
+- `app_drawer.py` — deferred (heavy Flet mocking, needs integration test approach)
 
 ### Tier 3 — Button components, minimal mocking (~30 tests)
 | File | Est. tests |
@@ -178,7 +185,7 @@ frontend/
 |------|------------|
 | `main.py` | 25 |
 
-**Current: 384 tests → Target: ~513 tests**
+**Current: 398 tests → Target: ~513 tests**
 
 ## Running Tests
 
