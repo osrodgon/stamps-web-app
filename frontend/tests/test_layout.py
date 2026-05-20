@@ -1,9 +1,6 @@
 """Unit tests for layout components."""
 
-from unittest.mock import MagicMock, patch
-
 import flet as ft
-import pytest
 
 from components.layout.horizontal_line import HorizontalLine
 from components.layout.vertical_line import VerticalLine
