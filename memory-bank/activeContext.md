@@ -1,9 +1,43 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-4 completed
+- **Task**: Frontend unit testing — Steps 1-5 completed (303 tests)
 - **Priority**: medium
-- **Status**: in_progress (Step 5 next: component tests)
+- **Status**: in_progress (Step 6 next: main.py tests + remaining tiers)
+
+## Remaining Untested Files (26 files, ~210 tests planned)
+
+### Tier 1 — Pure utilities, zero mocking (~20 tests)
+- `core/severity.py` (4), `core/urls.py` (8), `settings.py` (8)
+
+### Tier 2 — Core infrastructure, light mocking (~25 tests)
+- `core/logger.py` (5), `core/log_setup.py` (8), extend service tests (12)
+
+### Tier 3 — Button components, minimal mocking (~30 tests)
+- `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` (5 each)
+
+### Tier 4 — Form components, moderate mocking (~15 tests)
+- `components/form/text_field.py` (15)
+
+### Tier 5 — Layout components, light mocking (~15 tests)
+- `brand.py` (5), `app_drawer.py` (5), `horizontal_line.py` (3), `vertical_line.py` (3)
+
+### Tier 6 — Auth components, moderate mocking (~20 tests)
+- `login_card.py` (10), `signup_card.py` (10)
+
+### Tier 7 — Table detail card, heavy mocking (~15 tests)
+- `issue_detail_card.py` (15)
+
+### Tier 8 — Page templates, heavy mocking (~15 tests)
+- `standard_page.py` (10), `not_found_page.py` (5)
+
+### Tier 9 — Full pages, heaviest mocking (~30 tests)
+- `login_page.py` (10), `signup_page.py` (10), `collections_page.py` (5), `stamps_manager_page.py` (10)
+
+### Tier 10 — Entry point (~25 tests)
+- `main.py` (25)
+
+**Current: 303 tests → Target: ~513 tests**
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -66,3 +100,13 @@
   - Created test_colors.py: lighten_color edge cases, hex validation, 30 color constant values/types (43 tests)
   - Created test_base_ui.py: _set_background image/fallback, _save_user all fields, _delete_user all fields (18 tests)
   - Pattern: mock os.path.exists + ft.Container for background, mock ft.SharedPreferences for user session
+- [Today] Implemented Step 5: component tests — 84 new tests (all passing)
+  - Created test_app_header.py: three-area layout, add/clear methods, default state (13 tests)
+  - Created test_year_range_selector.py: coordinate conversion (_year_to_x/_x_to_year), set_range, properties, track width (14 tests)
+  - Created test_table_pagination.py: _format_range en/es, _total_pages, nav button states, update_state (18 tests)
+  - Created test_table_header.py: column count, sortable/non-sortable detection, toggle sort, update_sort_indicators (10 tests)
+  - Created test_issue_row.py: cell count, zebra striping, name column color, expand/collapse, set_stamps, set_loading (10 tests)
+  - Created test_issue_table_app.py: _parse_filter (8 cases), initial state, filter/sort/page callbacks, _rebuild_rows (19 tests)
+  - Key patterns: patch at `components.table.issue_table_app.IssueRow` (where used, not defined), mock `_schedule_fetch` to avoid page dependency, use `object.__setattr__` workaround for read-only `page` property
+  - IssueDetailCard expects stamps as `{"data": [...]}` not plain list
+  - Nav buttons start enabled; `_update_nav_buttons()` must be called explicitly to set disabled states
