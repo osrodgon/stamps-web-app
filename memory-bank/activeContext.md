@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3 buttons complete (350 tests)
+- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3-4 complete (384 tests)
 - **Priority**: medium
-- **Status**: in_progress (Tier 4 next: text_field ~15 tests)
+- **Status**: in_progress (Tier 5 next: layout components ~15 tests)
 
 ## Remaining Untested Files (20 files, ~163 tests planned)
 
@@ -20,8 +20,8 @@
 ### Tier 3 — Button components ✅ COMPLETE
 - `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` — ✅ 30 tests
 
-### Tier 4 — Form components, moderate mocking (~15 tests)
-- `components/form/text_field.py` (15)
+### Tier 4 — Form components ✅ COMPLETE
+- `components/form/text_field.py` — ✅ 34 tests
 
 ### Tier 5 — Layout components, light mocking (~15 tests)
 - `brand.py` (5), `app_drawer.py` (5), `horizontal_line.py` (3), `vertical_line.py` (3)
@@ -41,7 +41,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 350 tests → Target: ~513 tests**
+**Current: 384 tests → Target: ~513 tests**
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -125,3 +125,10 @@
     hover behavior, on_click/data assignment
   - Key finding: Flet hover events use `e.data = "true"` for hovered and `e.data = ""`
     (empty string) for not hovered — `"false"` is truthy in Python
+- [Today] Implemented Tier 4 form component tests — 34 new tests (all passing)
+  - Created test_text_field.py: FieldStyle (7), DEFAULT preset (3), APP_HEADER preset (9),
+    TextField (15)
+  - Pattern: mock ft.TextField, verify FieldStyle defaults and overrides, test style
+    resolution order (field_style → explicit params → kwargs)
+  - Key pattern: TextField extends ft.TextField, uses FieldStyle dataclass for presets,
+    explicit params override field_style values

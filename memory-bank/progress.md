@@ -51,6 +51,9 @@
 - [x] Implement Tier 3 button tests (30 tests, all passing)
   - test_buttons.py: AlertButton (5), DefaultButton (5), PrimaryButton (5),
     TextButton (5), LinkButton (5), IconButton (5)
+- [x] Implement Tier 4 form component tests (34 tests, all passing)
+  - test_text_field.py: FieldStyle (7), DEFAULT preset (3), APP_HEADER preset (9),
+    TextField (15)
 - [ ] Implement Step 6: main.py tests (planned, ~25 tests)
 - [ ] Implement Tier 1: pure utilities (~20 tests)
 - [ ] Implement Tier 2: core infrastructure (~25 tests)

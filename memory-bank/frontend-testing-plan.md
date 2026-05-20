@@ -1,7 +1,7 @@
 # Frontend Unit Testing Plan
 
 ## Current State
-- **350 tests** exist for the frontend (Steps 1-5 + log_setup + Tier 3 buttons complete)
+- **384 tests** exist for the frontend (Steps 1-5 + log_setup + Tier 3-4 complete)
 - `frontend/pytest.ini` with isolated config (`testpaths = tests`, `pythonpath = .`, `asyncio_mode = auto`)
 - `pytest-asyncio`, `pytest-mock`, `pytest-cov` are already in `requirements.dev.txt`
 - 3 service files are **Flet-free** — no `import flet` → testable in standard pytest
@@ -30,11 +30,12 @@ frontend/
 │   ├── test_issue_row.py                # ✅ Step 5: component (10 tests)
 │   ├── test_issue_table_app.py          # ✅ Step 5: component (19 tests)
 │   ├── test_log_setup.py                # ✅ log_setup (17 tests)
-│   └── test_buttons.py                  # ✅ Tier 3: buttons (30 tests)
+│   ├── test_buttons.py                  # ✅ Tier 3: buttons (30 tests)
+│   └── test_text_field.py               # ✅ Tier 4: form (34 tests)
 └── pytest.ini                           # ✅ frontend-specific pytest config
 ```
 
-**Total: 350 tests, all passing**
+**Total: 384 tests, all passing**
 
 ## Incremental Steps
 
@@ -119,7 +120,7 @@ frontend/
 
 ---
 
-## Remaining Untested Files (20 files, ~163 tests planned)
+## Remaining Untested Files (19 files, ~129 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered by existing tests
@@ -133,6 +134,9 @@ frontend/
 
 ### Tier 3 — Button components ✅ COMPLETE
 - `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` — ✅ 30 tests
+
+### Tier 4 — Form components ✅ COMPLETE
+- `components/form/text_field.py` — ✅ 34 tests
 
 ### Tier 3 — Button components, minimal mocking (~30 tests)
 | File | Est. tests |
@@ -174,7 +178,7 @@ frontend/
 |------|------------|
 | `main.py` | 25 |
 
-**Current: 350 tests → Target: ~513 tests**
+**Current: 384 tests → Target: ~513 tests**
 
 ## Running Tests
 
