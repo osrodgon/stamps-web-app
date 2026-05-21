@@ -129,12 +129,12 @@ class TestIssueTableAppRebuildRows:
             app = IssueTableApp(service=mock_service)
         return app
 
-    def test_rebuild_rows_empty_shows_empty_text(self, app: IssueTableApp) -> None:
+    def test_rebuild_rows_empty_shows_empty_state(self, app: IssueTableApp) -> None:
         app._data = []
         with patch.object(app, "update"):
             app._rebuild_rows()
 
-        assert app._empty_text.visible is True
+        assert app._empty_state.visible is True
         assert len(app._rows_container.controls) == 0
 
     def test_rebuild_rows_populated_creates_rows(self, app: IssueTableApp) -> None:
@@ -147,7 +147,17 @@ class TestIssueTableAppRebuildRows:
             mock_row.return_value = MagicMock()
             app._rebuild_rows()
 
-        assert app._empty_text.visible is False
+        assert app._empty_state.visible is False
+        assert mock_row.call_count == 2
+        app._data = [
+            {"id": 1, "name": "Issue 1", "country": "France"},
+            {"id": 2, "name": "Issue 2", "country": "Spain"},
+        ]
+        with patch("components.table.issue_table_app.IssueRow") as mock_row, \
+             patch.object(app, "update"):
+            mock_row.return_value = MagicMock()
+            app._rebuild_rows()
+
         assert mock_row.call_count == 2
 
     def test_rebuild_rows_auto_expands_single_row(self, app: IssueTableApp) -> None:

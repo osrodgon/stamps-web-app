@@ -37,7 +37,6 @@ class StampsManagerPage(StandardPage):
     - AppHeader with left-aligned controls (menu, title, separator, filter)
       and right-aligned add-issue button
     - YearRangeSelector for year-range filtering
-    - YearRangeSelector for year-range filtering
     - Main content area for the IssueTable
     - Slide-out AppDrawer navigation
     - Debounced (300ms) name/year text filter with pagination reset
@@ -119,7 +118,11 @@ class StampsManagerPage(StandardPage):
         self.header.add_right(add_issue_btn)
 
         # Create the drawer
-        self.drawer = AppDrawer(on_logout=self.request_logout)
+        self.drawer = AppDrawer(
+            on_logout=self.request_logout,
+            on_profile=self.request_profile,
+            on_settings=self.request_settings
+        )
         
         # Create the content area
         self._table: IssueTableApp = IssueTableApp(

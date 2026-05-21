@@ -33,7 +33,7 @@ class AppDrawer(ft.Container):
     user_full_name: ft.Text
     user_email: ft.Text
 
-    def __init__(self, on_logout=None):
+    def __init__(self, on_logout=None, on_profile=None, on_settings=None):
         """
         Initialize the AppDrawer component.
 
@@ -81,12 +81,12 @@ class AppDrawer(ft.Container):
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.PERSON, color=ft.Colors.BLACK_54),
                     title=ft.Text(_("profile.profile"), color=ft.Colors.BLACK_87),
-                    on_click=lambda _: print("Profile clicked")
+                    on_click=on_profile
                 ),
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.SETTINGS, color=ft.Colors.BLACK_54),
                     title=ft.Text(_("profile.settings"), color=ft.Colors.BLACK_87),
-                    on_click=lambda _: print("Settings clicked")
+                    on_click=on_settings
                 ),
                 ft.Divider(height=1, color=ft.Colors.BLACK_12),
                 ft.ListTile(
