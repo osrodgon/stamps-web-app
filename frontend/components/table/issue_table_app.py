@@ -84,13 +84,30 @@ class IssueTableApp(ft.Container):
             color=HEADER_BG,
             bgcolor=SKY_BLUE,
         )
-        self._rows_container: ft.Column = ft.Column(spacing=0, scroll=ft.ScrollMode.AUTO, expand=True)
-        self._empty_text: ft.Text = ft.Text(
-            _("collections.no_issues_found"),
+        self._rows_container: ft.Column = ft.Column(spacing=0, expand=True)
+        self._empty_state: ft.Container = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.SEARCH, size=48, color=ICON_GREY),
+                            ft.Text(
+                                _("collections.no_issues_found"),
+                                size=32,
+                                color=ICON_GREY,
+                                font_family="Roboto-Bold",
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=10,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
+            ),
             visible=False,
-            size=14,
-            font_family="Roboto-Bold",
-            color=ICON_GREY,
+            expand=True,
         )
         self._table_header: TableHeader = TableHeader(
             columns=COLUMNS,
@@ -124,10 +141,16 @@ class IssueTableApp(ft.Container):
                     ],
                 ),
                 ft.Container(
-                    content=ft.Column(
-                        controls=[self._rows_container],
-                        scroll=ft.ScrollMode.ADAPTIVE,
-                        spacing=0,
+                    content=ft.Stack(
+                        controls=[
+                            ft.Column(
+                                controls=[self._rows_container],
+                                scroll=ft.ScrollMode.ADAPTIVE,
+                                spacing=0,
+                                expand=True,
+                            ),
+                            self._empty_state,
+                        ],
                         expand=True,
                     ),
                     expand=True,
@@ -223,11 +246,12 @@ class IssueTableApp(ft.Container):
         self._rows_container.controls.clear()
 
         if not self._data:
-            self._empty_text.visible = True
+            self._empty_state.visible = True
             self.update()
             return
 
-        self._empty_text.visible = False
+        self._empty_state.visible = False
+        
         for index, issue in enumerate(self._data):
             auto_expand: bool = index == 0 and self._rows_per_page == 1
             row: IssueRow = IssueRow(

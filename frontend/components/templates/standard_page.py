@@ -14,12 +14,13 @@ class StandardPage(ft.View, BaseUI):
     - Collections Page
     
     Layout:
-    - Header: Contains AppHeader (to be created), fixed height (80px), expands horizontally
+    - Header: Contains AppHeader, fixed height (80px), expands horizontally
     - Main: Expands to fill remaining space (vertical & horizontal)
     
     Attributes:
         header (ft.Container): Header section containing AppHeader.
         main (ft.Container): Main content area that expands.
+        main_page (ft.Page): The underlying Flet page instance.
     """
     
     header: ft.Container
@@ -32,7 +33,7 @@ class StandardPage(ft.View, BaseUI):
         
         Args:
             page: The Flet page instance.
-            header_height: Height of the header in pixels. Default: 60.
+            header_height: Height of the header in pixels. Default: 80.
         """
         self.main_page = page
         
@@ -59,11 +60,14 @@ class StandardPage(ft.View, BaseUI):
             ]
         )
     
-    def set_app_header(self, app_header):
+    def set_app_header(self, app_header: ft.Container) -> ft.Container:
         """Set the AppHeader control in the header container.
         
         Args:
             app_header: The AppHeader control to display in the header.
+            
+        Returns:
+            The app_header that was set.
         """
         self.header.content = app_header
         return app_header
@@ -77,21 +81,47 @@ class StandardPage(ft.View, BaseUI):
         if self.header.content and self.page:
             self.page.update()
             
-    async def logout(self):
-        self.log.debug("Loggin out...")
+    def request_settings(self) -> None:
+        """Handle settings request from the header menu.
+        
+        Logs the event and is intended to be overridden by subclasses
+        to provide navigation or modal behavior.
+        """
+        self.log.debug("Settings requested.")
+        
+    def request_profile(self) -> None:
+        """Handle profile request from the header menu.
+        
+        Logs the event and is intended to be overridden by subclasses
+        to provide navigation or modal behavior.
+        """
+        self.log.debug("Profile requested.")
+        
+    async def logout(self) -> None:
+        """Perform logout by pushing the logout route.
+        
+        Delegates to the authentication system via URL routing and
+        should trigger token invalidation on the backend.
+        """
+        self.log.debug("Logging out...")
         await self.main_page.push_route(URLs.Frontend.logout)
 
-    def request_logout(self, e):
+    def request_logout(self, e: ft.ControlEvent) -> None:
+        """Show a confirmation dialog before logging out.
+        
+        Args:
+            e: The Flet control event that triggered the logout request.
+        """
         self.log.debug("Logout requested.")
         
         # 1. Create the 'Yes' action
-        async def confirm_action(e):
+        async def confirm_action(e: ft.ControlEvent) -> None:
             self.confirm_dialog.open = False
             self.main_page.update()
-            await self.logout() # Call your existing async method
+            await self.logout()
 
         # 2. Create the 'No' action
-        def cancel_action(e):
+        def cancel_action(e: ft.ControlEvent) -> None:
             self.confirm_dialog.open = False
             self.main_page.update()
 

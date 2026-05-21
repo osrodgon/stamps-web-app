@@ -128,11 +128,11 @@
     },
     "collections": {
         "title": "Colecciones",
-        "no_issues_found": "No se encontraron emisiones con los criterios proporcionados."
+        "no_issues_found": "No se encontraron series con los criterios proporcionados."
     },
     "pagination": {
         "pagination_of": "de",
-        "pagination_rows_per_page": "Emisiones por página",
+        "pagination_rows_per_page": "Series por página",
         "pagination_all_rows": "Todas"
     },
     "errors": {

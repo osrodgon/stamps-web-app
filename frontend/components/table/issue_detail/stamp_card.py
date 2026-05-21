@@ -159,7 +159,7 @@ class StampCard(ft.Card):
                                         padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                                     ),
                                     ft.Container(
-                                        content=ft.Text(used_part, size=14, color=GREY_700),
+                                        content=ft.Text(used_part, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
                                         bgcolor=ft.Colors.BLUE_100,
                                         border_radius=6,
                                         padding=ft.Padding.symmetric(horizontal=6, vertical=2),
