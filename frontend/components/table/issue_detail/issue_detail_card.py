@@ -15,10 +15,11 @@ class IssueDetailCard(ft.Container):
 
     Displays three sections:
     - Identity Header: Series name, emission date, and inline valuation
-      badges (Mint, Used, Total Printed).
+      badges (Mint, Used, Total Printed) with edit/delete issue icons.
     - Technical Specs: Responsive grid of issue attributes followed by
       description and notes text blocks.
-    - Stamp Grid: Responsive grid of StampCard components.
+    - Stamp Grid: Responsive grid of StampCard components with an
+      add-stamp button at the end.
 
     Args:
         issue: Raw issue data dict from the API response.
@@ -27,6 +28,9 @@ class IssueDetailCard(ft.Container):
         loading: If True, shows a loading placeholder in the stamp section.
         on_edit_stamp: Called with stamp ID when the edit icon is clicked.
         on_delete_stamp: Called with stamp ID when the delete icon is clicked.
+        on_edit_issue: Called with issue ID when the issue edit icon is clicked.
+        on_delete_issue: Called with issue ID when the issue delete icon is clicked.
+        on_add_stamp: Called with issue ID when the add-stamp button is clicked.
     """
 
     def __init__(
@@ -172,6 +176,11 @@ class IssueDetailCard(ft.Container):
             self._on_delete_issue(issue_id)
 
     def _handle_add_stamp(self, e: ft.ControlEvent) -> None:
+        """Handle add-stamp button click — fire on_add_stamp with issue ID.
+
+        Args:
+            e: The click event from the add-stamp IconButton.
+        """
         issue_id = self._issue.get("id")
         if self._on_add_stamp and issue_id is not None:
             self._on_add_stamp(issue_id)
@@ -272,6 +281,8 @@ class IssueDetailCard(ft.Container):
         return container
 
     def _build_stamp_table(self) -> ft.Control:
+        stamp_add_icon_size: int = 48
+        
         if self._loading:
             return ft.Container(
                 content=ft.Text(
@@ -317,30 +328,36 @@ class IssueDetailCard(ft.Container):
             ft.Container(
                 content=ft.Card(
                     elevation=1,
-                    content=ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                ft.Container(
-                                    content=ft.Icon(ft.Icons.ADD, size=48, color=GREY_700),
-                                    height=160,
-                                    width=160,
-                                    bgcolor=DARK_IMG_BG,
-                                    border_radius=4,
-                                    on_click=self._handle_add_stamp,
-                                ),
-                                ft.Text(
-                                    _("stamps.add"),
-                                    size=14,
-                                    color=GREY_700,
-                                    text_align=ft.TextAlign.CENTER,
-                                    expand=True,
-                                ),
-                            ],
-                            spacing=8,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            alignment=ft.MainAxisAlignment.START,
-                        ),
-                        padding=12,
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.IconButton(
+                                        icon=ft.Icons.ADD,
+                                        icon_size=stamp_add_icon_size,
+                                        splash_radius=1,
+                                        splash_color=ft.Colors.TRANSPARENT,
+                                        width=stamp_add_icon_size,
+                                        height=stamp_add_icon_size,
+                                        padding=0,
+                                        hover_color=ft.Colors.TRANSPARENT,
+                                        style=ft.ButtonStyle(
+                                            color={
+                                                ft.ControlState.DEFAULT: GREY_700,
+                                                ft.ControlState.HOVERED: ft.Colors.GREEN_700,
+                                            },
+                                            overlay_color=ft.Colors.TRANSPARENT,
+                                        ),
+                                        on_click=self._handle_add_stamp,
+                                        tooltip=_("stamps.add_tooltip"),
+                                    ),
+                                ],
+                                height=184,
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
                     ),
                 ),
                 col={"sm": 6, "md": 3},

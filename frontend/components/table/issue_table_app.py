@@ -54,6 +54,11 @@ class IssueTableApp(ft.Container):
         Args:
             service: IssueService instance for API communication. Creates
                 a new instance if not provided.
+            on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
+            on_delete_stamp: Called with stamp ID when a stamp delete icon is clicked.
+            on_edit_issue: Called with issue ID when the issue edit icon is clicked.
+            on_delete_issue: Called with issue ID when the issue delete icon is clicked.
+            on_add_stamp: Called with issue ID when the add-stamp button is clicked.
         """
         super().__init__()
         self._service: IssueService = service or IssueService()

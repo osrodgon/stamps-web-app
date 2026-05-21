@@ -35,6 +35,8 @@ class StampsManagerPage(StandardPage):
 
     The page uses StandardPage as its base, providing:
     - AppHeader with left-aligned controls (menu, title, separator, filter)
+      and right-aligned add-issue button
+    - YearRangeSelector for year-range filtering
     - YearRangeSelector for year-range filtering
     - Main content area for the IssueTable
     - Slide-out AppDrawer navigation
@@ -52,9 +54,10 @@ class StampsManagerPage(StandardPage):
         """Initialize the StampsManagerPage with header, filter, table, and drawer.
 
         Constructs the AppHeader with menu icon, title, separator, text
-        filter field, and YearRangeSelector. Creates the AppDrawer for
-        navigation and the IssueTableApp for displaying stamp issues.
-        Schedules asynchronous loading of user preferences on startup.
+        filter field, YearRangeSelector, and add-issue button. Creates
+        the AppDrawer for navigation and the IssueTableApp for displaying
+        stamp issues. Schedules asynchronous loading of user preferences
+        on startup.
 
         Args:
             page: The Flet page instance.
@@ -272,19 +275,49 @@ class StampsManagerPage(StandardPage):
         self._table.set_year_filter(f"{start}-{end}")
 
     def _handle_edit_stamp(self, stamp_id: int) -> None:
+        """Handle stamp edit action — stub for future implementation.
+
+        Args:
+            stamp_id: The ID of the stamp to edit.
+        """
         self.log.debug(f"Edit stamp {stamp_id}")
 
     def _handle_delete_stamp(self, stamp_id: int) -> None:
+        """Handle stamp delete action — stub for future implementation.
+
+        Args:
+            stamp_id: The ID of the stamp to delete.
+        """
         self.log.debug(f"Delete stamp {stamp_id}")
 
     def _handle_edit_issue(self, issue_id: int) -> None:
+        """Handle issue edit action — stub for future implementation.
+
+        Args:
+            issue_id: The ID of the issue to edit.
+        """
         self.log.debug(f"Edit issue {issue_id}")
 
     def _handle_delete_issue(self, issue_id: int) -> None:
+        """Handle issue delete action — stub for future implementation.
+
+        Args:
+            issue_id: The ID of the issue to delete.
+        """
         self.log.debug(f"Delete issue {issue_id}")
 
     def _handle_add_stamp(self, issue_id: int) -> None:
+        """Handle add-stamp action — stub for future implementation.
+
+        Args:
+            issue_id: The ID of the issue to add a stamp to.
+        """
         self.log.debug(f"Add stamp to issue {issue_id}")
 
     async def _handle_add_issue(self, e: ft.ControlEvent) -> None:
+        """Handle add-new-issue button click — stub for future implementation.
+
+        Args:
+            e: The click event from the add-issue IconButton.
+        """
         self.log.debug("Add new issue")

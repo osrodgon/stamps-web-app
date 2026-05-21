@@ -66,6 +66,10 @@
 - Duplicate ai_series_lookup keys removed from both en.json and es.json
 
 ## Session Log
+- [Today] Added docstrings across 5 files: _handle_add_stamp, show_stamp_detail_dialog, 6 handler stubs in StampsManagerPage, callback params in IssueRow/IssueTableApp/IssueDetailCard
+- [Today] Restyled add-stamp card: centered IconButton (48px ADD icon) in fixed-height Column, hover GREY_700→GREEN_700, tooltip from locale key
+- [Today] Renamed locale key stamps.add → stamps.add_tooltip in en/es.json
+- [Today] Added add-issue button (IconButton with ADD) in AppHeader right_area, stub handler
 - [Today] Added on_add_stamp callback chain through 4 layers: IssueDetailCard → IssueRow → IssueTableApp → StampsManagerPage
 - [Today] Add-stamp card renders as last stamp grid item: centered "+" icon on DARK_IMG_BG, "Add Stamp" label below, card with elevation=1
 - [Today] Fixed ft.Card.on_click → ft.Container.on_click (Card lacks on_click in Flet 0.84.0), moved click handler to inner container

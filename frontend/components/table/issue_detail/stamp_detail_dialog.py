@@ -19,6 +19,20 @@ def show_stamp_detail_dialog(
     lang: str,
     issue_year: str,
 ) -> None:
+    """Open a modal dialog displaying full-size stamp image and metadata.
+
+    Shows a 700px-wide AlertDialog with the stamp image on the left (capped
+    at 280px height) and catalog info on the right (codes, face value,
+    colors, MNH/Used valuations). Includes a full-width description below
+    the image row.
+
+    Args:
+        page: The Flet page instance to attach the dialog to.
+        stamp: Stamp data dict from the API response.
+        lang: Language code ("en" or "es") for currency formatting.
+        issue_year: The year of the parent issue, used to resolve the
+            image file path.
+    """
     colors_list: list[str] = stamp.get("colors", [])
     colors_str: str = ", ".join(colors_list) if colors_list else "-"
 

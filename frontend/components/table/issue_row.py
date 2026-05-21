@@ -54,7 +54,12 @@ class IssueRow(ft.Container):
             columns: List of ColumnDef to build cells from.
             lang: Language code for locale-aware formatting ("en" or "es").
             on_expand: Called with issue ID when the chevron is toggled open.
-            expanded: If True, start with details expanded (used for first row on page 1).
+            expanded: If True, start with details expanded.
+            on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
+            on_delete_stamp: Called with stamp ID when a stamp delete icon is clicked.
+            on_edit_issue: Called with issue ID when the issue edit icon is clicked.
+            on_delete_issue: Called with issue ID when the issue delete icon is clicked.
+            on_add_stamp: Called with issue ID when the add-stamp button is clicked.
         """
         super().__init__()
         self._issue: dict = issue

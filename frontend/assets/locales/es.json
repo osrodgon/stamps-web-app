@@ -124,7 +124,7 @@
         "image": "Imagen",
         "edit_tooltip": "Editar Sello",
         "delete_tooltip": "Eliminar Sello",
-        "add": "Añadir Sello"
+        "add_tooltip": "Añadir Sello"
     },
     "collections": {
         "title": "Colecciones",

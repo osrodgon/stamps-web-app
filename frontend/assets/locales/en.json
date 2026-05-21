@@ -124,7 +124,7 @@
         "image": "Image",
         "edit_tooltip": "Edit Stamp",
         "delete_tooltip": "Delete Stamp",
-        "add": "Add Stamp"
+        "add_tooltip": "Add Stamp"
     },
     "collections": {
         "title": "Collections",
