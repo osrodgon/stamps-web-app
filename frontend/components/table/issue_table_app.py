@@ -8,7 +8,7 @@ row expansion with async stamp loading. Pagination is automatically reset
 to page 1 when filters or sort order change.
 """
 
-from typing import Optional
+from typing import Callable, Optional
 
 import flet as ft
 import requests
@@ -35,7 +35,15 @@ class IssueTableApp(ft.Container):
         set_year_filter(): Apply a year range from an external slider.
     """
 
-    def __init__(self, service: Optional[IssueService] = None) -> None:
+    def __init__(
+        self,
+        service: Optional[IssueService] = None,
+        on_edit_stamp: Optional[Callable[[int], None]] = None,
+        on_delete_stamp: Optional[Callable[[int], None]] = None,
+        on_edit_issue: Optional[Callable[[int], None]] = None,
+        on_delete_issue: Optional[Callable[[int], None]] = None,
+        on_add_stamp: Optional[Callable[[int], None]] = None,
+    ) -> None:
         """Initialize the table with sub-components, state, and default layout.
 
         Sets up internal state for pagination, sorting, and filtering.
@@ -46,6 +54,11 @@ class IssueTableApp(ft.Container):
         Args:
             service: IssueService instance for API communication. Creates
                 a new instance if not provided.
+            on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
+            on_delete_stamp: Called with stamp ID when a stamp delete icon is clicked.
+            on_edit_issue: Called with issue ID when the issue edit icon is clicked.
+            on_delete_issue: Called with issue ID when the issue delete icon is clicked.
+            on_add_stamp: Called with issue ID when the add-stamp button is clicked.
         """
         super().__init__()
         self._service: IssueService = service or IssueService()
@@ -60,6 +73,11 @@ class IssueTableApp(ft.Container):
         self._name_filter: str = ""
         self._lang: str = get_language()
         self._year_filter: str = ""
+        self._on_edit_stamp: Optional[Callable[[int], None]] = on_edit_stamp
+        self._on_delete_stamp: Optional[Callable[[int], None]] = on_delete_stamp
+        self._on_edit_issue: Optional[Callable[[int], None]] = on_edit_issue
+        self._on_delete_issue: Optional[Callable[[int], None]] = on_delete_issue
+        self._on_add_stamp: Optional[Callable[[int], None]] = on_add_stamp
 
         self._progress_bar: ft.ProgressBar = ft.ProgressBar(
             visible=False,
@@ -219,6 +237,11 @@ class IssueTableApp(ft.Container):
                 lang=self._lang,
                 on_expand=self._on_expand,
                 expanded=auto_expand,
+                on_edit_stamp=self._on_edit_stamp,
+                on_delete_stamp=self._on_delete_stamp,
+                on_edit_issue=self._on_edit_issue,
+                on_delete_issue=self._on_delete_issue,
+                on_add_stamp=self._on_add_stamp,
             )
             self._rows_container.controls.append(row)
             if auto_expand and issue.get("id") is not None:

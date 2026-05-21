@@ -201,7 +201,7 @@ class TestColorConstants:
         assert SLIDER_INACTIVE == "#3d4c5d"
 
     def test_dark_img_bg_value(self) -> None:
-        assert DARK_IMG_BG == "#1a1a1a"
+        assert DARK_IMG_BG == "#313131"
 
     def test_bg_gradient_start_value(self) -> None:
         assert BG_GRADIENT_START == "#f0f4f8"

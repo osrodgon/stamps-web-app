@@ -56,16 +56,11 @@
     TextField (15)
 - [x] Implement Tier 5 layout component tests (14 tests, all passing)
   - test_layout.py: HorizontalLine (7), VerticalLine (7)
-- [ ] Implement Step 6: main.py tests (planned, ~25 tests)
-- [ ] Implement Tier 1: pure utilities (~20 tests)
-- [ ] Implement Tier 2: core infrastructure (~25 tests)
-- [ ] Implement Tier 3: button components (~30 tests)
-- [ ] Implement Tier 4: form components (~15 tests)
-- [ ] Implement Tier 5: layout components (~15 tests)
-- [ ] Implement Tier 6: auth components (~20 tests)
+- [ ] Implement Tier 6: auth components — deferred (ft.Container._values issue, needs integration test)
 - [ ] Implement Tier 7: table detail card (~15 tests)
 - [ ] Implement Tier 8: page templates (~15 tests)
 - [ ] Implement Tier 9: full pages (~30 tests)
+- [ ] Implement Tier 10: main.py (~25 tests)
 
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
@@ -108,6 +103,26 @@
 - [x] Added loading/empty states in stamp table section
 - [x] Added 7 new translation keys: year, mint, used, market_value_mnh, technical_specifications, valuation, image
 - [x] Fixed _kv_cell to properly set container.col property (not as kwargs)
+
+### Add-Stamp Button (2025-05-21)
+- [x] Added `on_add_stamp` callback param to IssueDetailCard, IssueRow, IssueTableApp
+- [x] Added `_handle_add_stamp` handler in IssueDetailCard (fires callback with issue_id)
+- [x] Added stub `_handle_add_stamp` in StampsManagerPage (logs only)
+- [x] Add-stamp card renders as last grid item: centered IconButton (48px ADD icon) in fixed-height Column, hover GREY_700→GREEN_700, tooltip from locale key
+- [x] Fixed ft.Card.on_click → ft.Container.on_click (Card lacks on_click in Flet 0.84.0)
+- [x] Renamed locale key stamps.add → stamps.add_tooltip
+- [x] All 398 tests passing after implementation
+
+### Add-Issue Button (2025-05-21)
+- [x] Added IconButton with ADD icon in AppHeader right_area
+- [x] Added async stub handler _handle_add_issue in StampsManagerPage
+
+### Docstring Batch 2 (2025-05-21)
+- [x] Added docstrings to _handle_add_stamp in IssueDetailCard
+- [x] Added full docstring to show_stamp_detail_dialog()
+- [x] Documented all callback params in IssueRow.__init__ and IssueTableApp.__init__
+- [x] Added docstrings to 6 handler stubs in StampsManagerPage
+- [x] Updated class/init docstrings for add-issue button reference
 
 ---
 
@@ -241,7 +256,10 @@ frontend/
 │   │   └── year_range_selector.py # YearRangeSelector class
 │   └── table/
 │       ├── column_def.py         # ColumnDef dataclass, COLUMNS list, formatters
-│       ├── issue_detail_card.py  # IssueDetailCard class (expanded detail view)
+│       ├── issue_detail/
+│       │   ├── issue_detail_card.py  # IssueDetailCard class
+│       │   ├── stamp_card.py         # StampCard class
+│       │   └── stamp_detail_dialog.py # show_stamp_detail_dialog function
 │       ├── issue_table_app.py    # IssueTableApp class
 │       ├── issue_row.py          # IssueRow class
 │       ├── table_header.py       # TableHeader class
@@ -302,7 +320,9 @@ components/layout/brand.py
 components/layout/horizontal_line.py
 components/layout/vertical_line.py
 components/table/column_def.py
-components/table/issue_detail_card.py
+components/table/issue_detail/issue_detail_card.py
+components/table/issue_detail/stamp_card.py
+components/table/issue_detail/stamp_detail_dialog.py
 components/table/issue_row.py
 components/table/issue_table_app.py
 components/table/table_header.py
