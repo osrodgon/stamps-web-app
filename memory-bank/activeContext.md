@@ -3,9 +3,9 @@
 ## Current Task
 - **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3-4 + Tier 5 lines complete (398 tests)
 - **Priority**: medium
-- **Status**: in_progress (Tier 6 next: auth components ~20 tests)
+- **Status**: in_progress (Tier 7 next: issue_detail_card ~15 tests)
 
-## Remaining Untested Files (20 files, ~163 tests planned)
+## Remaining Untested Files (15 files, ~95 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered
@@ -29,8 +29,9 @@
 - `brand.py` — deferred (heavy Flet mocking, needs integration test approach)
 - `app_drawer.py` — deferred (heavy Flet mocking, needs integration test approach)
 
-### Tier 6 — Auth components, moderate mocking (~20 tests)
-- `login_card.py` (10), `signup_card.py` (10)
+### Tier 6 — Auth components, deferred (heavy Flet mocking)
+- `login_card.py` — deferred (ft.Container._values descriptor issue, needs integration test)
+- `signup_card.py` — deferred (same _values issue, needs integration test)
 
 ### Tier 7 — Table detail card, heavy mocking (~15 tests)
 - `issue_detail_card.py` (15)
@@ -44,7 +45,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 398 tests → Target: ~513 tests**
+**Current: 398 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -65,6 +66,10 @@
 - Duplicate ai_series_lookup keys removed from both en.json and es.json
 
 ## Session Log
+- [Today] Added on_add_stamp callback chain through 4 layers: IssueDetailCard → IssueRow → IssueTableApp → StampsManagerPage
+- [Today] Add-stamp card renders as last stamp grid item: centered "+" icon on DARK_IMG_BG, "Add Stamp" label below, card with elevation=1
+- [Today] Fixed ft.Card.on_click → ft.Container.on_click (Card lacks on_click in Flet 0.84.0), moved click handler to inner container
+- [Today] All 398 tests pass after add-stamp implementation
 - [Today] Analyzed IconButton for readability improvements
 - [Today] Created IssueTable implementation plan
 - [Today] Stored plan in memory-bank/progress.md
@@ -139,3 +144,6 @@
   - Created test_layout.py: HorizontalLine (7), VerticalLine (7)
   - Pattern: direct instantiation (no mocking needed), verify height/width/bgcolor/border_radius
   - Note: Brand and AppDrawer deferred — heavy Flet mocking required, need integration test approach
+- [Today] Attempted Tier 6 auth card tests — deferred (ft.Container._values descriptor issue)
+  - login_card.py and signup_card.py cannot be unit tested due to Flet's descriptor system
+  - These require integration test approach with real Flet page context

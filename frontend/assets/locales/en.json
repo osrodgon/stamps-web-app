@@ -90,6 +90,11 @@
         "no_text_value": "None.",
         "of": "of"
     },
+    "issues":{
+        "edit_tooltip": "Edit issue",
+        "delete_tooltip": "Delete issue",
+        "add_tooltip": "Add new issue"
+    },
     "stamps": {
         "country": "Country",
         "issue_name": "Issue Name",
@@ -111,12 +116,15 @@
         "fesofi_code": "FESOFI Code",
         "market_value_used": "Market Value (Used)",
         "year": "Year",
-        "mint": "Mint (MNH)",
+        "mint": "Mint",
         "used": "Used",
         "market_value_mnh": "Market Value (MNH)",
         "technical_specifications": "Technical Specifications",
         "valuation": "Valuation",
-        "image": "Image"
+        "image": "Image",
+        "edit_tooltip": "Edit Stamp",
+        "delete_tooltip": "Delete Stamp",
+        "add": "Add Stamp"
     },
     "collections": {
         "title": "Collections",

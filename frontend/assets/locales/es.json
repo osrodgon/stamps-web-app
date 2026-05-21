@@ -90,6 +90,11 @@
         "no_text_value": "Ninguno/a.",
         "of": "de"
     },
+    "issues":{
+        "edit_tooltip": "Editar serie",
+        "delete_tooltip": "Eliminar serie",
+        "add_tooltip": "Añadir nueva serie"
+    },
     "stamps": {
         "country": "País",
         "issue_name": "Nombre de la serie",
@@ -111,12 +116,15 @@
         "fesofi_code": "Código FESOFI",
         "market_value_used": "Valor de mercado (Usado)",
         "year": "Año",
-        "mint": "Nuevo (MNH)",
+        "mint": "Nuevo",
         "used": "Usado",
         "market_value_mnh": "Valor de mercado (MNH)",
         "technical_specifications": "Especificaciones técnicas",
         "valuation": "Valoración",
-        "image": "Imagen"
+        "image": "Imagen",
+        "edit_tooltip": "Editar Sello",
+        "delete_tooltip": "Eliminar Sello",
+        "add": "Añadir Sello"
     },
     "collections": {
         "title": "Colecciones",

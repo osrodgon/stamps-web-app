@@ -56,16 +56,11 @@
     TextField (15)
 - [x] Implement Tier 5 layout component tests (14 tests, all passing)
   - test_layout.py: HorizontalLine (7), VerticalLine (7)
-- [ ] Implement Step 6: main.py tests (planned, ~25 tests)
-- [ ] Implement Tier 1: pure utilities (~20 tests)
-- [ ] Implement Tier 2: core infrastructure (~25 tests)
-- [ ] Implement Tier 3: button components (~30 tests)
-- [ ] Implement Tier 4: form components (~15 tests)
-- [ ] Implement Tier 5: layout components (~15 tests)
-- [ ] Implement Tier 6: auth components (~20 tests)
+- [ ] Implement Tier 6: auth components — deferred (ft.Container._values issue, needs integration test)
 - [ ] Implement Tier 7: table detail card (~15 tests)
 - [ ] Implement Tier 8: page templates (~15 tests)
 - [ ] Implement Tier 9: full pages (~30 tests)
+- [ ] Implement Tier 10: main.py (~25 tests)
 
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
@@ -108,6 +103,14 @@
 - [x] Added loading/empty states in stamp table section
 - [x] Added 7 new translation keys: year, mint, used, market_value_mnh, technical_specifications, valuation, image
 - [x] Fixed _kv_cell to properly set container.col property (not as kwargs)
+
+### Add-Stamp Button (2025-05-21)
+- [x] Added `on_add_stamp` callback param to IssueDetailCard, IssueRow, IssueTableApp
+- [x] Added `_handle_add_stamp` handler in IssueDetailCard (fires callback with issue_id)
+- [x] Added stub `_handle_add_stamp` in StampsManagerPage (logs only)
+- [x] Add-stamp card renders as last grid item: "+" icon on DARK_IMG_BG with "Add Stamp" label
+- [x] Fixed ft.Card.on_click → ft.Container.on_click (Card lacks on_click in Flet 0.84.0)
+- [x] All 398 tests passing after implementation
 
 ---
 

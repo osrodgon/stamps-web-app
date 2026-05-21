@@ -121,7 +121,7 @@ frontend/
 
 ---
 
-## Remaining Untested Files (17 files, ~115 tests planned)
+## Remaining Untested Files (15 files, ~95 tests planned)
 
 ### Tier 1 — Pure utilities (skipped, already covered)
 - `core/severity.py` — 100% covered by existing tests
@@ -145,25 +145,9 @@ frontend/
 - `brand.py` — deferred (heavy Flet mocking, needs integration test approach)
 - `app_drawer.py` — deferred (heavy Flet mocking, needs integration test approach)
 
-### Tier 3 — Button components, minimal mocking (~30 tests)
-| File | Est. tests |
-|------|------------|
-| `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` | 5 each |
-
-### Tier 4 — Form components, moderate mocking (~15 tests)
-| File | Est. tests |
-|------|------------|
-| `components/form/text_field.py` | 15 |
-
-### Tier 5 — Layout components, light mocking (~15 tests)
-| File | Est. tests |
-|------|------------|
-| `brand.py`, `app_drawer.py`, `horizontal_line.py`, `vertical_line.py` | 5, 5, 3, 3 |
-
-### Tier 6 — Auth components, moderate mocking (~20 tests)
-| File | Est. tests |
-|------|------------|
-| `login_card.py`, `signup_card.py` | 10 each |
+### Tier 6 — Auth components, deferred (heavy Flet mocking)
+- `login_card.py` — deferred (ft.Container._values descriptor issue, needs integration test)
+- `signup_card.py` — deferred (same _values issue, needs integration test)
 
 ### Tier 7 — Table detail card, heavy mocking (~15 tests)
 | File | Est. tests |
@@ -185,7 +169,7 @@ frontend/
 |------|------------|
 | `main.py` | 25 |
 
-**Current: 398 tests → Target: ~513 tests**
+**Current: 398 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
 
 ## Running Tests
 

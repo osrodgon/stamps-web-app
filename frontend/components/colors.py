@@ -106,5 +106,5 @@ ROW_HOVER: str = "#E8E8E8"
 SLIDER_INACTIVE: str = "#3d4c5d"
 
 #: Near black (#1a1a1a) - used for stamp image background in dialogs and thumbnails.
-DARK_IMG_BG: str = "#1a1a1a"
+DARK_IMG_BG: str = "#313131"
 

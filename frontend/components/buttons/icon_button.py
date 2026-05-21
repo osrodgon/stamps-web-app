@@ -12,7 +12,7 @@ class IconButton(ft.Container):
         icon (ft.Icon): The icon displayed in the button.
     """
     
-    def __init__(self, icon: str, bgcolor: str, size: int = 40, on_click=None, data=None):
+    def __init__(self, icon: str, bgcolor: str, size: int = 40, on_click=None, data=None, tooltip=None):
         """
         Initialize a circular IconButton.
         
@@ -22,6 +22,7 @@ class IconButton(ft.Container):
             size (int, optional): Diameter of the circular button. Default: 40.
             on_click (callable, optional): Callback function triggered on click.
             data (any, optional): Arbitrary data attached to the button.
+            tooltip (str, optional): Tooltip text for the button.
         """
         super().__init__()
         self.width = size
@@ -37,7 +38,8 @@ class IconButton(ft.Container):
         self.data = data
         self.alignment = ft.Alignment.CENTER
         self.on_hover = self._on_hover
-        
+        self.tooltip = tooltip
+
     def _on_hover(self, e: ft.HoverEvent) -> None:
         """
         Handle hover state changes for the button.

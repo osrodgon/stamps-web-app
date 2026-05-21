@@ -18,7 +18,7 @@ from components.colors import (
     TEXT_BLUE,
 )
 from components.table.column_def import ColumnDef
-from components.table.issue_detail_card import IssueDetailCard
+from components.table.issue_detail.issue_detail_card import IssueDetailCard
 from core.translations import _
 
 
@@ -37,6 +37,11 @@ class IssueRow(ft.Container):
         lang: str = "en",
         on_expand: Optional[Callable[[int], None]] = None,
         expanded: bool = False,
+        on_edit_stamp: Optional[Callable[[int], None]] = None,
+        on_delete_stamp: Optional[Callable[[int], None]] = None,
+        on_edit_issue: Optional[Callable[[int], None]] = None,
+        on_delete_issue: Optional[Callable[[int], None]] = None,
+        on_add_stamp: Optional[Callable[[int], None]] = None,
     ) -> None:
         """Initialize a single issue row with data cells and expandable details.
 
@@ -57,6 +62,11 @@ class IssueRow(ft.Container):
         self._columns: list[ColumnDef] = columns or []
         self._lang: str = lang
         self._on_expand: Optional[Callable[[int], None]] = on_expand
+        self._on_edit_stamp: Optional[Callable[[int], None]] = on_edit_stamp
+        self._on_delete_stamp: Optional[Callable[[int], None]] = on_delete_stamp
+        self._on_edit_issue: Optional[Callable[[int], None]] = on_edit_issue
+        self._on_delete_issue: Optional[Callable[[int], None]] = on_delete_issue
+        self._on_add_stamp: Optional[Callable[[int], None]] = on_add_stamp
         self._is_expanded: bool = expanded
         self._original_bgcolor: str | None = BG_LIGHT if row_index % 2 == 0 else BG_ALT
         self._stamps: list[dict] = []
@@ -149,6 +159,11 @@ class IssueRow(ft.Container):
             stamps=self._stamps,
             lang=self._lang,
             loading=self._loading_stamps,
+            on_edit_stamp=self._on_edit_stamp,
+            on_delete_stamp=self._on_delete_stamp,
+            on_edit_issue=self._on_edit_issue,
+            on_delete_issue=self._on_delete_issue,
+            on_add_stamp=self._on_add_stamp,
         )
 
     def set_loading(self) -> None:

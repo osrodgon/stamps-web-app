@@ -105,12 +105,28 @@ class StampsManagerPage(StandardPage):
         self.header.add_left(separator)
         self.header.add_left(series_year_filter)
         self.header.add_left(self._year_selector)
-        
+
+        # Right area: Add new issue button
+        add_issue_btn = IconButton(
+            icon=ft.Icons.ADD,
+            bgcolor=DARK_BLUE_GREY,
+            on_click=self._handle_add_issue,
+            tooltip=_("issues.add_tooltip")
+        )
+        self.header.add_right(add_issue_btn)
+
         # Create the drawer
         self.drawer = AppDrawer(on_logout=self.request_logout)
         
         # Create the content area
-        self._table: IssueTableApp = IssueTableApp(service=self._issue_service)
+        self._table: IssueTableApp = IssueTableApp(
+            service=self._issue_service,
+            on_edit_stamp=self._handle_edit_stamp,
+            on_delete_stamp=self._handle_delete_stamp,
+            on_edit_issue=self._handle_edit_issue,
+            on_delete_issue=self._handle_delete_issue,
+            on_add_stamp=self._handle_add_stamp,
+        )
         self.content_area = ft.Column(
             [self._table],
             expand=True,
@@ -254,3 +270,21 @@ class StampsManagerPage(StandardPage):
         """
         await asyncio.sleep(0.3)
         self._table.set_year_filter(f"{start}-{end}")
+
+    def _handle_edit_stamp(self, stamp_id: int) -> None:
+        self.log.debug(f"Edit stamp {stamp_id}")
+
+    def _handle_delete_stamp(self, stamp_id: int) -> None:
+        self.log.debug(f"Delete stamp {stamp_id}")
+
+    def _handle_edit_issue(self, issue_id: int) -> None:
+        self.log.debug(f"Edit issue {issue_id}")
+
+    def _handle_delete_issue(self, issue_id: int) -> None:
+        self.log.debug(f"Delete issue {issue_id}")
+
+    def _handle_add_stamp(self, issue_id: int) -> None:
+        self.log.debug(f"Add stamp to issue {issue_id}")
+
+    async def _handle_add_issue(self, e: ft.ControlEvent) -> None:
+        self.log.debug("Add new issue")
