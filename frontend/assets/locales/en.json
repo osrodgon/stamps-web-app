@@ -95,7 +95,12 @@
     "issues":{
         "edit_tooltip": "Edit issue",
         "delete_tooltip": "Delete issue",
-        "add_tooltip": "Add new issue"
+        "add_tooltip": "Add new issue",
+        "delete_confirm": "Delete issue",
+        "delete_confirm_message": "Are you sure you want to delete this issue? This will also delete all stamps associated with this issue.",
+        "delete_success": "Issue deleted successfully",
+        "delete_error": "Failed to delete issue",
+        "name": "Name"
     },
     "stamps": {
         "country": "Country",

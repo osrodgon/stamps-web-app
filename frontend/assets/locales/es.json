@@ -95,7 +95,12 @@
     "issues":{
         "edit_tooltip": "Editar serie",
         "delete_tooltip": "Eliminar serie",
-        "add_tooltip": "Añadir nueva serie"
+        "add_tooltip": "Añadir nueva serie",
+        "delete_confirm": "Eliminar serie",
+        "delete_confirm_message": "¿Estás seguro de que quieres eliminar esta serie? Esto también eliminará todos los sellos asociados a esta serie.",
+        "delete_success": "Serie eliminada correctamente",
+        "delete_error": "Error al eliminar la serie",
+        "name": "Nombre"
     },
     "stamps": {
         "country": "País",
