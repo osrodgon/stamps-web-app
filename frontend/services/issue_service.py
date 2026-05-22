@@ -21,6 +21,7 @@ class IssueService(BaseService):
     Public methods:
         get_issues:       Paginated issue list with sort, name, and year filters.
         delete_issue:     Remove an issue by ID.
+        delete_stamp:     Remove a stamp by ID.
         get_issue_stamps: Fetch stamps belonging to a specific issue.
         get_years:        Fetch all available years for range selector initialization.
     """
@@ -80,6 +81,26 @@ class IssueService(BaseService):
             Raw requests.Response, or None on network error.
         """
         url = f"{URLs.Backend.issues}{issue_id}/"
+        return await self._make_request(
+            request_type=self.DELETE,
+            url=url,
+            headers={"Authorization": f"Api-Key {API_MASTER_KEY}"},
+        )
+
+    async def delete_stamp(self, stamp_id: int) -> requests.Response | None:
+        """Delete a stamp by ID.
+
+        Sends a DELETE request to the backend stamps endpoint. The URL
+        intentionally omits a trailing slash to match the backend's
+        ``path('<int:id>', ...)`` route pattern.
+
+        Args:
+            stamp_id: The ID of the stamp to delete.
+
+        Returns:
+            Raw requests.Response (status 200 on success), or None on network error.
+        """
+        url = f"{URLs.Backend.stamps}{stamp_id}"
         return await self._make_request(
             request_type=self.DELETE,
             url=url,

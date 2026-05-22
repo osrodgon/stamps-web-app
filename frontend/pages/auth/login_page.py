@@ -147,7 +147,7 @@ class LoginPage(ft.View, BaseUI):
         if response.status_code != requests.codes.ok:
             error_msg = data['errors'][0]['message']
             self.log.error(f'Login failed: {error_msg}')
-            await self.show_notification(f'Error: {error_msg}', severity=Severity.ERROR, duration=1500)
+            await self.show_notification(_("auth.login_error"), severity=Severity.ERROR, duration=1500)
             return response
         
         # Login Success. Store auth token and user data in SharedPreferences

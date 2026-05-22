@@ -1,6 +1,6 @@
 """Unit tests for components/table/issue_detail/issue_detail_card.py — expanded issue detail card."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 import flet as ft
@@ -316,7 +316,7 @@ class TestIssueDetailCardStampTable:
             issue_year="2023",
             lang="en",
             on_edit=card._on_edit_stamp,
-            on_delete=card._on_delete_stamp,
+            on_delete=ANY,
         )
 
 

@@ -8,9 +8,11 @@ import flet as ft
 from components.colors import DARK_IMG_BG, GREY_700
 from components.table.column_def import fmt_currency
 from components.table.issue_detail.stamp_detail_dialog import show_stamp_detail_dialog
+from components.buttons.alert_button import AlertButton
+from components.buttons.default_button import DefaultButton
 from core.translations import _
 from settings import ASSETS_DIR, IMAGE_DIR, NO_STAMP
-from components.constants import STAMP_ACTION_ICON_SIZE, STAMP_THUMBNAIL_SIZE, FONT_SIZE_DEFAULT, CARD_ELEVATION
+from components.constants import STAMP_ACTION_ICON_SIZE, STAMP_THUMBNAIL_SIZE, FONT_SIZE_DEFAULT, CARD_ELEVATION, CARD_BORDER_RADIUS
 
 
 class StampCard(ft.Card):
@@ -190,6 +192,56 @@ class StampCard(ft.Card):
             self._on_edit(stamp_id)
 
     def _handle_delete(self, e: ft.ControlEvent) -> None:
+        """Show a confirmation dialog and delete the stamp on confirm.
+
+        Displays an AlertDialog with the stamp name and FESOFI code so
+        the user can verify which stamp is being deleted. On confirm,
+        fires the ``on_delete`` callback with the stamp ID. On cancel,
+        simply closes the dialog.
+
+        Uses ``page.overlay.append(dlg)`` followed by setting
+        ``dlg.open = True`` (Flet 0.84.0 compatible — ``page.open()``
+        is not available).
+
+        Args:
+            e: The click event from the delete IconButton.
+        """
         stamp_id = self._stamp.get("id")
-        if self._on_delete and stamp_id is not None:
-            self._on_delete(stamp_id)
+        stamp_name = self._stamp.get("name") or "-"
+        fesofi_code = self._stamp.get("fesofi_code") or "-"
+        if stamp_id is None:
+            return
+
+        def confirm_action(_: ft.ControlEvent) -> None:
+            dlg.open = False
+            self.page.update()
+            if self._on_delete:
+                self._on_delete(stamp_id)
+
+        def cancel_action(_: ft.ControlEvent) -> None:
+            dlg.open = False
+            self.page.update()
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(_("stamps.delete_confirm"), font_family="Roboto-Bold"),
+            content=ft.Column(
+                controls=[
+                    ft.Text(_("stamps.delete_confirm_message"), font_family="Roboto"),
+                    ft.Container(height=10),
+                    ft.Text(f"{_('stamps.fesofi_code')}: {fesofi_code}", size=14, color=GREY_700),
+                    ft.Text(f"{_('stamps.name')}: {stamp_name}", size=14, color=GREY_700),
+                ],
+                spacing=4,
+                tight=True,
+            ),
+            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
+            actions=[
+                DefaultButton(_("ui.cancel").upper(), on_click=cancel_action),
+                AlertButton(_("ui.delete").upper(), on_click=confirm_action),
+            ],
+            actions_alignment="end",
+        )
+        self.page.overlay.append(dlg)
+        dlg.open = True
+        self.page.update()

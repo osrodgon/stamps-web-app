@@ -22,6 +22,7 @@ from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
 from components.form.year_range_selector import YearRangeSelector
+from core.severity import Severity
 from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
 from components.constants import HEADER_HEIGHT, DEBOUNCE_DELAY
@@ -286,13 +287,41 @@ class StampsManagerPage(StandardPage):
         """
         self.log.debug(f"Edit stamp {stamp_id}")
 
-    def _handle_delete_stamp(self, stamp_id: int) -> None:
-        """Handle stamp delete action — stub for future implementation.
+    def _handle_delete_stamp(self, stamp_id: int, issue_id: int) -> None:
+        """Delete a stamp, show notification, and refresh stamps.
 
         Args:
             stamp_id: The ID of the stamp to delete.
+            issue_id: The ID of the parent issue for post-delete refresh.
         """
-        self.log.debug(f"Delete stamp {stamp_id}")
+        self.log.debug(f"Delete stamp {stamp_id} from issue {issue_id}")
+
+        page = self.page
+
+        async def do_delete() -> None:
+            """Send DELETE request, show notification, and refresh stamps.
+
+            Runs as a background task via ``page.run_task()``. On success,
+            shows a green notification and re-fetches the affected issue's
+            stamps. On failure, shows a red notification with the HTTP status
+            code logged for debugging.
+            """
+            try:
+                response = await self._issue_service.delete_stamp(stamp_id)
+                if response and response.status_code == requests.codes.ok:
+                    self.log.debug(f"Stamp {stamp_id} deleted successfully")
+                    await self.show_notification(_("stamps.delete_success"), severity=Severity.SUCCESS, duration=1500)
+                    page.update()
+                    await self._table._fetch_stamps_for_row(issue_id)
+                else:
+                    status_code = response.status_code if response else "no response"
+                    self.log.error(f"Delete stamp failed: {status_code}")
+                    await self.show_notification(_("stamps.delete_error"), severity=Severity.ERROR, duration=1500)
+                    page.update()
+            except Exception as ex:
+                self.log.error(f"Delete stamp error: {ex}")
+
+        self.page.run_task(do_delete)
 
     def _handle_edit_issue(self, issue_id: int) -> None:
         """Handle issue edit action — stub for future implementation.
