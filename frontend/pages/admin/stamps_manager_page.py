@@ -320,6 +320,8 @@ class StampsManagerPage(StandardPage):
                     page.update()
             except Exception as ex:
                 self.log.error(f"Delete stamp error: {ex}")
+                await self.show_notification(_("messages.unexpected_error"), severity=Severity.ERROR)
+                page.update()
 
         self.page.run_task(do_delete)
 
