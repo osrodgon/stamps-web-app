@@ -189,14 +189,19 @@ class Command(BaseCommand):
         apps: list[str] = MODE_MAP[mode]
         self.stdout.write(f"Backing up {len(apps)} app(s) ({mode}) ...")
 
-        with open(filepath, "w", encoding="utf-8") as f:
-            call_command(
-                "dumpdata",
-                *apps,
-                stdout=f,
-                indent=2,
-                natural_foreign=True,
-            )
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                call_command(
+                    "dumpdata",
+                    *apps,
+                    stdout=f,
+                    indent=2,
+                    natural_foreign=True,
+                )
+        except Exception as e:
+            if filepath.exists():
+                filepath.unlink()
+            raise CommandError(f"Backup failed: {e}")
 
         size: int = filepath.stat().st_size
         self.stdout.write(
