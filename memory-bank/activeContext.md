@@ -1,8 +1,8 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — ALL tiers complete (488 tests)
-- **Priority**: medium
+- **Task**: Database backup/restore commands — done
+- **Priority**: low
 - **Status**: completed
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
@@ -158,3 +158,5 @@
 - [Today] Implemented Tier 10 main.py tests — 24 tests (ROUTE_HANDLERS, configure_page, route_change with 7 scenarios, view_pop)
   - Pattern: patch `ft.SharedPreferences` via `patch.object(ft, "SharedPreferences")` for route tests
 - [Today] All 488 tests passing (398 baseline + 35 + 16 + 15 + 24 = 488)
+- [Today] Stamp deletion: Step 1-4 done, API call commented out. All 488 tests passing.
+- [Today] Database backup/restore: stamps_db_backup.py + stamps_db_restore.py with --mode (system/stamps/full). 1008 backend + 488 frontend tests passing.

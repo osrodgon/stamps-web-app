@@ -217,6 +217,7 @@ stamps-data/
 */assets/stamps/
 full_project_export.json
 *.csv
+backend/backups/
 
 
 .opencode
