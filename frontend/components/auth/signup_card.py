@@ -6,6 +6,7 @@ from core.translations import _
 from components.form.text_field import TextField
 from components.buttons.primary_button import PrimaryButton
 from core.utils import is_valid_email, is_strong_password
+from components.constants import FONT_SIZE_DEFAULT, FONT_SIZE_HEADING, CARD_SPACING, CARD_PADDING, CARD_BORDER_RADIUS, CARD_SHADOW_BLUR, CARD_SHADOW_OPACITY
 
 class SignupCard(ft.Container, BaseUI):
     """
@@ -40,7 +41,7 @@ class SignupCard(ft.Container, BaseUI):
     confirm_password: TextField
     sign_up : PrimaryButton
     cancel: PrimaryButton
-    size = 14
+    size = FONT_SIZE_DEFAULT
     
     def __init__(self, on_sign_up_click, on_sign_up_cancel):
         """
@@ -63,7 +64,7 @@ class SignupCard(ft.Container, BaseUI):
         # Create the UI elements
         self.sign_in_header = ft.Text(
             _("auth.sign_up"),
-            size=24,
+            size=FONT_SIZE_HEADING,
             font_family="Roboto-Bold",
             color=ft.Colors.BLACK,
         )
@@ -120,16 +121,16 @@ class SignupCard(ft.Container, BaseUI):
                     alignment=ft.MainAxisAlignment.CENTER
                 )
             ],
-            spacing=15,
+            spacing=CARD_SPACING,
             tight=True,
             intrinsic_width=True,
         )
         
         # Style the container
         self.bgcolor = ft.Colors.WHITE
-        self.padding = 20
-        self.border_radius = 8
-        self.shadow = ft.BoxShadow(blur_radius=15, color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK))
+        self.padding = CARD_PADDING
+        self.border_radius = CARD_BORDER_RADIUS
+        self.shadow = ft.BoxShadow(blur_radius=CARD_SHADOW_BLUR, color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK))
         
     def _validate(self):
         """

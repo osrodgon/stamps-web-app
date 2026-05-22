@@ -1,5 +1,6 @@
 import flet as ft
 from components.colors import SLATE_GREY, lighten_color, SLATE_GREY_HOVER
+from components.constants import FONT_SIZE_SMALL_HEADING
 
 
 class TextButton(ft.TextButton):
@@ -18,7 +19,7 @@ class TextButton(ft.TextButton):
         (Inherited from ft.TextButton)
     """
 
-    def __init__(self, text, on_click=None, data=None, size=16, font_family="Roboto"):
+    def __init__(self, text, on_click=None, data=None, size=FONT_SIZE_SMALL_HEADING, font_family="Roboto"):
         """
         Initializes a TextButton with the specified text and styling.
 

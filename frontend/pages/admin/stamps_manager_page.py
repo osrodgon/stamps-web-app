@@ -24,6 +24,7 @@ from components.table.issue_table_app import IssueTableApp
 from components.form.year_range_selector import YearRangeSelector
 from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
+from components.constants import HEADER_HEIGHT, DEBOUNCE_DELAY
 
 
 class StampsManagerPage(StandardPage):
@@ -63,7 +64,7 @@ class StampsManagerPage(StandardPage):
         """
         super().__init__(
             page=page,
-            header_height=80,
+            header_height=HEADER_HEIGHT,
         )
         
         self._filter_task: asyncio.Task | None = None
@@ -228,7 +229,7 @@ class StampsManagerPage(StandardPage):
         Args:
             value: The raw filter string (text, number, or pattern).
         """
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(DEBOUNCE_DELAY)
         self.log.debug(f"Aplying filter: {value}")
         await self._table.load(search=value, reset_page=True)
 
@@ -274,7 +275,7 @@ class StampsManagerPage(StandardPage):
             start: The selected minimum year.
             end: The selected maximum year.
         """
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(DEBOUNCE_DELAY)
         self._table.set_year_filter(f"{start}-{end}")
 
     def _handle_edit_stamp(self, stamp_id: int) -> None:

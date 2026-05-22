@@ -11,6 +11,7 @@ from components.colors import DARK_IMG_BG, GREY_700
 from components.table.column_def import fmt_currency
 from core.translations import _
 from settings import ASSETS_DIR, IMAGE_DIR, NO_STAMP
+from components.constants import FONT_SIZE_DEFAULT, CARD_BORDER_RADIUS, DIALOG_WIDTH, DIALOG_IMAGE_MAX_HEIGHT
 
 
 def show_stamp_detail_dialog(
@@ -52,9 +53,9 @@ def show_stamp_detail_dialog(
         else os.path.join(ASSETS_DIR, image_path)
     )
     try:
-        display_height: int = min(PILImage.open(abs_path).height, 280)
+        display_height: int = min(PILImage.open(abs_path).height, DIALOG_IMAGE_MAX_HEIGHT)
     except Exception:
-        display_height = 280
+        display_height = DIALOG_IMAGE_MAX_HEIGHT
 
     stamp_mnh: float = float(stamp.get("market_value_mnh") or 0)
     stamp_used: float = float(stamp.get("market_value_used") or 0)
@@ -96,17 +97,17 @@ def show_stamp_detail_dialog(
                                         ),
                                         ft.Column(
                                             controls=[
-                                                ft.Text(codes_text, size=14, color=GREY_700),
-                                                ft.Text(face_value_text, size=14, color=GREY_700),
-                                                ft.Text(color_text, size=14, color=GREY_700),
+                                                ft.Text(codes_text, size=FONT_SIZE_DEFAULT, color=GREY_700),
+                                                ft.Text(face_value_text, size=FONT_SIZE_DEFAULT, color=GREY_700),
+                                                ft.Text(color_text, size=FONT_SIZE_DEFAULT, color=GREY_700),
                                                 ft.Container(
-                                                    content=ft.Text(mnh_part, size=14, color=GREY_700),
+                                                    content=ft.Text(mnh_part, size=FONT_SIZE_DEFAULT, color=GREY_700),
                                                     bgcolor=ft.Colors.GREEN_100,
                                                     border_radius=6,
                                                     padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                                                 ),
                                                 ft.Container(
-                                                    content=ft.Text(used_part, size=14, color=GREY_700),
+                                                    content=ft.Text(used_part, size=FONT_SIZE_DEFAULT, color=GREY_700),
                                                     bgcolor=ft.Colors.BLUE_100,
                                                     border_radius=6,
                                                     padding=ft.Padding.symmetric(horizontal=8, vertical=4),
@@ -121,7 +122,7 @@ def show_stamp_detail_dialog(
                                 ft.Divider(height=1, thickness=1, color=ft.Colors.GREY_300),
                                 ft.Text(
                                     _("ui.description").upper(),
-                                    size=14,
+                                    size=FONT_SIZE_DEFAULT,
                                     font_family="Roboto-Black",
                                     color=GREY_700,
                                 ),
@@ -140,11 +141,11 @@ def show_stamp_detail_dialog(
                 spacing=12,
                 tight=True,
             ),
-            width=700,
+            width=DIALOG_WIDTH,
         ),
         actions=[DefaultButton(_("ui.close"), on_click=close)],
         on_dismiss=close,
-        shape=ft.RoundedRectangleBorder(radius=8),
+        shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
         title=ft.Text(
             stamp.get("name") or "-",
             size=23,

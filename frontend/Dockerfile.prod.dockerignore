@@ -29,5 +29,23 @@ pytest.ini
 Dockerfile*
 docker-compose*
 
-# Other
+# DVC files
+.dvc/
+.dvcignore
+dvc.lock
+*.dvc
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Environment files
+.env
+.env.*
+
+# Other (stamps will be a docker volume, so we don't want to include it in the build context)
 **/assets/stamps

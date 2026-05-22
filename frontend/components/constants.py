@@ -1,0 +1,54 @@
+"""Shared UI sizing and spacing constants."""
+
+# --- Button Dimensions ---
+BUTTON_HEIGHT: int = 40
+BUTTON_TEXT_SIZE: int = 14
+BUTTON_BORDER_RADIUS: int = 4
+ICON_BUTTON_SIZE: int = 40
+ICON_BUTTON_ICON_RATIO: float = 0.6
+
+# --- Icon Sizes ---
+ICON_SIZE_SMALL: int = 20
+ICON_SIZE_MEDIUM: int = 24
+ICON_SIZE_LARGE: int = 48
+
+# --- Font Sizes ---
+FONT_SIZE_XS: int = 12
+FONT_SIZE_DEFAULT: int = 14
+FONT_SIZE_SMALL_HEADING: int = 16
+FONT_SIZE_HEADING: int = 24
+FONT_SIZE_XLARGE: int = 32
+
+# --- Card / Surface ---
+CARD_PADDING: int = 20
+CARD_BORDER_RADIUS: int = 8
+CARD_ELEVATION: int = 1
+CARD_SPACING: int = 15
+CARD_SHADOW_BLUR: int = 15
+CARD_SHADOW_OPACITY: float = 0.2
+
+# --- Layout ---
+HEADER_HEIGHT: int = 80
+DRAWER_WIDTH: int = 300
+DRAWER_ANIMATION_DURATION: int = 300
+STANDARD_PADDING: int = 10
+TABLE_HEADER_HEIGHT: int = 50
+CHEVRON_CONTAINER_SIZE: int = 24
+STAMP_THUMBNAIL_SIZE: int = 160
+
+# --- Year Range Slider ---
+SLIDER_CANVAS_HEIGHT: int = 36
+SLIDER_TRACK_HEIGHT: int = 3
+SLIDER_THUMB_RADIUS: int = 6
+SLIDER_DEFAULT_MIN_YEAR: int = 1850
+
+# --- Stamps ---
+STAMP_ACTION_ICON_SIZE: int = 20
+ISSUE_ACTION_ICON_SIZE: int = 24
+STAMP_ADD_ICON_SIZE: int = 48
+DIALOG_WIDTH: int = 700
+DIALOG_IMAGE_MAX_HEIGHT: int = 280
+
+# --- Timing ---
+DEBOUNCE_DELAY: float = 0.3
+NOTIFICATION_DURATION: int = 2000

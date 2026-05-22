@@ -10,8 +10,9 @@ import flet as ft
 import flet.canvas as cv
 from typing import Callable, Optional
 
-from components.colors import SLIDER_INACTIVE
+from components.colors import SLIDER_INACTIVE, AURA_RADIUS_MULTIPLIER, AURA_OPACITY, DRAG_THUMB_SCALE
 from core.translations import _
+from components.constants import FONT_SIZE_DEFAULT, SLIDER_CANVAS_HEIGHT, SLIDER_TRACK_HEIGHT, SLIDER_THUMB_RADIUS, SLIDER_DEFAULT_MIN_YEAR
 
 
 class YearRangeSelector(ft.Container):
@@ -21,17 +22,17 @@ class YearRangeSelector(ft.Container):
     constructor params. Drag interaction via GestureDetector.
     """
 
-    _canvas_height: int = 36
+    _canvas_height: int = SLIDER_CANVAS_HEIGHT
 
     def __init__(
         self,
-        min_year: int = 1850,
+        min_year: int = SLIDER_DEFAULT_MIN_YEAR,
         max_year: int = 1975,
         start_value: int = None,
         end_value: int = None,
         width: int = 300,
-        track_height: int = 3,
-        thumb_radius: int = 6,
+        track_height: int = SLIDER_TRACK_HEIGHT,
+        thumb_radius: int = SLIDER_THUMB_RADIUS,
         step: int = 1,
         top_padding: int = 10,
         left_padding: int = 20,
@@ -87,7 +88,7 @@ class YearRangeSelector(ft.Container):
                     f"{_("filter.years_available")}: ",
                     ft.TextStyle(
                         color=ft.Colors.GREY_500, 
-                        size=14, 
+                        size=FONT_SIZE_DEFAULT, 
                         font_family="Roboto"
                     ),
                 ),
@@ -95,7 +96,7 @@ class YearRangeSelector(ft.Container):
                     f"{start_value} - {end_value}",
                     ft.TextStyle(
                         color=ft.Colors.GREY_500, 
-                        size=14,
+                        size=FONT_SIZE_DEFAULT,
                         font_family="Roboto"
                     ),
                 ),
@@ -224,9 +225,9 @@ class YearRangeSelector(ft.Container):
         x2: float = self._year_to_x(self._end)
         active_start: bool = self._dragging == "start"
         active_end: bool = self._dragging == "end"
-        aura_radius: float = self._thumb_radius * 1.8
+        aura_radius: float = self._thumb_radius * AURA_RADIUS_MULTIPLIER
         aura_paint: ft.Paint = ft.Paint(
-            color=ft.Colors.with_opacity(0.25, ft.Colors.WHITE),
+            color=ft.Colors.with_opacity(AURA_OPACITY, ft.Colors.WHITE),
         )
 
         shapes: list = []
@@ -259,14 +260,14 @@ class YearRangeSelector(ft.Container):
         # Left thumb
         shapes.append(cv.Circle(
             x1, track_center,
-            self._thumb_radius * 1.5 if active_start else self._thumb_radius,
+            self._thumb_radius * DRAG_THUMB_SCALE if active_start else self._thumb_radius,
             paint=ft.Paint(color=ft.Colors.GREY_500),
         ))
 
         # Right thumb
         shapes.append(cv.Circle(
             x2, track_center,
-            self._thumb_radius * 1.5 if active_end else self._thumb_radius,
+            self._thumb_radius * DRAG_THUMB_SCALE if active_end else self._thumb_radius,
             paint=ft.Paint(color=ft.Colors.GREY_500),
         ))
 

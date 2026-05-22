@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: Frontend unit testing — Steps 1-5 + log_setup + Tier 3-4 + Tier 5 lines complete (398 tests)
+- **Task**: Frontend unit testing — ALL tiers complete (488 tests)
 - **Priority**: medium
-- **Status**: in_progress (Tier 7 next: issue_detail_card ~15 tests)
+- **Status**: completed
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -45,7 +45,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 398 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
+**Current: 488 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -151,3 +151,10 @@
 - [Today] Attempted Tier 6 auth card tests — deferred (ft.Container._values descriptor issue)
   - login_card.py and signup_card.py cannot be unit tested due to Flet's descriptor system
   - These require integration test approach with real Flet page context
+- [Today] Implemented Tier 7 IssueDetailCard tests — 35 tests (init, header, specs, detail_cell, stamp_table, handlers)
+- [Today] Implemented Tier 8 page template tests — 16 tests (standard_page init/header/logout, not_found_page init/go_home)
+- [Today] Implemented Tier 9 StampsManagerPage tests — 15 tests (_round_down, _round_up, 5 handler stubs via __new__ bypass)
+  - login_page, signup_page, collections_page deferred (same ft.View _values descriptor issue)
+- [Today] Implemented Tier 10 main.py tests — 24 tests (ROUTE_HANDLERS, configure_page, route_change with 7 scenarios, view_pop)
+  - Pattern: patch `ft.SharedPreferences` via `patch.object(ft, "SharedPreferences")` for route tests
+- [Today] All 488 tests passing (398 baseline + 35 + 16 + 15 + 24 = 488)

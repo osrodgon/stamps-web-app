@@ -1,5 +1,6 @@
 import flet as ft
 from components.colors import RED, RED_HOVER, RED_DISABLED
+from components.constants import BUTTON_TEXT_SIZE, BUTTON_HEIGHT, BUTTON_BORDER_RADIUS
 
 
 class AlertButton(ft.Button):
@@ -40,19 +41,19 @@ class AlertButton(ft.Button):
                 horizontal space. Defaults to True.
         """
         super().__init__()
-        self.content = ft.Text(text, size=14)
+        self.content = ft.Text(text, size=BUTTON_TEXT_SIZE)
         self.color = ft.Colors.WHITE
         self.bgcolor = {
             ft.ControlState.DEFAULT: RED,
             ft.ControlState.DISABLED: RED_DISABLED
         }
-        self.height = 40
+        self.height = BUTTON_HEIGHT
         self.data = data
         self.on_click = on_click
         self.expand = expand
         self.on_hover = self._on_hover
         self.style = ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=4),
+            shape=ft.RoundedRectangleBorder(radius=BUTTON_BORDER_RADIUS),
         )
         self.font_style = "Roboto"
         if icon:

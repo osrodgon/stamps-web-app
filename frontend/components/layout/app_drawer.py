@@ -10,6 +10,7 @@ import flet as ft
 
 from settings import ORG_LOGO
 from core.translations import _
+from components.constants import DRAWER_WIDTH, DRAWER_ANIMATION_DURATION
 
 
 class AppDrawer(ft.Container):
@@ -41,7 +42,7 @@ class AppDrawer(ft.Container):
         Configures animation properties for smooth slide transitions.
         """
         super().__init__()
-        self.width = 300
+        self.width = DRAWER_WIDTH
         self.bgcolor = ft.Colors.GREY_50
         self.shadow = ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK_26)
 
@@ -50,8 +51,8 @@ class AppDrawer(ft.Container):
         self.padding = ft.Border.only(top=0, left=0, right=0, bottom=0)
 
         self.offset = ft.Offset(-1, 0)
-        self.animate_offset = ft.Animation(300, "decelerate")
-        self.animate_size = ft.Animation(300, "decelerate")
+        self.animate_offset = ft.Animation(DRAWER_ANIMATION_DURATION, "decelerate")
+        self.animate_size = ft.Animation(DRAWER_ANIMATION_DURATION, "decelerate")
 
         # 1. Profile Header Area
         self.user_full_name = ft.Text("Unknown", font_family="Roboto-Bold", size=18, color=ft.Colors.BLACK_87)

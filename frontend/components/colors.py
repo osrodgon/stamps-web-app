@@ -105,6 +105,15 @@ ROW_HOVER: str = "#E8E8E8"
 #: Muted blue-grey (#3d4c5d) - used for RangeSlider inactive track.
 SLIDER_INACTIVE: str = "#3d4c5d"
 
-#: Near black (#1a1a1a) - used for stamp image background in dialogs and thumbnails.
+#: Near black (#313131) - used for stamp image background in dialogs and thumbnails.
 DARK_IMG_BG: str = "#313131"
+
+# --- Slider Visual Constants ---
+
+#: Multiplier for thumb radius to compute aura circle radius (1.8x thumb).
+AURA_RADIUS_MULTIPLIER: float = 1.8
+#: Opacity for the aura fill around the active slider thumb.
+AURA_OPACITY: float = 0.25
+#: Scale factor for thumb enlargement while dragging (1.5x thumb radius).
+DRAG_THUMB_SCALE: float = 1.5
 

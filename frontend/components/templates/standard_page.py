@@ -4,6 +4,7 @@ from core.urls import URLs
 from core.translations import _
 from components.buttons.alert_button import AlertButton
 from components.buttons.default_button import DefaultButton
+from components.constants import HEADER_HEIGHT, CARD_BORDER_RADIUS
 
 class StandardPage(ft.View, BaseUI):
     """
@@ -27,7 +28,7 @@ class StandardPage(ft.View, BaseUI):
     main: ft.Container
     main_page: ft.Page
     
-    def __init__(self, page: ft.Page, header_height: int = 80):
+    def __init__(self, page: ft.Page, header_height: int = HEADER_HEIGHT):
         """
         Initialize StandardPage with header and main containers.
         
@@ -130,7 +131,7 @@ class StandardPage(ft.View, BaseUI):
             modal=True,
             title=ft.Text(_("auth.logout_confirm"), font_family="Roboto-Bold"),
             content=ft.Text(_("auth.logout_confirm_message"), font_family="Roboto"),
-            shape=ft.RoundedRectangleBorder(radius=8),
+            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
             actions=[
                 DefaultButton(_("ui.cancel").upper(), on_click=cancel_action),
                 AlertButton(_("auth.logout").upper(), on_click=confirm_action)

@@ -10,6 +10,7 @@ inside expandable Rows with SPACE_BETWEEN distribution.
 import flet as ft
 from core.logger import Logger
 from components.colors import DARK_BLUE_GREY
+from components.constants import HEADER_HEIGHT, STANDARD_PADDING
 
 
 class AppHeader(ft.Container, Logger):
@@ -41,13 +42,13 @@ class AppHeader(ft.Container, Logger):
     center_area: ft.Row
     right_area: ft.Row
 
-    def __init__(self, height: int = 80) -> None:
+    def __init__(self, height: int = HEADER_HEIGHT) -> None:
         """Initialize AppHeader with three empty area Rows.
 
         Args:
             height: Height of the header in pixels (default 80).
         """
-        super().__init__(padding=ft.Padding.only(left=10, right=10))
+        super().__init__(padding=ft.Padding.only(left=STANDARD_PADDING, right=STANDARD_PADDING))
         self.height = height
 
         self.bgcolor = DARK_BLUE_GREY
