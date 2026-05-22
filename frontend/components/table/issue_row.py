@@ -20,6 +20,7 @@ from components.colors import (
 from components.table.column_def import ColumnDef
 from components.table.issue_detail.issue_detail_card import IssueDetailCard
 from core.translations import _
+from components.constants import FONT_SIZE_SMALL_HEADING, CHEVRON_CONTAINER_SIZE, FONT_SIZE_DEFAULT
 
 
 class IssueRow(ft.Container):
@@ -79,7 +80,7 @@ class IssueRow(ft.Container):
 
         self._chevron_icon: ft.Icon = ft.Icon(
             icon=ft.Icons.KEYBOARD_ARROW_UP if expanded else ft.Icons.KEYBOARD_ARROW_DOWN,
-            size=16,
+            size=FONT_SIZE_SMALL_HEADING,
             color=ft.Colors.WHITE,
         )
         self._details: ft.Container = ft.Container(
@@ -122,8 +123,8 @@ class IssueRow(ft.Container):
         """Circular blue button that toggles the details expansion."""
         return ft.Container(
             content=self._chevron_icon,
-            width=24,
-            height=24,
+            width=CHEVRON_CONTAINER_SIZE,
+            height=CHEVRON_CONTAINER_SIZE,
             bgcolor=DARK_BLUE_GREY,
             border_radius=16,
             alignment=ft.Alignment.CENTER,
@@ -146,7 +147,7 @@ class IssueRow(ft.Container):
         return ft.Container(
             content=ft.Text(
                 text,
-                size=14,
+                size=FONT_SIZE_DEFAULT,
                 color=color,
                 font_family="Roboto",
                 text_align=text_align,

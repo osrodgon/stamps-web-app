@@ -10,6 +10,7 @@ from components.table.column_def import fmt_currency
 from components.table.issue_detail.stamp_detail_dialog import show_stamp_detail_dialog
 from core.translations import _
 from settings import ASSETS_DIR, IMAGE_DIR, NO_STAMP
+from components.constants import STAMP_ACTION_ICON_SIZE, STAMP_THUMBNAIL_SIZE, FONT_SIZE_DEFAULT, CARD_ELEVATION
 
 
 class StampCard(ft.Card):
@@ -43,7 +44,7 @@ class StampCard(ft.Card):
         self._on_edit: Optional[Callable[[int], None]] = on_edit
         self._on_delete: Optional[Callable[[int], None]] = on_delete
 
-        self.elevation = 1
+        self.elevation = CARD_ELEVATION
 
         colors_list: list[str] = stamp.get("colors", [])
         colors_str: str = ", ".join(colors_list) if colors_list else "-"
@@ -65,7 +66,7 @@ class StampCard(ft.Card):
         color_text: str = f"{_('stamps.color')}: {colors_str}"
         mnh_part: str = f"{_('stamps.mint')}: {fmt_currency(stamp_mnh, lang)}"
         used_part: str = f"{_('stamps.used')}: {fmt_currency(stamp_used, lang)}"
-        stamp_actions_icon_size: int = 20
+        stamp_actions_icon_size: int = STAMP_ACTION_ICON_SIZE
 
         self.content = ft.Container(
             content=ft.Column(
@@ -76,11 +77,11 @@ class StampCard(ft.Card):
                                 content=ft.Image(
                                     src=image_path,
                                     fit="contain",
-                                    height=160,
-                                    width=160,
+                                    height=STAMP_THUMBNAIL_SIZE,
+                                    width=STAMP_THUMBNAIL_SIZE,
                                 ),
-                                height=160,
-                                width=160,
+                                height=STAMP_THUMBNAIL_SIZE,
+                                width=STAMP_THUMBNAIL_SIZE,
                                 bgcolor=DARK_IMG_BG,
                                 border_radius=4,
                                 shadow=ft.BoxShadow(
@@ -149,17 +150,17 @@ class StampCard(ft.Card):
                                         ],
                                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                                     ),
-                                    ft.Text(codes_text, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
-                                    ft.Text(face_value_text, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
-                                    ft.Text(color_text, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
+                                    ft.Text(codes_text, size=FONT_SIZE_DEFAULT, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
+                                    ft.Text(face_value_text, size=FONT_SIZE_DEFAULT, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
+                                    ft.Text(color_text, size=FONT_SIZE_DEFAULT, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
                                     ft.Container(
-                                        content=ft.Text(mnh_part, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
+                                        content=ft.Text(mnh_part, size=FONT_SIZE_DEFAULT, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
                                         bgcolor=ft.Colors.GREEN_100,
                                         border_radius=6,
                                         padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                                     ),
                                     ft.Container(
-                                        content=ft.Text(used_part, size=14, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
+                                        content=ft.Text(used_part, size=FONT_SIZE_DEFAULT, color=GREY_700, overflow=ft.TextOverflow.ELLIPSIS),
                                         bgcolor=ft.Colors.BLUE_100,
                                         border_radius=6,
                                         padding=ft.Padding.symmetric(horizontal=6, vertical=2),

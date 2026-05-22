@@ -12,6 +12,7 @@ from components.form.text_field import TextField
 from components.buttons.link_button import LinkButton
 from components.colors import GREY_700, DELETE_RED
 from core.base_ui import BaseUI
+from components.constants import FONT_SIZE_DEFAULT, FONT_SIZE_HEADING, FONT_SIZE_XS, CARD_SPACING, CARD_PADDING, CARD_BORDER_RADIUS, CARD_SHADOW_BLUR, CARD_SHADOW_OPACITY
 
 
 class LoginCard(ft.Container, BaseUI):
@@ -41,7 +42,7 @@ class LoginCard(ft.Container, BaseUI):
     sign_up_text: ft.Text
     sign_up_button: LinkButton
     error_message: ft.Text
-    size: int = 14
+    size: int = FONT_SIZE_DEFAULT
     
     def __init__(self, on_login_click: callable, on_sign_up_click: callable) -> None:
         """Build the login card with text fields, buttons, and layout.
@@ -63,7 +64,7 @@ class LoginCard(ft.Container, BaseUI):
         
         self.sign_in_header = ft.Text(
             _("auth.sign_in"),
-            size=24,
+            size=FONT_SIZE_HEADING,
             font_family="Roboto-Bold",
             color=ft.Colors.BLACK,
         )
@@ -99,7 +100,7 @@ class LoginCard(ft.Container, BaseUI):
         
         self.error_message = ft.Text(
             "",
-            size=12,
+            size=FONT_SIZE_XS,
             color=DELETE_RED,
             font_family="Roboto",
             visible=False
@@ -117,15 +118,15 @@ class LoginCard(ft.Container, BaseUI):
                         alignment=ft.MainAxisAlignment.CENTER
                 )
             ],
-            spacing=15,
+            spacing=CARD_SPACING,
             tight=True,
             intrinsic_width=True,
         )
         
         self.bgcolor = ft.Colors.WHITE
-        self.padding = 20
-        self.border_radius = 8
-        self.shadow = ft.BoxShadow(blur_radius=15, color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK))
+        self.padding = CARD_PADDING
+        self.border_radius = CARD_BORDER_RADIUS
+        self.shadow = ft.BoxShadow(blur_radius=CARD_SHADOW_BLUR, color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK))
 
     async def _handle_login_click(self, e: ft.ControlEvent) -> None:
         """Handle login button click with validation."""

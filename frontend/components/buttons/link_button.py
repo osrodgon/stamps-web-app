@@ -1,6 +1,7 @@
 import flet as ft
 
 from components.colors import SKY_BLUE, SKY_BLUE_HOVER
+from components.constants import FONT_SIZE_DEFAULT
 
 
 class LinkButton(ft.TextButton):
@@ -20,7 +21,7 @@ class LinkButton(ft.TextButton):
         (Inherited from ft.TextButton)
     """
 
-    def __init__(self, text, on_click=None, data=None, size=14):
+    def __init__(self, text, on_click=None, data=None, size=FONT_SIZE_DEFAULT):
         """
         Initializes a LinkButton with the specified text and behavior.
 

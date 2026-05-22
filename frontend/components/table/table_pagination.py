@@ -11,6 +11,7 @@ import flet as ft
 from components.colors import BG_LIGHT, ICON_GREY, ROW_BORDER
 from components.table.column_def import fmt_number
 from core.translations import _, get_language
+from components.constants import FONT_SIZE_DEFAULT, ICON_SIZE_SMALL, STANDARD_PADDING
 
 class TablePagination(ft.Container):
     """Footer pagination controls.
@@ -26,7 +27,7 @@ class TablePagination(ft.Container):
         total: int = 0,
         on_page_change: Optional[Callable[[int], None]] = None,
         on_page_size_change: Optional[Callable[[int], None]] = None,
-        font_size: int = 14,
+        font_size: int = FONT_SIZE_DEFAULT,
         font_family: str = "Roboto-Bold",
     ) -> None:
         """Initialize pagination controls with current state and callbacks.
@@ -92,7 +93,7 @@ class TablePagination(ft.Container):
         )
 
         self.alignment = ft.Alignment.CENTER_RIGHT
-        self.padding = ft.Padding.symmetric(horizontal=10, vertical=4)
+        self.padding = ft.Padding.symmetric(horizontal=STANDARD_PADDING, vertical=4)
         self.border = ft.Border.only(top=ft.BorderSide(1, ROW_BORDER))
         self.content = ft.Row(
             controls=[
@@ -127,7 +128,7 @@ class TablePagination(ft.Container):
         """Create a pagination navigation icon button."""
         return ft.IconButton(
             icon=icon,
-            icon_size=20,
+            icon_size=ICON_SIZE_SMALL,
             on_click=on_click,
             icon_color=ICON_GREY,
         )

@@ -8,6 +8,9 @@ from components.colors import DARK_IMG_BG, GREY_700
 from components.table.column_def import fmt_currency, fmt_date, fmt_number
 from components.table.issue_detail.stamp_card import StampCard
 from core.translations import _
+from components.constants import CARD_PADDING, CARD_ELEVATION, FONT_SIZE_DEFAULT, FONT_SIZE_SMALL_HEADING, FONT_SIZE_XLARGE, ISSUE_ACTION_ICON_SIZE, STAMP_ADD_ICON_SIZE, STANDARD_PADDING
+
+_ADD_STAMP_CARD_HEIGHT: int = 184
 
 
 class IssueDetailCard(ft.Container):
@@ -56,7 +59,7 @@ class IssueDetailCard(ft.Container):
         self._on_delete_issue: Optional[Callable[[int], None]] = on_delete_issue
         self._on_add_stamp: Optional[Callable[[int], None]] = on_add_stamp
 
-        self.padding = 20
+        self.padding = CARD_PADDING
         self.bgcolor = ft.Colors.BLUE_GREY_50
 
         self.content = ft.Column(
@@ -74,36 +77,36 @@ class IssueDetailCard(ft.Container):
         mint_value: float = float(self._issue.get("market_value_mnh") or 0)
         used_value: float = float(self._issue.get("market_value_used") or 0)
         total_printed: int = int(self._issue.get("total_printed") or 0)
-        issue_actions_icon_size: int = 24
+        issue_actions_icon_size: int = ISSUE_ACTION_ICON_SIZE
 
         return ft.Container(
             content=ft.Column(
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Text(issue_name, size=32, font_family="Roboto-Black"),
+                            ft.Text(issue_name, size=FONT_SIZE_XLARGE, font_family="Roboto-Black"),
                             ft.Row(
                                 controls=[
                                     ft.Row(
                                         controls=[
-                                            ft.Text(_("stamps.mint"), size=14, font_family="Roboto-Black", color=GREY_700),
-                                            ft.Container(content=ft.Text(fmt_currency(mint_value, self._lang), size=14, font_family="Roboto-Black", color=ft.Colors.GREEN_700), bgcolor=ft.Colors.GREEN_100, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
+                                            ft.Text(_("stamps.mint"), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black", color=GREY_700),
+                                            ft.Container(content=ft.Text(fmt_currency(mint_value, self._lang), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black", color=ft.Colors.GREEN_700), bgcolor=ft.Colors.GREEN_100, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
                                         ],
                                         spacing=6,
                                     ),
                                     ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
                                     ft.Row(
                                         controls=[
-                                            ft.Text(_("stamps.used"), size=14, font_family="Roboto-Black", color=GREY_700),
-                                            ft.Container(content=ft.Text(fmt_currency(used_value, self._lang), size=14, font_family="Roboto-Black", color=ft.Colors.BLUE_700), bgcolor=ft.Colors.BLUE_100, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
+                                            ft.Text(_("stamps.used"), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black", color=GREY_700),
+                                            ft.Container(content=ft.Text(fmt_currency(used_value, self._lang), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black", color=ft.Colors.BLUE_700), bgcolor=ft.Colors.BLUE_100, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
                                         ],
                                         spacing=6,
                                     ),
                                     ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
                                     ft.Row(
                                         controls=[
-                                            ft.Text(_("stamps.total_printed"), size=14, font_family="Roboto-Black", color=GREY_700),
-                                            ft.Container(content=ft.Text(fmt_number(total_printed, self._lang), size=14, font_family="Roboto-Black"), bgcolor=ft.Colors.GREY_300, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
+                                            ft.Text(_("stamps.total_printed"), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black", color=GREY_700),
+                                            ft.Container(content=ft.Text(fmt_number(total_printed, self._lang), size=FONT_SIZE_DEFAULT, font_family="Roboto-Black"), bgcolor=ft.Colors.GREY_300, border_radius=8, padding=ft.Padding.symmetric(horizontal=6, vertical=4)),
                                         ],
                                         spacing=6,
                                     ),
@@ -159,7 +162,7 @@ class IssueDetailCard(ft.Container):
                         spacing=16,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
-                    ft.Text(date_str, size=16, color=GREY_700),
+                    ft.Text(date_str, size=FONT_SIZE_SMALL_HEADING, color=GREY_700),
                 ],
                 spacing=4,
             ),
@@ -190,7 +193,7 @@ class IssueDetailCard(ft.Container):
         notes: str = self._issue.get("note") or _("ui.no_text_value")
 
         return ft.Card(
-            elevation=1,
+            elevation=CARD_ELEVATION,
             content=ft.Container(
                 content=ft.Column(
                     controls=[
@@ -212,13 +215,13 @@ class IssueDetailCard(ft.Container):
                             controls=[
                                 ft.Text(
                                     _("ui.description").upper(),
-                                    size=14,
-                                    font_family="Roboto-Black",
-                                    color=GREY_700,
-                                ),
-                                ft.Text(
-                                    str(description),
-                                    size=14,
+                    size=FONT_SIZE_DEFAULT,
+                    font_family="Roboto-Black",
+                    color=GREY_700,
+                ),
+                ft.Text(
+                    str(description),
+                    size=FONT_SIZE_DEFAULT,
                                     font_family="Roboto",
                                     text_align=ft.TextAlign.JUSTIFY,
                                 ),
@@ -229,13 +232,13 @@ class IssueDetailCard(ft.Container):
                             controls=[
                                 ft.Text(
                                     _("ui.notes").upper(),
-                                    size=14,
-                                    font_family="Roboto-Black",
-                                    color=GREY_700,
-                                ),
-                                ft.Text(
-                                    str(notes),
-                                    size=14,
+                    size=FONT_SIZE_DEFAULT,
+                    font_family="Roboto-Black",
+                    color=GREY_700,
+                ),
+                ft.Text(
+                    str(notes),
+                    size=FONT_SIZE_DEFAULT,
                                     font_family="Roboto",
                                     text_align=ft.TextAlign.JUSTIFY,
                                 ),
@@ -258,13 +261,13 @@ class IssueDetailCard(ft.Container):
                         controls=[
                             ft.Text(
                                 label.upper(),
-                                size=14,
+                                size=FONT_SIZE_DEFAULT,
                                 font_family="Roboto-Black",
                                 color=GREY_700,
                             ),
                             ft.Text(
                                 value,
-                                size=14,
+                                size=FONT_SIZE_DEFAULT,
                                 font_family="Roboto",
                             ),
                         ],
@@ -281,7 +284,7 @@ class IssueDetailCard(ft.Container):
         return container
 
     def _build_stamp_table(self) -> ft.Control:
-        stamp_add_icon_size: int = 48
+        stamp_add_icon_size: int = STAMP_ADD_ICON_SIZE
         
         if self._loading:
             return ft.Container(
@@ -290,17 +293,17 @@ class IssueDetailCard(ft.Container):
                     size=14,
                     color=GREY_700,
                 ),
-                padding=10,
+                padding=STANDARD_PADDING,
             )
 
         if not self._stamps:
             return ft.Container(
                 content=ft.Text(
                     _("stamps.no_stamps_found"),
-                    size=14,
+                    size=FONT_SIZE_DEFAULT,
                     color=GREY_700,
                 ),
-                padding=10,
+                padding=STANDARD_PADDING,
             )
 
         sorted_stamps: list[dict] = sorted(
@@ -326,8 +329,8 @@ class IssueDetailCard(ft.Container):
 
         stamp_controls.append(
             ft.Container(
-                content=ft.Card(
-                    elevation=1,
+                content=                ft.Card(
+                    elevation=CARD_ELEVATION,
                     content=ft.Row(
                         controls=[
                             ft.Column(
@@ -352,7 +355,7 @@ class IssueDetailCard(ft.Container):
                                         tooltip=_("stamps.add_tooltip"),
                                     ),
                                 ],
-                                height=184,
+                                height=_ADD_STAMP_CARD_HEIGHT,
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             ),

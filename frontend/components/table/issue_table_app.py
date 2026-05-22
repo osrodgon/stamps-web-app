@@ -20,6 +20,7 @@ from components.table.table_header import TableHeader
 from components.table.table_pagination import TablePagination
 from core.translations import _, get_language
 from services.issue_service import IssueService
+from components.constants import ICON_SIZE_LARGE, FONT_SIZE_XLARGE
 
 
 class IssueTableApp(ft.Container):
@@ -90,10 +91,10 @@ class IssueTableApp(ft.Container):
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.SEARCH, size=48, color=ICON_GREY),
+                            ft.Icon(ft.Icons.SEARCH, size=ICON_SIZE_LARGE, color=ICON_GREY),
                             ft.Text(
                                 _("collections.no_issues_found"),
-                                size=32,
+                                size=FONT_SIZE_XLARGE,
                                 color=ICON_GREY,
                                 font_family="Roboto-Bold",
                             ),

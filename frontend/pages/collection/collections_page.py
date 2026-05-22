@@ -18,6 +18,7 @@ from components.colors import DARK_BLUE_GREY
 from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
+from components.constants import HEADER_HEIGHT
 
 
 class CollectionsPage(StandardPage):
@@ -47,7 +48,7 @@ class CollectionsPage(StandardPage):
         """
         super().__init__(
             page=page,
-            header_height=80,
+            header_height=HEADER_HEIGHT,
         )
         
         # Set AppHeader first

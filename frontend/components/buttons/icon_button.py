@@ -1,5 +1,6 @@
 import flet as ft
 from components.colors import lighten_color, DARK_BLUE_GREY
+from components.constants import ICON_BUTTON_SIZE, ICON_BUTTON_ICON_RATIO
 
 class IconButton(ft.Container):
     """
@@ -12,7 +13,7 @@ class IconButton(ft.Container):
         icon (ft.Icon): The icon displayed in the button.
     """
     
-    def __init__(self, icon: str, bgcolor: str, size: int = 40, on_click=None, data=None, tooltip=None):
+    def __init__(self, icon: str, bgcolor: str, size: int = ICON_BUTTON_SIZE, on_click=None, data=None, tooltip=None):
         """
         Initialize a circular IconButton.
         
@@ -31,7 +32,7 @@ class IconButton(ft.Container):
         self.border_radius = size // 2  # Makes it circular
         self.content = ft.Icon(
             icon=icon,
-            size=size * 0.6,  # Icon is 60% of button size
+            size=size * ICON_BUTTON_ICON_RATIO,  # Icon as % of button size
             color=ft.Colors.WHITE,
         )
         self.on_click = on_click

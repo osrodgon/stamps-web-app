@@ -11,6 +11,7 @@ import flet as ft
 from components.colors import HEADER_BG
 from components.table.column_def import ColumnDef
 from core.translations import _
+from components.constants import FONT_SIZE_DEFAULT, FONT_SIZE_XS, CHEVRON_CONTAINER_SIZE, TABLE_HEADER_HEIGHT
 
 
 class TableHeader(ft.Container):
@@ -46,13 +47,13 @@ class TableHeader(ft.Container):
 
         self._sort_icon: ft.Icon = ft.Icon(
             icon=ft.Icons.ARROW_DOWNWARD,
-            size=14,
+            size=FONT_SIZE_DEFAULT,
             color=ft.Colors.WHITE,
         )
 
         self.bgcolor = HEADER_BG
         self.padding = ft.Padding(left=10, right=25, top=8, bottom=8)
-        self.height=50
+        self.height=TABLE_HEADER_HEIGHT
         self._rebuild()
 
     def _rebuild(self) -> None:
@@ -64,7 +65,7 @@ class TableHeader(ft.Container):
 
     def _build_columns(self) -> list[ft.Control]:
         """Build the header column list from COLUMNS definition."""
-        cells: list[ft.Control] = [ft.Container(width=24)]
+        cells: list[ft.Control] = [ft.Container(width=CHEVRON_CONTAINER_SIZE)]
 
         for col in self._columns:
             if col.sortable:
@@ -93,7 +94,7 @@ class TableHeader(ft.Container):
         return ft.Container(
             content=ft.Text(
                 label,
-                size=12,
+                size=FONT_SIZE_XS,
                 font_family="Roboto-Bold",
                 color=ft.Colors.WHITE,
                 text_align=text_align,
@@ -114,7 +115,7 @@ class TableHeader(ft.Container):
                 controls=[
                     ft.Text(
                         _(col.translation_key).upper(),
-                        size=12,
+                        size=FONT_SIZE_XS,
                         font_family="Roboto-Bold",
                         color=ft.Colors.WHITE,
                     ),
