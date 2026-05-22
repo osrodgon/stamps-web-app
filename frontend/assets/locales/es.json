@@ -48,7 +48,8 @@
         "no_account": "¿No tienes una cuenta?",
         "sign_up_success": "Usuario registrado correctamente",
         "logout_confirm": "Confirmar cierre de sesión",
-        "logout_confirm_message": "¿Estás seguro de que quieres cerrar tu sesión?"
+        "logout_confirm_message": "¿Estás seguro de que quieres cerrar tu sesión?",
+        "login_error": "Error al iniciar sesión. Por favor, verifica tus credenciales e inténtalo de nuevo."
     },
     "profile": {
         "profile": "Perfil",
@@ -79,6 +80,7 @@
     "ui": {
         "actions": "Acciones",
         "cancel": "Cancelar",
+        "delete": "Eliminar",
         "close": "Cerrar",
         "ok": "OK",
         "required": "Este campo es obligatorio",
@@ -124,7 +126,12 @@
         "image": "Imagen",
         "edit_tooltip": "Editar Sello",
         "delete_tooltip": "Eliminar Sello",
-        "add_tooltip": "Añadir Sello"
+        "add_tooltip": "Añadir Sello",
+        "delete_confirm": "Eliminar Sello",
+        "delete_confirm_message": "¿Estás seguro de que quieres eliminar este sello?",
+        "delete_success": "Sello eliminado correctamente",
+        "delete_error": "Error al eliminar el sello",
+        "name": "Nombre"
     },
     "collections": {
         "title": "Colecciones",

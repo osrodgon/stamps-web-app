@@ -88,6 +88,13 @@
 - [ ] Fix LSP type errors in frontend code (pre-existing)
 - [ ] Add type hints to remaining untyped functions
 
+### Stamp Deletion (2025-05-22)
+- [x] Step 1: Added `delete_stamp()` method to `IssueService` (issue_service.py)
+- [x] Step 2: Confirmation dialog in `StampCard._handle_delete` + callback wrapping in `IssueDetailCard`
+- [x] Step 3: Added 5 locale keys (en/es): `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
+- [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through `IssueRow` → `IssueTableApp` → `StampsManagerPage` (API call commented out — log only)
+- [x] All 488 tests passing
+
 ### Documentation
 - [ ] Update opencode_rules.md to reflect Flet (not NiceGUI)
 - [ ] Document test patterns in memory-bank

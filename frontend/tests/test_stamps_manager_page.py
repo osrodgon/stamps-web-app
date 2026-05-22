@@ -5,7 +5,7 @@ instantiation is deferred due to Flet's C++ Prop descriptor system
 (same limitation as auth card tests).
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -64,10 +64,15 @@ class TestHandlerStubs:
         m._handle_edit_stamp(1)
         m._log.debug.assert_called_once_with("Edit stamp 1")
 
-    def test_handle_delete_stamp_logs(self) -> None:
+    def test_handle_delete_stamp_logs_and_runs_task(self) -> None:
+        # PropertyMock needed because ``page`` is a read-only C++ Prop
+        # (Flet descriptor) — patching it directly would fail.
         m = self._make_manager()
-        m._handle_delete_stamp(2)
-        m._log.debug.assert_called_once_with("Delete stamp 2")
+        mock_page = MagicMock()
+        with patch.object(type(m), "page", new_callable=PropertyMock, return_value=mock_page):
+            m._handle_delete_stamp(2, 5)
+        m._log.debug.assert_called_once_with("Delete stamp 2 from issue 5")
+        mock_page.run_task.assert_called_once()
 
     def test_handle_edit_issue_logs(self) -> None:
         m = self._make_manager()

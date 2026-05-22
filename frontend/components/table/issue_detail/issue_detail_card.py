@@ -30,7 +30,7 @@ class IssueDetailCard(ft.Container):
         lang: Language code ("en" or "es").
         loading: If True, shows a loading placeholder in the stamp section.
         on_edit_stamp: Called with stamp ID when the edit icon is clicked.
-        on_delete_stamp: Called with stamp ID when the delete icon is clicked.
+        on_delete_stamp: Called with (stamp_id, issue_id) when the delete icon is clicked.
         on_edit_issue: Called with issue ID when the issue edit icon is clicked.
         on_delete_issue: Called with issue ID when the issue delete icon is clicked.
         on_add_stamp: Called with issue ID when the add-stamp button is clicked.
@@ -43,7 +43,7 @@ class IssueDetailCard(ft.Container):
         lang: str,
         loading: bool = False,
         on_edit_stamp: Optional[Callable[[int], None]] = None,
-        on_delete_stamp: Optional[Callable[[int], None]] = None,
+        on_delete_stamp: Optional[Callable[[int, int], None]] = None,
         on_edit_issue: Optional[Callable[[int], None]] = None,
         on_delete_issue: Optional[Callable[[int], None]] = None,
         on_add_stamp: Optional[Callable[[int], None]] = None,
@@ -320,7 +320,7 @@ class IssueDetailCard(ft.Container):
                     issue_year=issue_year,
                     lang=self._lang,
                     on_edit=self._on_edit_stamp,
-                    on_delete=self._on_delete_stamp,
+                    on_delete=lambda sid: self._on_delete_stamp(sid, self._issue["id"]),
                 ),
                 col={"sm": 6, "md": 3},
             )
@@ -329,7 +329,7 @@ class IssueDetailCard(ft.Container):
 
         stamp_controls.append(
             ft.Container(
-                content=                ft.Card(
+                content=ft.Card(
                     elevation=CARD_ELEVATION,
                     content=ft.Row(
                         controls=[

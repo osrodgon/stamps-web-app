@@ -1,9 +1,10 @@
 # Active Context
 
 ## Current Task
-- **Task**: Database backup/restore commands — done
+- **Task**: Stamp deletion implementation — all 4 steps complete, API call live
 - **Priority**: low
 - **Status**: completed
+- **Status**: pending — awaiting `delete_stamp` endpoint to uncomment and test
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -160,3 +161,4 @@
 - [Today] All 488 tests passing (398 baseline + 35 + 16 + 15 + 24 = 488)
 - [Today] Stamp deletion: Step 1-4 done, API call commented out. All 488 tests passing.
 - [Today] Database backup/restore: stamps_db_backup.py + stamps_db_restore.py with --mode (system/stamps/full). 1008 backend + 488 frontend tests passing.
+- [Today] Stamp deletion implementation: Step 1 (delete_stamp service method) + Step 2 (confirmation dialog in StampCard) + Step 3 (5 locale keys) + Step 4 (callback wiring through IssueRow/IssueTableApp/StampsManagerPage). API call commented out, log only. All 488 tests passing.

@@ -48,7 +48,8 @@
         "no_account": "Don't have an account?",
         "sign_up_success": "User registered successfully",
         "logout_confirm": "Confirm Logout",
-        "logout_confirm_message": "Are you sure you want to log out of your account?"
+        "logout_confirm_message": "Are you sure you want to log out of your account?",
+        "login_error": "Login failed. Please check your credentials and try again."
     },
     "profile": {
         "profile": "Profile",
@@ -79,6 +80,7 @@
     "ui": {
         "actions": "Actions",
         "cancel": "Cancel",
+        "delete": "Delete",
         "close": "Close",
         "ok": "OK",
         "required": "This field is required",
@@ -124,7 +126,12 @@
         "image": "Image",
         "edit_tooltip": "Edit Stamp",
         "delete_tooltip": "Delete Stamp",
-        "add_tooltip": "Add Stamp"
+        "add_tooltip": "Add Stamp",
+        "delete_confirm": "Delete Stamp",
+        "delete_confirm_message": "Are you sure you want to delete this stamp?",
+        "delete_success": "Stamp deleted successfully",
+        "delete_error": "Failed to delete stamp",
+        "name": "Name"
     },
     "collections": {
         "title": "Collections",
