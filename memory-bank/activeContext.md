@@ -1,10 +1,9 @@
 # Active Context
 
 ## Current Task
-- **Task**: Stamp deletion implementation — all 4 steps complete, API call live
+- **Task**: Issue deletion implementation — confirmation dialog + live API call + cascade stamps
 - **Priority**: low
 - **Status**: completed
-- **Status**: pending — awaiting `delete_stamp` endpoint to uncomment and test
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -46,10 +45,11 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 488 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
+**Current: 491 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
+- Locale files are user-managed — never modify en.json or es.json
 - IssueTable fully implemented and integrated into StampsManagerPage
 - COLUMNS list in column_def.py is single source of truth for table columns
 - All table components extend ft.Container (no UserControl in Flet 0.84.0)
@@ -162,3 +162,10 @@
 - [Today] Stamp deletion: Step 1-4 done, API call commented out. All 488 tests passing.
 - [Today] Database backup/restore: stamps_db_backup.py + stamps_db_restore.py with --mode (system/stamps/full). 1008 backend + 488 frontend tests passing.
 - [Today] Stamp deletion implementation: Step 1 (delete_stamp service method) + Step 2 (confirmation dialog in StampCard) + Step 3 (5 locale keys) + Step 4 (callback wiring through IssueRow/IssueTableApp/StampsManagerPage). API call commented out, log only. All 488 tests passing.
+- [Today] Uncommented delete_stamp API call in `_handle_delete_stamp` with success/error notifications + stamps refresh
+- [Today] Added `auth.login_error` locale key, replaced raw error in login_page.py
+- [Today] Expanded docstrings: `delete_stamp`, `_handle_delete`, `do_delete`, plus inline comment in tests
+- [Today] Issue deletion: confirmation dialog in IssueDetailCard._handle_delete_issue showing issue name + cascade warning
+- [Today] Issue deletion: live API call in StampsManagerPage._handle_delete_issue with notification + table reload
+- [Today] 5 locale keys added for issues (delete_confirm, delete_confirm_message, delete_success, delete_error, name)
+- [Today] 3 new tests for issue delete dialog; 491 total passing

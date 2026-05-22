@@ -7,7 +7,7 @@
 - [x] Implemented Tier 8: StandardPage 10 tests, NotFoundPage 6 tests
 - [x] Implemented Tier 9: StampsManagerPage static methods + 5 handler stubs — 15 tests
 - [x] Implemented Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
-- [x] Total: 488 tests (all passing)
+- [x] Total: 491 tests (all passing)
 - [x] Deferred: login_card, signup_card, login_page, signup_page, collections_page (Flet descriptor system)
 
 ### Frontend Docstring Updates (2025-05-11)
@@ -82,7 +82,14 @@
 - [x] Created `stamps_db_backup.py` — interactive/non-interactive backup with `--mode` (system/stamps/full)
 - [x] Created `stamps_db_restore.py` — interactive restore with confirmation prompt
 - [x] Added `backend/backups/` to `.gitignore`
-- [x] 1008 backend tests + 488 frontend tests passing
+- [x] 1008 backend tests + 491 frontend tests passing
+
+### Issue Deletion (2025-05-22)
+- [x] Confirmation dialog in `IssueDetailCard._handle_delete_issue` showing issue name + cascade warning
+- [x] Locale keys provided by user (not managed by automation)
+- [x] Live API call in `StampsManagerPage._handle_delete_issue` with success/error notifications and table reload
+- [x] 3 new tests for issue delete dialog (dialog shown, confirm fires callback, cancel does not fire)
+- [x] All 491 tests passing
 
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
@@ -92,7 +99,7 @@
 - [x] Step 1: Added `delete_stamp()` method to `IssueService` (issue_service.py)
 - [x] Step 2: Confirmation dialog in `StampCard._handle_delete` + callback wrapping in `IssueDetailCard`
 - [x] Step 3: Added 5 locale keys (en/es): `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
-- [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through `IssueRow` → `IssueTableApp` → `StampsManagerPage` (API call commented out — log only)
+- [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through → `StampsManagerPage` with live API call, success/error notifications, and stamps refresh
 - [x] All 488 tests passing
 
 ### Documentation

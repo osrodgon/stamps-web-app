@@ -79,10 +79,13 @@ class TestHandlerStubs:
         m._handle_edit_issue(3)
         m._log.debug.assert_called_once_with("Edit issue 3")
 
-    def test_handle_delete_issue_logs(self) -> None:
+    def test_handle_delete_issue_logs_and_runs_task(self) -> None:
         m = self._make_manager()
-        m._handle_delete_issue(4)
+        mock_page = MagicMock()
+        with patch.object(type(m), "page", new_callable=PropertyMock, return_value=mock_page):
+            m._handle_delete_issue(4)
         m._log.debug.assert_called_once_with("Delete issue 4")
+        mock_page.run_task.assert_called_once()
 
     def test_handle_add_stamp_logs(self) -> None:
         m = self._make_manager()
