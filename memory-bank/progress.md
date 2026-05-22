@@ -71,6 +71,19 @@
   - login_page, signup_page, collections_page deferred (ft.View _values descriptor issue)
 - [x] Implement Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
 
+### Stamp Deletion (2025-05-22)
+- [x] Added `delete_stamp()` to IssueService
+- [x] Confirmation dialog in StampCard + callback wrapping in IssueDetailCard
+- [x] 5 locale keys: `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
+- [x] Callback wiring through IssueRow → IssueTableApp → StampsManagerPage (API call commented out)
+- [x] All 488 tests passing
+
+### Database Backup/Restore Commands (2025-05-22)
+- [x] Created `stamps_db_backup.py` — interactive/non-interactive backup with `--mode` (system/stamps/full)
+- [x] Created `stamps_db_restore.py` — interactive restore with confirmation prompt
+- [x] Added `backend/backups/` to `.gitignore`
+- [x] 1008 backend tests + 488 frontend tests passing
+
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
 - [ ] Add type hints to remaining untyped functions
