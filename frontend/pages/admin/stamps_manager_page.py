@@ -334,12 +334,45 @@ class StampsManagerPage(StandardPage):
         self.log.debug(f"Edit issue {issue_id}")
 
     def _handle_delete_issue(self, issue_id: int) -> None:
-        """Handle issue delete action — stub for future implementation.
+        """Delete an issue, show notification, and reload the table.
+
+        Sends a DELETE request to the backend and refreshes the table
+        on success. The backend cascade-deletes all stamps belonging
+        to this issue automatically.
 
         Args:
             issue_id: The ID of the issue to delete.
         """
         self.log.debug(f"Delete issue {issue_id}")
+
+        page = self.page
+
+        async def do_delete() -> None:
+            """Send DELETE request, show notification, and reload table.
+
+            Runs as a background task via ``page.run_task()``. On success,
+            shows a green notification and reloads the issue table. On
+            failure, shows a red notification with the HTTP status code
+            logged for debugging.
+            """
+            try:
+                response = await self._issue_service.delete_issue(issue_id)
+                if response and response.status_code == requests.codes.ok:
+                    self.log.debug(f"Issue {issue_id} deleted successfully")
+                    await self.show_notification(_("issues.delete_success"), severity=Severity.SUCCESS, duration=1500)
+                    page.update()
+                    await self._table.load(reset_page=True)
+                else:
+                    status_code = response.status_code if response else "no response"
+                    self.log.error(f"Delete issue failed: {status_code}")
+                    await self.show_notification(_("issues.delete_error"), severity=Severity.ERROR, duration=1500)
+                    page.update()
+            except Exception as ex:
+                self.log.error(f"Delete issue error: {ex}")
+                await self.show_notification(_("messages.unexpected_error"), severity=Severity.ERROR)
+                page.update()
+
+        self.page.run_task(do_delete)
 
     def _handle_add_stamp(self, issue_id: int) -> None:
         """Handle add-stamp action — stub for future implementation.

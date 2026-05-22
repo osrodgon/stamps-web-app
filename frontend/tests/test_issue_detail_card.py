@@ -1,6 +1,6 @@
 """Unit tests for components/table/issue_detail/issue_detail_card.py — expanded issue detail card."""
 
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, PropertyMock, patch
 
 import pytest
 import flet as ft
@@ -337,19 +337,62 @@ class TestIssueDetailCardHandlers:
 
         card._handle_edit_issue(MagicMock())
 
-    def test_handle_delete_issue_fires_callback(self, sample_issue: dict) -> None:
+    def test_handle_delete_issue_shows_dialog(self, sample_issue: dict) -> None:
         callback = MagicMock()
         with patch("components.table.issue_detail.issue_detail_card.StampCard"):
             card = IssueDetailCard(issue=sample_issue, stamps=[], lang="en", on_delete_issue=callback)
 
-        card._handle_delete_issue(MagicMock())
+        mock_page = MagicMock()
+        with patch.object(type(card), "page", new_callable=PropertyMock, return_value=mock_page):
+            card._handle_delete_issue(MagicMock())
+
+        mock_page.overlay.append.assert_called_once()
+        dlg = mock_page.overlay.append.call_args[0][0]
+        assert isinstance(dlg, ft.AlertDialog)
+        assert dlg.modal is True
+
+    def test_handle_delete_issue_confirm_fires_callback(self, sample_issue: dict) -> None:
+        callback = MagicMock()
+        with patch("components.table.issue_detail.issue_detail_card.StampCard"):
+            card = IssueDetailCard(issue=sample_issue, stamps=[], lang="en", on_delete_issue=callback)
+
+        mock_page = MagicMock()
+        with patch.object(type(card), "page", new_callable=PropertyMock, return_value=mock_page):
+            card._handle_delete_issue(MagicMock())
+            dlg = mock_page.overlay.append.call_args[0][0]
+            confirm_btn = dlg.actions[1]
+            confirm_btn.on_click(MagicMock())
         callback.assert_called_once_with(42)
+
+    def test_handle_delete_issue_cancel_does_not_fire(self, sample_issue: dict) -> None:
+        callback = MagicMock()
+        with patch("components.table.issue_detail.issue_detail_card.StampCard"):
+            card = IssueDetailCard(issue=sample_issue, stamps=[], lang="en", on_delete_issue=callback)
+
+        mock_page = MagicMock()
+        with patch.object(type(card), "page", new_callable=PropertyMock, return_value=mock_page):
+            card._handle_delete_issue(MagicMock())
+            dlg = mock_page.overlay.append.call_args[0][0]
+            cancel_btn = dlg.actions[0]
+            cancel_btn.on_click(MagicMock())
+        callback.assert_not_called()
+
+    def test_handle_delete_issue_noop_when_no_id(self) -> None:
+        callback = MagicMock()
+        issue: dict = {"name": "Test", "date": "2023-01-01"}
+        with patch("components.table.issue_detail.issue_detail_card.StampCard"):
+            card = IssueDetailCard(issue=issue, stamps=[], lang="en", on_delete_issue=callback)
+
+        card._handle_delete_issue(MagicMock())
+        callback.assert_not_called()
 
     def test_handle_delete_issue_noop_when_no_callback(self, sample_issue: dict) -> None:
         with patch("components.table.issue_detail.issue_detail_card.StampCard"):
             card = IssueDetailCard(issue=sample_issue, stamps=[], lang="en")
 
-        card._handle_delete_issue(MagicMock())
+        mock_page = MagicMock()
+        with patch.object(type(card), "page", new_callable=PropertyMock, return_value=mock_page):
+            card._handle_delete_issue(MagicMock())
 
     def test_handle_add_stamp_fires_callback(self, sample_issue: dict) -> None:
         callback = MagicMock()

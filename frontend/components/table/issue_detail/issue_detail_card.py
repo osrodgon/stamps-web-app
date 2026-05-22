@@ -7,8 +7,10 @@ import flet as ft
 from components.colors import DARK_IMG_BG, GREY_700
 from components.table.column_def import fmt_currency, fmt_date, fmt_number
 from components.table.issue_detail.stamp_card import StampCard
+from components.buttons.alert_button import AlertButton
+from components.buttons.default_button import DefaultButton
 from core.translations import _
-from components.constants import CARD_PADDING, CARD_ELEVATION, FONT_SIZE_DEFAULT, FONT_SIZE_SMALL_HEADING, FONT_SIZE_XLARGE, ISSUE_ACTION_ICON_SIZE, STAMP_ADD_ICON_SIZE, STANDARD_PADDING
+from components.constants import CARD_PADDING, CARD_ELEVATION, CARD_BORDER_RADIUS, FONT_SIZE_DEFAULT, FONT_SIZE_SMALL_HEADING, FONT_SIZE_XLARGE, ISSUE_ACTION_ICON_SIZE, STAMP_ADD_ICON_SIZE, STANDARD_PADDING
 
 _ADD_STAMP_CARD_HEIGHT: int = 184
 
@@ -174,9 +176,56 @@ class IssueDetailCard(ft.Container):
             self._on_edit_issue(issue_id)
 
     def _handle_delete_issue(self, e: ft.ControlEvent) -> None:
+        """Show a confirmation dialog and delete the issue on confirm.
+
+        Displays an AlertDialog with the issue name and a warning that
+        all associated stamps will also be deleted. On confirm, fires
+        the ``on_delete_issue`` callback with the issue ID. On cancel,
+        simply closes the dialog.
+
+        Uses ``page.overlay.append(dlg)`` followed by setting
+        ``dlg.open = True`` (Flet 0.84.0 compatible).
+
+        Args:
+            e: The click event from the delete IconButton.
+        """
         issue_id = self._issue.get("id")
-        if self._on_delete_issue and issue_id is not None:
-            self._on_delete_issue(issue_id)
+        issue_name: str = self._issue.get("name") or _("ui.no_text_value")
+        if issue_id is None:
+            return
+
+        def confirm_action(_: ft.ControlEvent) -> None:
+            dlg.open = False
+            self.page.update()
+            if self._on_delete_issue:
+                self._on_delete_issue(issue_id)
+
+        def cancel_action(_: ft.ControlEvent) -> None:
+            dlg.open = False
+            self.page.update()
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(_("issues.delete_confirm"), font_family="Roboto-Bold"),
+            content=ft.Column(
+                controls=[
+                    ft.Text(_("issues.delete_confirm_message"), font_family="Roboto"),
+                    ft.Container(height=10),
+                    ft.Text(f"{_('issues.name')}: {issue_name}", size=14, color=GREY_700),
+                ],
+                spacing=4,
+                tight=True,
+            ),
+            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
+            actions=[
+                DefaultButton(_("ui.cancel").upper(), on_click=cancel_action),
+                AlertButton(_("ui.delete").upper(), on_click=confirm_action),
+            ],
+            actions_alignment="end",
+        )
+        self.page.overlay.append(dlg)
+        dlg.open = True
+        self.page.update()
 
     def _handle_add_stamp(self, e: ft.ControlEvent) -> None:
         """Handle add-stamp button click — fire on_add_stamp with issue ID.
