@@ -66,7 +66,7 @@ def show_stamp_detail_dialog(
     color_text: str = f"{_('stamps.color')}: {colors_str}"
     mnh_part: str = f"{_('stamps.mint')}: {fmt_currency(stamp_mnh, lang)}"
     used_part: str = f"{_('stamps.used')}: {fmt_currency(stamp_used, lang)}"
-    total_printed: str = f"{_('stamps.total_printed')}: {fmt_currency(stamp.get('total_printed'), lang)}"
+    total_printed: str = f"{_('stamps.total_printed')}: {fmt_number(stamp.get('total_printed'), lang)}"
 
     def close(_: ft.ControlEvent | None = None) -> None:
         dlg.open = False
