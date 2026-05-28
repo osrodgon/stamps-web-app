@@ -1,7 +1,5 @@
 """Unit tests for core/utils.py — pure validation functions."""
 
-import pytest
-
 from core.utils import is_strong_password, is_valid_email
 
 
@@ -98,3 +96,7 @@ class TestIsStrongPassword:
 
     def test_valid_long_password(self) -> None:
         assert is_strong_password("VeryLongAndSecurePassword123!") is True
+
+
+
+

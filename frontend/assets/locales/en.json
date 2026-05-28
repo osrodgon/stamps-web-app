@@ -78,6 +78,7 @@
         "unexpected_error": "An unexpected error occurred. Please try again."
     },
     "ui": {
+        "loading": "Loading...",
         "actions": "Actions",
         "cancel": "Cancel",
         "delete": "Delete",
@@ -93,6 +94,15 @@
         "of": "of"
     },
     "issues":{
+        "add_title": "Add New Issue",
+        "select_date": "Select date",
+        "create": "Create Issue",
+        "country": "Country",
+        "perforation": "Perforation",
+        "artist": "Artist/Engraver",
+        "paper_type": "Paper Type",
+        "printer": "Printer",
+        "print_type": "Print Type",
         "edit_tooltip": "Edit issue",
         "delete_tooltip": "Delete issue",
         "add_tooltip": "Add new issue",
@@ -100,16 +110,19 @@
         "delete_confirm_message": "Are you sure you want to delete this issue? This will also delete all stamps associated with this issue.",
         "delete_success": "Issue deleted successfully",
         "delete_error": "Failed to delete issue",
-        "name": "Name"
+        "name": "Name",
+        "hint_name": "Enter the name of the issue"
     },
     "stamps": {
+        "description": "Description",
+        "notes": "Notes",
         "country": "Country",
         "issue_name": "Issue Name",
         "perforation": "Perforation",
         "print_type": "Print Type",
         "stamp_type": "Stamp Type",
         "stamps": "Stamps",
-        "total_printed": "Total Printed",
+        "total_printed": "Stamp Total Printed",
         "loading_stamps": "Loading stamps...",
         "no_stamps_found": "No stamps found for this issue.",
         "stamps_manager_title": "Stamps Manager",

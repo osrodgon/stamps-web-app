@@ -63,7 +63,7 @@ ASSETS_DIR = f"{FRONTEND_DIR}/assets"
 BACKGROUND_IMG = "background.webp"
 FAV_ICON = "fav_icon.webp"
 ORG_LOGO = "org.png"
-NO_STAMP = "no_stamp.webp"
+NO_STAMP = "no_stamp_new.webp"
 
 # Mock login for development/testing
 MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'

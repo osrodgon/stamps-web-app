@@ -36,4 +36,4 @@ docker-compose*
 
 # Other
 **/resources/
-**/backups/
+**/backups/*

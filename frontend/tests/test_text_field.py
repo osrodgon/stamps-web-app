@@ -141,9 +141,11 @@ class TestTextField:
 
     @patch("components.form.text_field.ft.TextField")
     def test_font_family_is_roboto(self, mock_tf: MagicMock) -> None:
-        """TextField font_family is Roboto."""
-        tf = TextField(label="Username")
-        assert tf.font_family == "Roboto"
+        """TextField text_style.font_family is Roboto."""
+        tf = TextField(
+            field_style=FieldStyle(border=ft.InputBorder.NONE, expand=False),
+        )
+        assert tf.text_style.font_family == "Roboto"
 
     @patch("components.form.text_field.ft.TextField")
     def test_uses_default_field_style(self, mock_tf: MagicMock) -> None:

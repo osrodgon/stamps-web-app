@@ -42,19 +42,22 @@ class ColumnDef:
 
 
 def fmt_currency(value: Any, lang: str) -> str:
-    """Format a monetary value with locale-aware separators.
+    """Format a monetary value with locale-aware separators; return "-" for zero.
 
     en: "€1,234.56"
     es: "€1.234,56"
+    Returns "-" when value is 0, None, or empty.
 
     Args:
-        value: Raw value (string or number). None/empty → "€0.00".
+        value: Raw value (string or number). None/empty → "-".
         lang: Language code ("en" or "es").
 
     Returns:
-        Formatted string with Euro symbol and two decimal places.
+        Formatted string with Euro symbol and two decimal places, or "-" for zero.
     """
     val: float = float(value or 0)
+    if val == 0:
+        return "-"
     formatted: str = f"€{val:,.2f}"
     if lang == "es":
         formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
@@ -62,19 +65,22 @@ def fmt_currency(value: Any, lang: str) -> str:
 
 
 def fmt_number(value: Any, lang: str) -> str:
-    """Format an integer with locale-aware thousands separator.
+    """Format an integer with locale-aware thousands separator; return "-" for zero.
 
     en: "1,234,567"
     es: "1.234.567"
+    Returns "-" when value is 0, None, or empty.
 
     Args:
-        value: Raw value (string or number). None/empty → "0".
+        value: Raw value (string or number). None/empty → "-".
         lang: Language code ("en" or "es").
 
     Returns:
-        Formatted integer string without decimals.
+        Formatted integer string without decimals, or "-" for zero.
     """
     val: int = int(value or 0)
+    if val == 0:
+        return "-"
     formatted: str = f"{val:,}"
     if lang == "es":
         formatted = formatted.replace(",", ".")
