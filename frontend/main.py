@@ -17,9 +17,34 @@ from pages.collection.collections_page import CollectionsPage
 from pages.admin.stamps_manager_page import StampsManagerPage
 from core.urls import URLs
 from core.log_setup import log_setup
-from core.translations import init_language
+from core.translations import init_language, get_language
+
+
 from settings import    APP_NAME, ASSETS_DIR, FONT_REGULAR, FONT_BOLD, FONT_BLACK, FRONTEND_PORT, \
                         USER_JWT_TOKEN, USER_IS_ADMIN, FAV_ICON
+
+from components.colors import SKY_BLUE
+from components.constants import BUTTON_BORDER_RADIUS
+
+
+def _locale_config(lang: str) -> ft.LocaleConfiguration:
+    """Build a ``LocaleConfiguration`` for the given language code.
+
+    Args:
+        lang: Two-letter language code (``"en"`` or ``"es"``).
+
+    Returns:
+        A ``LocaleConfiguration`` with the current locale set and both
+        English and Spanish listed as supported locales.
+    """
+    mapping: dict[str, ft.Locale] = {
+        "en": ft.Locale("en", "US"),
+        "es": ft.Locale("es", "ES"),
+    }
+    return ft.LocaleConfiguration(
+        current_locale=mapping.get(lang, mapping["en"]),
+        supported_locales=list(mapping.values()),
+    )
 
 # Route handlers for implemented pages
 ROUTE_HANDLERS = {
@@ -57,10 +82,31 @@ def configure_page(page: ft.Page):
         page_transitions=ft.PageTransitionsTheme(
             linux=ft.PageTransitionTheme.NONE
         ),
-        font_family="Roboto"
+        font_family="Roboto",
+        date_picker_theme=ft.DatePickerTheme(
+            confirm_button_style=ft.ButtonStyle(
+                bgcolor=SKY_BLUE,
+                color=ft.Colors.WHITE,
+                overlay_color=ft.Colors.with_opacity(0.2, SKY_BLUE),
+                shape=ft.RoundedRectangleBorder(radius=BUTTON_BORDER_RADIUS),
+            ),
+            cancel_button_style=ft.ButtonStyle(
+                color=SKY_BLUE,
+                overlay_color=ft.Colors.with_opacity(0.1, SKY_BLUE),
+                shape=ft.RoundedRectangleBorder(radius=BUTTON_BORDER_RADIUS),
+            ),
+            day_overlay_color=ft.Colors.with_opacity(0.15, SKY_BLUE),
+            year_overlay_color=ft.Colors.with_opacity(0.15, SKY_BLUE),
+            today_bgcolor=SKY_BLUE,
+            today_foreground_color=ft.Colors.WHITE,
+            day_shape=ft.RoundedRectangleBorder(radius=BUTTON_BORDER_RADIUS),
+            shape=ft.RoundedRectangleBorder(radius=BUTTON_BORDER_RADIUS),
+        ),
     )
-    
+
     page.window.icon = FAV_ICON
+
+    page.locale_configuration = _locale_config(get_language())
 
 
 async def route_change(e: ft.RouteChangeEvent):
@@ -118,13 +164,18 @@ async def main(page: ft.Page):
         page.add(ft.Text(f"Failed to initialize language: {e}"))
         page.update()
 
+    # Sync locale after language init — init_language() may have loaded
+    # a persisted language preference different from the default.
+    page.locale_configuration = _locale_config(get_language())
+
     page.on_route_change = route_change
     page.on_view_pop = view_pop
     
     # Handle initial route directly
     route = URLs.Frontend.root
     prefs = ft.SharedPreferences()
-
+    
+    
     if route == URLs.Frontend.root:
         auth_token = await prefs.get(USER_JWT_TOKEN)
         if auth_token:

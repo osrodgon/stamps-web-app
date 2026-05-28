@@ -72,7 +72,6 @@ APP_HEADER: FieldStyle = FieldStyle(
     label_style=ft.TextStyle(color=ft.Colors.GREY_500, font_family="Roboto"),
 )
 
-
 class TextField(ft.TextField):
     """A customized text input field component for Flet applications.
 
@@ -94,11 +93,13 @@ class TextField(ft.TextField):
 
     def __init__(
         self,
-        label: str,
+        label: Optional[str] = None,
         password: bool = False,
         can_reveal_password: bool = False,
         border_color: Optional[str] = None,
+        border_width: Optional[int] = None,
         focused_border_color: Optional[str] = None,
+        focused_border_width: Optional[int] = None,
         width: Optional[int] = None,
         on_click: Optional[Callable[..., None]] = None,
         on_change: Optional[Callable[..., None]] = None,
@@ -107,6 +108,8 @@ class TextField(ft.TextField):
         text_size: Optional[int] = None,
         label_style: Optional[ft.TextStyle] = None,
         field_style: FieldStyle = DEFAULT,
+        hint_text: Optional[str] = None,
+        text_style: Optional[ft.TextStyle] = None,
         **kwargs: Any,
     ) -> None:
         """Initializes a TextField with the specified label and behavior.
@@ -140,14 +143,23 @@ class TextField(ft.TextField):
                 hint_text, suffix_icon, prefix_icon, etc.).
         """
         super().__init__(**kwargs)
-        self.label = label
+        if label is not None:
+            self.label = label
+        if hint_text is not None:
+            self.hint_text = hint_text
         self.password = password
         self.can_reveal_password = can_reveal_password
-        self.font_family = "Roboto"
+        if text_style is not None:
+            self.text_style = text_style
+        else:
+            self.text_style = ft.TextStyle(font_family="Roboto")
+
 
         # Apply field_style defaults, then let explicit params override
         self.border_color = border_color if border_color is not None else field_style.border_color
+        self.border_width = border_width if border_width is not None else field_style.border_width
         self.focused_border_color = focused_border_color if focused_border_color is not None else field_style.focused_border_color
+        self.focused_border_width = focused_border_width if focused_border_width is not None else field_style.focused_border_width
         self.text_size = text_size if text_size is not None else field_style.text_size
         self.expand = expand if expand is not None else field_style.expand
         self.border = border if border is not None else field_style.border

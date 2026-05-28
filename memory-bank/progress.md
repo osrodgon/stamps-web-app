@@ -7,7 +7,7 @@
 - [x] Implemented Tier 8: StandardPage 10 tests, NotFoundPage 6 tests
 - [x] Implemented Tier 9: StampsManagerPage static methods + 5 handler stubs — 15 tests
 - [x] Implemented Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
-- [x] Total: 491 tests (all passing)
+- [x] Total: 535 tests (all passing)
 - [x] Deferred: login_card, signup_card, login_page, signup_page, collections_page (Flet descriptor system)
 
 ### Frontend Docstring Updates (2025-05-11)
@@ -91,9 +91,45 @@
 - [x] 3 new tests for issue delete dialog (dialog shown, confirm fires callback, cancel does not fire)
 - [x] All 491 tests passing
 
+### DatePicker Styling & Future Dates (2025-05-24)
+- [x] Added `year_shape` to DatePickerTheme via post-construction assignment (skipped by __init__)
+- [x] Added `shape` to DatePickerTheme for dialog corner radius (8px)
+- [x] Changed DatePickerField default `last_date` from `today` to `today + 365 days`
+- [x] 2 new tests (year_shape, shape); 560 total passing
+
+### Client Timezone Detection (2025-05-26)
+- [x] `index.html` JS detects `Intl.DateTimeFormat().resolvedOptions().timeZone` and passes as `?tz=` query param
+- [x] `core/utils.py`: `init_client_timezone(page)` + `get_local_today()` — reads query param, returns today in client timezone
+- [x] `settings.py`: added `DEFAULT_TIMEZONE` env var
+- [x] `main.py`: calls `init_client_timezone(page)` on startup
+- [x] Replaced `datetime.date.today()` and `datetime.datetime.now()` with `get_local_today()` in `date_picker.py` and `issue_form.py`
+- [x] 3 new tests for `init_client_timezone`, 3 for `get_local_today`, updated 2 existing tests
+- [x] All 566 tests passing
+
+### Add Issue Form (2025-05-24)
+- [x] Added URL definitions for `countries`, `artists`, `paper_types`, `printers`
+- [x] Added 7 service methods: `create_issue`, `get_countries`, `get_artists`, `get_stamp_types`, `get_paper_types`, `get_print_types`, `get_printers`
+- [x] Created `IssueForm` dialog component with specs grid (3 cols), date picker + "Today" button, reference data dropdowns, multiline description/notes, Create/Cancel buttons
+- [x] Wired `_handle_add_issue` in StampsManagerPage → opens IssueForm → reloads table on success
+- [x] 28 service tests + 16 IssueForm tests = 44 new tests
+- [x] All 535 frontend tests passing
+- [x] Noted Flet 0.84.0 quirks: `ft.Dropdown` sets `on_change` after construction; `ft.TextButton` uses `content` not `text`
+
 ### Code Improvements
 - [ ] Fix LSP type errors in frontend code (pre-existing)
 - [ ] Add type hints to remaining untyped functions
+
+### IssueService + IssueForm Refactoring (2025-05-28)
+- [x] Extracted `_fetch_ref` / `_create_ref` helpers in IssueService — 14 boilerplate methods → 1-liners
+- [x] Split `_build_form()` into named methods (`_build_name_section`, `_build_date_row`, `_build_specs_grid`, `_build_notes_section`, `_build_actions`, `_assemble_card`)
+- [x] Renamed `_mnh_field` → `_mint_field`, `_date_picker_icon` → `_date_picker`
+- [x] Removed dead `_on_field_change` handler and `_field_cell` static method
+- [x] Replaced `_make_dropdown` setattr pattern with `_build_dropdown` + explicit assignment
+- [x] Moved DatePicker overlay append from `_build_form()` to `show()`
+- [x] Added `super().__init__()` call in IssueForm
+- [x] Documented `_on_success` as sync-only
+- [x] Fixed stale docstrings in both files
+- [x] All 585 tests passing
 
 ### Stamp Deletion (2025-05-22)
 - [x] Step 1: Added `delete_stamp()` method to `IssueService` (issue_service.py)
@@ -101,6 +137,20 @@
 - [x] Step 3: Added 5 locale keys (en/es): `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
 - [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through → `StampsManagerPage` with live API call, success/error notifications, and stamps refresh
 - [x] All 488 tests passing
+
+### DatePicker Timezone Fix — REIMPLEMENTATION NEEDED
+- [ ] Reimplement `init_client_timezone(page)` — reads `?tz=` query param from `index.html` JS
+- [ ] Reimplement `get_local_today()` — returns today in client timezone
+- [ ] Reimplement `to_local_date()` — converts Flutter's UTC-normalised datetime back to client tz
+- [ ] Restore JS timezone detection in `assets/index.html` (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
+- [ ] Call `init_client_timezone(page)` in `main.py`
+- [ ] Replace `datetime.date.today()` with `get_local_today()` in `date_picker.py`, `issue_form.py`
+- [ ] Re-add tests for all of the above
+
+### Add Issues to Database (backend)
+- [ ] Backend endpoint to persist issues from frontend IssueForm — manual testing in progress
+- [ ] Wire up working tree changes on branch `212-feature-stamps-manager-add-issues`
+- [x] Fixed duplicate issue creation bug in `issue_form.py` (duplicated `_on_create` logic causing two API calls)
 
 ### Documentation
 - [ ] Update opencode_rules.md to reflect Flet (not NiceGUI)

@@ -7,6 +7,8 @@ import pytest
 import requests
 
 from services.issue_service import IssueService
+from core.urls import URLs
+from settings import API_MASTER_KEY
 
 
 class TestIssueServiceGetIssues:
@@ -222,4 +224,411 @@ class TestIssueServiceGetYears:
         with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
             result = await service.get_years()
 
+            assert result is None
+
+
+class TestIssueServiceCreateIssue:
+    """Tests for the create_issue method."""
+
+    @pytest.fixture
+    def service(self) -> IssueService:
+        return IssueService()
+
+    @pytest.fixture
+    def mock_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 201
+        return response
+
+    async def test_create_issue_sends_post(self, service: IssueService, mock_response: MagicMock) -> None:
+        payload: dict = {"name": "Test Series", "year": 1}
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            result = await service.create_issue(payload)
+
+            assert result is mock_response
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["payload"] == payload
+
+    async def test_create_issue_correct_endpoint(self, service: IssueService, mock_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            from core.urls import URLs
+
+            await service.create_issue({"name": "Test"})
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.issues
+
+    async def test_create_issue_includes_api_key_header(
+        self, service: IssueService, mock_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            await service.create_issue({"name": "Test"})
+
+            call_kwargs = mock_req.call_args[1]
+            assert "Authorization" in call_kwargs["headers"]
+
+    async def test_create_issue_returns_none_on_error(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.create_issue({"name": "Test"})
+
+            assert result is None
+
+
+class TestIssueServiceReferenceData:
+    """Tests for reference data fetch methods (get_countries, get_artists, etc.)."""
+
+    @pytest.fixture
+    def service(self) -> IssueService:
+        return IssueService()
+
+    @pytest.fixture
+    def mock_ok_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 200
+        response.json.return_value = {
+            "data": [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+        }
+        return response
+
+    @pytest.fixture
+    def mock_error_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 500
+        return response
+
+    async def test_get_countries_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_countries()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_countries_error_returns_empty(
+        self, service: IssueService, mock_error_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_countries()
+
+            assert result == []
+
+    async def test_get_countries_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_countries()
+
+            assert result == []
+
+    async def test_get_countries_correct_endpoint(self, service: IssueService, mock_ok_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_countries()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.countries
+            assert call_kwargs["request_type"] == service.GET
+
+    async def test_get_artists_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_artists()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_artists_error_returns_empty(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_artists()
+
+            assert result == []
+
+    async def test_get_artists_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_artists()
+
+            assert result == []
+
+    async def test_get_artists_correct_endpoint(self, service: IssueService, mock_ok_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_artists()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.artists
+            assert call_kwargs["request_type"] == service.GET
+
+    async def test_get_stamp_types_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_stamp_types()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_stamp_types_error_returns_empty(
+        self, service: IssueService, mock_error_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_stamp_types()
+
+            assert result == []
+
+    async def test_get_stamp_types_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_stamp_types()
+
+            assert result == []
+
+    async def test_get_stamp_types_correct_endpoint(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_stamp_types()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.stamp_types
+            assert call_kwargs["request_type"] == service.GET
+
+    async def test_get_paper_types_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_paper_types()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_paper_types_error_returns_empty(
+        self, service: IssueService, mock_error_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_paper_types()
+
+            assert result == []
+
+    async def test_get_paper_types_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_paper_types()
+
+            assert result == []
+
+    async def test_get_paper_types_correct_endpoint(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_paper_types()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.paper_types
+            assert call_kwargs["request_type"] == service.GET
+
+    async def test_get_print_types_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_print_types()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_print_types_error_returns_empty(
+        self, service: IssueService, mock_error_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_print_types()
+
+            assert result == []
+
+    async def test_get_print_types_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_print_types()
+
+            assert result == []
+
+    async def test_get_print_types_correct_endpoint(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_print_types()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.print_types
+            assert call_kwargs["request_type"] == service.GET
+
+    async def test_get_printers_returns_list(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response):
+            result = await service.get_printers()
+
+            assert result == [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}]
+
+    async def test_get_printers_error_returns_empty(
+        self, service: IssueService, mock_error_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.get_printers()
+
+            assert result == []
+
+    async def test_get_printers_network_error_returns_empty(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.get_printers()
+
+            assert result == []
+
+    async def test_get_printers_correct_endpoint(
+        self, service: IssueService, mock_ok_response: MagicMock
+    ) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_ok_response) as mock_req:
+            from core.urls import URLs
+
+            await service.get_printers()
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["url"] == URLs.Backend.printers
+            assert call_kwargs["request_type"] == service.GET
+
+
+class TestIssueServiceCreateMethods:
+    """Tests for the new create methods (country, artist, stamp_type, paper_type, print_type, printer, year)."""
+
+    @pytest.fixture
+    def service(self) -> IssueService:
+        return IssueService()
+
+    @pytest.fixture
+    def mock_created_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 201
+        response.json.return_value = {"data": {"id": 42, "name": "Test"}}
+        return response
+
+    @pytest.fixture
+    def mock_error_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 400
+        return response
+
+    async def test_create_country_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_country("France")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.countries
+            assert call_kwargs["payload"] == {"name": "France"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_country_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_country("France")
+            assert result is None
+
+    async def test_create_country_network_error_returns_none(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.create_country("France")
+            assert result is None
+
+    async def test_create_artist_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_artist("Picasso")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.artists
+            assert call_kwargs["payload"] == {"name": "Picasso"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_artist_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_artist("Picasso")
+            assert result is None
+
+    async def test_create_stamp_type_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_stamp_type("Definitive")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.stamp_types
+            assert call_kwargs["payload"] == {"name": "Definitive"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_stamp_type_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_stamp_type("Definitive")
+            assert result is None
+
+    async def test_create_paper_type_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_paper_type("Chalky")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.paper_types
+            assert call_kwargs["payload"] == {"name": "Chalky"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_paper_type_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_paper_type("Chalky")
+            assert result is None
+
+    async def test_create_print_type_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_print_type("Lithography")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.print_types
+            assert call_kwargs["payload"] == {"name": "Lithography"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_print_type_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_print_type("Lithography")
+            assert result is None
+
+    async def test_create_printer_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_printer("Security Printer")
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.printers
+            assert call_kwargs["payload"] == {"name": "Security Printer"}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_printer_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_printer("Security Printer")
+            assert result is None
+
+    async def test_create_year_success(self, service: IssueService, mock_created_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_created_response) as mock_req:
+            result = await service.create_year(2023)
+
+            assert result == 42
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.POST
+            assert call_kwargs["url"] == URLs.Backend.years
+            assert call_kwargs["payload"] == {"year": 2023}
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_create_year_returns_none_on_error(self, service: IssueService, mock_error_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_error_response):
+            result = await service.create_year(2023)
             assert result is None

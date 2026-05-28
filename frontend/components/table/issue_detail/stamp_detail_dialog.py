@@ -66,6 +66,7 @@ def show_stamp_detail_dialog(
     color_text: str = f"{_('stamps.color')}: {colors_str}"
     mnh_part: str = f"{_('stamps.mint')}: {fmt_currency(stamp_mnh, lang)}"
     used_part: str = f"{_('stamps.used')}: {fmt_currency(stamp_used, lang)}"
+    total_printed: str = f"{_('stamps.total_printed')}: {fmt_currency(stamp.get('total_printed'), lang)}"
 
     def close(_: ft.ControlEvent | None = None) -> None:
         dlg.open = False
@@ -109,6 +110,12 @@ def show_stamp_detail_dialog(
                                                 ft.Container(
                                                     content=ft.Text(used_part, size=FONT_SIZE_DEFAULT, color=GREY_700),
                                                     bgcolor=ft.Colors.BLUE_100,
+                                                    border_radius=6,
+                                                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                                                ),
+                                                ft.Container(
+                                                    content=ft.Text(total_printed, size=FONT_SIZE_DEFAULT, color=GREY_700),
+                                                    bgcolor=ft.Colors.GREY_300,
                                                     border_radius=6,
                                                     padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                                                 ),

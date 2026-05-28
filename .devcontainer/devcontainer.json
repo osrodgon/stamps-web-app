@@ -7,7 +7,8 @@
 
 	"runArgs": [
         "--network=stamps-network",  // Add the container to the network where the database is running
-			"--add-host=host.docker.internal:host-gateway"
+		"--add-host=host.docker.internal:host-gateway",
+		"-e", "TZ=Europe/Madrid"  // Set the timezone environment variable to Europe/Madrid
     ],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.

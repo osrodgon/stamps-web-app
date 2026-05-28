@@ -78,6 +78,7 @@
         "unexpected_error": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
     },
     "ui": {
+        "loading": "Cargando...",
         "actions": "Acciones",
         "cancel": "Cancelar",
         "delete": "Eliminar",
@@ -93,6 +94,15 @@
         "of": "de"
     },
     "issues":{
+        "add_title": "Añadir Nueva Serie",
+        "select_date": "Seleccionar fecha",
+        "create": "Crear Serie",
+        "country": "País",
+        "perforation": "Dentado",
+        "artist": "Artista/Grabador",
+        "paper_type": "Tipo de Papel",
+        "printer": "Imprenta",
+        "print_type": "Tipo de Impresión",
         "edit_tooltip": "Editar serie",
         "delete_tooltip": "Eliminar serie",
         "add_tooltip": "Añadir nueva serie",
@@ -100,16 +110,19 @@
         "delete_confirm_message": "¿Estás seguro de que quieres eliminar esta serie? Esto también eliminará todos los sellos asociados a esta serie.",
         "delete_success": "Serie eliminada correctamente",
         "delete_error": "Error al eliminar la serie",
-        "name": "Nombre"
+        "name": "Nombre",
+        "hint_name": "Introduce el nombre de la serie"
     },
     "stamps": {
+        "description": "Descripción",
+        "notes": "Notas",
         "country": "País",
         "issue_name": "Nombre de la serie",
         "perforation": "Dentado",
         "print_type": "Tipo de impresión",
         "stamp_type": "Tipo de sello",
         "stamps": "Sellos",
-        "total_printed": "Tirada total",
+        "total_printed": "Tirada total sello",
         "loading_stamps": "Cargando sellos...",
         "no_stamps_found": "No se encontraron sellos para esta serie.",
         "stamps_manager_title": "Gestión de Sellos",

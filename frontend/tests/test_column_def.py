@@ -16,13 +16,13 @@ class TestFmtCurrency:
         assert fmt_currency("1234.56", "en") == "€1,234.56"
 
     def test_english_format_zero(self) -> None:
-        assert fmt_currency(0, "en") == "€0.00"
+        assert fmt_currency(0, "en") == "-"
 
     def test_english_format_none(self) -> None:
-        assert fmt_currency(None, "en") == "€0.00"
+        assert fmt_currency(None, "en") == "-"
 
     def test_english_format_empty_string(self) -> None:
-        assert fmt_currency("", "en") == "€0.00"
+        assert fmt_currency("", "en") == "-"
 
     def test_english_large_number(self) -> None:
         assert fmt_currency(1234567.89, "en") == "€1,234,567.89"
@@ -34,13 +34,13 @@ class TestFmtCurrency:
         assert fmt_currency("1234.56", "es") == "€1.234,56"
 
     def test_spanish_format_zero(self) -> None:
-        assert fmt_currency(0, "es") == "€0,00"
+        assert fmt_currency(0, "es") == "-"
 
     def test_spanish_format_none(self) -> None:
-        assert fmt_currency(None, "es") == "€0,00"
+        assert fmt_currency(None, "es") == "-"
 
     def test_spanish_format_empty_string(self) -> None:
-        assert fmt_currency("", "es") == "€0,00"
+        assert fmt_currency("", "es") == "-"
 
     def test_spanish_large_number(self) -> None:
         assert fmt_currency(1234567.89, "es") == "€1.234.567,89"
@@ -59,13 +59,13 @@ class TestFmtNumber:
         assert fmt_number(1234567, "en") == "1,234,567"
 
     def test_english_format_zero(self) -> None:
-        assert fmt_number(0, "en") == "0"
+        assert fmt_number(0, "en") == "-"
 
     def test_english_format_none(self) -> None:
-        assert fmt_number(None, "en") == "0"
+        assert fmt_number(None, "en") == "-"
 
     def test_english_format_empty_string(self) -> None:
-        assert fmt_number("", "en") == "0"
+        assert fmt_number("", "en") == "-"
 
     def test_english_format_string_number(self) -> None:
         assert fmt_number("500000", "en") == "500,000"
@@ -80,13 +80,13 @@ class TestFmtNumber:
         assert fmt_number(1234567, "es") == "1.234.567"
 
     def test_spanish_format_zero(self) -> None:
-        assert fmt_number(0, "es") == "0"
+        assert fmt_number(0, "es") == "-"
 
     def test_spanish_format_none(self) -> None:
-        assert fmt_number(None, "es") == "0"
+        assert fmt_number(None, "es") == "-"
 
     def test_spanish_format_empty_string(self) -> None:
-        assert fmt_number("", "es") == "0"
+        assert fmt_number("", "es") == "-"
 
     def test_spanish_format_string_number(self) -> None:
         assert fmt_number("500000", "es") == "500.000"

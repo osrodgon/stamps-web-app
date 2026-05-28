@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import flet as ft
 import pytest
 
-from main import configure_page, route_change, view_pop, ROUTE_HANDLERS
+from main import _locale_config, configure_page, route_change, view_pop, ROUTE_HANDLERS
 from core.urls import URLs
 
 
@@ -54,10 +54,32 @@ class TestConfigurePage:
         configure_page(page)
         assert page.theme is not None
 
+    def test_theme_has_date_picker_theme(self) -> None:
+        page = MagicMock()
+        configure_page(page)
+        assert page.theme.date_picker_theme is not None
+        assert page.theme.date_picker_theme.confirm_button_style is not None
+        assert page.theme.date_picker_theme.cancel_button_style is not None
+
+    def test_theme_date_picker_has_shape(self) -> None:
+        page = MagicMock()
+        configure_page(page)
+        assert page.theme.date_picker_theme.shape is not None
+
     def test_sets_window_icon(self) -> None:
         page = MagicMock()
         configure_page(page)
         assert page.window.icon is not None
+
+    def test_sets_locale_configuration(self) -> None:
+        page = MagicMock()
+        configure_page(page)
+        assert page.locale_configuration is not None
+
+    def test_locale_configuration_has_supported_locales(self) -> None:
+        page = MagicMock()
+        configure_page(page)
+        assert len(page.locale_configuration.supported_locales) == 2
 
     def test_fonts_contain_roboto_keys(self) -> None:
         page = MagicMock()
@@ -65,6 +87,31 @@ class TestConfigurePage:
         assert "Roboto" in page.fonts
         assert "Roboto-Bold" in page.fonts
         assert "Roboto-Black" in page.fonts
+
+
+class TestLocaleConfig:
+    """Tests for the _locale_config helper."""
+
+    def test_returns_locale_configuration(self) -> None:
+        result = _locale_config("en")
+        assert isinstance(result, ft.LocaleConfiguration)
+
+    def test_en_current_locale(self) -> None:
+        result = _locale_config("en")
+        assert result.current_locale.language_code == "en"
+
+    def test_es_current_locale(self) -> None:
+        result = _locale_config("es")
+        assert result.current_locale.language_code == "es"
+
+    def test_unknown_falls_back_to_en(self) -> None:
+        result = _locale_config("fr")
+        assert result.current_locale.language_code == "en"
+
+    def test_supported_locales_contains_en_and_es(self) -> None:
+        result = _locale_config("en")
+        codes = {loc.language_code for loc in result.supported_locales}
+        assert codes == {"en", "es"}
 
 
 class TestRouteChange:

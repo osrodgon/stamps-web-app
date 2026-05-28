@@ -22,6 +22,7 @@ from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
 from components.form.year_range_selector import YearRangeSelector
+from components.issue_form.issue_form import IssueForm
 from core.severity import Severity
 from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
@@ -383,9 +384,18 @@ class StampsManagerPage(StandardPage):
         self.log.debug(f"Add stamp to issue {issue_id}")
 
     async def _handle_add_issue(self, e: ft.ControlEvent) -> None:
-        """Handle add-new-issue button click — stub for future implementation.
+        """Open the Add Issue form dialog.
+
+        Shows the IssueForm dialog to create a new stamp issue. On
+        successful creation, reloads the issue table.
 
         Args:
             e: The click event from the add-issue IconButton.
         """
         self.log.debug("Add new issue")
+        form = IssueForm(
+            page=self.page,
+            issue_service=self._issue_service,
+            on_success=lambda: self.page.run_task(self._table.load, reset_page=True),
+        )
+        await form.show()

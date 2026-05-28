@@ -207,6 +207,16 @@ class LoginPage(ft.View, BaseUI):
             
             self.log.debug("Language changed to English.")
         
+        # Sync Flet page locale so DatePicker etc. pick up the new language
+        self.page.locale_configuration = ft.LocaleConfiguration(
+            current_locale=ft.Locale(get_language(), "US" if get_language() == "en" else "ES"),
+            supported_locales=[
+                ft.Locale("en", "US"),
+                ft.Locale("es", "ES"),
+            ],
+        )
+        self.page.update()
+        
         # Update branding
         self.collectibles.update()
         
