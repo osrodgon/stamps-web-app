@@ -10,6 +10,7 @@ and supports dynamic language switching via the translation module.
 
 import flet as ft
 from core.base_ui import BaseUI
+from core.utils import validate_jwt_token
 from pages.auth.signup_page import SignupPage
 from pages.auth.login_page import LoginPage
 from pages.not_found_page import NotFoundPage
@@ -178,7 +179,7 @@ async def main(page: ft.Page):
     
     if route == URLs.Frontend.root:
         auth_token = await prefs.get(USER_JWT_TOKEN)
-        if auth_token:
+        if validate_jwt_token(auth_token):
             user_is_admin = await prefs.get(USER_IS_ADMIN)
             if user_is_admin:
                 route = URLs.Frontend.stamps_manager

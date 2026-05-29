@@ -19,8 +19,7 @@ Example:
 
 import datetime
 import re
-
-from settings import USER_IS_ADMIN
+import jwt
 
 
 def is_valid_email(email: str) -> bool:
@@ -72,3 +71,36 @@ def is_strong_password(password: str) -> bool:
     """
     pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[_!@#$%^&*(),.?\":{}|<>]).{8,}$"
     return re.match(pattern, password) is not None
+
+def validate_jwt_token(token: str) -> bool:
+    """Check if a JWT token is still valid (not expired).
+
+    Decodes the token without verifying the signature (client-side
+    check only).  If the token has an ``exp`` claim that is past
+    the current UTC time, returns ``False``.  Returns ``False`` also
+    for any malformed token or decoding error.
+
+    Args:
+        token: The JWT string to validate.
+
+    Returns:
+        True if the token is present and its ``exp`` claim (if any)
+        is still in the future, False otherwise.
+    """
+    if not token:
+        return False
+    try:
+        payload = jwt.decode(
+            token,
+            options={"verify_signature": False},
+            algorithms=["HS256"],
+        )
+        exp = payload.get("exp")
+        curr = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        if exp is None:
+            return True  # no expiry = treat as valid
+        return  curr < exp
+    except jwt.DecodeError:
+        return False
+    except Exception:
+        return False

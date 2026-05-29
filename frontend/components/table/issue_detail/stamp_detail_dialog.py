@@ -8,7 +8,7 @@ from PIL import Image as PILImage
 
 from components.buttons.default_button import DefaultButton
 from components.colors import DARK_IMG_BG, GREY_700
-from components.table.column_def import fmt_currency
+from components.table.column_def import fmt_currency, fmt_number
 from core.translations import _
 from settings import ASSETS_DIR, IMAGE_DIR, NO_STAMP
 from components.constants import FONT_SIZE_DEFAULT, CARD_BORDER_RADIUS, DIALOG_WIDTH, DIALOG_IMAGE_MAX_HEIGHT
