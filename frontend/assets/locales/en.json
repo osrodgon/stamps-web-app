@@ -111,7 +111,14 @@
         "delete_success": "Issue deleted successfully",
         "delete_error": "Failed to delete issue",
         "name": "Name",
-        "hint_name": "Enter the name of the issue"
+        "hint_name": "Enter the name of the issue",
+        "name_required": "Issue name is required",
+        "invalid_mnh": "Invalid mint value",
+        "invalid_used": "Invalid used value",
+        "invalid_total_printed": "Invalid total printed value",
+        "creation_failed": "Failed to create issue",
+        "creation_success": "Issue created successfully",
+        "network_error": "Network error. Please check your connection."
     },
     "stamps": {
         "description": "Description",

@@ -111,7 +111,14 @@
         "delete_success": "Serie eliminada correctamente",
         "delete_error": "Error al eliminar la serie",
         "name": "Nombre",
-        "hint_name": "Introduce el nombre de la serie"
+        "hint_name": "Introduce el nombre de la serie",
+        "name_required": "El nombre de la serie es obligatorio",
+        "invalid_mnh": "El valor del sello nuevo no es válido",
+        "invalid_used": "El valor del sello usado no es válido",
+        "invalid_total_printed": "El valor de sellos emitidos no es válido",
+        "creation_failed": "Error al crear la serie",
+        "creation_success": "Serie creada correctamente",
+        "network_error": "Error de red. Por favor, comprueba tu conexión."
     },
     "stamps": {
         "description": "Descripción",
