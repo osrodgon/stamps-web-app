@@ -1,9 +1,7 @@
 # Active Context
 
 ## Current Task
-- **Task**: Add issues to database (backend) — work in progress, manual testing
-- **Priority**: high
-- **Status**: in progress
+- None (all pending items deferred)
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -50,8 +48,8 @@
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
 - Locale files are user-managed — never modify en.json or es.json
-- **Known bug**: DatePicker is still one day off — timezone detection (`init_client_timezone`, `get_local_today`, `to_local_date`) was dropped from index.html, utils.py, main.py, date_picker.py, issue_form.py. Needs reimplementation.
-- Add issues to database (backend) is a new feature being manually tested — branch `212-feature-stamps-manager-add-issues`
+- DatePicker timezone fix complete — JS in index.html writes to localStorage, Python reads via SharedPreferences
+- Add issues to database (backend) — complete on branch `212-feature-stamps-manager-add-issues`
 - IssueTable fully implemented and integrated into StampsManagerPage
 - COLUMNS list in column_def.py is single source of truth for table columns
 - All table components extend ft.Container (no UserControl in Flet 0.84.0)
@@ -69,6 +67,10 @@
 - Duplicate ai_series_lookup keys removed from both en.json and es.json
 
 ## Session Log
+- [Today] Added `validate_jwt_token()` to utils.py and wired into main.py root route — client-side JWT exp check on first page load
+- [Today] Added PyJWT dependency, 7 issue creation locale keys (en/es), cleaned unused imports in login_view.py
+- [Today] DatePicker timezone fix complete — JS in index.html writes to localStorage, Python reads via SharedPreferences
+- [Today] 12 new timezone tests, 597 total passing
 - [Today] Fixed 3 failing issue form tests (mock `json` → `payload` kwargs, `show_snack_bar` → `show_dialog`, network error expectation)
 - [Today] Refactored IssueService: extracted `_fetch_ref` / `_create_ref` helpers, 14 boilerplate get/create methods → 1-liners
 - [Today] Refactored IssueForm (`issue_form.py`):

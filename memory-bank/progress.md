@@ -138,23 +138,37 @@
 - [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through → `StampsManagerPage` with live API call, success/error notifications, and stamps refresh
 - [x] All 488 tests passing
 
-### DatePicker Timezone Fix — REIMPLEMENTATION NEEDED
-- [ ] Reimplement `init_client_timezone(page)` — reads `?tz=` query param from `index.html` JS
-- [ ] Reimplement `get_local_today()` — returns today in client timezone
-- [ ] Reimplement `to_local_date()` — converts Flutter's UTC-normalised datetime back to client tz
-- [ ] Restore JS timezone detection in `assets/index.html` (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
-- [ ] Call `init_client_timezone(page)` in `main.py`
-- [ ] Replace `datetime.date.today()` with `get_local_today()` in `date_picker.py`, `issue_form.py`
-- [ ] Re-add tests for all of the above
+### DatePicker Timezone Fix — Complete (2025-05-30)
+- [x] JS timezone detection in `index.html` — writes `Intl.DateTimeFormat().resolvedOptions().timeZone` to `localStorage` under `flutter.stamps_app._timezone` with `JSON.stringify()`
+- [x] `init_client_timezone()` in `utils.py` — reads the stored timezone via `SharedPreferences.get(TIMEZONE)`
+- [x] `get_local_today()` in `utils.py` — returns today in the client timezone using `zoneinfo.ZoneInfo`
+- [x] `to_local_date()` in `utils.py` — converts Flutter's UTC-normalised datetime back to client local date
+- [x] `DEFAULT_TIMEZONE` env var in `settings.py`
+- [x] Wired `init_client_timezone()` into `main.py` startup
+- [x] Replaced `datetime.date.today()` with `get_local_today()` in `date_picker.py` and `issue_form.py`
+- [x] 12 new tests for all three timezone functions — 597 total passing
 
-### Add Issues to Database (backend)
-- [ ] Backend endpoint to persist issues from frontend IssueForm — manual testing in progress
-- [ ] Wire up working tree changes on branch `212-feature-stamps-manager-add-issues`
+### Client-Side JWT Token Validation (2025-05-30)
+- [x] Added `validate_jwt_token()` to `core/utils.py` — decodes JWT without signature verification, checks `exp` claim against UTC
+- [x] Wired validation into `main.py` root route (redirect only when stored JWT is still valid, not just present)
+- [x] Added `PyJWT==2.10.1` to `requirements.base.txt`
+- [x] Added 7 locale keys (en/es) for issue creation feedback
+- [x] Cleaned up unused imports in `login_view.py`
+- [x] Note: validation runs on first page load only; follow-ups for API-level checks TBD
+
+### Add Issues to Database (backend) — Complete
+- [x] Backend endpoint to persist issues from frontend IssueForm
+- [x] Wire up working tree changes on branch `212-feature-stamps-manager-add-issues`
 - [x] Fixed duplicate issue creation bug in `issue_form.py` (duplicated `_on_create` logic causing two API calls)
 
+### Add Stamps
+- [x] Create backend endpoint to add stamps to an issue
+- [ ] Build frontend stamp form dialog
+- [ ] Wire up in StampsManagerPage
+
 ### Documentation
-- [ ] Update opencode_rules.md to reflect Flet (not NiceGUI)
-- [ ] Document test patterns in memory-bank
+- [x] Update opencode_rules.md to reflect Flet (not NiceGUI)
+- [x] Document test patterns in memory-bank
 
 ## Notes
 - Frontend framework: Flet (not NiceGUI)

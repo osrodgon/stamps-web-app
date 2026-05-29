@@ -20,11 +20,15 @@
         }
         /* The spinner and loading divs are omitted entirely */
     </style>
-    </head>
-    <body>
+</head>
+<body>
     <script>
         var _flet_web_renderer = "auto";
         var _flet_route_url_strategy = "path";
+        var _timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (_timezone) {
+            window.localStorage.setItem("flutter.stamps_app._timezone", JSON.stringify(_timezone));
+        }
     </script>
     <script src="main.dart.js" type="application/javascript"></script>
 </body>

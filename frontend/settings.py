@@ -43,10 +43,12 @@ USER_EMAIL = f"{STORAGE_PREFIX}email"
 USER_JWT_TOKEN = f"{STORAGE_PREFIX}jwt_token"
 USER_LANGUAGE = f"{STORAGE_PREFIX}language"
 USER_ID = f"{STORAGE_PREFIX}id"
+TIMEZONE = f"{STORAGE_PREFIX}_timezone"
 
 
 # --- Application Defaults ---
 DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "es")  # Default: Spanish
+DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "UTC")
 
 
 # --- Application Metadata ---

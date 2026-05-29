@@ -19,7 +19,14 @@ Example:
 
 import datetime
 import re
+import zoneinfo
+
 import jwt
+
+from settings import DEFAULT_TIMEZONE, TIMEZONE
+
+
+_CLIENT_TIMEZONE: str | None = None
 
 
 def is_valid_email(email: str) -> bool:
@@ -104,3 +111,60 @@ def validate_jwt_token(token: str) -> bool:
         return False
     except Exception:
         return False
+
+
+async def _read_client_timezone() -> str | None:
+    """Read the client timezone from SharedPreferences.
+
+    Returns the IANA timezone string (e.g. ``"Europe/Madrid"``) or
+    ``None`` if not found.
+    """
+    import flet as ft  # noqa: PLC0415
+
+    prefs = ft.SharedPreferences()
+    raw = await prefs.get(TIMEZONE)
+    if raw and isinstance(raw, str):
+        global _CLIENT_TIMEZONE
+        _CLIENT_TIMEZONE = raw
+        return raw
+    return None
+
+
+def get_client_timezone() -> str:
+    """Return the active client timezone or the default.
+
+    Returns:
+        An IANA timezone name, falling back to ``DEFAULT_TIMEZONE``.
+    """
+    return _CLIENT_TIMEZONE or DEFAULT_TIMEZONE
+
+
+def get_local_today() -> datetime.date:
+    """Return today's date in the client's timezone.
+
+    Returns:
+        The current date in the detected client timezone (or the
+        ``DEFAULT_TIMEZONE`` fallback if no client timezone is available).
+    """
+    tz_name: str = _CLIENT_TIMEZONE or DEFAULT_TIMEZONE
+    tz = zoneinfo.ZoneInfo(tz_name)
+    return datetime.datetime.now(tz).date()
+
+
+def to_local_date(utc_dt: datetime.datetime, tz_name: str) -> datetime.date:
+    """Convert a UTC-normalised datetime to a date in the given timezone.
+
+    Flutter's DatePicker normalises the selected date to a UTC
+    ``datetime`` before sending it to Python.  This function reverses
+    that normalisation so the date matches what the user selected.
+
+    Args:
+        utc_dt: The UTC datetime to convert.
+        tz_name: IANA timezone name (e.g. ``"America/New_York"``).
+
+    Returns:
+        The local date in the target timezone.
+    """
+    if utc_dt.tzinfo is None:
+        utc_dt = utc_dt.replace(tzinfo=datetime.timezone.utc)
+    return utc_dt.astimezone(zoneinfo.ZoneInfo(tz_name)).date()
