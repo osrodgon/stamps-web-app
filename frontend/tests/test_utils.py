@@ -141,16 +141,6 @@ class TestReadClientTimezone:
         assert result is None
         assert utils._CLIENT_TIMEZONE == "Europe/Madrid"
 
-    async def test_ignores_string_without_slash(self) -> None:
-        from core import utils
-        utils._CLIENT_TIMEZONE = "Europe/Madrid"
-        mock_prefs = MagicMock()
-        mock_prefs.get = AsyncMock(return_value="invalid")
-        with patch("flet.SharedPreferences", return_value=mock_prefs):
-            result = await utils._read_client_timezone()
-        assert result is None
-
-
 class TestGetClientTimezone:
     """Tests for the get_client_timezone function."""
 

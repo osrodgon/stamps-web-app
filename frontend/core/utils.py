@@ -123,7 +123,7 @@ async def _read_client_timezone() -> str | None:
 
     prefs = ft.SharedPreferences()
     raw = await prefs.get(TIMEZONE)
-    if raw and isinstance(raw, str) and "/" in raw:
+    if raw and isinstance(raw, str):
         global _CLIENT_TIMEZONE
         _CLIENT_TIMEZONE = raw
         return raw
