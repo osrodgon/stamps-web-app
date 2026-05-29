@@ -10,7 +10,7 @@ and supports dynamic language switching via the translation module.
 
 import flet as ft
 from core.base_ui import BaseUI
-from core.utils import validate_jwt_token
+from core.utils import _read_client_timezone, validate_jwt_token
 from pages.auth.signup_page import SignupPage
 from pages.auth.login_page import LoginPage
 from pages.not_found_page import NotFoundPage
@@ -159,6 +159,8 @@ async def main(page: ft.Page):
     """Main async entry point for the Flet application."""
     configure_page(page)
 
+    await _read_client_timezone()
+
     try:
         await init_language()
     except Exception as e:
@@ -175,8 +177,7 @@ async def main(page: ft.Page):
     # Handle initial route directly
     route = URLs.Frontend.root
     prefs = ft.SharedPreferences()
-    
-    
+
     if route == URLs.Frontend.root:
         auth_token = await prefs.get(USER_JWT_TOKEN)
         if validate_jwt_token(auth_token):

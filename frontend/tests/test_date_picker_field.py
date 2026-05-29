@@ -113,26 +113,29 @@ class TestDatePickerFieldPicker:
         field._on_field_click(MagicMock())
         mock_page.show_dialog.assert_called_once_with(field._picker)
 
-    def test_on_picker_change_updates_value(self, mock_page: MagicMock) -> None:
+    async def test_on_picker_change_updates_value(self, mock_page: MagicMock) -> None:
         field = DatePickerField(page=mock_page, label="Date")
         mock_event = MagicMock()
-        mock_event.control.value = datetime.date(2024, 6, 15)
-        field._on_picker_change(mock_event)
+        mock_event.control.value = datetime.datetime(2024, 6, 15, 22, 0, 0, tzinfo=datetime.timezone.utc)
+        with patch("components.form.date_picker._read_client_timezone", return_value="America/New_York"):
+            await field._on_picker_change(mock_event)
         assert field.value == datetime.date(2024, 6, 15)
         mock_page.update.assert_called_once()
 
-    def test_on_picker_change_fires_callback(self, mock_page: MagicMock) -> None:
+    async def test_on_picker_change_fires_callback(self, mock_page: MagicMock) -> None:
         callback = MagicMock()
         field = DatePickerField(page=mock_page, label="Date", on_change=callback)
         mock_event = MagicMock()
         mock_event.control.value = datetime.date(2024, 3, 20)
-        field._on_picker_change(mock_event)
+        with patch("components.form.date_picker._read_client_timezone", return_value="UTC"):
+            await field._on_picker_change(mock_event)
         callback.assert_called_once_with(datetime.date(2024, 3, 20))
 
-    def test_on_picker_change_no_control(self, mock_page: MagicMock) -> None:
+    async def test_on_picker_change_no_control(self, mock_page: MagicMock) -> None:
         callback = MagicMock()
         field = DatePickerField(page=mock_page, label="Date", on_change=callback)
         mock_event = MagicMock()
         mock_event.control = None
-        field._on_picker_change(mock_event)
+        with patch("components.form.date_picker._read_client_timezone", return_value="UTC"):
+            await field._on_picker_change(mock_event)
         callback.assert_not_called()

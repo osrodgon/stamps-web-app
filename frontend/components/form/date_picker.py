@@ -14,6 +14,8 @@ import flet as ft
 from components.form.text_field import DEFAULT, FieldStyle, TextField
 from components.table.column_def import fmt_date
 from core.translations import get_language
+from core.utils import _read_client_timezone, get_local_today, to_local_date
+from settings import DEFAULT_TIMEZONE
 
 
 
@@ -67,7 +69,7 @@ class DatePickerField(TextField):
         self._picker: ft.DatePicker = ft.DatePicker(
             on_change=self._on_picker_change,
             first_date=first_date or datetime.date(1800, 1, 1),
-            last_date=last_date or datetime.date.today() + datetime.timedelta(days=365),
+            last_date=last_date or get_local_today() + datetime.timedelta(days=365),
         )
         page.overlay.append(self._picker)
 
@@ -111,7 +113,7 @@ class DatePickerField(TextField):
 
     def set_today(self) -> None:
         """Set the value to today's date and fire the ``on_change`` callback."""
-        today: datetime.date = datetime.date.today()
+        today: datetime.date = get_local_today()
         self.value = today
         if self._on_change_callback:
             self._on_change_callback(today)
@@ -124,7 +126,7 @@ class DatePickerField(TextField):
         """
         self._page.show_dialog(self._picker)
 
-    def _on_picker_change(self, e: ft.ControlEvent) -> None:
+    async def _on_picker_change(self, e: ft.ControlEvent) -> None:
         """Handle date selection from the DatePicker dialog.
 
         Args:
@@ -133,7 +135,11 @@ class DatePickerField(TextField):
         if not e.control or not e.control.value:
             return
         raw = e.control.value
-        self._selected_date = raw.date() if isinstance(raw, datetime.datetime) else raw
+        if isinstance(raw, datetime.datetime):
+            tz = await _read_client_timezone() or DEFAULT_TIMEZONE
+            self._selected_date = to_local_date(raw, tz)
+        else:
+            self._selected_date = raw
         text: str = fmt_date(self._selected_date.isoformat(), get_language())
         ft.TextField.__dict__["value"].__set__(self, text)
         self._page.update()

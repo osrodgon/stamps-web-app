@@ -1,6 +1,16 @@
 """Unit tests for core/utils.py — pure validation functions."""
 
-from core.utils import is_strong_password, is_valid_email
+import datetime
+import zoneinfo
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from core.utils import (
+    get_client_timezone,
+    get_local_today,
+    is_strong_password,
+    is_valid_email,
+    to_local_date,
+)
 
 
 class TestIsValidEmail:
@@ -98,5 +108,113 @@ class TestIsStrongPassword:
         assert is_strong_password("VeryLongAndSecurePassword123!") is True
 
 
+class TestReadClientTimezone:
+    """Tests for the _read_client_timezone function."""
+
+    async def test_sets_client_timezone_from_prefs(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = None
+        mock_prefs = MagicMock()
+        mock_prefs.get = AsyncMock(return_value="America/New_York")
+        with patch("flet.SharedPreferences", return_value=mock_prefs):
+            result = await utils._read_client_timezone()
+        assert result == "America/New_York"
+        assert utils._CLIENT_TIMEZONE == "America/New_York"
+
+    async def test_ignores_none_value(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Europe/Madrid"
+        mock_prefs = MagicMock()
+        mock_prefs.get = AsyncMock(return_value=None)
+        with patch("flet.SharedPreferences", return_value=mock_prefs):
+            result = await utils._read_client_timezone()
+        assert result is None
+        assert utils._CLIENT_TIMEZONE == "Europe/Madrid"
+
+    async def test_ignores_non_string_value(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Europe/Madrid"
+        mock_prefs = MagicMock()
+        mock_prefs.get = AsyncMock(return_value=123)
+        with patch("flet.SharedPreferences", return_value=mock_prefs):
+            result = await utils._read_client_timezone()
+        assert result is None
+        assert utils._CLIENT_TIMEZONE == "Europe/Madrid"
+
+    async def test_ignores_string_without_slash(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Europe/Madrid"
+        mock_prefs = MagicMock()
+        mock_prefs.get = AsyncMock(return_value="invalid")
+        with patch("flet.SharedPreferences", return_value=mock_prefs):
+            result = await utils._read_client_timezone()
+        assert result is None
 
 
+class TestGetClientTimezone:
+    """Tests for the get_client_timezone function."""
+
+    def test_returns_stored_timezone(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Asia/Tokyo"
+        assert get_client_timezone() == "Asia/Tokyo"
+
+    def test_falls_back_to_default_when_none(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = None
+        assert get_client_timezone() == "UTC"
+
+
+class TestGetLocalToday:
+    """Tests for the get_local_today function."""
+
+    def test_returns_date_in_client_timezone(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Asia/Tokyo"
+        expected = datetime.datetime.now(zoneinfo.ZoneInfo("Asia/Tokyo")).date()
+        assert get_local_today() == expected
+
+    def test_falls_back_to_default_when_none(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = None
+        expected = datetime.datetime.now(zoneinfo.ZoneInfo("UTC")).date()
+        assert get_local_today() == expected
+
+    def test_returns_date_object(self) -> None:
+        from core import utils
+        utils._CLIENT_TIMEZONE = "Europe/Madrid"
+        assert isinstance(get_local_today(), datetime.date)
+
+
+class TestToLocalDate:
+    """Tests for the to_local_date conversion function."""
+
+    def test_same_day_same_date(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 15, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        result = to_local_date(utc_dt, "America/New_York")
+        assert result == datetime.date(2024, 6, 15)
+
+    def test_crosses_date_boundary_forward(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 15, 20, 0, 0, tzinfo=datetime.timezone.utc)
+        result = to_local_date(utc_dt, "Asia/Tokyo")
+        assert result == datetime.date(2024, 6, 16)
+
+    def test_crosses_date_boundary_backward(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 16, 3, 0, 0, tzinfo=datetime.timezone.utc)
+        result = to_local_date(utc_dt, "America/New_York")
+        assert result == datetime.date(2024, 6, 15)
+
+    def test_handles_naive_datetime_as_utc(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 15, 22, 0, 0)
+        result = to_local_date(utc_dt, "America/New_York")
+        assert result == datetime.date(2024, 6, 15)
+
+    def test_handles_negative_offset(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 15, 11, 0, 0, tzinfo=datetime.timezone.utc)
+        result = to_local_date(utc_dt, "Pacific/Honolulu")
+        assert result == datetime.date(2024, 6, 15)
+
+    def test_handles_positive_offset(self) -> None:
+        utc_dt = datetime.datetime(2024, 6, 15, 22, 0, 0, tzinfo=datetime.timezone.utc)
+        result = to_local_date(utc_dt, "Pacific/Auckland")
+        assert result == datetime.date(2024, 6, 16)

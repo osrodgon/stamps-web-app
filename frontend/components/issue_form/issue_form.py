@@ -25,6 +25,8 @@ from core.translations import _, get_language
 from core.base_ui import BaseUI
 from core.severity import Severity
 from core.logger import Logger
+from core.utils import _read_client_timezone, get_local_today, to_local_date
+from settings import DEFAULT_TIMEZONE
 from services.issue_service import IssueService
 
 
@@ -98,7 +100,7 @@ class IssueForm(BaseUI, Logger):
     # --- Helpers ---
 
     def _get_today(self) -> str:
-        return fmt_date(datetime.date.today().isoformat(), lang=get_language())
+        return fmt_date(get_local_today().isoformat(), lang=get_language())
 
     @staticmethod
     def _build_dropdown(items: list[dict]) -> Dropdown:
@@ -526,7 +528,7 @@ class IssueForm(BaseUI, Logger):
             self._date_picker.open = True
             self.page.update()
 
-    def _on_date_picker_change(self, e: ft.ControlEvent) -> None:
+    async def _on_date_picker_change(self, e: ft.ControlEvent) -> None:
         """Update the date label when a date is selected.
 
         Args:
@@ -535,7 +537,11 @@ class IssueForm(BaseUI, Logger):
         raw = e.control.value if e.control else None
         if raw is None:
             return
-        dt: datetime.date = raw.date() if isinstance(raw, datetime.datetime) else raw
+        if isinstance(raw, datetime.datetime):
+            tz = await _read_client_timezone() or DEFAULT_TIMEZONE
+            dt = to_local_date(raw, tz)
+        else:
+            dt = raw
 
         self._selected_date = dt
         self._date_label.value = fmt_date(dt.isoformat(), get_language())
@@ -598,7 +604,7 @@ class IssueForm(BaseUI, Logger):
         printer_id = await _resolve_ref(self._printer_dropdown, self._service.create_printer)
         print_type_id = await _resolve_ref(self._print_type_dropdown, self._service.create_print_type)
 
-        year_number = (self._selected_date or datetime.date.today()).year
+        year_number = (self._selected_date or get_local_today()).year
         year_id = None
         for year_obj in self._years:
             if year_obj.get("year") == year_number:
@@ -623,7 +629,7 @@ class IssueForm(BaseUI, Logger):
             "printer": printer_id,
             "print_type": print_type_id,
             "year": year_id,
-            "date": (self._selected_date or datetime.date.today()).isoformat()
+            "date": (self._selected_date or get_local_today()).isoformat()
         }
         self.log.debug(f"Payload built: {payload}")
 
