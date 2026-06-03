@@ -360,13 +360,19 @@ class TestIssueFormCreate:
         await form.show()
 
         form._name_field.value = "Complete Series"
-        form._country_dropdown.value = "1"
-        form._artist_dropdown.value = "10"
-        form._stamp_type_dropdown.value = "20"
+        form._country_dropdown._dropdown.value = "1"
+        form._country_dropdown._selected_id = 1
+        form._artist_dropdown._dropdown.value = "10"
+        form._artist_dropdown._selected_id = 10
+        form._stamp_type_dropdown._dropdown.value = "20"
+        form._stamp_type_dropdown._selected_id = 20
         form._perforation_field.value = "Zebra 13"
-        form._paper_type_dropdown.value = "30"
-        form._printer_dropdown.value = "50"
-        form._print_type_dropdown.value = "40"
+        form._paper_type_dropdown._dropdown.value = "30"
+        form._paper_type_dropdown._selected_id = 30
+        form._printer_dropdown._dropdown.value = "50"
+        form._printer_dropdown._selected_id = 50
+        form._print_type_dropdown._dropdown.value = "40"
+        form._print_type_dropdown._selected_id = 40
         form._mint_field.value = "1.50"
         form._used_field.value = "0.75"
         form._total_printed_field.value = "500000"
@@ -494,6 +500,7 @@ class TestIssueFormEditableDropdown:
 
     async def test_create_with_custom_text_value(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_country = AsyncMock(return_value=99)
         mock_service.create_issue = AsyncMock(
             return_value=MagicMock(spec=requests.Response, status_code=201)
         )
@@ -501,19 +508,25 @@ class TestIssueFormEditableDropdown:
         await form.show()
 
         form._name_field.value = "Custom Country Issue"
-        form._country_dropdown.value = "99"
-        form._artist_dropdown.value = "10"
-        form._stamp_type_dropdown.value = "20"
-        form._paper_type_dropdown.value = "30"
-        form._printer_dropdown.value = "50"
-        form._print_type_dropdown.value = "40"
+        form._artist_dropdown._dropdown.value = "10"
+        form._artist_dropdown._selected_id = 10
+        form._stamp_type_dropdown._dropdown.value = "20"
+        form._stamp_type_dropdown._selected_id = 20
+        form._paper_type_dropdown._dropdown.value = "30"
+        form._paper_type_dropdown._selected_id = 30
+        form._printer_dropdown._dropdown.value = "50"
+        form._printer_dropdown._selected_id = 50
+        form._print_type_dropdown._dropdown.value = "40"
+        form._print_type_dropdown._selected_id = 40
         test_date = datetime.date(2021, 6, 15)
         form._selected_date = test_date
         form._date_label.value = fmt_date(test_date.isoformat(), get_language())
 
-        await form._on_create(MagicMock())
+        with patch.object(type(form._country_dropdown), "text", new_callable=PropertyMock, return_value="My Custom Country"):
+            await form._on_create(MagicMock())
 
         mock_service.create_issue.assert_awaited_once()
+        mock_service.create_country.assert_awaited_once_with("My Custom Country")
         payload = mock_service.create_issue.call_args[0][0]
         assert payload["country"] == 99
 
@@ -538,11 +551,17 @@ class TestIssueFormEditableDropdown:
 
 
 async def _set_minimal_fields(form: IssueForm, name: str = "Test Series") -> None:
-    """Set required name + all dropdown values to avoid int(None) crash in _resolve_ref."""
+    """Set required name + all dropdown values to avoid None crash in _resolve_ref."""
     form._name_field.value = name
-    form._country_dropdown.value = "1"
-    form._artist_dropdown.value = "10"
-    form._stamp_type_dropdown.value = "20"
-    form._paper_type_dropdown.value = "30"
-    form._printer_dropdown.value = "50"
-    form._print_type_dropdown.value = "40"
+    form._country_dropdown._dropdown.value = "1"
+    form._country_dropdown._selected_id = 1
+    form._artist_dropdown._dropdown.value = "10"
+    form._artist_dropdown._selected_id = 10
+    form._stamp_type_dropdown._dropdown.value = "20"
+    form._stamp_type_dropdown._selected_id = 20
+    form._paper_type_dropdown._dropdown.value = "30"
+    form._paper_type_dropdown._selected_id = 30
+    form._printer_dropdown._dropdown.value = "50"
+    form._printer_dropdown._selected_id = 50
+    form._print_type_dropdown._dropdown.value = "40"
+    form._print_type_dropdown._selected_id = 40

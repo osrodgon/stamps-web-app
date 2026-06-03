@@ -262,6 +262,7 @@ class IssueTableApp(ft.Container):
                 lang=self._lang,
                 on_expand=self._on_expand,
                 expanded=auto_expand,
+                service=self._service,
                 on_edit_stamp=self._on_edit_stamp,
                 on_delete_stamp=self._on_delete_stamp,
                 on_edit_issue=self._on_edit_issue,

@@ -7,7 +7,7 @@
 - [x] Implemented Tier 8: StandardPage 10 tests, NotFoundPage 6 tests
 - [x] Implemented Tier 9: StampsManagerPage static methods + 5 handler stubs — 15 tests
 - [x] Implemented Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
-- [x] Total: 535 tests (all passing)
+- [x] Total: 618 tests (all passing)
 - [x] Deferred: login_card, signup_card, login_page, signup_page, collections_page (Flet descriptor system)
 
 ### Frontend Docstring Updates (2025-05-11)
@@ -223,6 +223,15 @@
 - [x] Documented all callback params in IssueRow.__init__ and IssueTableApp.__init__
 - [x] Added docstrings to 6 handler stubs in StampsManagerPage
 - [x] Updated class/init docstrings for add-issue button reference
+
+### IssueDetailCard Read/Edit Toggle (2025-05-30)
+- [x] Added `update_issue()` to IssueService (PUT issues/{id}/)
+- [x] Local edit mode toggle in IssueDetailCard for stamp_type field only
+- [x] Edit icon swaps to save/cancel icons, stamp_type cell replaced with AutoCompleteField
+- [x] Passes IssueService through IssueRow → IssueTableApp → IssueDetailCard
+- [x] On save: resolves stamp_type (select or create ref), calls PUT, updates local data, fires `on_edit_issue` callback
+- [x] Upgraded `_handle_edit_issue` in StampsManagerPage from stub to `self._table.load(reset_page=True)`
+- [x] All 614 tests passing
 
 ---
 
