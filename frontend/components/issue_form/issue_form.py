@@ -16,7 +16,7 @@ from components.constants import (
     FONT_SIZE_SMALL_HEADING,
     STANDARD_PADDING,
 )
-from components.form.dropdown import Dropdown
+from components.form.auto_complete_field import AutoCompleteField
 from components.form.text_field import TextField
 from components.table.column_def import fmt_date
 from core.translations import _, get_language
@@ -82,13 +82,13 @@ class IssueForm(BaseUI, Logger):
         self._name_field: Optional[ft.TextField] = None
         self._name_label: Optional[ft.Text] = None
         self._date_label: Optional[ft.Text] = None
-        self._country_dropdown: Optional[Dropdown] = None
-        self._artist_dropdown: Optional[Dropdown] = None
-        self._stamp_type_dropdown: Optional[Dropdown] = None
+        self._country_dropdown: Optional[AutoCompleteField] = None
+        self._artist_dropdown: Optional[AutoCompleteField] = None
+        self._stamp_type_dropdown: Optional[AutoCompleteField] = None
         self._perforation_field: Optional[ft.TextField] = None
-        self._paper_type_dropdown: Optional[Dropdown] = None
-        self._printer_dropdown: Optional[Dropdown] = None
-        self._print_type_dropdown: Optional[Dropdown] = None
+        self._paper_type_dropdown: Optional[AutoCompleteField] = None
+        self._printer_dropdown: Optional[AutoCompleteField] = None
+        self._print_type_dropdown: Optional[AutoCompleteField] = None
         self._description_field: Optional[ft.TextField] = None
         self._notes_field: Optional[ft.TextField] = None
         self._mint_field: Optional[ft.TextField] = None
@@ -103,28 +103,16 @@ class IssueForm(BaseUI, Logger):
         return fmt_date(get_local_today().isoformat(), lang=get_language())
 
     @staticmethod
-    def _build_dropdown(items: list[dict]) -> Dropdown:
-        """Build an editable reference-data dropdown from a list of items.
+    def _build_dropdown(items: list[dict]) -> AutoCompleteField:
+        """Build an editable reference-data autocomplete field from a list of items.
 
         Args:
             items: List of ``{"id": int, "name": str}`` dicts.
 
         Returns:
-            A Dropdown with options for each item, editable for free-text entry.
+            An AutoCompleteField with suggestions for each item.
         """
-        return Dropdown(
-            label=None,
-            options=[
-                ft.dropdown.Option(text=i["name"], key=str(i["id"]))
-                for i in items
-            ],
-            editable=True,
-            expand=True,
-            menu_style=ft.MenuStyle(alignment=ft.Alignment.TOP_RIGHT),
-            enable_filter=True,
-            border_width=1,
-            focused_border_width=1,
-        )
+        return AutoCompleteField(items=items, margin=ft.Margin(0, 4, 0, 0))
 
     @staticmethod
     def _paired_cell(icon: str, label: str, control: ft.Control) -> ft.Container:
@@ -585,16 +573,20 @@ class IssueForm(BaseUI, Logger):
             await self.show_notification(_("issues.invalid_total_printed"), severity=Severity.ERROR)
             return
 
-        async def _resolve_ref(dropdown: ft.Dropdown | None, create_func) -> int | None:
-            val = dropdown.value
-            if val is None:
-                new_ref = dropdown.text
-                self.log.debug(f"Creating new reference data: {new_ref}")
-                new_id = await create_func(new_ref)
-                if new_id is None:
-                    await self.show_notification(_("issues.creation_failed"), severity=Severity.ERROR)
-                return new_id
-            return int(val)
+        async def _resolve_ref(field: AutoCompleteField | None, create_func) -> int | None:
+            if field is None:
+                return None
+            sid = field.selected_id
+            if sid is not None:
+                return sid
+            new_ref = field.text
+            if not new_ref:
+                return None
+            self.log.debug(f"Creating new reference data: {new_ref}")
+            new_id = await create_func(new_ref)
+            if new_id is None:
+                await self.show_notification(_("issues.creation_failed"), severity=Severity.ERROR)
+            return new_id
 
         self.log.debug("Resolving reference data...")
         country_id = await _resolve_ref(self._country_dropdown, self._service.create_country)

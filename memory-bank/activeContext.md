@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task
-- None (all pending items deferred)
+- IssueDetailCard read/edit toggle — stamp_type field (enter edit mode via edit icon, AutoCompleteField for stamp type, save/cancel icons, local edit mode)
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -43,7 +43,7 @@
 ### Tier 10 — Entry point (~25 tests)
 - `main.py` (25)
 
-**Current: 535 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
+**Current: 618 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -65,6 +65,9 @@
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - Spanish locale fixes applied: éxitO, caracteres, Tipo de sello, Tirada total
 - Duplicate ai_series_lookup keys removed from both en.json and es.json
+- **AutoCompleteField** wraps `ft.AutoComplete` with `selected_id` tracking — replaces editable `Dropdown` in IssueForm
+- Reference data fields show suggestions on typing (native ft.AutoComplete behavior)
+- IssueDetailCard edit mode: edit icon toggles stamp_type to AutoCompleteField, save/cancel icons, local edit mode (no parent callback), `update_issue()` in IssueService
 
 ## Session Log
 - [Today] Added `validate_jwt_token()` to utils.py and wired into main.py root route — client-side JWT exp check on first page load
@@ -83,4 +86,6 @@
   - Added `super().__init__()` call
   - Documented `_on_success` as sync-only
 - [Today] Fixed stale docstrings: IssueService class doc (missing 7 create methods), IssueForm attribute doc (`_page` → `page`), added docstrings to all builder/static methods
-- [Today] All 585 tests passing
+- [Today] IssueForm dropdowns replaced with AutoCompleteField — 15 new tests, 614 total passing
+- [Today] IssueDetailCard read/edit toggle: `update_issue()` in IssueService, local edit mode with AutoCompleteField for stamp_type, save/cancel icons, pass service through IssueRow→IssueTableApp→StampsManagerPage, reload table on save
+- [Today] Swapped AutoCompleteField from `ft.Dropdown` (arrow/hover/height issues) → `ft.AutoComplete` (native suggestions, no arrow, no hover) — 618 tests passing

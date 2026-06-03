@@ -113,12 +113,21 @@
         "name": "Name",
         "hint_name": "Enter the name of the issue",
         "name_required": "Issue name is required",
+        "mint_value_invalid": "Mint value must be a valid non-negative number",
         "invalid_mnh": "Invalid mint value",
         "invalid_used": "Invalid used value",
         "invalid_total_printed": "Invalid total printed value",
         "creation_failed": "Failed to create issue",
         "creation_success": "Issue created successfully",
-        "network_error": "Network error. Please check your connection."
+        "update_success": "Issue updated successfully",
+        "network_error": "Network error. Please check your connection.",
+        "save_tooltip": "Save issue",
+        "hint_country": "Country of the issue",
+        "hint_stamp_type": "Stamp type of the issue",
+        "hint_print_type": "Print type of the issue",
+        "hint_printer_type": "Printer of the issue",
+        "hint_artist": "Artist/Engraver of the issue",
+        "hint_paper_type": "Paper type of the issue"
     },
     "stamps": {
         "description": "Description",

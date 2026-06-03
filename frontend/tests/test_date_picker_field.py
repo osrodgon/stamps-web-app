@@ -93,16 +93,18 @@ class TestDatePickerFieldSetToday:
 
     def test_set_today_sets_value(self, mock_page: MagicMock) -> None:
         field = DatePickerField(page=mock_page, label="Date")
-        today: datetime.date = datetime.date.today()
-        field.set_today()
-        assert field.value == today
+        expected: datetime.date = datetime.date(2026, 5, 15)
+        with patch("components.form.date_picker.get_local_today", return_value=expected):
+            field.set_today()
+        assert field.value == expected
 
     def test_set_today_fires_callback(self, mock_page: MagicMock) -> None:
         callback = MagicMock()
         field = DatePickerField(page=mock_page, label="Date", on_change=callback)
-        today: datetime.date = datetime.date.today()
-        field.set_today()
-        callback.assert_called_once_with(today)
+        expected: datetime.date = datetime.date(2026, 5, 15)
+        with patch("components.form.date_picker.get_local_today", return_value=expected):
+            field.set_today()
+        callback.assert_called_once_with(expected)
 
 
 class TestDatePickerFieldPicker:

@@ -21,6 +21,7 @@ from components.table.column_def import ColumnDef
 from components.table.issue_detail.issue_detail_card import IssueDetailCard
 from core.translations import _
 from components.constants import FONT_SIZE_SMALL_HEADING, CHEVRON_CONTAINER_SIZE, FONT_SIZE_DEFAULT
+from services.issue_service import IssueService
 
 
 class IssueRow(ft.Container):
@@ -38,6 +39,7 @@ class IssueRow(ft.Container):
         lang: str = "en",
         on_expand: Optional[Callable[[int], None]] = None,
         expanded: bool = False,
+        service: Optional[IssueService] = None,
         on_edit_stamp: Optional[Callable[[int], None]] = None,
         on_delete_stamp: Optional[Callable[[int, int], None]] = None,
         on_edit_issue: Optional[Callable[[int], None]] = None,
@@ -56,6 +58,7 @@ class IssueRow(ft.Container):
             lang: Language code for locale-aware formatting ("en" or "es").
             on_expand: Called with issue ID when the chevron is toggled open.
             expanded: If True, start with details expanded.
+            service: IssueService for edit mode API calls.
             on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
             on_delete_stamp: Called with (stamp_id, issue_id) when the stamp delete icon is clicked.
             on_edit_issue: Called with issue ID when the issue edit icon is clicked.
@@ -68,6 +71,7 @@ class IssueRow(ft.Container):
         self._columns: list[ColumnDef] = columns or []
         self._lang: str = lang
         self._on_expand: Optional[Callable[[int], None]] = on_expand
+        self._service: Optional[IssueService] = service
         self._on_edit_stamp: Optional[Callable[[int], None]] = on_edit_stamp
         self._on_delete_stamp: Optional[Callable[[int, int], None]] = on_delete_stamp
         self._on_edit_issue: Optional[Callable[[int], None]] = on_edit_issue
@@ -165,6 +169,7 @@ class IssueRow(ft.Container):
             stamps=self._stamps,
             lang=self._lang,
             loading=self._loading_stamps,
+            service=self._service,
             on_edit_stamp=self._on_edit_stamp,
             on_delete_stamp=self._on_delete_stamp,
             on_edit_issue=self._on_edit_issue,

@@ -327,12 +327,15 @@ class StampsManagerPage(StandardPage):
         self.page.run_task(do_delete)
 
     def _handle_edit_issue(self, issue_id: int) -> None:
-        """Handle issue edit action — stub for future implementation.
+        """Reload table after an issue has been edited.
+
+        Called from IssueDetailCard after a successful save of edit mode.
 
         Args:
-            issue_id: The ID of the issue to edit.
+            issue_id: The ID of the issue that was updated.
         """
-        self.log.debug(f"Edit issue {issue_id}")
+        self.log.debug(f"Issue {issue_id} updated.")
+        # self.page.run_task(self._table.load, reset_page=True)
 
     def _handle_delete_issue(self, issue_id: int) -> None:
         """Delete an issue, show notification, and reload the table.

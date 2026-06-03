@@ -22,6 +22,7 @@ class IssueService(BaseService):
     Public methods:
         get_issues:         Paginated issue list with sort, name, and year filters.
         create_issue:       Create a new stamp issue via POST.
+        update_issue:       Update an existing stamp issue.
         delete_issue:       Remove an issue by ID.
         delete_stamp:       Remove a stamp by ID.
         get_issue_stamps:   Fetch stamps belonging to a specific issue.
@@ -149,6 +150,27 @@ class IssueService(BaseService):
             url=URLs.Backend.issues,
             payload=data,
             headers=self._auth_headers,
+        )
+
+    async def update_issue(self, issue_id: int, data: dict[str, Any]) -> requests.Response | None:
+        """Update an existing stamp issue via PUT.
+
+        Sends a partial update (``partial=True`` on backend) with only
+        the fields provided in ``data``.
+
+        Args:
+            issue_id: The ID of the issue to update.
+            data: Dict of fields to update (e.g. ``{"stamp_type": 3}``).
+
+        Returns:
+            Raw requests.Response, or None on network error.
+        """
+        url = f"{URLs.Backend.issues}{issue_id}/"
+        return await self._make_request(
+            request_type=self.PUT,
+            url=url,
+            headers=self._auth_headers,
+            payload=data,
         )
 
     async def delete_issue(self, issue_id: int) -> requests.Response | None:

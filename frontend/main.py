@@ -81,7 +81,7 @@ def configure_page(page: ft.Page):
     # Remove the "Zoom" animation for Linux
     page.theme = ft.Theme(
         page_transitions=ft.PageTransitionsTheme(
-            linux=ft.PageTransitionTheme.NONE
+            linux=ft.PageTransitionTheme.FADE_UPWARDS
         ),
         font_family="Roboto",
         date_picker_theme=ft.DatePickerTheme(

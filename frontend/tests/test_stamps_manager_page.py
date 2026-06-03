@@ -57,6 +57,7 @@ class TestHandlerStubs:
         with patch.object(StampsManagerPage, "__init__", return_value=None):
             m = StampsManagerPage.__new__(StampsManagerPage)
             m._log = MagicMock()
+            m._table = MagicMock()
             return m
 
     def test_handle_edit_stamp_logs(self) -> None:
@@ -76,8 +77,9 @@ class TestHandlerStubs:
 
     def test_handle_edit_issue_logs(self) -> None:
         m = self._make_manager()
-        m._handle_edit_issue(3)
-        m._log.debug.assert_called_once_with("Edit issue 3")
+        with patch.object(type(m), "page", new_callable=PropertyMock, return_value=MagicMock()):
+            m._handle_edit_issue(3)
+        m._log.debug.assert_called_once_with("Issue 3 updated.")
 
     def test_handle_delete_issue_logs_and_runs_task(self) -> None:
         m = self._make_manager()
