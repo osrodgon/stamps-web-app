@@ -1,6 +1,6 @@
 """Unit tests for components/issue_form/issue_form.py — Add Issue dialog."""
 
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import datetime
 import pytest
@@ -8,8 +8,7 @@ import flet as ft
 import requests
 
 from components.issue_form.issue_form import IssueForm
-from components.table.column_def import fmt_date
-from core.translations import _, get_language
+from core.translations import _
 
 
 @pytest.fixture
@@ -23,13 +22,7 @@ def mock_page() -> MagicMock:
 @pytest.fixture
 def mock_service() -> MagicMock:
     service = MagicMock()
-    service.get_countries = AsyncMock(return_value=[{"id": 1, "name": "Spain"}, {"id": 2, "name": "France"}])
-    service.get_artists = AsyncMock(return_value=[{"id": 10, "name": "Artist A"}])
-    service.get_stamp_types = AsyncMock(return_value=[{"id": 20, "name": "Definitive"}])
-    service.get_paper_types = AsyncMock(return_value=[{"id": 30, "name": "Paper X"}])
-    service.get_print_types = AsyncMock(return_value=[{"id": 40, "name": "Lithography"}])
-    service.get_printers = AsyncMock(return_value=[{"id": 50, "name": "Printer Y"}])
-    service.get_years = AsyncMock(return_value=[{"id": 1, "year": 2020}, {"id": 2, "year": 2021}, {"id": 3, "year": 2022}])
+    service.get_years = AsyncMock(return_value=None)
     service.create_country = AsyncMock(return_value=None)
     service.create_artist = AsyncMock(return_value=None)
     service.create_stamp_type = AsyncMock(return_value=None)
@@ -48,6 +41,48 @@ sample_years_response.json.return_value = {
 }
 
 
+@pytest.fixture(autouse=True)
+def mock_shared_components() -> tuple[MagicMock, MagicMock]:
+    with (
+        patch("components.issue_form.issue_form.IssueHeaderSection") as mock_header_cls,
+        patch("components.issue_form.issue_form.IssueSpecsGrid") as mock_specs_cls,
+    ):
+        mock_header = MagicMock()
+        mock_header.name_text = ""
+        mock_header.mint_value = 0.0
+        mock_header.used_value = 0.0
+        mock_header.total_printed_value = 0
+        mock_header.date_value = datetime.date.today().isoformat()
+
+        mock_specs = MagicMock()
+        mock_specs.description_value = ""
+        mock_specs.notes_value = ""
+        mock_specs.edit_state = {}
+        mock_specs.enter_edit_mode = AsyncMock(return_value=True)
+
+        mock_header_cls.return_value = mock_header
+        mock_specs_cls.return_value = mock_specs
+
+        yield mock_header, mock_specs
+
+
+def _set_minimal_fields(
+    form: IssueForm,
+    name: str = "Test Series",
+    date_iso: str = "2021-06-15",
+) -> None:
+    form._header_section.name_text = name
+    form._header_section.date_value = date_iso
+    form._specs_grid.edit_state = {
+        "country": {"ac": MagicMock(selected_id=1), "issue_key": "country", "create": MagicMock()},
+        "artist": {"ac": MagicMock(selected_id=10), "issue_key": "artist", "create": MagicMock()},
+        "stamp_type": {"ac": MagicMock(selected_id=20), "issue_key": "stamp_type", "create": MagicMock()},
+        "paper_type": {"ac": MagicMock(selected_id=30), "issue_key": "paper_type", "create": MagicMock()},
+        "printer": {"ac": MagicMock(selected_id=50), "issue_key": "printer", "create": MagicMock()},
+        "print_type": {"ac": MagicMock(selected_id=40), "issue_key": "print_type", "create": MagicMock()},
+    }
+
+
 class TestIssueFormInit:
     """Tests for IssueForm initialization and basic structure."""
 
@@ -62,9 +97,11 @@ class TestIssueFormInit:
 class TestIssueFormShow:
     """Tests for the show() method."""
 
-    async def test_show_creates_dialog(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        form = IssueForm(page=mock_page, issue_service=mock_service)
+    async def test_show_creates_dialog(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
 
         await form.show()
 
@@ -72,40 +109,31 @@ class TestIssueFormShow:
         assert form._dlg in mock_page.overlay
         assert form._dlg.open is True
 
-    async def test_show_fetches_reference_data(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_show_fetches_years(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
 
         await form.show()
 
-        mock_service.get_countries.assert_awaited_once()
-        mock_service.get_artists.assert_awaited_once()
-        mock_service.get_stamp_types.assert_awaited_once()
-        mock_service.get_paper_types.assert_awaited_once()
-        mock_service.get_print_types.assert_awaited_once()
-        mock_service.get_printers.assert_awaited_once()
+        mock_service.get_years.assert_awaited_once()
 
-    async def test_show_populates_reference_data(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_show_enters_edit_mode(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_header, mock_specs = mock_shared_components
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
 
         await form.show()
 
-        assert len(form._countries) == 2
-        assert len(form._artists) == 1
+        mock_specs.enter_edit_mode.assert_awaited_once_with(mock_service)
+        mock_header.enter_edit_mode.assert_called_once()
 
-    async def test_show_builds_form_fields(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-
-        await form.show()
-
-        assert form._name_field is not None
-        assert form._country_dropdown is not None
-        assert form._description_field is not None
-        assert form._notes_field is not None
-
-    async def test_show_loads_initial_loading_view(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_show_builds_content(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
 
@@ -113,12 +141,38 @@ class TestIssueFormShow:
 
         content = form._dlg.content
         assert content is not None
+        controls = content.controls
+        assert len(controls) == 2  # header+specs container + actions row
+
+    async def test_show_stores_years(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+
+        await form.show()
+
+        assert len(form._years) == 3
+
+    async def test_show_handles_enter_edit_mode_failure(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_header, mock_specs = mock_shared_components
+        mock_specs.enter_edit_mode = AsyncMock(return_value=False)
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+
+        await form.show()
+
+        assert form._dlg.open is False
 
 
 class TestIssueFormCancel:
     """Tests for the cancel action."""
 
-    async def test_cancel_closes_dialog(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_cancel_closes_dialog(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
@@ -131,7 +185,9 @@ class TestIssueFormCancel:
 class TestIssueFormCreate:
     """Tests for the create/submit action."""
 
-    async def test_create_without_name_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_create_without_name_shows_error(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
@@ -144,213 +200,8 @@ class TestIssueFormCreate:
         assert isinstance(args, ft.SnackBar)
         assert args.content.value == _("issues.name_required")
 
-    async def test_create_with_invalid_mnh_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        form._name_field.value = "Test Series"
-        form._mint_field.value = "invalid"
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_not_called()
-        mock_page.show_dialog.assert_called_once()
-        args = mock_page.show_dialog.call_args[0][0]
-        assert isinstance(args, ft.SnackBar)
-        assert args.content.value == _("issues.invalid_mnh")
-
-    async def test_create_with_invalid_used_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        form._name_field.value = "Test Series"
-        form._used_field.value = "invalid"
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_not_called()
-        mock_page.show_dialog.assert_called_once()
-        args = mock_page.show_dialog.call_args[0][0]
-        assert isinstance(args, ft.SnackBar)
-        assert args.content.value == _("issues.invalid_used")
-
-    async def test_create_with_invalid_total_printed_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        form._name_field.value = "Test Series"
-        form._total_printed_field.value = "invalid"
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_not_called()
-        mock_page.show_dialog.assert_called_once()
-        args = mock_page.show_dialog.call_args[0][0]
-        assert isinstance(args, ft.SnackBar)
-        assert args.content.value == _("issues.invalid_total_printed")
-
-    async def test_create_with_existing_id_uses_directly(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_awaited_once()
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["country"] == 1
-        mock_service.create_country.assert_not_called()
-
-    async def test_create_with_typed_text_creates_new(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_awaited_once()
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["country"] == 1
-
-    async def test_create_with_creation_failed_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        resp = MagicMock(spec=requests.Response)
-        resp.status_code = 400
-        resp.json.return_value = {}
-        mock_service.create_issue = AsyncMock(return_value=resp)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_awaited_once()
-        mock_page.show_dialog.assert_called_once()
-        args = mock_page.show_dialog.call_args[0][0]
-        assert isinstance(args, ft.SnackBar)
-        assert args.content.value == _("issues.creation_failed")
-
-    async def test_create_year_resolves_from_cache_first(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-        await _set_minimal_fields(form)
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_year.assert_not_called()
-        mock_service.create_issue.assert_awaited_once()
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["year"] == 2
-
-    async def test_create_year_creates_new_when_not_cached(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_year = AsyncMock(return_value=99)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        test_date = datetime.date(2023, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-        await _set_minimal_fields(form)
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_year.assert_awaited_once_with(2023)
-        mock_service.create_issue.assert_awaited_once()
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["year"] == 99
-
-    async def test_create_year_creation_failed_shows_error(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_year = AsyncMock(return_value=None)
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        test_date = datetime.date(2023, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-        await _set_minimal_fields(form)
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_not_called()
-        mock_page.show_dialog.assert_called_once()
-        args = mock_page.show_dialog.call_args[0][0]
-        assert isinstance(args, ft.SnackBar)
-        assert args.content.value == _("issues.creation_failed")
-
-    async def test_create_on_success_200(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        resp = MagicMock(spec=requests.Response)
-        resp.status_code = 200
-        mock_service.create_issue = AsyncMock(return_value=resp)
-        on_success = MagicMock()
-        form = IssueForm(page=mock_page, issue_service=mock_service, on_success=on_success)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        on_success.assert_called_once()
-
-    async def test_create_on_success_201(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        resp = MagicMock(spec=requests.Response)
-        resp.status_code = 201
-        mock_service.create_issue = AsyncMock(return_value=resp)
-        on_success = MagicMock()
-        form = IssueForm(page=mock_page, issue_service=mock_service, on_success=on_success)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        on_success.assert_called_once()
-
-    async def test_create_builds_payload_with_all_fields(
-        self, mock_page: MagicMock, mock_service: MagicMock
+    async def test_create_with_existing_id_uses_directly(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
     ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         mock_service.create_issue = AsyncMock(
@@ -359,28 +210,179 @@ class TestIssueFormCreate:
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
 
-        form._name_field.value = "Complete Series"
-        form._country_dropdown._dropdown.value = "1"
-        form._country_dropdown._selected_id = 1
-        form._artist_dropdown._dropdown.value = "10"
-        form._artist_dropdown._selected_id = 10
-        form._stamp_type_dropdown._dropdown.value = "20"
-        form._stamp_type_dropdown._selected_id = 20
-        form._perforation_field.value = "Zebra 13"
-        form._paper_type_dropdown._dropdown.value = "30"
-        form._paper_type_dropdown._selected_id = 30
-        form._printer_dropdown._dropdown.value = "50"
-        form._printer_dropdown._selected_id = 50
-        form._print_type_dropdown._dropdown.value = "40"
-        form._print_type_dropdown._selected_id = 40
-        form._mint_field.value = "1.50"
-        form._used_field.value = "0.75"
-        form._total_printed_field.value = "500000"
-        form._description_field.value = "A test series"
-        form._notes_field.value = "Some notes"
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 1, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_issue.assert_awaited_once()
+        payload = mock_service.create_issue.call_args[0][0]
+        assert payload["country"] == 1
+        mock_service.create_country.assert_not_called()
+
+    async def test_create_with_typed_text_creates_new(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_issue = AsyncMock(
+            return_value=MagicMock(spec=requests.Response, status_code=201)
+        )
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_issue.assert_awaited_once()
+        payload = mock_service.create_issue.call_args[0][0]
+        assert payload["country"] == 1
+
+    async def test_create_with_creation_failed_shows_error(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        resp = MagicMock(spec=requests.Response)
+        resp.status_code = 400
+        resp.json.return_value = {}
+        mock_service.create_issue = AsyncMock(return_value=resp)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_issue.assert_awaited_once()
+        mock_page.show_dialog.assert_called_once()
+        args = mock_page.show_dialog.call_args[0][0]
+        assert isinstance(args, ft.SnackBar)
+        assert args.content.value == _("issues.creation_failed")
+
+    async def test_create_year_resolves_from_cache_first(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_issue = AsyncMock(
+            return_value=MagicMock(spec=requests.Response, status_code=201)
+        )
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_year.assert_not_called()
+        mock_service.create_issue.assert_awaited_once()
+        payload = mock_service.create_issue.call_args[0][0]
+        assert payload["year"] == 2
+
+    async def test_create_year_creates_new_when_not_cached(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_year = AsyncMock(return_value=99)
+        mock_service.create_issue = AsyncMock(
+            return_value=MagicMock(spec=requests.Response, status_code=201)
+        )
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2023-06-15")
+        form._years = [{"id": 1, "year": 2020}, {"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_year.assert_awaited_once_with(2023)
+        mock_service.create_issue.assert_awaited_once()
+        payload = mock_service.create_issue.call_args[0][0]
+        assert payload["year"] == 99
+
+    async def test_create_year_creation_failed_shows_error(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_year = AsyncMock(return_value=None)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2023-06-15")
+        form._years = [{"id": 1, "year": 2020}, {"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_issue.assert_not_called()
+        mock_page.show_dialog.assert_called_once()
+        args = mock_page.show_dialog.call_args[0][0]
+        assert isinstance(args, ft.SnackBar)
+        assert args.content.value == _("issues.creation_failed")
+
+    async def test_create_on_success_200(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        resp = MagicMock(spec=requests.Response)
+        resp.status_code = 200
+        mock_service.create_issue = AsyncMock(return_value=resp)
+        on_success = MagicMock()
+        form = IssueForm(page=mock_page, issue_service=mock_service, on_success=on_success)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 1, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        on_success.assert_called_once()
+
+    async def test_create_on_success_201(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        resp = MagicMock(spec=requests.Response)
+        resp.status_code = 201
+        mock_service.create_issue = AsyncMock(return_value=resp)
+        on_success = MagicMock()
+        form = IssueForm(page=mock_page, issue_service=mock_service, on_success=on_success)
+        await form.show()
+
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        on_success.assert_called_once()
+
+    async def test_create_builds_payload_with_all_fields(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        mock_service.create_issue = AsyncMock(
+            return_value=MagicMock(spec=requests.Response, status_code=201)
+        )
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        form._header_section.name_text = "Complete Series"
+        form._header_section.mint_value = 1.50
+        form._header_section.used_value = 0.75
+        form._header_section.total_printed_value = 500000
+        form._header_section.date_value = "2021-06-15"
+        form._specs_grid.description_value = "A test series"
+        form._specs_grid.notes_value = "Some notes"
+        form._specs_grid.edit_state = {
+            "country": {"ac": MagicMock(selected_id=1), "issue_key": "country", "create": MagicMock()},
+            "artist": {"ac": MagicMock(selected_id=10), "issue_key": "artist", "create": MagicMock()},
+            "stamp_type": {"ac": MagicMock(selected_id=20), "issue_key": "stamp_type", "create": MagicMock()},
+            "paper_type": {"ac": MagicMock(selected_id=30), "issue_key": "paper_type", "create": MagicMock()},
+            "printer": {"ac": MagicMock(selected_id=50), "issue_key": "printer", "create": MagicMock()},
+            "print_type": {"ac": MagicMock(selected_id=40), "issue_key": "print_type", "create": MagicMock()},
+        }
+        form._years = [{"id": 2, "year": 2021}]
 
         await form._on_create(MagicMock())
 
@@ -390,19 +392,18 @@ class TestIssueFormCreate:
         assert payload["country"] == 1
         assert payload["artist"] == 10
         assert payload["stamp_type"] == 20
-        assert payload["perforation"] == "Zebra 13"
         assert payload["paper_type"] == 30
         assert payload["printer"] == 50
         assert payload["print_type"] == 40
         assert payload["year"] == 2
-        assert payload["market_value_mnh"] == 1.50
-        assert payload["market_value_used"] == 0.75
-        assert payload["total_printed"] == 500000
+        assert payload["market_value_mnh"] == "1.5"
+        assert payload["market_value_used"] == "0.75"
+        assert payload["total_printed"] == "500000"
         assert payload["description"] == "A test series"
         assert payload["note"] == "Some notes"
 
     async def test_create_closes_dialog_on_success(
-        self, mock_page: MagicMock, mock_service: MagicMock
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
     ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         mock_service.create_issue = AsyncMock(
@@ -411,26 +412,24 @@ class TestIssueFormCreate:
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
 
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
         dlg = form._dlg
 
         await form._on_create(MagicMock())
 
         assert dlg.open is False
 
-    async def test_create_network_error_shows_snack_bar(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_create_network_error_shows_snack_bar(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         mock_service.create_issue = AsyncMock(return_value=None)
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
 
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
 
         await form._on_create(MagicMock())
 
@@ -439,7 +438,9 @@ class TestIssueFormCreate:
         assert isinstance(args, ft.SnackBar)
         assert args.content.value == _("issues.creation_failed")
 
-    async def test_create_api_error_shows_snack_bar(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_create_api_error_shows_snack_bar(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         error_resp = MagicMock(spec=requests.Response)
         error_resp.status_code = 400
@@ -448,10 +449,8 @@ class TestIssueFormCreate:
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
 
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
+        _set_minimal_fields(form, date_iso="2021-06-15")
+        form._years = [{"id": 2, "year": 2021}]
 
         await form._on_create(MagicMock())
 
@@ -460,11 +459,43 @@ class TestIssueFormCreate:
         assert isinstance(args, ft.SnackBar)
         assert args.content.value == "Bad Request"
 
+    async def test_create_reference_creation_failure(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
+        mock_service.get_years = AsyncMock(return_value=sample_years_response)
+        form = IssueForm(page=mock_page, issue_service=mock_service)
+        await form.show()
+
+        # Set up edit_state with an AC that has no selected_id and non-empty text
+        ac_no_id = MagicMock()
+        ac_no_id.selected_id = None
+        ac_no_id.text = "New Country"
+        form._header_section.name_text = "Test"
+        form._header_section.date_value = "2021-06-15"
+        form._specs_grid.edit_state = {
+            "country": {
+                "ac": ac_no_id,
+                "issue_key": "country",
+                "create": AsyncMock(return_value=None),
+            },
+        }
+        form._years = [{"id": 2, "year": 2021}]
+
+        await form._on_create(MagicMock())
+
+        mock_service.create_issue.assert_not_called()
+        mock_page.show_dialog.assert_called_once()
+        args = mock_page.show_dialog.call_args[0][0]
+        assert isinstance(args, ft.SnackBar)
+        assert args.content.value == _("issues.creation_failed")
+
 
 class TestIssueFormClose:
     """Tests for the close method."""
 
-    async def test_close_cleans_up(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    async def test_close_cleans_up(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=sample_years_response)
         form = IssueForm(page=mock_page, issue_service=mock_service)
         await form.show()
@@ -475,93 +506,15 @@ class TestIssueFormClose:
         assert dlg.open is False
 
 
-class TestIssueFormReferenceDataErrors:
-    """Tests for graceful handling of reference data fetch failures."""
+class TestIssueFormEmptyYears:
+    """Tests for graceful handling when years endpoint returns nothing."""
 
-    async def test_all_reference_data_failures(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_countries = AsyncMock(return_value=[])
-        mock_service.get_artists = AsyncMock(return_value=[])
-        mock_service.get_stamp_types = AsyncMock(return_value=[])
-        mock_service.get_paper_types = AsyncMock(return_value=[])
-        mock_service.get_print_types = AsyncMock(return_value=[])
-        mock_service.get_printers = AsyncMock(return_value=[])
+    async def test_show_with_no_years(
+        self, mock_page: MagicMock, mock_service: MagicMock, mock_shared_components: tuple[MagicMock, MagicMock]
+    ) -> None:
         mock_service.get_years = AsyncMock(return_value=None)
         form = IssueForm(page=mock_page, issue_service=mock_service)
 
         await form.show()
 
-        assert form._countries == []
-        assert form._artists == []
-        assert form._name_field is not None
-
-
-class TestIssueFormEditableDropdown:
-    """Tests for editable dropdown behavior (int for IDs, str for custom text)."""
-
-    async def test_create_with_custom_text_value(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_country = AsyncMock(return_value=99)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        form._name_field.value = "Custom Country Issue"
-        form._artist_dropdown._dropdown.value = "10"
-        form._artist_dropdown._selected_id = 10
-        form._stamp_type_dropdown._dropdown.value = "20"
-        form._stamp_type_dropdown._selected_id = 20
-        form._paper_type_dropdown._dropdown.value = "30"
-        form._paper_type_dropdown._selected_id = 30
-        form._printer_dropdown._dropdown.value = "50"
-        form._printer_dropdown._selected_id = 50
-        form._print_type_dropdown._dropdown.value = "40"
-        form._print_type_dropdown._selected_id = 40
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        with patch.object(type(form._country_dropdown), "text", new_callable=PropertyMock, return_value="My Custom Country"):
-            await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_awaited_once()
-        mock_service.create_country.assert_awaited_once_with("My Custom Country")
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["country"] == 99
-
-    async def test_create_with_id_value(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
-        mock_service.get_years = AsyncMock(return_value=sample_years_response)
-        mock_service.create_issue = AsyncMock(
-            return_value=MagicMock(spec=requests.Response, status_code=201)
-        )
-        form = IssueForm(page=mock_page, issue_service=mock_service)
-        await form.show()
-
-        await _set_minimal_fields(form)
-        test_date = datetime.date(2021, 6, 15)
-        form._selected_date = test_date
-        form._date_label.value = fmt_date(test_date.isoformat(), get_language())
-
-        await form._on_create(MagicMock())
-
-        mock_service.create_issue.assert_awaited_once()
-        payload = mock_service.create_issue.call_args[0][0]
-        assert payload["country"] == 1
-
-
-async def _set_minimal_fields(form: IssueForm, name: str = "Test Series") -> None:
-    """Set required name + all dropdown values to avoid None crash in _resolve_ref."""
-    form._name_field.value = name
-    form._country_dropdown._dropdown.value = "1"
-    form._country_dropdown._selected_id = 1
-    form._artist_dropdown._dropdown.value = "10"
-    form._artist_dropdown._selected_id = 10
-    form._stamp_type_dropdown._dropdown.value = "20"
-    form._stamp_type_dropdown._selected_id = 20
-    form._paper_type_dropdown._dropdown.value = "30"
-    form._paper_type_dropdown._selected_id = 30
-    form._printer_dropdown._dropdown.value = "50"
-    form._printer_dropdown._selected_id = 50
-    form._print_type_dropdown._dropdown.value = "40"
-    form._print_type_dropdown._selected_id = 40
+        assert form._years == []

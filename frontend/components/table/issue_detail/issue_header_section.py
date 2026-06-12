@@ -42,6 +42,7 @@ class IssueHeaderSection(ft.Container):
         on_delete_click: Optional[Callable] = None,
         on_save_click: Optional[Callable] = None,
         on_cancel_click: Optional[Callable] = None,
+        hide_action_icons: bool = False,
     ) -> None:
         super().__init__()
         self._issue: dict = issue
@@ -50,6 +51,7 @@ class IssueHeaderSection(ft.Container):
         self._on_delete_click: Optional[Callable] = on_delete_click
         self._on_save_click: Optional[Callable] = on_save_click
         self._on_cancel_click: Optional[Callable] = on_cancel_click
+        self._hide_action_icons: bool = hide_action_icons
 
         self._original_name: str = self._issue.get("name") or _("ui.no_text_value")
         raw_mint = self._issue.get("market_value_mnh")
@@ -70,8 +72,10 @@ class IssueHeaderSection(ft.Container):
         self._original_date: str = raw_date if raw_date else ""
         self._date_container: Optional[ft.Container] = None
         self._date_picker_field: Optional[DatePickerField] = None
+        show_actions: bool = not hide_action_icons
+        self._badges_row: Optional[ft.Row] = None
         self._edit_icon: ft.IconButton = self._new_icon(
-            ft.Icons.EDIT, _("issues.edit_tooltip"), ft.Colors.ORANGE_700, True, self._on_edit_click
+            ft.Icons.EDIT, _("issues.edit_tooltip"), ft.Colors.ORANGE_700, show_actions, self._on_edit_click
         )
         self._save_icon: ft.IconButton = self._new_icon(
             ft.Icons.CHECK, _("issues.save_tooltip"), ft.Colors.GREEN_700, False, self._on_save_click
@@ -80,7 +84,7 @@ class IssueHeaderSection(ft.Container):
             ft.Icons.CLOSE, _("ui.cancel"), ft.Colors.RED_700, False, self._on_cancel_click
         )
         self._delete_icon: ft.IconButton = self._new_icon(
-            ft.Icons.DELETE, _("issues.delete_tooltip"), ft.Colors.RED_700, True, self._on_delete_click
+            ft.Icons.DELETE, _("issues.delete_tooltip"), ft.Colors.RED_700, show_actions, self._on_delete_click
         )
 
         self.content = self._build_content()
@@ -155,22 +159,24 @@ class IssueHeaderSection(ft.Container):
             ),
         )
 
+        self._badges_row = ft.Row(
+            controls=[
+                mint_badge,
+                ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
+                used_badge,
+                ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
+                total_printed_badge,
+            ],
+            spacing=16,
+            expand=True,
+        )
+
         return ft.Column(
             controls=[
                 ft.Row(
                     controls=[
                         self._name_container,
-                        ft.Row(
-                            controls=[
-                                mint_badge,
-                                ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
-                                used_badge,
-                                ft.VerticalDivider(width=1, thickness=1, color=ft.Colors.GREY_300),
-                                total_printed_badge,
-                            ],
-                            spacing=16,
-                            expand=True,
-                        ),
+                        self._badges_row,
                         ft.Row(
                             controls=[
                                 self._edit_icon,
@@ -217,6 +223,9 @@ class IssueHeaderSection(ft.Container):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._name_container.content = self._name_textfield
+        self._name_container.expand = True
+        if self._badges_row:
+            self._badges_row.expand = False
 
         current_mint_raw = self._issue.get("market_value_mnh") or self._original_mint
         self._mint_textfield = ft.TextField(
@@ -271,15 +280,16 @@ class IssueHeaderSection(ft.Container):
                 page=page,
                 label="",
                 value=initial_date,
-                width=160,
+                width=220,
                 dense=True,
             )
             self._date_container.content = self._date_picker_field
 
-        self._edit_icon.visible = False
-        self._delete_icon.visible = False
-        self._save_icon.visible = True
-        self._cancel_icon.visible = True
+        if not self._hide_action_icons:
+            self._edit_icon.visible = False
+            self._delete_icon.visible = False
+            self._save_icon.visible = True
+            self._cancel_icon.visible = True
         self._safe_update()
 
     def exit_edit_mode(self, saved: bool, new_name: str = "") -> None:
@@ -289,6 +299,9 @@ class IssueHeaderSection(ft.Container):
             size=FONT_SIZE_XLARGE,
             font_family="Roboto-Black",
         )
+        self._name_container.expand = False
+        if self._badges_row:
+            self._badges_row.expand = True
         self._name_textfield = None
 
         if saved:
@@ -341,10 +354,11 @@ class IssueHeaderSection(ft.Container):
         )
         self._date_picker_field = None
 
-        self._edit_icon.visible = True
-        self._delete_icon.visible = True
-        self._save_icon.visible = False
-        self._cancel_icon.visible = False
+        if not self._hide_action_icons:
+            self._edit_icon.visible = True
+            self._delete_icon.visible = True
+            self._save_icon.visible = False
+            self._cancel_icon.visible = False
         self._safe_update()
 
     def _safe_update(self) -> None:

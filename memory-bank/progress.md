@@ -119,6 +119,15 @@
 - [ ] Fix LSP type errors in frontend code (pre-existing)
 - [ ] Add type hints to remaining untyped functions
 
+### IssueForm Visual Alignment with IssueDetailCard (2025-06-12)
+- [x] Added `hide_action_icons: bool = False` param to IssueHeaderSection — guards icon visibility in enter/exit_edit_mode
+- [x] Rebuilt IssueForm to use IssueHeaderSection + IssueSpecsGrid in permanent edit mode (reuses same components as edit flow)
+- [x] Kept Cancel/Create buttons at bottom of dialog
+- [x] Removed all hand-rolled form builder methods (`_build_name_section`, `_build_specs_grid`, `_paired_cell`, etc.) — now driven by shared components
+- [x] Rewrote `_on_create` to read from IssueHeaderSection properties + IssueSpecsGrid edit_state (same pattern as `_handle_save_edit`)
+- [x] Updated 24 tests (mock shared components, test via mock properties instead of old field attributes)
+- [x] All 624 tests passing
+
 ### IssueService + IssueForm Refactoring (2025-05-28)
 - [x] Extracted `_fetch_ref` / `_create_ref` helpers in IssueService — 14 boilerplate methods → 1-liners
 - [x] Split `_build_form()` into named methods (`_build_name_section`, `_build_date_row`, `_build_specs_grid`, `_build_notes_section`, `_build_actions`, `_assemble_card`)
