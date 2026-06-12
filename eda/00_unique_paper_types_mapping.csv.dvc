@@ -1,5 +1,5 @@
 outs:
-- md5: 6e7d2671c3023d1e0d97536495315dd3
-  size: 1177
+- md5: f71b122f47777c403fa484f2142ef545
+  size: 1154
   hash: md5
   path: 00_unique_paper_types_mapping.csv

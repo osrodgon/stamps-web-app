@@ -1,5 +1,5 @@
 outs:
-- md5: 78c38e7567e2fbefb33feb1039e01743
-  size: 34438
+- md5: c3f517e2da783aae8a5e3dd873241d79
+  size: 34426
   hash: md5
   path: 00_unique_colors_mapping.csv
