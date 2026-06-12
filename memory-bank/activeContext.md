@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task
-- IssueDetailCard read/edit toggle — stamp_type field (enter edit mode via edit icon, AutoCompleteField for stamp type, save/cancel icons, local edit mode)
+- IssueForm visual alignment with IssueDetailCard edit mode (reuse IssueHeaderSection + IssueSpecsGrid components, keep Cancel/Create buttons at bottom)
 
 ## Remaining Untested Files (15 files, ~95 tests planned)
 
@@ -89,3 +89,4 @@
 - [Today] IssueForm dropdowns replaced with AutoCompleteField — 15 new tests, 614 total passing
 - [Today] IssueDetailCard read/edit toggle: `update_issue()` in IssueService, local edit mode with AutoCompleteField for stamp_type, save/cancel icons, pass service through IssueRow→IssueTableApp→StampsManagerPage, reload table on save
 - [Today] Swapped AutoCompleteField from `ft.Dropdown` (arrow/hover/height issues) → `ft.AutoComplete` (native suggestions, no arrow, no hover) — 618 tests passing
+- [Today] Rebuilt IssueForm to reuse IssueHeaderSection + IssueSpecsGrid in permanent edit mode, wrapped in AlertDialog with Cancel/Create at bottom — 24 tests, 624 total passing
