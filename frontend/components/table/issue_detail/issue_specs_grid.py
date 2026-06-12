@@ -251,6 +251,7 @@ class IssueSpecsGrid(ft.Card):
             max_lines=6,
             border=ft.InputBorder.UNDERLINE,
             dense=True,
+            expand=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
         )
         self._description_container.content = self._description_textfield
@@ -261,6 +262,7 @@ class IssueSpecsGrid(ft.Card):
             min_lines=2,
             max_lines=6,
             border=ft.InputBorder.UNDERLINE,
+            expand=True,
             dense=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
         )

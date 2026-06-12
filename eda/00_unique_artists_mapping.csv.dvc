@@ -1,5 +1,5 @@
 outs:
-- md5: fe4dca4530814aea1829a95c9ef06c98
-  size: 5172
+- md5: 8ca92025c291905bb8cc5dd54192df5f
+  size: 5159
   hash: md5
   path: 00_unique_artists_mapping.csv

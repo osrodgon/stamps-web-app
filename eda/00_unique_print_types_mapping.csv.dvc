@@ -1,5 +1,5 @@
 outs:
-- md5: c6ef8855b0ed9aae2e93bd16f4963d34
-  size: 6569
+- md5: f5a4a7e40814f296d71512ad01330c72
+  size: 6536
   hash: md5
   path: 00_unique_print_types_mapping.csv
