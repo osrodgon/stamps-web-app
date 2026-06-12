@@ -1,7 +1,6 @@
 """Header section — issue name, valuation badges, action icons."""
 
 import datetime
-from math import exp
 from typing import Callable, Optional
 
 import flet as ft
