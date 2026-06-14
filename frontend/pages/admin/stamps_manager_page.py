@@ -23,6 +23,7 @@ from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
 from components.form.year_range_selector import YearRangeSelector
 from components.issue_form.issue_form import IssueForm
+from components.stamp_form.stamp_form import StampForm
 from core.severity import Severity
 from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME
@@ -379,12 +380,24 @@ class StampsManagerPage(StandardPage):
         self.page.run_task(do_delete)
 
     def _handle_add_stamp(self, issue_id: int) -> None:
-        """Handle add-stamp action — stub for future implementation.
+        """Open the StampForm dialog to create a new stamp.
 
         Args:
             issue_id: The ID of the issue to add a stamp to.
         """
         self.log.debug(f"Add stamp to issue {issue_id}")
+        page = self.page
+
+        async def do_show() -> None:
+            form = StampForm(
+                page=page,
+                issue_service=self._issue_service,
+                issue_id=issue_id,
+                on_success=lambda: page.run_task(self._table.load, reset_page=True),
+            )
+            await form.show()
+
+        self.page.run_task(do_show)
 
     async def _handle_add_issue(self, e: ft.ControlEvent) -> None:
         """Open the Add Issue form dialog.
