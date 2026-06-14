@@ -229,6 +229,36 @@ class IssueService(BaseService):
 
     # --- Reference data: getters ---
 
+    async def create_stamp(self, data: dict[str, Any]) -> requests.Response | None:
+        """Create a new stamp.
+
+        POST to /stamps/ with the StampRequestSerializer payload.
+
+        Args:
+            data: Stamp creation payload (issue, name, face_value, etc.).
+
+        Returns:
+            Raw requests.Response, or None on network error.
+        """
+        return await self._make_request(
+            request_type=self.POST,
+            url=URLs.Backend.stamps,
+            payload=data,
+            headers=self._auth_headers,
+        )
+
+    async def get_colors(self) -> requests.Response | None:
+        """Fetch all colors from the backend.
+
+        Returns:
+            Raw requests.Response (data is list of color objects), or None.
+        """
+        return await self._make_request(
+            request_type=self.GET,
+            url=URLs.Backend.colors,
+            headers=self._auth_headers,
+        )
+
     async def get_countries(self) -> list[dict]:
         return await self._fetch_ref(URLs.Backend.countries)
 

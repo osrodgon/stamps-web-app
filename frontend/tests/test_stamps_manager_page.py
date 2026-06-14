@@ -91,5 +91,8 @@ class TestHandlerStubs:
 
     def test_handle_add_stamp_logs(self) -> None:
         m = self._make_manager()
-        m._handle_add_stamp(5)
+        mock_page = MagicMock()
+        with patch.object(type(m), "page", new_callable=PropertyMock, return_value=mock_page):
+            m._handle_add_stamp(5)
         m._log.debug.assert_called_once_with("Add stamp to issue 5")
+        mock_page.run_task.assert_called_once()
