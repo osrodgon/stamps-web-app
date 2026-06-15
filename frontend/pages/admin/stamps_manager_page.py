@@ -22,8 +22,8 @@ from components.layout.vertical_line import VerticalLine
 from components.layout.app_drawer import AppDrawer
 from components.table.issue_table_app import IssueTableApp
 from components.form.year_range_selector import YearRangeSelector
-from components.issue_form.issue_form import IssueForm
-from components.stamp_form.stamp_form import StampForm
+from components.form.dialogs.issue_form import IssueForm
+from components.form.dialogs.stamp_form import StampForm
 from core.severity import Severity
 from services.issue_service import IssueService
 from settings import USER_EMAIL, USER_FIRST_NAME, USER_LAST_NAME

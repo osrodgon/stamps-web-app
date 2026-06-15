@@ -6,7 +6,7 @@ import pytest
 import flet as ft
 import requests
 
-from components.stamp_form.stamp_form import StampForm
+from components.form.dialogs.stamp_form import StampForm
 
 
 @pytest.fixture
