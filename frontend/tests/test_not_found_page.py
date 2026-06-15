@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import flet as ft
 
-from pages.not_found_page import NotFoundPage
+from pages.common.not_found_page import NotFoundPage
 from core.urls import URLs
 
 

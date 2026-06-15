@@ -7,7 +7,7 @@ import pytest
 import flet as ft
 import requests
 
-from components.issue_form.issue_form import IssueForm
+from components.form.dialogs.issue_form import IssueForm
 from core.translations import _
 
 
@@ -44,8 +44,8 @@ sample_years_response.json.return_value = {
 @pytest.fixture(autouse=True)
 def mock_shared_components() -> tuple[MagicMock, MagicMock]:
     with (
-        patch("components.issue_form.issue_form.IssueHeaderSection") as mock_header_cls,
-        patch("components.issue_form.issue_form.IssueSpecsGrid") as mock_specs_cls,
+        patch("components.form.dialogs.issue_form.IssueHeaderSection") as mock_header_cls,
+        patch("components.form.dialogs.issue_form.IssueSpecsGrid") as mock_specs_cls,
     ):
         mock_header = MagicMock()
         mock_header.name_text = ""

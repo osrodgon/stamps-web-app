@@ -13,7 +13,7 @@ from core.base_ui import BaseUI
 from core.utils import _read_client_timezone, validate_jwt_token
 from pages.auth.signup_page import SignupPage
 from pages.auth.login_page import LoginPage
-from pages.not_found_page import NotFoundPage
+from pages.common.not_found_page import NotFoundPage
 from pages.collection.collections_page import CollectionsPage
 from pages.admin.stamps_manager_page import StampsManagerPage
 from core.urls import URLs
