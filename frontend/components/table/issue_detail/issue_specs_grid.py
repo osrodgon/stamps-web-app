@@ -171,7 +171,7 @@ class IssueSpecsGrid(ft.Card):
                             self._detail_cells["stamp_type"],
                             self._detail_cells["printer"],
                             self._build_cell(ft.Icons.CALENDAR_TODAY, _("stamps.year"), issue.get("year") or "-", col={"sm": 6, "md": 4}),
-                            self._build_cell(ft.Icons.GRID_ON, _("stamps.perforation"), issue.get("perforation") or "-", col={"sm": 6, "md": 4}),
+                            self._build_cell(ft.Icons.GRID_ON, _("common.perforation"), issue.get("perforation") or "-", col={"sm": 6, "md": 4}),
                             self._detail_cells["print_type"],
                             self._detail_cells["artist"],
                             self._detail_cells["paper_type"],
@@ -182,7 +182,7 @@ class IssueSpecsGrid(ft.Card):
                     ft.Column(
                         controls=[
                             ft.Text(
-                                _("ui.description").upper(),
+                                _("common.description").upper(),
                                 size=FONT_SIZE_DEFAULT,
                                 font_family="Roboto-Black",
                                 color=GREY_700,
@@ -194,7 +194,7 @@ class IssueSpecsGrid(ft.Card):
                     ft.Column(
                         controls=[
                             ft.Text(
-                                _("ui.notes").upper(),
+                                _("common.notes").upper(),
                                 size=FONT_SIZE_DEFAULT,
                                 font_family="Roboto-Black",
                                 color=GREY_700,

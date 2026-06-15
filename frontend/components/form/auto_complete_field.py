@@ -1,6 +1,6 @@
 """Editable dropdown wrapping ft.Dropdown with selected_id tracking."""
 
-from typing import Optional
+from typing import Callable, Optional
 
 import flet as ft
 
@@ -20,15 +20,18 @@ class AutoCompleteField(ft.Container):
         self,
         items: list[dict],
         expand: bool = True,
+        width: Optional[int] = None,
         suggestions_max_height: int = 200,
         margin: Optional[ft.Margin] = None,
         hint_text: Optional[str] = None,
+        on_select: Optional[Callable[[int], None]] = None,
     ) -> None:
         self._items: list[dict] = items
         self._id_to_name: dict[str, str] = {
             str(item["id"]): item["name"] for item in items
         }
         self._selected_id: Optional[int] = None
+        self._on_select_callback: Optional[Callable[[int], None]] = on_select
 
         self._dropdown: ft.Dropdown = ft.Dropdown(
             height=20,
@@ -58,6 +61,7 @@ class AutoCompleteField(ft.Container):
         super().__init__(
             content=self._dropdown,
             expand=expand,
+            width=width,
             padding=0,
             margin=margin,
         )
@@ -84,6 +88,8 @@ class AutoCompleteField(ft.Container):
         """Update selected_id when an option is selected."""
         if e.data:
             self._selected_id = int(e.data)
+            if self._on_select_callback:
+                self._on_select_callback(self._selected_id)
         else:
             self._selected_id = None
             
@@ -92,6 +98,8 @@ class AutoCompleteField(ft.Container):
             if item["name"] == e.data:
                 self._dropdown.value = str(item["id"])
                 self._selected_id = item["id"]
+                if self._on_select_callback:
+                    self._on_select_callback(self._selected_id)
                 return
         self._dropdown.value = e.data
         self._selected_id = None

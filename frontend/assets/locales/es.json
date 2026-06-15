@@ -1,32 +1,4 @@
 {
-    "ai_series_lookup": {
-        "title": "Búsqueda de Series por IA",
-        "name_label": "Nombre de la serie o motivo",
-        "name_placeholder": "Introduce el nombre de la serie o motivo del sello",
-        "date_label": "Fecha de publicación",
-        "date_placeholder": "ej., 15-01-2024",
-        "extract_button": "Extraer",
-        "button_tooltip": "Buscar series usando IA",
-        "loading": "Buscando y extrayendo datos...",
-        "error_empty_fields": "Por favor, completa los campos de nombre y fecha",
-        "error_network": "Error de red. Por favor, comprueba tu conexión.",
-        "error_not_found": "No se encontraron series que coincidan con los criterios",
-        "error_validation": "Datos de entrada no válidos",
-        "error_service": "Servicio de IA no disponible. Inténtalo de nuevo más tarde.",
-        "error_unknown": "Ha ocurrido un error inesperado",
-        "save_error_network": "Error de red al guardar. Por favor, comprueba tu conexión.",
-        "save_error_validation": "Datos no válidos. Por favor, revisa la información extraída.",
-        "save_error_service": "Servicio no disponible al guardar. Inténtalo de nuevo más tarde.",
-        "save_error_unknown": "Ha ocurrido un error inesperado al guardar.",
-        "field_issue_date": "Fecha de emisión",
-        "stamps_title": "Sellos en la serie",
-        "save_button": "Guardar serie",
-        "save_not_implemented": "¡La función de guardar estará disponible pronto!",
-        "saving": "Guardando serie...",
-        "save_success": "¡Serie creada con éxito!",
-        "error_save_failed": "Error al crear la serie",
-        "error_help": "Intente ajustar el nombre o fecha y buscar nuevamente."
-    },
     "auth": {
         "sign_in": "Iniciar sesión",
         "sign_up": "Regístrate",
@@ -38,13 +10,11 @@
         "first_name": "Nombre",
         "last_name": "Apellidos",
         "account_details": "Introduce tus datos para crear una cuenta",
-        "create_account": "Crear una cuenta",
         "username_and_password": "Introduce tu nombre de usuario y contraseña para acceder a tu cuenta",
         "username_password_required": "El nombre de usuario y la contraseña son obligatorios.",
         "invalid_email": "Dirección de correo electrónico no válida",
         "invalid_password": "La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales",
         "password_not_match": "Las contraseñas no coinciden",
-        "agree": "Acepto los <a class=\"text-primary\" href=\"#\">Términos de servicio</a> y la <a class=\"text-primary\" href=\"#\">Política de privacidad</a>",
         "no_account": "¿No tienes una cuenta?",
         "sign_up_success": "Usuario registrado correctamente",
         "logout_confirm": "Confirmar cierre de sesión",
@@ -62,20 +32,23 @@
         "series_year_tooltip_3": "• 1997 : Año específico",
         "series_year_tooltip_4": "• \"cadena\" : Búsqueda por nombre",
         "series_year_tooltip_header": "Ejemplos de formatos de búsqueda:",
-        "select_year": "Seleccionar Año",
-        "years_available": "Años",
-        "use_filter_to_enable_slider": "Rango:"
+        "years_available": "Años"
     },
     "messages": {
-        "api_error": "Se ha recibido una respuesta inesperada del servidor o los datos solicitados no están disponibles.",
         "no_response": "Fallo en la solicitud de inicio de sesión, el servidor no responde.",
-        "response_issue": "Error al iniciar sesión debido a un problema con la respuesta del servidor.",
-        "response_mock_login": "No se pudo simular el inicio de sesión. Revise las variables de entorno y asegúrese de que la base de datos esté funcionando.",
-        "review_form_data": "Datos inválidos o faltantes. Por favor, revisa el formulario y inténtalo de nuevo.",
-        "token_missing": "No se pudo obtener el token de la respuesta de inicio de sesión.",
-        "no_description": "No hay descripción disponible. Haz clic para agregar.",
-        "no_notes": "No hay notas disponibles. Haz clic para agregar.",
         "unexpected_error": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+    },
+    "common": {
+        "country": "País",
+        "perforation": "Dentado",
+        "artist": "Artista/Grabador",
+        "paper_type": "Tipo de papel",
+        "printer": "Imprenta",
+        "print_type": "Tipo de impresión",
+        "stamp_type": "Tipo de sello",
+        "description": "Descripción",
+        "notes": "Notas",
+        "of": "de"
     },
     "ui": {
         "loading": "Cargando...",
@@ -86,23 +59,14 @@
         "ok": "OK",
         "required": "Este campo es obligatorio",
         "details": "Detalles",
-        "description": "Descripción",
-        "notes": "Notas",
         "date": "Fecha",
         "value": "Valor",
         "no_text_value": "Ninguno/a.",
-        "of": "de"
+        "done": "Hecho"
     },
-    "issues":{
+    "issues": {
         "add_title": "Añadir Nueva Serie",
-        "select_date": "Seleccionar fecha",
         "create": "Crear Serie",
-        "country": "País",
-        "perforation": "Dentado",
-        "artist": "Artista/Grabador",
-        "paper_type": "Tipo de Papel",
-        "printer": "Imprenta",
-        "print_type": "Tipo de Impresión",
         "edit_tooltip": "Editar serie",
         "delete_tooltip": "Eliminar serie",
         "add_tooltip": "Añadir nueva serie",
@@ -114,50 +78,25 @@
         "hint_name": "Introduce el nombre de la serie",
         "name_required": "El nombre de la serie es obligatorio",
         "mint_value_invalid": "El valor sin usar debe ser un número válido no negativo",
-        "invalid_mnh": "El valor del sello nuevo no es válido",
-        "invalid_used": "El valor del sello usado no es válido",
-        "invalid_total_printed": "El valor de sellos emitidos no es válido",
         "creation_failed": "Error al crear la serie",
         "creation_success": "Serie creada correctamente",
         "update_success": "Serie actualizada correctamente",
         "network_error": "Error de red. Por favor, comprueba tu conexión.",
         "save_tooltip": "Guardar cambios",
-        "hint_country": "País al que pertenece la serie",
-        "hint_stamp_type": "Tipo de sello de la serie",
-        "hint_print_type": "Tipo de impresión de la serie",
-        "hint_printer_type": "Tipo de imprenta de la serie",
-        "hint_artist": "Artista/grabador de la serie",
-        "hint_paper_type": "Tipo de papel de la serie"
+        "save_error_unknown": "Ha ocurrido un error inesperado al guardar."
     },
     "stamps": {
-        "description": "Descripción",
-        "notes": "Notas",
-        "country": "País",
-        "issue_name": "Nombre de la serie",
-        "perforation": "Dentado",
-        "print_type": "Tipo de impresión",
-        "stamp_type": "Tipo de sello",
-        "stamps": "Sellos",
         "total_printed": "Tirada total sello",
         "loading_stamps": "Cargando sellos...",
         "no_stamps_found": "No se encontraron sellos para esta serie.",
-        "stamps_manager_title": "Gestión de Sellos",
-        "market_value": "Valor de mercado",
-        "artist": "Artista/Grabador",
-        "printer": "Imprenta",
-        "paper_type": "Tipo de papel",
+        "manager_title": "Gestión de Sellos",
         "face_value": "Valor facial",
         "color": "Color",
         "edifil_code": "Código Edifil",
         "fesofi_code": "Código FESOFI",
-        "market_value_used": "Valor de mercado (Usado)",
         "year": "Año",
         "mint": "Nuevo",
         "used": "Usado",
-        "market_value_mnh": "Valor de mercado (MNH)",
-        "technical_specifications": "Especificaciones técnicas",
-        "valuation": "Valoración",
-        "image": "Imagen",
         "edit_tooltip": "Editar Sello",
         "delete_tooltip": "Eliminar Sello",
         "add_tooltip": "Añadir Sello",
@@ -165,16 +104,23 @@
         "delete_confirm_message": "¿Estás seguro de que quieres eliminar este sello?",
         "delete_success": "Sello eliminado correctamente",
         "delete_error": "Error al eliminar el sello",
-        "name": "Nombre"
+        "name": "Nombre",
+        "create_title": "Nuevo sello",
+        "select_colors": "Colores del sello",
+        "create_stamp": "Añadir sello",
+        "search_colors": "Buscar colores...",
+        "name_required": "Falta nombre del sello",
+        "face_value_required": "Falta valor facial",
+        "creation_success": "Sello creado con éxito",
+        "creation_failed": "Error al crear sello"
     },
     "collections": {
         "title": "Colecciones",
         "no_issues_found": "No se encontraron series con los criterios proporcionados."
     },
     "pagination": {
-        "pagination_of": "de",
-        "pagination_rows_per_page": "Series por página",
-        "pagination_all_rows": "Todas"
+        "rows_per_page": "Series por página",
+        "all_rows": "Todas"
     },
     "errors": {
         "page_not_found": "La página que buscas **no se encuentra** en este servidor.",
@@ -182,14 +128,12 @@
         "take_me_home": "Volver al Inicio"
     },
     "branding": {
-        "today": "Hoy",
         "language_en": "Inglés",
         "language_es": "Español",
         "collectibles": "COLECCIONABLES",
         "your_stamps_world": "Tu Mundo De Sellos"
     },
     "date": {
-        "of": "de",
         "months": {
             "1": "Enero",
             "2": "Febrero",
@@ -203,6 +147,6 @@
             "10": "Octubre",
             "11": "Noviembre",
             "12": "Diciembre"
-        }   
+        }
     }
 }

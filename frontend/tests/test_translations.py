@@ -52,11 +52,11 @@ class TestTranslate:
         assert result == "Iniciar sesión"
 
     def test_translate_dot_notation(self) -> None:
-        result = Translations.translate("stamps.country", language="en")
+        result = Translations.translate("common.country", language="en")
         assert result == "Country"
 
     def test_translate_fallback_to_english(self) -> None:
-        result = Translations.translate("ui.of", language="es")
+        result = Translations.translate("common.of", language="es")
         assert result == "de"
 
     def test_translate_returns_key_if_not_found(self) -> None:
@@ -64,11 +64,11 @@ class TestTranslate:
         assert result == "nonexistent.key"
 
     def test_translate_with_interpolation(self) -> None:
-        result = Translations.translate("ui.of", language="en")
+        result = Translations.translate("common.of", language="en")
         assert result == "of"
 
     def test_translate_missing_format_key_returns_raw(self) -> None:
-        result = Translations.translate("ui.of", language="en", missing_var="test")
+        result = Translations.translate("common.of", language="en", missing_var="test")
         assert result == "of"
 
     def test_translate_uses_current_language_when_none(self) -> None:
@@ -110,7 +110,7 @@ class TestUnderscoreFunction:
 
     def test_underscore_with_interpolation(self) -> None:
         set_language("en")
-        result = _("ui.of")
+        result = _("common.of")
         assert result == "of"
 
 

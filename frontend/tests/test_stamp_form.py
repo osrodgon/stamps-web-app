@@ -86,7 +86,8 @@ class TestStampFormShow:
         assert form._fesofi_field is not None
         assert form._edifil_field is not None
         assert form._face_value_field is not None
-        assert form._colors_field is not None
+        assert form._select_colors_btn is not None
+        assert form._color_chips is not None
         assert form._mnh_field is not None
         assert form._used_field is not None
         assert form._total_printed_field is not None
@@ -106,33 +107,92 @@ class TestStampFormCancel:
 class TestStampFormResolveColors:
     """Tests for _resolve_color_ids."""
 
-    def test_resolve_exact_names(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    def test_resolve_no_colors_selected(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
+        assert form._resolve_color_ids() == []
+
+    def test_resolve_with_selected_colors(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
+        form._selected_colors = [
+            {"id": 1, "name": "Red"},
+            {"id": 3, "name": "Green"},
+        ]
+        assert form._resolve_color_ids() == [1, 3]
+
+    def test_resolve_removed_colors_excluded(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
+        form._selected_colors = [
+            {"id": 1, "name": "Red"},
+            {"id": 2, "name": "Blue"},
+        ]
+        form._selected_colors = [c for c in form._selected_colors if c["id"] != 1]
+        assert form._resolve_color_ids() == [2]
+
+
+class TestStampFormChips:
+    """Tests for the chip-based color selector via picker dialog."""
+
+    def test_show_color_picker_creates_dialog(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         form._colors_list = sample_colors_response.json.return_value["data"]
-        ids = form._resolve_color_ids("Red, Blue, Green")
-        assert ids == [1, 2, 3]
+        form._show_color_picker()
+        assert form._color_dialog is not None
+        assert form._color_dialog.open is True
+        assert len(form._color_checkboxes) == 3
 
-    def test_resolve_with_whitespace(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    def test_show_color_picker_pre_checks_selected(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         form._colors_list = sample_colors_response.json.return_value["data"]
-        ids = form._resolve_color_ids("  Red ,  Blue  ")
-        assert ids == [1, 2]
+        form._selected_colors = [{"id": 1, "name": "Red"}]
+        form._show_color_picker()
+        red_cb = [cb for cb in form._color_checkboxes if cb.label == "Red"][0]
+        blue_cb = [cb for cb in form._color_checkboxes if cb.label == "Blue"][0]
+        assert red_cb.value is True
+        assert blue_cb.value is False
 
-    def test_resolve_empty_string(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    def test_apply_colors_saves_checked(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         form._colors_list = sample_colors_response.json.return_value["data"]
-        assert form._resolve_color_ids("") == []
+        form._color_chips = MagicMock()
+        form._show_color_picker()
+        form._color_checkboxes[0].value = True   # Blue (id=2)
+        form._color_checkboxes[1].value = True   # Green (id=3)
+        form._color_checkboxes[2].value = False  # Red (id=1) unchecked
+        form._apply_colors()
+        ids = [c["id"] for c in form._selected_colors]
+        assert 2 in ids  # Blue
+        assert 3 in ids  # Green
+        assert 1 not in ids  # Red unchecked
 
-    def test_resolve_unknown_name_skipped(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    def test_apply_colors_empty_when_none_checked(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         form._colors_list = sample_colors_response.json.return_value["data"]
-        ids = form._resolve_color_ids("Red, Purple, Blue")
-        assert ids == [1, 2]
+        form._color_chips = MagicMock()
+        form._show_color_picker()
+        for cb in form._color_checkboxes:
+            cb.value = False
+        form._apply_colors()
+        assert form._selected_colors == []
 
-    def test_resolve_no_colors(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+    def test_remove_color_removes_from_list(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
-        form._colors_list = []
-        assert form._resolve_color_ids("Red, Blue") == []
+        form._selected_colors = [
+            {"id": 1, "name": "Red"},
+            {"id": 2, "name": "Blue"},
+            {"id": 3, "name": "Green"},
+        ]
+        form._color_chips = MagicMock()
+        form._remove_color(2)
+        assert form._selected_colors == [{"id": 1, "name": "Red"}, {"id": 3, "name": "Green"}]
+
+    def test_rebuild_chips_creates_correct_count(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
+        form._selected_colors = sample_colors_response.json.return_value["data"]
+        form._color_chips = MagicMock()
+        form._rebuild_chips()
+        controls = form._color_chips.controls
+        assert len(controls) == 3
+        assert isinstance(controls[0], ft.Chip)
 
 
 class TestStampFormValidation:

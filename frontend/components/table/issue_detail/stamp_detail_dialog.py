@@ -128,7 +128,7 @@ def show_stamp_detail_dialog(
                                 ),
                                 ft.Divider(height=1, thickness=1, color=ft.Colors.GREY_300),
                                 ft.Text(
-                                    _("ui.description").upper(),
+                                    _("common.description").upper(),
                                     size=FONT_SIZE_DEFAULT,
                                     font_family="Roboto-Black",
                                     color=GREY_700,
