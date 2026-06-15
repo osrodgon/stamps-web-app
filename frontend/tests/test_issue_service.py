@@ -185,6 +185,50 @@ class TestIssueServiceGetIssueStamps:
             assert result is None
 
 
+class TestIssueServiceUpdateStamp:
+    """Tests for the update_stamp method."""
+
+    @pytest.fixture
+    def service(self) -> IssueService:
+        return IssueService()
+
+    @pytest.fixture
+    def mock_response(self) -> MagicMock:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 200
+        return response
+
+    async def test_update_stamp_correct_url(self, service: IssueService, mock_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            result = await service.update_stamp(7, {"name": "Updated"})
+
+            assert result is mock_response
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["request_type"] == service.PUT
+            assert call_kwargs["url"] == f"{URLs.Backend.stamps}7"
+
+    async def test_update_stamp_sends_payload(self, service: IssueService, mock_response: MagicMock) -> None:
+        payload: dict = {"name": "Updated", "face_value": "3.00"}
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            await service.update_stamp(7, payload)
+
+            call_kwargs = mock_req.call_args[1]
+            assert call_kwargs["payload"] == payload
+
+    async def test_update_stamp_includes_auth_header(self, service: IssueService, mock_response: MagicMock) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=mock_response) as mock_req:
+            await service.update_stamp(1, {})
+
+            call_kwargs = mock_req.call_args[1]
+            from settings import API_MASTER_KEY
+            assert call_kwargs["headers"]["Authorization"] == f"Api-Key {API_MASTER_KEY}"
+
+    async def test_update_stamp_returns_none_on_error(self, service: IssueService) -> None:
+        with patch.object(service, "_make_request", new_callable=AsyncMock, return_value=None):
+            result = await service.update_stamp(1, {})
+            assert result is None
+
+
 class TestIssueServiceGetYears:
     """Tests for the get_years method."""
 

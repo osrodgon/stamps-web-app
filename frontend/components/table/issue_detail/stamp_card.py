@@ -27,7 +27,7 @@ class StampCard(ft.Card):
         stamp: Stamp data dict from the API response.
         issue_year: The year of the parent issue (for image path resolution).
         lang: Language code ("en" or "es").
-        on_edit: Called with stamp ID when the edit icon is clicked.
+        on_edit: Called with the stamp dict when the edit icon is clicked.
         on_delete: Called with stamp ID when the delete icon is clicked.
     """
 
@@ -36,7 +36,7 @@ class StampCard(ft.Card):
         stamp: dict,
         issue_year: str,
         lang: str,
-        on_edit: Optional[Callable[[int], None]] = None,
+        on_edit: Optional[Callable[[dict], None]] = None,
         on_delete: Optional[Callable[[int], None]] = None,
     ) -> None:
         super().__init__()
@@ -187,9 +187,8 @@ class StampCard(ft.Card):
         show_stamp_detail_dialog(self.page, self._stamp, self._lang, self._issue_year)
 
     def _handle_edit(self, e: ft.ControlEvent) -> None:
-        stamp_id = self._stamp.get("id")
-        if self._on_edit and stamp_id is not None:
-            self._on_edit(stamp_id)
+        if self._on_edit and self._stamp:
+            self._on_edit(self._stamp)
 
     def _handle_delete(self, e: ft.ControlEvent) -> None:
         """Show a confirmation dialog and delete the stamp on confirm.

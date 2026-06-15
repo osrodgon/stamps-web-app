@@ -112,7 +112,11 @@
         "name_required": "Falta nombre del sello",
         "face_value_required": "Falta valor facial",
         "creation_success": "Sello creado con éxito",
-        "creation_failed": "Error al crear sello"
+        "creation_failed": "Error al crear sello",
+        "edit_title": "Editar sello",
+        "update_stamp": "Actualizar",
+        "update_success": "Sello actualizado con éxito",
+        "update_failed": "Error al actualizar sello"
     },
     "collections": {
         "title": "Colecciones",

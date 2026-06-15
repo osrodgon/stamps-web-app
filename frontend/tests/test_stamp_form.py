@@ -22,6 +22,7 @@ def mock_service() -> MagicMock:
     service = MagicMock()
     service.get_colors = AsyncMock(return_value=None)
     service.create_stamp = AsyncMock(return_value=None)
+    service.update_stamp = AsyncMock(return_value=None)
     return service
 
 
@@ -202,14 +203,14 @@ class TestStampFormValidation:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         await form.show()
         form._face_value_field.value = "1.00"
-        await form._on_create(MagicMock())
+        await form._on_save(MagicMock())
         mock_service.create_stamp.assert_not_awaited()
 
     async def test_missing_face_value_does_not_create(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
         form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42)
         await form.show()
         form._name_field.value = "Test Stamp"
-        await form._on_create(MagicMock())
+        await form._on_save(MagicMock())
         mock_service.create_stamp.assert_not_awaited()
 
     async def test_valid_fields_calls_create_stamp(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
@@ -221,7 +222,7 @@ class TestStampFormValidation:
         await form.show()
         form._name_field.value = "Test Stamp"
         form._face_value_field.value = "1.00"
-        await form._on_create(MagicMock())
+        await form._on_save(MagicMock())
 
         mock_service.create_stamp.assert_awaited_once()
         args, _ = mock_service.create_stamp.call_args
@@ -239,3 +240,83 @@ class TestStampFormClose:
         await form.show()
         form.close()
         assert form._dlg.open is False
+
+
+class TestStampFormEditMode:
+    """Tests for StampForm in edit mode (stamp_data provided)."""
+
+    sample_stamp: dict = {
+        "id": 99,
+        "name": "My Stamp",
+        "fesofi_code": "F123",
+        "edifil_code": "E456",
+        "face_value": "2.50",
+        "market_value_mnh": "1.00",
+        "market_value_used": "0.50",
+        "total_printed": "10000",
+        "description": "A test stamp",
+        "colors": ["Red", "Blue"],
+    }
+
+    def test_init_edit_mode_stores_data(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42, stamp_data=self.sample_stamp)
+        assert form._editing is True
+        assert form._stamp_id == 99
+        assert form._stamp_data is self.sample_stamp
+
+    async def test_show_edit_mode_pre_populates_fields(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        mock_service.get_colors = AsyncMock(return_value=sample_colors_response)
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42, stamp_data=self.sample_stamp)
+        await form.show()
+        assert form._name_field.value == "My Stamp"
+        assert form._fesofi_field.value == "F123"
+        assert form._edifil_field.value == "E456"
+        assert form._face_value_field.value == "2.50"
+        assert form._mnh_field.value == "1.00"
+        assert form._used_field.value == "0.50"
+        assert form._total_printed_field.value == "10000"
+        assert form._description_field.value == "A test stamp"
+
+    async def test_show_edit_mode_pre_populates_colors(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        mock_service.get_colors = AsyncMock(return_value=sample_colors_response)
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42, stamp_data=self.sample_stamp)
+        await form.show()
+        selected_names: list[str] = [c["name"] for c in form._selected_colors]
+        assert "Red" in selected_names
+        assert "Blue" in selected_names
+        assert "Green" not in selected_names
+
+    async def test_edit_mode_calls_update_stamp(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 200
+        mock_service.update_stamp = AsyncMock(return_value=response)
+        mock_service.get_colors = AsyncMock(return_value=None)
+
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42, stamp_data=self.sample_stamp)
+        await form.show()
+        form._name_field.value = "Updated Stamp"
+        form._face_value_field.value = "3.00"
+        await form._on_save(MagicMock())
+
+        mock_service.update_stamp.assert_awaited_once()
+        args, _ = mock_service.update_stamp.call_args
+        stamp_id, payload = args
+        assert stamp_id == 99
+        assert payload["name"] == "Updated Stamp"
+        assert payload["face_value"] == "3.00"
+        assert "issue" not in payload
+
+    async def test_edit_omits_issue_from_payload(self, mock_page: MagicMock, mock_service: MagicMock) -> None:
+        response = MagicMock(spec=requests.Response)
+        response.status_code = 200
+        mock_service.update_stamp = AsyncMock(return_value=response)
+        mock_service.get_colors = AsyncMock(return_value=None)
+
+        form = StampForm(page=mock_page, issue_service=mock_service, issue_id=42, stamp_data=self.sample_stamp)
+        await form.show()
+        form._name_field.value = "Test"
+        form._face_value_field.value = "1.00"
+        await form._on_save(MagicMock())
+
+        _, payload = mock_service.update_stamp.call_args[0]
+        assert "issue" not in payload

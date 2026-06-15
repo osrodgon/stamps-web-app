@@ -1,49 +1,7 @@
 # Active Context
 
 ## Current Task
-- IssueForm visual alignment with IssueDetailCard edit mode (reuse IssueHeaderSection + IssueSpecsGrid components, keep Cancel/Create buttons at bottom)
-
-## Remaining Untested Files (15 files, ~95 tests planned)
-
-### Tier 1 — Pure utilities (skipped, already covered)
-- `core/severity.py` — 100% covered
-- `core/urls.py` — 100% covered
-- `settings.py` — 95% covered (dotenv fallback)
-
-### Tier 2 — Core infrastructure (partially done)
-- `core/logger.py` — 100% covered
-- `core/log_setup.py` — ✅ 17 tests, 100% coverage
-- Extend service tests (12)
-
-### Tier 3 — Button components ✅ COMPLETE
-- `alert_button.py`, `default_button.py`, `primary_button.py`, `text_button.py`, `link_button.py`, `icon_button.py` — ✅ 30 tests
-
-### Tier 4 — Form components ✅ COMPLETE
-- `components/form/text_field.py` — ✅ 34 tests
-
-### Tier 5 — Layout components (partially done)
-- `horizontal_line.py` — ✅ 7 tests
-- `vertical_line.py` — ✅ 7 tests
-- `brand.py` — deferred (heavy Flet mocking, needs integration test approach)
-- `app_drawer.py` — deferred (heavy Flet mocking, needs integration test approach)
-
-### Tier 6 — Auth components, deferred (heavy Flet mocking)
-- `login_card.py` — deferred (ft.Container._values descriptor issue, needs integration test)
-- `signup_card.py` — deferred (same _values issue, needs integration test)
-
-### Tier 7 — Table detail card, heavy mocking (~15 tests)
-- `issue_detail_card.py` (15)
-
-### Tier 8 — Page templates, heavy mocking (~15 tests)
-- `standard_page.py` (10), `not_found_page.py` (5)
-
-### Tier 9 — Full pages, heaviest mocking (~30 tests)
-- `login_page.py` (10), `signup_page.py` (10), `collections_page.py` (5), `stamps_manager_page.py` (10)
-
-### Tier 10 — Entry point (~25 tests)
-- `main.py` (25)
-
-**Current: 618 tests → Target: ~493 tests** (Tier 6 deferred, -20 tests)
+- Stamp edit feature: reuse StampForm dialog for editing stamps
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -63,30 +21,9 @@
 - 3 service files are Flet-free (base_service, auth_service, issue_service)
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
-- Spanish locale fixes applied: éxitO, caracteres, Tipo de sello, Tirada total
-- Duplicate ai_series_lookup keys removed from both en.json and es.json
-- **AutoCompleteField** wraps `ft.AutoComplete` with `selected_id` tracking — replaces editable `Dropdown` in IssueForm
-- Reference data fields show suggestions on typing (native ft.AutoComplete behavior)
-- IssueDetailCard edit mode: edit icon toggles stamp_type to AutoCompleteField, save/cancel icons, local edit mode (no parent callback), `update_issue()` in IssueService
+- **StampForm edit mode**: accepts `stamp_data` param, pre-populates all fields + colors, dispatches to `update_stamp()` / `create_stamp()`
+- Edit callback chain: StampCard passes `stamp_dict` → IssueStampGrid → IssueDetailCard wraps with `issue_id` → IssueRow → IssueTableApp → StampsManagerPage opens StampForm
+- 653 tests total (9 new: 4 edit-mode + 4 update_stamp service + 1 handler)
 
 ## Session Log
-- [Today] Added `validate_jwt_token()` to utils.py and wired into main.py root route — client-side JWT exp check on first page load
-- [Today] Added PyJWT dependency, 7 issue creation locale keys (en/es), cleaned unused imports in login_view.py
-- [Today] DatePicker timezone fix complete — JS in index.html writes to localStorage, Python reads via SharedPreferences
-- [Today] 12 new timezone tests, 597 total passing
-- [Today] Fixed 3 failing issue form tests (mock `json` → `payload` kwargs, `show_snack_bar` → `show_dialog`, network error expectation)
-- [Today] Refactored IssueService: extracted `_fetch_ref` / `_create_ref` helpers, 14 boilerplate get/create methods → 1-liners
-- [Today] Refactored IssueForm (`issue_form.py`):
-  - Split `_build_form()` into 8 named methods
-  - `_mnh_field` → `_mint_field`, `_date_picker_icon` → `_date_picker`
-  - Removed dead `_on_field_change` handler + registrations
-  - Removed dead `_field_cell` method
-  - Replaced `_make_dropdown(items, attr)` setattr pattern with `_build_dropdown(items)` + explicit assignment
-  - Moved DatePicker overlay append from `_build_form()` to `show()` (one call)
-  - Added `super().__init__()` call
-  - Documented `_on_success` as sync-only
-- [Today] Fixed stale docstrings: IssueService class doc (missing 7 create methods), IssueForm attribute doc (`_page` → `page`), added docstrings to all builder/static methods
-- [Today] IssueForm dropdowns replaced with AutoCompleteField — 15 new tests, 614 total passing
-- [Today] IssueDetailCard read/edit toggle: `update_issue()` in IssueService, local edit mode with AutoCompleteField for stamp_type, save/cancel icons, pass service through IssueRow→IssueTableApp→StampsManagerPage, reload table on save
-- [Today] Swapped AutoCompleteField from `ft.Dropdown` (arrow/hover/height issues) → `ft.AutoComplete` (native suggestions, no arrow, no hover) — 618 tests passing
-- [Today] Rebuilt IssueForm to reuse IssueHeaderSection + IssueSpecsGrid in permanent edit mode, wrapped in AlertDialog with Cancel/Create at bottom — 24 tests, 624 total passing
+- [Today] Stamp edit feature: added `update_stamp()` to IssueService, modified StampForm for edit mode (stamp_data param, pre-population of all fields + colors, _on_save dispatches to create/update), changed callback chain to pass stamp dict through 6 layers, implemented _handle_edit_stamp in StampsManagerPage, added 4 locale keys (edit_title, update_stamp, update_success, update_failed) to en/es, 8 new tests — 653 total passing

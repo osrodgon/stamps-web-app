@@ -112,7 +112,11 @@
         "name_required": "Name is required",
         "face_value_required": "Face value is required",
         "creation_success": "Stamp created successfully",
-        "creation_failed": "Failed to create stamp"
+        "creation_failed": "Failed to create stamp",
+        "edit_title": "Edit Stamp",
+        "update_stamp": "Update",
+        "update_success": "Stamp updated successfully",
+        "update_failed": "Failed to update stamp"
     },
     "collections": {
         "title": "Collections",

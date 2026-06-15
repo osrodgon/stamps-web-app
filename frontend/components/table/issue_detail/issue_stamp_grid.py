@@ -40,7 +40,7 @@ class IssueStampGrid(ft.Container):
         loading: bool,
         lang: str,
         issue_year: str,
-        on_edit_stamp: Optional[Callable[[int], Any]] = None,
+        on_edit_stamp: Optional[Callable[[dict], Any]] = None,
         on_delete_stamp: Optional[Callable[[int], Any]] = None,
         on_add_stamp: Optional[Callable] = None,
     ) -> None:
@@ -49,7 +49,7 @@ class IssueStampGrid(ft.Container):
         self._loading: bool = loading
         self._lang: str = lang
         self._issue_year: str = issue_year
-        self._on_edit_stamp: Optional[Callable[[int], Any]] = on_edit_stamp
+        self._on_edit_stamp: Optional[Callable[[dict], Any]] = on_edit_stamp
         self._on_delete_stamp: Optional[Callable[[int], Any]] = on_delete_stamp
         self._on_add_stamp: Optional[Callable] = on_add_stamp
 

@@ -62,8 +62,12 @@ class TestHandlerStubs:
 
     def test_handle_edit_stamp_logs(self) -> None:
         m = self._make_manager()
-        m._handle_edit_stamp(1)
-        m._log.debug.assert_called_once_with("Edit stamp 1")
+        stamp_dict: dict = {"id": 1, "name": "Test Stamp"}
+        mock_page = MagicMock()
+        with patch.object(type(m), "page", new_callable=PropertyMock, return_value=mock_page):
+            m._handle_edit_stamp(stamp_dict, 42)
+        m._log.debug.assert_called_once_with("Edit stamp 1 from issue 42")
+        mock_page.run_task.assert_called_once()
 
     def test_handle_delete_stamp_logs_and_runs_task(self) -> None:
         # PropertyMock needed because ``page`` is a read-only C++ Prop

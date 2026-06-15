@@ -210,6 +210,26 @@ class IssueService(BaseService):
             headers=self._auth_headers,
         )
 
+    async def update_stamp(self, stamp_id: int, data: dict[str, Any]) -> requests.Response | None:
+        """Update an existing stamp.
+
+        PUT to /stamps/{stamp_id} with partial update payload.
+
+        Args:
+            stamp_id: The ID of the stamp to update.
+            data: Partial stamp update payload.
+
+        Returns:
+            Raw requests.Response, or None on network error.
+        """
+        url: str = f"{URLs.Backend.stamps}{stamp_id}"
+        return await self._make_request(
+            request_type=self.PUT,
+            url=url,
+            headers=self._auth_headers,
+            payload=data,
+        )
+
     async def get_issue_stamps(self, issue_id: int) -> requests.Response | None:
         """
         Fetch stamps belonging to a specific issue.
