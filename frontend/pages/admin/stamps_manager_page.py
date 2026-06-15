@@ -281,13 +281,26 @@ class StampsManagerPage(StandardPage):
         await asyncio.sleep(DEBOUNCE_DELAY)
         self._table.set_year_filter(f"{start}-{end}")
 
-    def _handle_edit_stamp(self, stamp_id: int) -> None:
-        """Handle stamp edit action — stub for future implementation.
+    def _handle_edit_stamp(self, stamp: dict, issue_id: int) -> None:
+        """Open StampForm in edit mode to edit an existing stamp.
 
         Args:
-            stamp_id: The ID of the stamp to edit.
+            stamp: The stamp dict to edit.
+            issue_id: The ID of the parent issue.
         """
-        self.log.debug(f"Edit stamp {stamp_id}")
+        self.log.debug(f"Edit stamp {stamp.get('id')} from issue {issue_id}")
+
+        async def _run() -> None:
+            form: StampForm = StampForm(
+                self.page,
+                self._issue_service,
+                issue_id,
+                stamp_data=stamp,
+                on_success=lambda: self.page.run_task(self._table.load, reset_page=True),
+            )
+            await form.show()
+
+        self.page.run_task(_run)
 
     def _handle_delete_stamp(self, stamp_id: int, issue_id: int) -> None:
         """Delete a stamp, show notification, and refresh stamps.

@@ -40,7 +40,7 @@ class IssueRow(ft.Container):
         on_expand: Optional[Callable[[int], None]] = None,
         expanded: bool = False,
         service: Optional[IssueService] = None,
-        on_edit_stamp: Optional[Callable[[int], None]] = None,
+        on_edit_stamp: Optional[Callable[[dict, int], None]] = None,
         on_delete_stamp: Optional[Callable[[int, int], None]] = None,
         on_edit_issue: Optional[Callable[[int], None]] = None,
         on_delete_issue: Optional[Callable[[int], None]] = None,
@@ -59,7 +59,7 @@ class IssueRow(ft.Container):
             on_expand: Called with issue ID when the chevron is toggled open.
             expanded: If True, start with details expanded.
             service: IssueService for edit mode API calls.
-            on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
+            on_edit_stamp: Called with (stamp_dict, issue_id) when a stamp edit icon is clicked.
             on_delete_stamp: Called with (stamp_id, issue_id) when the stamp delete icon is clicked.
             on_edit_issue: Called with issue ID when the issue edit icon is clicked.
             on_delete_issue: Called with issue ID when the issue delete icon is clicked.
@@ -72,7 +72,7 @@ class IssueRow(ft.Container):
         self._lang: str = lang
         self._on_expand: Optional[Callable[[int], None]] = on_expand
         self._service: Optional[IssueService] = service
-        self._on_edit_stamp: Optional[Callable[[int], None]] = on_edit_stamp
+        self._on_edit_stamp: Optional[Callable[[dict, int], None]] = on_edit_stamp
         self._on_delete_stamp: Optional[Callable[[int, int], None]] = on_delete_stamp
         self._on_edit_issue: Optional[Callable[[int], None]] = on_edit_issue
         self._on_delete_issue: Optional[Callable[[int], None]] = on_delete_issue

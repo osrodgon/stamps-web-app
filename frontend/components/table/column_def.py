@@ -119,15 +119,15 @@ def fmt_date(value: str, lang: str) -> str:
 # To add, remove, or reorder columns, edit this list —
 # header and row components update automatically.
 COLUMNS: list[ColumnDef] = [
-    ColumnDef("stamps.country", "country", width=100),
+    ColumnDef("common.country", "country", width=100),
     ColumnDef("ui.date", "date", width=120, sortable=True),
-    ColumnDef("stamps.issue_name", "name", text_align=ft.TextAlign.LEFT, sortable=True),
-    ColumnDef("stamps.artist", "artist"),
-    ColumnDef("stamps.printer", "printer"),
-    ColumnDef("stamps.perforation", "perforation", width=100),
-    ColumnDef("stamps.stamp_type", "stamp_type", width=100),
-    ColumnDef("stamps.print_type", "print_type", width=100),
-    ColumnDef("stamps.paper_type", "paper_type", width=100),
+    ColumnDef("issues.name", "name", text_align=ft.TextAlign.LEFT, sortable=True),
+    ColumnDef("common.artist", "artist"),
+    ColumnDef("common.printer", "printer"),
+    ColumnDef("common.perforation", "perforation", width=100),
+    ColumnDef("common.stamp_type", "stamp_type", width=100),
+    ColumnDef("common.print_type", "print_type", width=100),
+    ColumnDef("common.paper_type", "paper_type", width=100),
     ColumnDef("stamps.total_printed", "total_printed", width=120, text_align=ft.TextAlign.RIGHT, fmt=fmt_number),
     ColumnDef("ui.value", "market_value_mnh", width=100, text_align=ft.TextAlign.RIGHT, fmt=fmt_currency),
 ]

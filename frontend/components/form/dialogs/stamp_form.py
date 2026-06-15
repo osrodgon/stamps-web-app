@@ -28,17 +28,22 @@ from services.issue_service import IssueService
 
 
 class StampForm(BaseUI, Logger):
-    """AlertDialog-based form for creating a new stamp.
+    """AlertDialog-based form for creating or editing a stamp.
 
     Layout mirrors ``show_stamp_detail_dialog`` — same Card, same Row
     structure, same spacing — but each display element is replaced with
     an ``ft.TextField`` using ``hint_text`` to indicate what to enter.
 
+    When ``stamp_data`` is provided, the form operates in edit mode:
+    fields are pre-populated and the save action calls ``update_stamp()``
+    instead of ``create_stamp()``.
+
     Attributes:
         page: The Flet page instance.
         _service: The IssueService for API calls.
-        _issue_id: The ID of the parent issue to add the stamp to.
-        _on_success: Callback fired after successful creation (sync only).
+        _issue_id: The ID of the parent issue.
+        _stamp_data: Stamp dict for edit mode (None for create mode).
+        _on_success: Callback fired after successful save (sync only).
     """
 
     def __init__(
@@ -46,13 +51,18 @@ class StampForm(BaseUI, Logger):
         page: ft.Page,
         issue_service: IssueService,
         issue_id: int,
+        stamp_data: Optional[dict] = None,
         on_success: Optional[Callable[[], None]] = None,
     ) -> None:
         super().__init__()
         self.page: ft.Page = page
         self._service: IssueService = issue_service
         self._issue_id: int = issue_id
+        self._stamp_data: Optional[dict] = stamp_data
         self._on_success: Optional[Callable[[], None]] = on_success
+
+        self._editing: bool = stamp_data is not None
+        self._stamp_id: Optional[int] = stamp_data.get("id") if stamp_data else None
 
         self._dlg: Optional[ft.AlertDialog] = None
         self._colors_list: list[dict] = []
@@ -80,10 +90,12 @@ class StampForm(BaseUI, Logger):
 
     async def show(self) -> None:
         """Fetch colors reference data and display the form dialog."""
+        title_key: str = "stamps.edit_title" if self._editing else "stamps.create_title"
+        title_text: str = _("stamps.edit_title") if self._editing and _("stamps.edit_title") != "stamps.edit_title" else _("stamps.create_title") if _("stamps.create_title") != "stamps.create_title" else "Stamp"
         self._dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text(
-                _("stamps.create_title") if _("stamps.create_title") != "stamps.create_title" else "Create Stamp",
+                title_text,
                 size=23,
                 font_family="Roboto-Black",
                 margin=ft.Margin(left=12),
@@ -116,8 +128,31 @@ class StampForm(BaseUI, Logger):
         else:
             self._colors_list = []
 
+        # Pre-populate colors in edit mode
+        if self._editing and self._stamp_data:
+            stamp_color_names: list[str] = self._stamp_data.get("colors", [])
+            self._selected_colors = [
+                c for c in self._colors_list
+                if c["name"] in stamp_color_names
+            ]
+
         self._build_content()
         self.page.update()
+
+    def _stamp_value(self, key: str, default: str = "") -> str:
+        """Return a stamp data value for pre-population, or default.
+
+        Args:
+            key: The dict key in ``_stamp_data``.
+            default: Fallback value when not editing or key is missing.
+
+        Returns:
+            The string value to set on a TextField.
+        """
+        if not self._editing or self._stamp_data is None:
+            return default
+        val = self._stamp_data.get(key)
+        return str(val) if val is not None else default
 
     def _build_content(self) -> None:
         """Replace the loading spinner with the form layout matching stamp_detail_dialog."""
@@ -129,7 +164,7 @@ class StampForm(BaseUI, Logger):
             color=GREY_700, italic=True, size=FONT_SIZE_DEFAULT
         )
         self._name_field = ft.TextField(
-            value="",
+            value=self._stamp_value("name"),
             hint_text=_("stamps.name"),
             hint_style=hint_style,
             border=ft.InputBorder.UNDERLINE,
@@ -139,7 +174,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._fesofi_field = ft.TextField(
-            value="",
+            value=self._stamp_value("fesofi_code"),
             hint_text=_("stamps.fesofi_code"),
             hint_style=hint_style,
             border=ft.InputBorder.UNDERLINE,
@@ -149,7 +184,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._edifil_field = ft.TextField(
-            value="",
+            value=self._stamp_value("edifil_code"),
             hint_text=_("stamps.edifil_code"),
             hint_style=hint_style,
             border=ft.InputBorder.UNDERLINE,
@@ -159,7 +194,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._face_value_field = ft.TextField(
-            value="",
+            value=self._stamp_value("face_value"),
             hint_text=_("stamps.face_value"),
             hint_style=hint_style,
             border=ft.InputBorder.UNDERLINE,
@@ -180,7 +215,7 @@ class StampForm(BaseUI, Logger):
             run_spacing=4,
         )
         self._mnh_field = ft.TextField(
-            value="",
+            value=self._stamp_value("market_value_mnh"),
             hint_text="0.00",
             hint_style=hint_style,
             border=ft.InputBorder.NONE,
@@ -190,7 +225,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._used_field = ft.TextField(
-            value="",
+            value=self._stamp_value("market_value_used"),
             hint_text="0.00",
             hint_style=hint_style,
             border=ft.InputBorder.NONE,
@@ -199,7 +234,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._total_printed_field = ft.TextField(
-            value="",
+            value=self._stamp_value("total_printed"),
             hint_text="0",
             hint_style=hint_style,
             border=ft.InputBorder.NONE,
@@ -208,7 +243,7 @@ class StampForm(BaseUI, Logger):
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._description_field = ft.TextField(
-            value="",
+            value=self._stamp_value("description"),
             hint_text=_("common.description"),
             hint_style=hint_style,
             multiline=True,
@@ -317,11 +352,13 @@ class StampForm(BaseUI, Logger):
         )
         create_btn = PrimaryButton(
             text=(
-                _("stamps.create_stamp")
+                _("stamps.update_stamp")
+                if self._editing and _("stamps.update_stamp") != "stamps.update_stamp"
+                else _("stamps.create_stamp")
                 if _("stamps.create_stamp") != "stamps.create_stamp"
-                else "Create Stamp"
+                else "Save"
             ).upper(),
-            on_click=self._on_create,
+            on_click=self._on_save,
             expand=False,
         )
 
@@ -403,6 +440,9 @@ class StampForm(BaseUI, Logger):
 
         if self._dlg:
             self._dlg.content = content
+
+        if self._editing:
+            self._rebuild_chips(page_not_ready=True)
 
     def close(self) -> None:
         """Close the dialog and clean up."""
@@ -507,8 +547,13 @@ class StampForm(BaseUI, Logger):
         self._rebuild_chips()
         self._close_color_picker()
 
-    def _rebuild_chips(self) -> None:
-        """Rebuild the chip row from the selected colors list."""
+    def _rebuild_chips(self, page_not_ready: bool = False) -> None:
+        """Rebuild the chip row from the selected colors list.
+
+        Args:
+            page_not_ready: If True, skip the ``update()`` call since
+                the control is not yet attached to the page tree.
+        """
         chips: list[ft.Control] = []
         for c in self._selected_colors:
             chip = ft.Chip(
@@ -520,7 +565,8 @@ class StampForm(BaseUI, Logger):
             )
             chips.append(chip)
         self._color_chips.controls = chips
-        self._color_chips.update()
+        if not page_not_ready:
+            self._color_chips.update()
 
     def _remove_color(self, color_id: int) -> None:
         """Remove a color from the selected list and rebuild chips.
@@ -541,11 +587,14 @@ class StampForm(BaseUI, Logger):
         """
         return [c["id"] for c in self._selected_colors]
 
-    async def _on_create(self, e: ft.ControlEvent) -> None:
-        """Validate and submit the form to create a new stamp.
+    async def _on_save(self, e: ft.ControlEvent) -> None:
+        """Validate and submit the form.
+
+        In create mode, calls ``create_stamp()``.
+        In edit mode, calls ``update_stamp()``.
 
         Args:
-            e: The click event from the Create Stamp button.
+            e: The click event from the Save button.
         """
         self.log.debug("Validating required fields...")
 
@@ -596,10 +645,12 @@ class StampForm(BaseUI, Logger):
         color_ids: list[int] = self._resolve_color_ids()
 
         payload: dict[str, Any] = {
-            "issue": self._issue_id,
             "name": name_val,
             "face_value": face_val,
         }
+
+        if not self._editing:
+            payload["issue"] = self._issue_id
 
         if fesofi_val:
             payload["fesofi_code"] = fesofi_val
@@ -616,20 +667,25 @@ class StampForm(BaseUI, Logger):
         if color_ids:
             payload["colors"] = color_ids
 
-        self.log.debug(f"Creating stamp with payload: {payload}")
+        self.log.debug(f"Saving stamp with payload: {payload}")
         try:
-            response = await self._service.create_stamp(payload)
+            if self._editing and self._stamp_id is not None:
+                response = await self._service.update_stamp(self._stamp_id, payload)
+            else:
+                response = await self._service.create_stamp(payload)
             if response and response.status_code in (200, 201):
                 self.close()
                 if self._on_success:
                     self._on_success()
                 await self.show_notification(
-                    _("stamps.creation_success") if _("stamps.creation_success") != "stamps.creation_success" else "Stamp created successfully",
+                    _("stamps.update_success") if self._editing
+                    else _("stamps.creation_success"),
                     severity=Severity.SUCCESS,
                 )
             else:
                 error_msg = (
-                    _("stamps.creation_failed") if _("stamps.creation_failed") != "stamps.creation_failed" else "Failed to create stamp"
+                    _("stamps.update_failed") if self._editing
+                    else _("stamps.creation_failed")
                 )
                 if response:
                     try:
@@ -637,7 +693,7 @@ class StampForm(BaseUI, Logger):
                         error_msg = error_data.get("message", error_msg)
                     except Exception:
                         pass
-                self.log.error(f"Failed to create stamp: {error_msg}")
+                self.log.error(f"Failed to save stamp: {error_msg}")
                 await self.show_notification(error_msg, severity=Severity.ERROR)
         except Exception as exc:
             self.log.error(f"{exc}")

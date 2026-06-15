@@ -10,6 +10,14 @@
 - [x] Total: 618 tests (all passing)
 - [x] Deferred: login_card, signup_card, login_page, signup_page, collections_page (Flet descriptor system)
 
+### Stamp Edit Feature (2025-06-15)
+- [x] Added `update_stamp()` to IssueService (PUT /stamps/{id}/)
+- [x] Modified StampForm for edit mode: `stamp_data` param, pre-populates all fields + colors, `_on_save` dispatches to create/update
+- [x] Changed callback chain: StampCard passes `stamp_dict` → wrapped with `issue_id` in IssueDetailCard → StampsManagerPage opens StampForm
+- [x] Implemented `_handle_edit_stamp` in StampsManagerPage
+- [x] Added 4 locale keys: `edit_title`, `update_stamp`, `update_success`, `update_failed`
+- [x] 9 new tests (4 edit-mode, 4 update_stamp service, 1 handler) — 653 total passing
+
 ### Frontend Docstring Updates (2025-05-11)
 - [x] Analyzed colors.py for readability improvements
 - [x] Added type hints to colors.py

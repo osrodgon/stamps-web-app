@@ -30,7 +30,7 @@ class IssueDetailCard(ft.Container, BaseUI):
         lang: Language code ("en" or "es").
         loading: If True, shows a loading placeholder in the stamp section.
         service: IssueService for fetching reference data and saving changes.
-        on_edit_stamp: Called with stamp ID when the edit icon is clicked.
+        on_edit_stamp: Called with (stamp_dict, issue_id) when the edit icon is clicked.
         on_delete_stamp: Called with (stamp_id, issue_id) when delete is clicked.
         on_edit_issue: Called with issue ID after a successful edit save.
         on_delete_issue: Called with issue ID when the issue delete icon is clicked.
@@ -44,7 +44,7 @@ class IssueDetailCard(ft.Container, BaseUI):
         lang: str,
         loading: bool = False,
         service: Optional[IssueService] = None,
-        on_edit_stamp: Optional[Callable[[int], Any]] = None,
+        on_edit_stamp: Optional[Callable[[dict, int], Any]] = None,
         on_delete_stamp: Optional[Callable[[int, int], Any]] = None,
         on_edit_issue: Optional[Callable[[int], Any]] = None,
         on_delete_issue: Optional[Callable[[int], Any]] = None,
@@ -63,6 +63,11 @@ class IssueDetailCard(ft.Container, BaseUI):
             if on_delete_stamp is not None else None
         )
 
+        wrapped_on_edit_stamp = (
+            (lambda stamp: on_edit_stamp(stamp, self._issue["id"]))
+            if on_edit_stamp is not None else None
+        )
+
         self._header_section = IssueHeaderSection(
             issue=issue,
             lang=lang,
@@ -77,7 +82,7 @@ class IssueDetailCard(ft.Container, BaseUI):
             loading=loading,
             lang=lang,
             issue_year=str(issue.get("year", "")),
-            on_edit_stamp=on_edit_stamp,
+            on_edit_stamp=wrapped_on_edit_stamp,
             on_delete_stamp=wrapped_on_delete_stamp,
             on_add_stamp=self._handle_add_stamp,
         )

@@ -39,7 +39,7 @@ class IssueTableApp(ft.Container):
     def __init__(
         self,
         service: Optional[IssueService] = None,
-        on_edit_stamp: Optional[Callable[[int], None]] = None,
+        on_edit_stamp: Optional[Callable[[dict, int], None]] = None,
         on_delete_stamp: Optional[Callable[[int, int], None]] = None,
         on_edit_issue: Optional[Callable[[int], None]] = None,
         on_delete_issue: Optional[Callable[[int], None]] = None,
@@ -55,7 +55,7 @@ class IssueTableApp(ft.Container):
         Args:
             service: IssueService instance for API communication. Creates
                 a new instance if not provided.
-            on_edit_stamp: Called with stamp ID when a stamp edit icon is clicked.
+            on_edit_stamp: Called with (stamp_dict, issue_id) when a stamp edit icon is clicked.
             on_delete_stamp: Called with (stamp_id, issue_id) when a stamp delete icon is clicked.
             on_edit_issue: Called with issue ID when the issue edit icon is clicked.
             on_delete_issue: Called with issue ID when the issue delete icon is clicked.
@@ -74,7 +74,7 @@ class IssueTableApp(ft.Container):
         self._name_filter: str = ""
         self._lang: str = get_language()
         self._year_filter: str = ""
-        self._on_edit_stamp: Optional[Callable[[int], None]] = on_edit_stamp
+        self._on_edit_stamp: Optional[Callable[[dict, int], None]] = on_edit_stamp
         self._on_delete_stamp: Optional[Callable[[int, int], None]] = on_delete_stamp
         self._on_edit_issue: Optional[Callable[[int], None]] = on_edit_issue
         self._on_delete_issue: Optional[Callable[[int], None]] = on_delete_issue
