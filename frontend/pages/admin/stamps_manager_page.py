@@ -80,7 +80,7 @@ class StampsManagerPage(StandardPage):
         # Controls for the left area of the header
         menu_icon = IconButton(icon=ft.Icons.MENU, bgcolor=DARK_BLUE_GREY, on_click=self.menu_clicked)
         menu_text = ft.Text(
-            _("stamps.stamps_manager_title"),
+            _("stamps.manager_title"),
             color = ft.Colors.WHITE,
             font_family="Roboto-Bold",
             size=20

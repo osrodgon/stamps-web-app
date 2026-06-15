@@ -111,7 +111,7 @@ def fmt_date(value: str, lang: str) -> str:
     except (ValueError, TypeError):
         return value or "-"
     month_name: str = _(f"date.months.{dt.month}")
-    of_word: str = _("date.of")
+    of_word: str = _("common.of")
     return f"{dt.day} {of_word} {month_name} {of_word} {dt.year}"
 
 

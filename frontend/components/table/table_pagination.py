@@ -99,7 +99,7 @@ class TablePagination(ft.Container):
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text(f"{_("pagination.pagination_rows_per_page")}:", 
+                        ft.Text(f"{_("pagination.rows_per_page")}:", 
                                 size=font_size, 
                                 font_family=font_family
                         ),
@@ -140,7 +140,7 @@ class TablePagination(ft.Container):
         start: int = (self._page - 1) * self._page_size + 1
         end: int = min(self._page * self._page_size, self._total)
         lang: str = get_language()
-        return f"{fmt_number(start, lang)}-{fmt_number(end, lang)} {_('pagination.pagination_of')} {fmt_number(self._total, lang)}"
+        return f"{fmt_number(start, lang)}-{fmt_number(end, lang)} {_('common.of')} {fmt_number(self._total, lang)}"
 
     def _total_pages(self) -> int:
         """Calculate total pages."""
@@ -164,7 +164,7 @@ class TablePagination(ft.Container):
     def _on_dropdown_change(self, e: ft.ControlEvent) -> None:
         """Handle page size dropdown change."""
         value: str = e.control.value
-        new_size: int = 0 if value == _("pagination.pagination_all_rows") else int(value)
+        new_size: int = 0 if value == _("pagination.all_rows") else int(value)
         self._page_size = new_size
         self._page = 1
         self._range_text.value = self._format_range()

@@ -56,14 +56,21 @@ class StampForm(BaseUI, Logger):
 
         self._dlg: Optional[ft.AlertDialog] = None
         self._colors_list: list[dict] = []
+        self._selected_colors: list[dict] = []
+
+        # Color picker dialog state
+        self._color_dialog: Optional[ft.AlertDialog] = None
+        self._color_search: Optional[ft.TextField] = None
+        self._color_checkboxes: list[ft.Checkbox] = []
+        self._color_checkbox_col: Optional[ft.Column] = None
 
         # Fields
         self._name_field: Optional[ft.TextField] = None
         self._fesofi_field: Optional[ft.TextField] = None
         self._edifil_field: Optional[ft.TextField] = None
         self._face_value_field: Optional[ft.TextField] = None
-        self._colors_field: Optional[ft.TextField] = None
-        self._color_picker: Optional[ft.Dropdown] = None
+        self._select_colors_btn: Optional[DefaultButton] = None
+        self._color_chips: Optional[ft.Row] = None
         self._mnh_field: Optional[ft.TextField] = None
         self._used_field: Optional[ft.TextField] = None
         self._total_printed_field: Optional[ft.TextField] = None
@@ -102,7 +109,8 @@ class StampForm(BaseUI, Logger):
         colors_response = await self._service.get_colors()
         if colors_response and colors_response.status_code == requests.codes.ok:
             try:
-                self._colors_list = colors_response.json().get("data", [])
+                raw: list[dict] = colors_response.json().get("data", [])
+                self._colors_list = sorted(raw, key=lambda x: x.get("name", "").lower())
             except Exception:
                 self._colors_list = []
         else:
@@ -160,29 +168,16 @@ class StampForm(BaseUI, Logger):
             text_style=field_font,
             content_padding=ft.Padding(0, 0, 0, 0),
         )
-        sorted_colors: list[dict] = sorted(
-            self._colors_list, key=lambda x: x["name"].lower()
-        )
-        self._colors_field = ft.TextField(
-            value="",
-            hint_text=_("stamps.color"),
-            hint_style=hint_style,
-            border=ft.InputBorder.UNDERLINE,
-            dense=True,
-            expand=True,
-            text_style=field_font,
-            content_padding=ft.Padding(0, 0, 0, 0),
-        )
-        self._color_picker = ft.Dropdown(
-            options=[
-                ft.dropdown.Option(key=str(c["id"]), text=c["name"])
-                for c in sorted_colors
-            ],
-            hint_text=_("stamps.select_color"),
-            dense=True,
+        self._select_colors_btn = PrimaryButton(
+            text=_("stamps.select_colors") if _("stamps.select_colors") != "stamps.select_colors" else "Select Colors",
+            on_click=lambda e: self._show_color_picker(),
             expand=False,
-            width=180,
-            on_select=self._on_color_select,
+        )
+        self._color_chips = ft.Row(
+            controls=[],
+            wrap=True,
+            spacing=4,
+            run_spacing=4,
         )
         self._mnh_field = ft.TextField(
             value="",
@@ -190,6 +185,7 @@ class StampForm(BaseUI, Logger):
             hint_style=hint_style,
             border=ft.InputBorder.NONE,
             dense=True,
+            width=100,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto", color=GREY_700),
             content_padding=ft.Padding(0, 0, 0, 0),
         )
@@ -213,7 +209,7 @@ class StampForm(BaseUI, Logger):
         )
         self._description_field = ft.TextField(
             value="",
-            hint_text=_("stamps.description"),
+            hint_text=_("common.description"),
             hint_style=hint_style,
             multiline=True,
             min_lines=2,
@@ -249,57 +245,68 @@ class StampForm(BaseUI, Logger):
             ),
             ft.Row(
                 controls=[
-                    ft.Text(f"{_('stamps.color')}: ", **_ls()),
-                    self._colors_field,
-                    self._color_picker,
+                    #ft.Text(f"{_('stamps.color')}: ", **_ls()),
+                    self._select_colors_btn,
+                    self._color_chips,
                 ],
                 spacing=2,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(
-                content=ft.Row(
+                content=ft.Column(
                     controls=[
-                        ft.Text(f"{_('stamps.mint')}: ", **_ls()),
-                        self._mnh_field,
+                        ft.Row(
+                            controls=[
+                                ft.Text(f"{_('stamps.mint')}: ", **_ls()),
+                                ft.Container(content=self._mnh_field, width=100),
+                            ],
+                            spacing=2,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                     ],
-                    spacing=2,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.START,
                 ),
                 bgcolor=ft.Colors.GREEN_100,
                 border_radius=6,
                 padding=ft.Padding.symmetric(horizontal=8, vertical=4),
-                expand=False,
+                width=200
             ),
             ft.Container(
-                content=ft.Row(
+                content=ft.Column(
                     controls=[
-                        ft.Text(f"{_('stamps.used')}: ", **_ls()),
-                        self._used_field,
+                        ft.Row(
+                            controls=[
+                                ft.Text(f"{_('stamps.used')}: ", **_ls()),
+                                ft.Container(content=self._used_field, width=100),
+                            ],
+                            spacing=2,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                     ],
-                    spacing=2,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.START,
                 ),
                 bgcolor=ft.Colors.BLUE_100,
                 border_radius=6,
                 padding=ft.Padding.symmetric(horizontal=8, vertical=4),
-                expand=False,
+                width=200
             ),
             ft.Container(
-                content=ft.Row(
+                content=ft.Column(
                     controls=[
-                        ft.Text(f"{_('stamps.total_printed')}: ", **_ls()),
-                        self._total_printed_field,
+                        ft.Row(
+                            controls=[
+                                ft.Text(f"{_('stamps.total_printed')}: ", **_ls()),
+                                ft.Container(content=self._total_printed_field, width=100),
+                            ],
+                            spacing=2,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
                     ],
-                    spacing=2,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    expand=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.START,
                 ),
                 bgcolor=ft.Colors.GREY_300,
                 border_radius=6,
                 padding=ft.Padding.symmetric(horizontal=8, vertical=4),
-                expand=False,
+                width=200,
             ),
         ]
 
@@ -368,7 +375,7 @@ class StampForm(BaseUI, Logger):
                                 ft.Column(
                                     controls=[
                                         ft.Text(
-                                            _("ui.description").upper(),
+                                            _("common.description").upper(),
                                             size=FONT_SIZE_DEFAULT,
                                             font_family="Roboto-Black",
                                             color=GREY_700,
@@ -413,56 +420,126 @@ class StampForm(BaseUI, Logger):
         """
         self.close()
 
-    # --- Color picker ---
+    # --- Color picker dialog ---
 
-    def _on_color_select(self, e: ft.ControlEvent) -> None:
-        """Append the selected color to the comma-separated colors field.
+    def _show_color_picker(self) -> None:
+        """Open a searchable multi-select dialog for picking colors."""
+        self._color_search = ft.TextField(
+            hint_text=_("stamps.search_colors") if _("stamps.search_colors") != "stamps.search_colors" else "Search colors...",
+            border=ft.InputBorder.UNDERLINE,
+            dense=True,
+            on_change=self._filter_color_checkboxes,
+        )
+        self._color_checkboxes = [
+            ft.Checkbox(
+                label=c["name"],
+                value=any(sc["id"] == c["id"] for sc in self._selected_colors),
+            )
+            for c in sorted(self._colors_list, key=lambda x: x["name"])
+        ]
+        checkbox_col = ft.Column(
+            controls=self._color_checkboxes,
+            spacing=0,
+            tight=True,
+            scroll=ft.ScrollMode.AUTO,
+            height=300,
+        )
+        self._color_checkbox_col = checkbox_col
+        cancel_btn = DefaultButton(
+            text=_("ui.cancel").upper(),
+            on_click=lambda e: self._close_color_picker(),
+            expand=False,
+        )
+        done_btn = PrimaryButton(
+            text=_("ui.done").upper() if _("ui.done") != "ui.done" else "Done",
+            on_click=lambda e: self._apply_colors(),
+            expand=False,
+        )
+        self._color_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(_("stamps.select_colors") if _("stamps.select_colors") != "stamps.select_colors" else "Select Colors", font_family="Roboto-Black"),
+            content=ft.Column(
+                controls=[
+                    self._color_search,
+                    ft.Divider(height=1),
+                    checkbox_col,
+                ],
+                tight=True,
+                width=320,
+            ),
+            actions=[
+                ft.Row(
+                    controls=[cancel_btn, done_btn],
+                    alignment=ft.MainAxisAlignment.END,
+                    spacing=12,
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
+        )
+        self.page.overlay.append(self._color_dialog)
+        self._color_dialog.open = True
+        self.page.update()
+
+    def _close_color_picker(self) -> None:
+        """Close the color picker dialog."""
+        if self._color_dialog:
+            self._color_dialog.open = False
+            self.page.update()
+
+    def _filter_color_checkboxes(self, e: ft.ControlEvent) -> None:
+        """Filter color checkboxes by search text."""
+        query: str = (e.data or "").strip().lower()
+        for cb in self._color_checkboxes:
+            cb.visible = not query or query in cb.label.lower()
+        if self._color_checkbox_col:
+            self._color_checkbox_col.update()
+
+    def _apply_colors(self) -> None:
+        """Read checked colors and update selected_colors chips."""
+        self._selected_colors = [
+            c for c in self._colors_list
+            if any(
+                cb.label == c["name"] and cb.value
+                for cb in self._color_checkboxes
+            )
+        ]
+        self._rebuild_chips()
+        self._close_color_picker()
+
+    def _rebuild_chips(self) -> None:
+        """Rebuild the chip row from the selected colors list."""
+        chips: list[ft.Control] = []
+        for c in self._selected_colors:
+            chip = ft.Chip(
+                label=ft.Text(c["name"], size=13),
+                delete_icon=ft.Icon(ft.Icons.CLOSE, size=16),
+                on_delete=lambda _, cid=c["id"]: self._remove_color(cid),
+                bgcolor=ft.Colors.GREY_200,
+                padding=ft.Padding.symmetric(horizontal=6, vertical=2),
+            )
+            chips.append(chip)
+        self._color_chips.controls = chips
+        self._color_chips.update()
+
+    def _remove_color(self, color_id: int) -> None:
+        """Remove a color from the selected list and rebuild chips.
 
         Args:
-            e: The select event from the color picker dropdown.
+            color_id: The ID of the color to remove.
         """
-        if not e.data:
-            return
-        selected_name: str = ""
-        for opt in self._color_picker.options:
-            if opt.key == e.data:
-                selected_name = opt.text
-                break
-        if not selected_name:
-            return
-
-        current: str = self._colors_field.value or ""
-        if current.strip():
-            self._colors_field.value = current.rstrip(", ") + ", " + selected_name
-        else:
-            self._colors_field.value = selected_name
-        self._color_picker.value = None
-        self._color_picker.update()
-        self._colors_field.update()
+        self._selected_colors = [c for c in self._selected_colors if c["id"] != color_id]
+        self._rebuild_chips()
 
     # --- Color resolution ---
 
-    def _resolve_color_ids(self, colors_str: str) -> list[int]:
-        """Parse comma-separated color names and return a list of IDs.
-
-        Args:
-            colors_str: Comma-separated color names.
+    def _resolve_color_ids(self) -> list[int]:
+        """Return the list of selected color IDs.
 
         Returns:
-            List of matching color IDs.
+            List of color IDs from the selected chips.
         """
-        if not colors_str:
-            return []
-        parts: list[str] = [p.strip() for p in colors_str.split(",") if p.strip()]
-        if not parts:
-            return []
-        name_to_id: dict[str, int] = {c["name"].strip().lower(): c["id"] for c in self._colors_list}
-        ids: list[int] = []
-        for part in parts:
-            cid = name_to_id.get(part.lower())
-            if cid is not None:
-                ids.append(cid)
-        return ids
+        return [c["id"] for c in self._selected_colors]
 
     async def _on_create(self, e: ft.ControlEvent) -> None:
         """Validate and submit the form to create a new stamp.
@@ -490,7 +567,6 @@ class StampForm(BaseUI, Logger):
 
         fesofi_val: str = self._fesofi_field.value.strip() if self._fesofi_field else ""
         edifil_val: str = self._edifil_field.value.strip() if self._edifil_field else ""
-        colors_str: str = self._colors_field.value.strip() if self._colors_field else ""
 
         mnh_raw: str = self._mnh_field.value.strip() if self._mnh_field else ""
         used_raw: str = self._used_field.value.strip() if self._used_field else ""
@@ -517,7 +593,7 @@ class StampForm(BaseUI, Logger):
             except (ValueError, TypeError):
                 pass
 
-        color_ids: list[int] = self._resolve_color_ids(colors_str)
+        color_ids: list[int] = self._resolve_color_ids()
 
         payload: dict[str, Any] = {
             "issue": self._issue_id,
