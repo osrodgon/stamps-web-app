@@ -217,6 +217,7 @@ class IssueForm(BaseUI, Logger):
             "description": desc_val,
             "note": notes_val,
             "date": date_val,
+            "perforation": self._specs_grid.perforation_value,
         }
 
         self.log.debug("Resolving reference data...")
