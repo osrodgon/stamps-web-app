@@ -18,7 +18,7 @@ from services.issue_service import IssueService
 _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     "country": {
         "icon": ft.Icons.FLAG,
-        "label_key": "stamps.country",
+        "label_key": "common.country",
         "issue_key": "country",
         "fetch": lambda s: s.get_countries(),
         "create": lambda s, n: s.create_country(n),
@@ -26,7 +26,7 @@ _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     },
     "stamp_type": {
         "icon": ft.Icons.CATEGORY,
-        "label_key": "stamps.stamp_type",
+        "label_key": "common.stamp_type",
         "issue_key": "stamp_type",
         "fetch": lambda s: s.get_stamp_types(),
         "create": lambda s, n: s.create_stamp_type(n),
@@ -34,7 +34,7 @@ _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     },
     "printer": {
         "icon": ft.Icons.FACTORY,
-        "label_key": "stamps.printer",
+        "label_key": "common.printer",
         "issue_key": "printer",
         "fetch": lambda s: s.get_printers(),
         "create": lambda s, n: s.create_printer(n),
@@ -42,7 +42,7 @@ _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     },
     "print_type": {
         "icon": ft.Icons.PRINT,
-        "label_key": "stamps.print_type",
+        "label_key": "common.print_type",
         "issue_key": "print_type",
         "fetch": lambda s: s.get_print_types(),
         "create": lambda s, n: s.create_print_type(n),
@@ -50,7 +50,7 @@ _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     },
     "artist": {
         "icon": ft.Icons.BRUSH,
-        "label_key": "stamps.artist",
+        "label_key": "common.artist",
         "issue_key": "artist",
         "fetch": lambda s: s.get_artists(),
         "create": lambda s, n: s.create_artist(n),
@@ -58,7 +58,7 @@ _EDITABLE_FIELDS: dict[str, dict[str, Any]] = {
     },
     "paper_type": {
         "icon": ft.Icons.DESCRIPTION,
-        "label_key": "stamps.paper_type",
+        "label_key": "common.paper_type",
         "issue_key": "paper_type",
         "fetch": lambda s: s.get_paper_types(),
         "create": lambda s, n: s.create_paper_type(n),
@@ -92,6 +92,9 @@ class IssueSpecsGrid(ft.Card):
         self._notes_textfield: Optional[ft.TextField] = None
         self._original_description: str = issue.get("description") or ""
         self._original_notes: str = issue.get("note") or ""
+        self._perforation_cell: Optional[ft.Container] = None
+        self._perforation_textfield: Optional[ft.TextField] = None
+        self._original_perforation: str = issue.get("perforation") or ""
 
         self.elevation = CARD_ELEVATION
         self.content = self._build_content()
@@ -144,6 +147,12 @@ class IssueSpecsGrid(ft.Card):
                 col={"sm": 6, "md": 4},
             )
 
+        self._perforation_cell = self._build_cell(
+            ft.Icons.GRID_ON, _("common.perforation"),
+            issue.get("perforation") or "-",
+            col={"sm": 6, "md": 4},
+        )
+
         self._description_container = ft.Container(
             content=ft.Text(
                 str(description),
@@ -171,7 +180,7 @@ class IssueSpecsGrid(ft.Card):
                             self._detail_cells["stamp_type"],
                             self._detail_cells["printer"],
                             self._build_cell(ft.Icons.CALENDAR_TODAY, _("stamps.year"), issue.get("year") or "-", col={"sm": 6, "md": 4}),
-                            self._build_cell(ft.Icons.GRID_ON, _("common.perforation"), issue.get("perforation") or "-", col={"sm": 6, "md": 4}),
+                            self._perforation_cell,
                             self._detail_cells["print_type"],
                             self._detail_cells["artist"],
                             self._detail_cells["paper_type"],
@@ -268,6 +277,18 @@ class IssueSpecsGrid(ft.Card):
         )
         self._notes_container.content = self._notes_textfield
 
+        perf_val: str = self._issue.get("perforation") or ""
+        self._perforation_textfield = ft.TextField(
+            value=perf_val,
+            border=ft.InputBorder.UNDERLINE,
+            dense=True,
+            expand=True,
+            text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
+        )
+        if self._perforation_cell:
+            value_container: ft.Container = self._perforation_cell.content.controls[1].controls[1]
+            value_container.content = self._perforation_textfield
+
         return True
 
     def exit_edit_mode(self, saved: bool) -> None:
@@ -314,6 +335,16 @@ class IssueSpecsGrid(ft.Card):
         )
         self._notes_textfield = None
 
+        self._perforation_textfield = None
+        perf_display: str = self._issue.get("perforation") or "-"
+        if self._perforation_cell:
+            value_container: ft.Container = self._perforation_cell.content.controls[1].controls[1]
+            value_container.content = ft.Text(
+                perf_display,
+                size=FONT_SIZE_DEFAULT,
+                font_family="Roboto",
+            )
+
     @property
     def edit_state(self) -> dict[str, dict[str, Any]]:
         return self._edit_state
@@ -329,3 +360,9 @@ class IssueSpecsGrid(ft.Card):
         if self._notes_textfield is not None:
             return self._notes_textfield.value.strip()
         return self._original_notes
+
+    @property
+    def perforation_value(self) -> str:
+        if self._perforation_textfield is not None:
+            return self._perforation_textfield.value.strip()
+        return self._original_perforation
