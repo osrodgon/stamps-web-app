@@ -218,25 +218,26 @@ class IssueHeaderSection(ft.Container):
             value=self._issue.get("name") or self._original_name,
             hint_text=hint_text,
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
             dense=True,
+            width=320,
             text_style=ft.TextStyle(size=FONT_SIZE_XLARGE, font_family="Roboto-Black"),
             content_padding=ft.Padding(0, 0, 0, 0),
         )
         self._name_container.content = self._name_textfield
-        self._name_container.expand = True
-        if self._badges_row:
-            self._badges_row.expand = False
 
         current_mint_raw = self._issue.get("market_value_mnh") or self._original_mint
         self._mint_textfield = ft.TextField(
             value=str(current_mint_raw) if current_mint_raw != "0" else "",
             hint_text="0.00",
+            prefix="€ ",
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREEN_400,
             dense=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto-Black",
                                      color=ft.Colors.GREEN_700),
             content_padding=ft.Padding(0, 0, 0, 0),
-            width=80,
+            width=110,
             keyboard_type="number",
         )
         self._mint_value_container.content = self._mint_textfield
@@ -245,12 +246,14 @@ class IssueHeaderSection(ft.Container):
         self._used_textfield = ft.TextField(
             value=str(current_used_raw) if current_used_raw != "0" else "",
             hint_text="0.00",
+            prefix="€ ",
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.BLUE_400,
             dense=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto-Black",
                                      color=ft.Colors.BLUE_700),
             content_padding=ft.Padding(0, 0, 0, 0),
-            width=80,
+            width=110,
             keyboard_type="number",
         )
         self._used_value_container.content = self._used_textfield
@@ -260,10 +263,11 @@ class IssueHeaderSection(ft.Container):
             value=str(current_total_raw) if current_total_raw != "0" else "",
             hint_text="0",
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
             dense=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto-Black"),
             content_padding=ft.Padding(0, 0, 0, 0),
-            width=80,
+            width=100,
             keyboard_type="number",
         )
         self._total_printed_container.content = self._total_printed_textfield

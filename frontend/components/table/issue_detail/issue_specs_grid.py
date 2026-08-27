@@ -259,6 +259,7 @@ class IssueSpecsGrid(ft.Card):
             min_lines=2,
             max_lines=6,
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
             dense=True,
             expand=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
@@ -271,6 +272,7 @@ class IssueSpecsGrid(ft.Card):
             min_lines=2,
             max_lines=6,
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
             expand=True,
             dense=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
@@ -281,6 +283,7 @@ class IssueSpecsGrid(ft.Card):
         self._perforation_textfield = ft.TextField(
             value=perf_val,
             border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
             dense=True,
             expand=True,
             text_style=ft.TextStyle(size=FONT_SIZE_DEFAULT, font_family="Roboto"),
