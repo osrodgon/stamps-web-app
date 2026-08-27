@@ -296,7 +296,7 @@ class StampsManagerPage(StandardPage):
                 self._issue_service,
                 issue_id,
                 stamp_data=stamp,
-                on_success=lambda: self.page.run_task(self._table.load, reset_page=True),
+                on_success=lambda: self.page.run_task(self._table._fetch_stamps_for_row, issue_id),
             )
             await form.show()
 
@@ -406,7 +406,7 @@ class StampsManagerPage(StandardPage):
                 page=page,
                 issue_service=self._issue_service,
                 issue_id=issue_id,
-                on_success=lambda: page.run_task(self._table.load, reset_page=True),
+                on_success=lambda: page.run_task(self._table._fetch_stamps_for_row, issue_id),
             )
             await form.show()
 

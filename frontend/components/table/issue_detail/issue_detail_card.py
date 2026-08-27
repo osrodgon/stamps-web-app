@@ -1,5 +1,6 @@
 """Issue detail card component — expanded issue details with stamps grid."""
 
+import datetime
 from typing import Any, Callable, Optional
 
 import flet as ft
@@ -14,6 +15,7 @@ from components.table.issue_detail.issue_stamp_grid import IssueStampGrid
 from core.base_ui import BaseUI
 from core.severity import Severity
 from core.translations import _
+from core.utils import get_local_today
 from components.constants import CARD_BORDER_RADIUS, CARD_PADDING
 from services.issue_service import IssueService
 
@@ -133,7 +135,22 @@ class IssueDetailCard(ft.Container, BaseUI):
         desc_val: str = self._specs_grid.description_value
         notes_val: str = self._specs_grid.notes_value
         date_val: str = self._header_section.date_value
+        perf_val: str = self._specs_grid.perforation_value
 
+        year_number: int = (
+            datetime.date.fromisoformat(date_val).year
+            if date_val else get_local_today().year
+        )
+        years_response = await self._service.get_years()
+        year_id: Optional[int] = None
+        if years_response and years_response.status_code == 200:
+            years_data = years_response.json().get("data", [])
+            for year_obj in years_data:
+                if year_obj.get("year") == year_number:
+                    year_id = year_obj.get("id")
+                    break
+        if year_id is None:
+            year_id = await self._service.create_year(year_number)
         payload: dict[str, Any] = {
             "name": name_value,
             "market_value_mnh": str(mint_val),
@@ -142,7 +159,11 @@ class IssueDetailCard(ft.Container, BaseUI):
             "description": desc_val,
             "note": notes_val,
             "date": date_val,
+            "perforation": perf_val,
         }
+
+        if year_id:
+            payload["year"] = year_id
 
         for key, state in self._specs_grid.edit_state.items():
             ac: AutoCompleteField = state["ac"]
@@ -177,6 +198,8 @@ class IssueDetailCard(ft.Container, BaseUI):
             self._issue["description"] = desc_val
             self._issue["note"] = notes_val
             self._issue["date"] = date_val
+            self._issue["perforation"] = perf_val
+            self._issue["year"] = year_number
             self._header_section.exit_edit_mode(saved=True, new_name=name_value)
             self._specs_grid.exit_edit_mode(saved=True)
             await self.show_notification(_("issues.update_success"), Severity.SUCCESS)

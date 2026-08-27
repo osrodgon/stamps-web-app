@@ -21,9 +21,7 @@
 - 3 service files are Flet-free (base_service, auth_service, issue_service)
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
-- **StampForm edit mode**: accepts `stamp_data` param, pre-populates all fields + colors, dispatches to `update_stamp()` / `create_stamp()`
-- Edit callback chain: StampCard passes `stamp_dict` → IssueStampGrid → IssueDetailCard wraps with `issue_id` → IssueRow → IssueTableApp → StampsManagerPage opens StampForm
-- 653 tests total (9 new: 4 edit-mode + 4 update_stamp service + 1 handler)
+- **Form UI Styling Alignment**: updated `issue_header_section.py`, `issue_specs_grid.py`, and `stamp_form.py` to use consistent `ft.InputBorder.UNDERLINE` with `border_color=GREY_400`. In `StampForm`, valuation fields (`_mnh_field` and `_used_field`) use standard regular font (`Roboto`, `GREY_700`) and non-italic `prefix_style` for `€`. 653 tests passing.
 
 ## Session Log
-- [Today] Stamp edit feature: added `update_stamp()` to IssueService, modified StampForm for edit mode (stamp_data param, pre-population of all fields + colors, _on_save dispatches to create/update), changed callback chain to pass stamp dict through 6 layers, implemented _handle_edit_stamp in StampsManagerPage, added 4 locale keys (edit_title, update_stamp, update_success, update_failed) to en/es, 8 new tests — 653 total passing
+- [Today] Stamp edit feature & Form UI adjustments: updated `StampForm` valuation inputs (`_mnh_field` & `_used_field`) to regular `Roboto` text in `GREY_700` and non-italic `prefix_style` for the euro symbol. All 653 frontend tests passing.
