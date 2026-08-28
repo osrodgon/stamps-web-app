@@ -68,18 +68,12 @@ class StampForm(BaseUI, Logger):
         self._colors_list: list[dict] = []
         self._selected_colors: list[dict] = []
 
-        # Color picker dialog state
-        self._color_dialog: Optional[ft.AlertDialog] = None
-        self._color_search: Optional[ft.TextField] = None
-        self._color_checkboxes: list[ft.Checkbox] = []
-        self._color_checkbox_col: Optional[ft.Column] = None
-
         # Fields
         self._name_field: Optional[ft.TextField] = None
         self._fesofi_field: Optional[ft.TextField] = None
         self._edifil_field: Optional[ft.TextField] = None
         self._face_value_field: Optional[ft.TextField] = None
-        self._select_colors_btn: Optional[DefaultButton] = None
+        self._color_dropdown: Optional[ft.Dropdown] = None
         self._color_chips: Optional[ft.Row] = None
         self._mnh_field: Optional[ft.TextField] = None
         self._used_field: Optional[ft.TextField] = None
@@ -137,6 +131,7 @@ class StampForm(BaseUI, Logger):
             ]
 
         self._build_content()
+        self._update_color_dropdown_and_chips(page_not_ready=True)
         self.page.update()
 
     def _stamp_value(self, key: str, default: str = "") -> str:
@@ -207,16 +202,36 @@ class StampForm(BaseUI, Logger):
             text_style=field_font,
             content_padding=ft.Padding(0, 0, 0, 0),
         )
-        self._select_colors_btn = PrimaryButton(
-            text=_("stamps.select_colors") if _("stamps.select_colors") != "stamps.select_colors" else "Select Colors",
-            on_click=lambda e: self._show_color_picker(),
-            expand=False,
+        hint_colors_text = (
+            _("stamps.select_colors")
+            if _("stamps.select_colors") != "stamps.select_colors"
+            else "Select Colors"
         )
+        self._color_dropdown = ft.Dropdown(
+            hint_text=hint_colors_text,
+            hint_style=hint_style,
+            border=ft.InputBorder.UNDERLINE,
+            border_color=ft.Colors.GREY_400,
+            dense=True,
+            text_size=FONT_SIZE_DEFAULT,
+            content_padding=ft.Padding(0, 0, 0, 0),
+            editable=True,
+            enable_filter=True,
+            enable_search=True,
+            menu_height=200,
+            menu_style=ft.MenuStyle(
+                alignment=ft.Alignment.BOTTOM_LEFT,
+            ),
+            options=[],
+            width=160,
+        )
+        self._color_dropdown.on_select = self._on_color_selected
         self._color_chips = ft.Row(
             controls=[],
             wrap=True,
             spacing=4,
             run_spacing=4,
+            expand=True,
         )
         prefix_style: ft.TextStyle = ft.TextStyle(
             size=FONT_SIZE_DEFAULT,
@@ -295,11 +310,11 @@ class StampForm(BaseUI, Logger):
             ),
             ft.Row(
                 controls=[
-                    #ft.Text(f"{_('stamps.color')}: ", **_ls()),
-                    self._select_colors_btn,
+                    self._color_dropdown,
                     self._color_chips,
                 ],
-                spacing=2,
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(
                 content=ft.Column(
@@ -475,92 +490,54 @@ class StampForm(BaseUI, Logger):
         """
         self.close()
 
-    # --- Color picker dialog ---
+    # --- Color selector handlers ---
 
-    def _show_color_picker(self) -> None:
-        """Open a searchable multi-select dialog for picking colors."""
-        self._color_search = ft.TextField(
-            hint_text=_("stamps.search_colors") if _("stamps.search_colors") != "stamps.search_colors" else "Search colors...",
-            border=ft.InputBorder.UNDERLINE,
-            dense=True,
-            on_change=self._filter_color_checkboxes,
-        )
-        self._color_checkboxes = [
-            ft.Checkbox(
-                label=c["name"],
-                value=any(sc["id"] == c["id"] for sc in self._selected_colors),
-            )
-            for c in sorted(self._colors_list, key=lambda x: x["name"])
-        ]
-        checkbox_col = ft.Column(
-            controls=self._color_checkboxes,
-            spacing=0,
-            tight=True,
-            scroll=ft.ScrollMode.AUTO,
-            height=300,
-        )
-        self._color_checkbox_col = checkbox_col
-        cancel_btn = DefaultButton(
-            text=_("ui.cancel").upper(),
-            on_click=lambda e: self._close_color_picker(),
-            expand=False,
-        )
-        done_btn = PrimaryButton(
-            text=_("ui.done").upper() if _("ui.done") != "ui.done" else "Done",
-            on_click=lambda e: self._apply_colors(),
-            expand=False,
-        )
-        self._color_dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text(_("stamps.select_colors") if _("stamps.select_colors") != "stamps.select_colors" else "Select Colors", font_family="Roboto-Black"),
-            content=ft.Column(
-                controls=[
-                    self._color_search,
-                    ft.Divider(height=1),
-                    checkbox_col,
-                ],
-                tight=True,
-                width=320,
-            ),
-            actions=[
-                ft.Row(
-                    controls=[cancel_btn, done_btn],
-                    alignment=ft.MainAxisAlignment.END,
-                    spacing=12,
-                ),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
-        )
-        self.page.overlay.append(self._color_dialog)
-        self._color_dialog.open = True
-        self.page.update()
+    def _update_color_dropdown_and_chips(self, page_not_ready: bool = False) -> None:
+        """Update available options in color dropdown and rebuild color chips.
 
-    def _close_color_picker(self) -> None:
-        """Close the color picker dialog."""
-        if self._color_dialog:
-            self._color_dialog.open = False
-            self.page.update()
-
-    def _filter_color_checkboxes(self, e: ft.ControlEvent) -> None:
-        """Filter color checkboxes by search text."""
-        query: str = (e.data or "").strip().lower()
-        for cb in self._color_checkboxes:
-            cb.visible = not query or query in cb.label.lower()
-        if self._color_checkbox_col:
-            self._color_checkbox_col.update()
-
-    def _apply_colors(self) -> None:
-        """Read checked colors and update selected_colors chips."""
-        self._selected_colors = [
+        Args:
+            page_not_ready: If True, skip calling ``update()`` on controls.
+        """
+        available_colors = [
             c for c in self._colors_list
-            if any(
-                cb.label == c["name"] and cb.value
-                for cb in self._color_checkboxes
-            )
+            if not any(sc["id"] == c["id"] for sc in self._selected_colors)
         ]
-        self._rebuild_chips()
-        self._close_color_picker()
+        if self._color_dropdown:
+            self._color_dropdown.options = [
+                ft.dropdown.Option(key=str(c["id"]), text=c["name"])
+                for c in available_colors
+            ]
+            self._color_dropdown.value = None
+            if hasattr(self._color_dropdown, "text"):
+                self._color_dropdown.text = ""
+            if not page_not_ready and hasattr(self._color_dropdown, "page") and self._color_dropdown.page:
+                self._color_dropdown.update()
+
+        self._rebuild_chips(page_not_ready=page_not_ready)
+
+    def _on_color_selected(self, e: ft.ControlEvent) -> None:
+        """Handle selection of a color from the inline dropdown.
+
+        Args:
+            e: The select control event containing the selected color ID key in ``e.data``.
+        """
+        color_key = e.data or (self._color_dropdown.value if self._color_dropdown else None)
+        if not color_key:
+            return
+
+        color_obj = None
+        try:
+            color_id = int(color_key)
+            color_obj = next((c for c in self._colors_list if c["id"] == color_id), None)
+        except (ValueError, TypeError):
+            color_obj = next(
+                (c for c in self._colors_list if c["name"].lower() == str(color_key).strip().lower()),
+                None,
+            )
+
+        if color_obj and not any(sc["id"] == color_obj["id"] for sc in self._selected_colors):
+            self._selected_colors.append(color_obj)
+            self._update_color_dropdown_and_chips(page_not_ready=False)
 
     def _rebuild_chips(self, page_not_ready: bool = False) -> None:
         """Rebuild the chip row from the selected colors list.
@@ -569,6 +546,8 @@ class StampForm(BaseUI, Logger):
             page_not_ready: If True, skip the ``update()`` call since
                 the control is not yet attached to the page tree.
         """
+        if not self._color_chips:
+            return
         chips: list[ft.Control] = []
         for c in self._selected_colors:
             chip = ft.Chip(
@@ -580,17 +559,17 @@ class StampForm(BaseUI, Logger):
             )
             chips.append(chip)
         self._color_chips.controls = chips
-        if not page_not_ready:
+        if not page_not_ready and hasattr(self._color_chips, "page") and self._color_chips.page:
             self._color_chips.update()
 
     def _remove_color(self, color_id: int) -> None:
-        """Remove a color from the selected list and rebuild chips.
+        """Remove a color from the selected list, rebuild chips, and restore to dropdown.
 
         Args:
             color_id: The ID of the color to remove.
         """
         self._selected_colors = [c for c in self._selected_colors if c["id"] != color_id]
-        self._rebuild_chips()
+        self._update_color_dropdown_and_chips(page_not_ready=False)
 
     # --- Color resolution ---
 
