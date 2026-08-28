@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task
-- Stamp edit feature: reuse StampForm dialog for editing stamps
+- Stamp color selection UX improvement: replaced modal dialog color picker with inline Material 3 multi-select color dropdown and input chips in `StampForm`.
 
 ## Notes
 - Frontend uses Flet 0.84.0 (not NiceGUI)
@@ -21,7 +21,7 @@
 - 3 service files are Flet-free (base_service, auth_service, issue_service)
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
-- **Form UI Styling Alignment**: updated `issue_header_section.py`, `issue_specs_grid.py`, and `stamp_form.py` to use consistent `ft.InputBorder.UNDERLINE` with `border_color=GREY_400`. In `StampForm`, valuation fields (`_mnh_field` and `_used_field`) use standard regular font (`Roboto`, `GREY_700`) and non-italic `prefix_style` for `€`. 653 tests passing.
+- **Inline Multi-Select Color Picker**: Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`) and removable `ft.Chip` controls directly inside `StampForm`. Available dropdown options automatically filter out selected colors, and removing a chip restores the color to available options. All 651 tests passing.
 
 ## Session Log
-- [Today] Stamp edit feature & Form UI adjustments: updated `StampForm` valuation inputs (`_mnh_field` & `_used_field`) to regular `Roboto` text in `GREY_700` and non-italic `prefix_style` for the euro symbol. All 653 frontend tests passing.
+- [Today] Stamp color selection UX: replaced nested modal dialog color picker in `StampForm` with an inline Material 3 multi-select dropdown and removable chips. Updated `stamp_form.py` and `test_stamp_form.py`. All 651 frontend tests passing.

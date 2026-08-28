@@ -406,6 +406,7 @@ frontend/
 - [x] Step 7: Integrate into StampsManagerPage content_area
 - [x] Step 8: Refactor to COLUMNS-driven architecture with column_def.py
 - [x] Step 9: Locale-aware number formatting (en/es)
+- [x] Step 10: Inline multi-select color selector with chips in `StampForm` (replacing modal dialog color picker)
 
 ---
 
