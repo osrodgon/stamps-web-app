@@ -193,3 +193,61 @@ msgstr "series"
 #: datadesk/templates/datadesk/dashboard.html
 msgid "Open the issues workbench"
 msgstr "Abrir el banco de series"
+
+#: datadesk/views/workspace.py
+msgid "Edifil"
+msgstr "Edifil"
+
+#: datadesk/views/workspace.py
+msgid "Fesofi"
+msgstr "Fesofi"
+
+#: datadesk/views/workspace.py
+msgid "Face value"
+msgstr "Valor facial"
+
+#: datadesk/views/workspace.py
+msgid "Colors"
+msgstr "Colores"
+
+#: datadesk/views/workspace.py
+msgid "Market value MNH"
+msgstr "Valor de mercado MNH"
+
+#: datadesk/views/workspace.py
+msgid "Market value used"
+msgstr "Valor de mercado usado"
+
+#: datadesk/views/workspace.py
+msgid "Description"
+msgstr "Descripción"
+
+#: datadesk/views/workspace.py
+msgid "Note"
+msgstr "Nota"
+
+#: datadesk/views/workspace.py
+msgid "No stamps in this issue."
+msgstr "Esta serie no tiene sellos."
+
+
+#: datadesk/views/workbench.py
+msgid "Open"
+msgstr "Abrir"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Issue metadata"
+msgstr "Metadatos de la serie"
+
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Back to the issues workbench"
+msgstr "Volver al banco de series"
+
+
+
+
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "as stored · series values describe the whole set, stamp values the stamp"
+msgstr "tal como está guardado · los valores de la serie describen el conjunto y los del sello, el sello"

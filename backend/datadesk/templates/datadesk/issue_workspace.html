@@ -1,0 +1,50 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {{ issue.name }}{% endblock %}
+
+{% block breadcrumbs %}
+  <a href="{% url 'datadesk:issues' %}">{% translate "Issues" %}</a>
+  <span class="dd-crumb-sep">/</span>
+  {{ issue.year.year }}
+  <span class="dd-crumb-sep">/</span>
+  <b>{{ issue.name }}</b>
+{% endblock %}
+
+{% block content %}
+  <section class="dd-page dd-workspace-page">
+    <div class="dd-meta">
+      <div class="dd-meta-head">
+        <span class="dd-label">{% translate "Issue metadata" %}</span>
+        <span class="dd-hint">{% translate "as stored · series values describe the whole set, stamp values the stamp" %}</span>
+        <a class="dd-btn dd-btn-ghost dd-meta-back" href="{% url 'datadesk:issues' %}">
+          {% translate "Back to the issues workbench" %}
+        </a>
+      </div>
+
+      <div class="dd-fields">
+        {% for field in metadata %}
+          <div class="dd-field{% if field.wide %} dd-field-wide{% endif %}">
+            <span class="dd-field-key">{{ field.label }}</span>
+            <span class="dd-field-value" title="{{ field.value }}">{{ field.value }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <div class="dd-gridwrap">
+      <div class="dd-grid-head">
+        <span class="dd-label">{% translate "Stamps" %}</span>
+        <span class="dd-count">{{ stamp_count }}</span>
+      </div>
+      <div id="stamp-grid"></div>
+    </div>
+  </section>
+
+  {{ config|json_script:"stamp-config" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/issue_workspace.js' %}"></script>
+{% endblock %}

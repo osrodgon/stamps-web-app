@@ -96,6 +96,15 @@ Set `DATADESK_TLS=1` in the deployment environment when nginx terminates TLS in 
 Django. It only turns on `Secure` cookies and `SECURE_PROXY_SSL_HEADER`; the code path is
 the same locally and on the server.
 
+Stamp pictures are read from disk, not from the database: `Stamp.image` is empty and the
+files live with the frontend, one `.webp` per FESOFI code under `<year>/<code>.webp`.
+`DATADESK_STAMP_IMAGES` points at that tree and both compose files mount it read-only
+(`../frontend/assets/stamps` in dev, `/media/data/stamps-docker-data/images` in prod, the
+same host folder the frontend serves at `/app/assets/stamps`). A folder that does not
+exist is not an error: the grid falls back to a hollow marker and the "without image"
+queue counts everything. The listing is cached for a minute, so dropping a new file on
+the server shows up without a restart or a rebuild.
+
 Restricting the app by IP is done at the proxy, not in Django:
 
 ```nginx

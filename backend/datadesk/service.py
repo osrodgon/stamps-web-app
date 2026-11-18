@@ -12,6 +12,8 @@ from typing import Any
 
 from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
 
+from datadesk.images import ImageIndex, has_picture, image_index
+from datadesk.palette import tone_for
 from issues_api.models import Issue
 from stamps_api.models import Stamp
 
@@ -72,7 +74,6 @@ SORT_FIELDS: dict[str, str] = {
 DEFAULT_SORT: tuple[str, str] = ("year", "asc")
 DEFAULT_PAGE_SIZE = 100
 MAX_PAGE_SIZE = 200
-
 
 @dataclass(frozen=True)
 class IssueFilters:
@@ -250,14 +251,65 @@ def stamp_queryset(issue_id: int) -> QuerySet[Stamp]:
     )
 
 
+def stamp_rows(issue: Issue) -> list[dict[str, Any]]:
+    """Returns the stamps of an issue, ready for the workspace grid.
+
+    The picture index is read once and shared by every row: the shared cache is
+    a file, and asking it 57 times costs more than walking the folders.
+    """
+    index = image_index()
+    return [
+        serialize_stamp(stamp, issue, index=index)
+        for stamp in stamp_queryset(issue.pk)
+    ]
+
+
+def serialize_stamp(
+    stamp: Stamp, issue: Issue, index: ImageIndex | None = None
+) -> dict[str, Any]:
+    """Turns a stamp into the flat row the workspace grid renders.
+
+    Nothing is inherited: every value shown belongs to the stamp. The series
+    values describe the **set** (its print run, what the complete series is
+    worth) and a stamp's describe the stamp, so an equal number is a
+    coincidence, never a copy.
+
+    Colours carry their tone as well as their name, so the chip keeps the same
+    pastel everywhere without the script knowing any colour names.
+    """
+    return {
+        "id": stamp.pk,
+        "edifil": stamp.edifil_code or "",
+        "fesofi": stamp.fesofi_code or "",
+        "name": stamp.name,
+        "face_value": stamp.face_value,
+        "colors": [
+            {"name": name, "tone": tone_for(name)}
+            for name in sorted(color.name for color in stamp.colors.all())
+        ],
+        "total_printed": stamp.total_printed,
+        "mnh": _decimal(stamp.market_value_mnh),
+        "used": _decimal(stamp.market_value_used),
+        "has_image": has_picture(issue.year.year, stamp.fesofi_code, index),
+    }
+
+
 def missing_data_report() -> dict[str, int]:
     """Counts the rows that still need work, for the dashboard queues.
 
-    ``image`` may be NULL or an empty string, so both are checked. ``face_value``
-    cannot be NULL (the column has no ``null=True``), so the only way to be
-    missing is an empty string.
+    ``stamps_without_image`` looks at the picture files, not at ``Stamp.image``:
+    the column is empty in every row and the pictures live in the mounted
+    folder, so the queue must count what the workspace can actually show.
+    ``face_value`` cannot be NULL (the column has no ``null=True``), so the only
+    way to be missing is an empty string.
     """
     stamps = Stamp.objects.all()
+    index = image_index()
+    with_image = sum(
+        1
+        for code, year in stamps.values_list("fesofi_code", "issue__year__year")
+        if has_picture(year, code, index)
+    )
 
     return {
         "issues_without_country": Issue.objects.filter(country__isnull=True).count(),
@@ -265,9 +317,7 @@ def missing_data_report() -> dict[str, int]:
         "issues_without_stamps": Issue.objects.filter(stamps__isnull=True).count(),
         "stamps_without_colors": stamps.filter(colors__isnull=True).count(),
         "stamps_without_face_value": stamps.filter(face_value="").count(),
-        "stamps_without_image": stamps.filter(
-            Q(image__isnull=True) | Q(image="")
-        ).count(),
+        "stamps_without_image": stamps.count() - with_image,
     }
 
 

@@ -1,6 +1,7 @@
 """S7 acceptance: the read layer answers with the expected queries and numbers."""
 import pytest
 from django.apps import apps
+from django.core.cache import cache
 
 from colors_api.models import Color
 from countries_api.models import Country
@@ -12,8 +13,19 @@ from years_api.models import Year
 
 
 @pytest.fixture
-def dataset(db) -> dict:
-    """Small, explicit dataset: every counter has rows and gaps."""
+def dataset(db, tmp_path, settings) -> dict:
+    """Small, explicit dataset: every counter has rows and gaps.
+
+    One stamp gets a picture in a temporary images folder, so the "without
+    image" counter is checked against a folder and not against a missing one.
+    """
+    pictures = tmp_path / "stamps"
+    (pictures / "1987").mkdir(parents=True)
+    picture = pictures / "1987" / "1234.webp"
+    picture.write_bytes(b"RIFF\x00\x00\x00\x00WEBPVP8 ")
+    settings.DATADESK_STAMP_IMAGES = pictures
+    cache.clear()
+
     year = Year.objects.create(year=1987)
     spain = Country.objects.create(name="España")
     color = Color.objects.create(name="Carmín")
@@ -30,7 +42,10 @@ def dataset(db) -> dict:
     )
 
     good = Stamp.objects.create(
-        issue=complete, face_value="15 Ptas", name="Retrato", image="stamps/a.jpg"
+        issue=complete,
+        face_value="15 Ptas",
+        name="Retrato",
+        fesofi_code="1234",
     )
     good.colors.set([color])
     no_color = Stamp.objects.create(
@@ -123,13 +138,16 @@ class TestMissingDataReport:
     def test_counts_match_the_dataset(self, dataset) -> None:
         report = service.missing_data_report()
 
+        # One of the four stamps has a picture file, so three are "without".
+        # The counter reads the folder, not ``Stamp.image``: that column is
+        # empty in every row of the real database.
         assert report == {
             "issues_without_country": 1,
             "issues_without_date": 1,
             "issues_without_stamps": 1,
             "stamps_without_colors": 1,
             "stamps_without_face_value": 1,
-            "stamps_without_image": 1,
+            "stamps_without_image": 3,
         }
 
     def test_every_report_key_is_covered(self, dataset) -> None:
