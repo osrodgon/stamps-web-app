@@ -1,0 +1,925 @@
+# DataDesk — plan de implementación por pasos
+
+Documento de trabajo. El diseño funcional sigue en
+`memory-bank/datadesk-app-plan.md`; esto es **cómo se construye**, cortado en pasos
+que se pueden coger y terminar de uno en uno.
+
+Cada paso declara de qué depende. Las dependencias no son un orden estricto: los
+pasos sin aristas entre sí se pueden hacer en cualquier orden, en paralelo, o
+saltarse temporalmente.
+
+**Estado de implementación: ver §7 al final.** Ahí está qué pasos están hechos,
+con fecha, qué ficheros se tocaron y qué se decidió sobre la marcha. Si vienes de
+un rebuild del contenedor, lee esa sección antes que nada.
+
+---
+
+## 1. Supuestos (elegidos por defecto, se cambian en D0)
+
+| Tema | Elegido | Por qué |
+|---|---|---|
+| Traducciones | Comando propio `datadesk_make_messages` con `polib` (Python puro) | No hay `gettext` en ningún Dockerfile y no quiero tocar las imágenes |
+| Cuenta | Usuario dedicado `datadesk` con `is_staff=True`, `is_superuser=False` | Un bug en DataDesk no puede tocar Users, APIKey ni Collections |
+| Libs JS | Descargadas una vez a `backend/datadesk/static/datadesk/vendor/` y versionadas | Sin npm, sin CDN |
+| Caché de throttling | `FileBasedCache` (`CACHES["default"]`) | Producción corre `gunicorn --workers 4` y LocMem daría 5 intentos **por worker**; FileBased los comparte sin tabla ni migración, y con un solo actor no importa que se pierda al recrear el contenedor |
+| Despliegue | Local sin nginx · servidor con nginx + TLS | Todo lo que depende de TLS va detrás de `DATADESK_TLS`, sin ramas de código: mismo binario en los dos sitios |
+| Herencia sello → serie | **Solo lectura, sin columnas nuevas** (opción A de §2) | País, artista e impresor son de serie por definición y un sello pertenece a una única serie |
+| Transporte | Vistas Django que devuelven JSON, **no una API REST** | Sin capa DRF de exposición, sin `/api/v1/`, sin versionado. Sesión + CSRF + `is_staff`; los serializers de DRF solo validan |
+| Alcance | Solo `Issue`, `Stamp` y **8 lookups** (`ConditionType` queda en el admin) | Igual que §6 del diseño: existen 9 tablas de lookup, 8 entran en DataDesk |
+| Volumen actual | **2.540 series · 9.555 sellos** (≈3,8 de media, **máximo 24** en una serie) con dispersión amplia: desde 1 sello | El grid del workbench pagina server-side; el de sellos del workspace **no pagina**, porque es siempre una sola serie. No se asume techo: si mañana aparece una serie de 100, debe seguir funcionando sin rediseño |
+
+---
+
+## 2. Corrección de esquema — **cerrada: opción A**
+
+Revisando `stamps_api/models.py`, la lista de "campos heredados" del diseño §3.2
+no era exacta:
+
+`Stamp` **no tiene** `country`, `year`, `stamp_type`, `print_type`, `printer`,
+`artist`, `paper_type` ni `perforation`. Solo tiene:
+
+```
+issue (FK) · edifil_code · fesofi_code · face_value · name · description
+image · colors (M2M) · market_value_mnh · market_value_used · total_printed
+```
+
+Confirmado también fuera del modelo: `StampRequestSerializer` expone exactamente
+esos campos, `StampForm` edita 9 y son los mismos, y ningún sitio del backend
+(incluido `ai_api`) escribe esos 8 campos a nivel de sello.
+
+**Decisión (confirmada por el usuario)**: país, artista e impresor son atributos
+de la serie, todos los sellos de una serie los comparten, y un sello pertenece a
+una única serie. No hay excepciones que registrar → **no se añaden columnas a
+`Stamp`**. No hace falta la convención `NULL = hereda` ni el concepto de
+override para esos campos.
+
+Consecuencias, que ya están incorporadas a los pasos:
+
+1. **La herencia de esos 8 campos es solo de presentación**: se muestran una vez,
+   en la franja de metadatos de la serie (S10), nunca repetidos por fila.
+2. **La herencia editable se limita a 5 campos**: `name`, `description`,
+   `total_printed`, `market_value_mnh`, `market_value_used`, que el sello sí
+   almacena. Ahí aplica el gris heredado / negro propio / `↺` (S14, S16).
+3. `face_value` y `name` son **obligatorios** (`NOT NULL`, sin `blank=True`).
+   Generar `rows=N` en blanco no vale: cada fila nueva nace con
+   `name = <nombre de la serie>` y `face_value` vacío pero marcado requerido.
+4. Los tests corren con **SQLite en memoria** (`RUNNING_TESTS=True` en
+   `pytest.ini`), así que el servicio **no puede usar nada exclusivo de
+   Postgres** (`ArrayField`, `SearchVector`, `distinct on`) o los tests no pasan.
+5. Si algún día apareciera una excepción real (un valor impreso por otra
+   imprenta), añadir la columna es una migración aditiva barata en Postgres; lo
+   único que hay que respetar ahora es construir el mapa de herencia del cliente
+   de forma genérica (S14), para que sumar un campo no obligue a tocar la UI.
+
+Pendiente fuera de este plan: el diseño `memory-bank/datadesk-app-plan.md` §3.2 y
+el mockup ya están corregidos con esta decisión.
+
+---
+
+## 3. Mapa de pasos
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| D0 | Decisiones | — | XS | no | — |
+| S1 | Esqueleto de app + flag + montaje | — | S | 404/200 | ✅ 2026-11-18 |
+| S2 | Estáticos vendorizados + `base.html` | S1 | S | no | — |
+| S3 | Login, logout, gate, throttling | S1, S2 | M | sí | — |
+| S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | — |
+| S5 | `updated_at` en Issue/Stamp | S1 | XS | no | — |
+| S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | — |
+| S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | — |
+| S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | — |
+| S9 | Prueba de rendimiento + índices | S8 | S | no | — |
+| S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | — |
+| S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | — |
+| S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | — |
+| S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | — |
+| S14 | Change set en cliente + footer + undo | S13 | L | sí | — |
+| S15 | Panel de revisión + commit por lotes | S14 | M | sí | — |
+| S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | — |
+| S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | — |
+| S18 | Crear lookup desde la celda | S12, S14 | M | sí | — |
+| S19 | Pantalla de lookups + merge | S7, S12 | M | sí | — |
+| S20 | Dashboard + colas "needs attention" | S8 | S | sí | — |
+| S21 | Activity log + revertir commit | S6, S12 | M | sí | — |
+| S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | — |
+
+Leyenda de tamaño: XS < 1h · S ≈ medio día · M ≈ 1 día · L ≈ 2–3 días.
+
+Hitos entregables: **S8** (ves tus datos), **S13** (puedes corregir un dato),
+**S16** (puedes crear una serie), **S19+S21** (mantenimiento completo con red).
+
+---
+
+## 4. Detalle de cada paso
+
+### D0 — Decisiones
+
+Sin código. Cerrar:
+
+1. `polib` vs `gettext` en la imagen vs commitear `.mo`.
+2. Usuario dedicado `datadesk` vs superusuario existente.
+3. Descargar libs ahora vs que las dejes tú.
+4. Dominio real del servidor desplegado (solo para `ALLOWED_HOSTS` /
+   `CSRF_TRUSTED_ORIGINS` en el despliegue; en local no hace falta).
+
+(La pregunta de overrides por sello ya está cerrada en §2: opción A, sin
+columnas nuevas.)
+
+Salida: nada escrito. Si no hay respuesta, se implementa con los valores de §1 y
+se anota en el propio código para revertir fácil.
+
+---
+
+### S1 — Esqueleto de app, flag y montaje
+
+**Depende de**: nada.
+
+- `backend/datadesk/__init__.py`, `apps.py` (`DataDeskConfig`), `urls.py` con
+  `app_name = "datadesk"`, `views/dashboard.py` con un `TemplateView` provisional.
+- `backend/_backend/settings.py`:
+  - `DATADESK_ENABLED = os.getenv("DATADESK_ENABLED", "False")...`
+  - `"datadesk"` en `INSTALLED_APPS`
+  - `DATADESK_URL = "datadesk/"`, `DATADESK_LOGIN_URL = "/datadesk/login/"`
+- `backend/_backend/urls.py`: montar **solo si** `DATADESK_ENABLED`
+  (`if settings.DATADESK_ENABLED: urlpatterns += [path(DATADESK_URL, include("datadesk.urls"))]`).
+  Nunca dentro de `SERVER_URL_V1`.
+- `backend/datadesk/templates/datadesk/dashboard.html`: un `<h1>DataDesk</h1>`.
+
+**Aceptación**: con `DATADESK_ENABLED=False`, `/datadesk/` da 404; con `True`, 200.
+`python manage.py check` limpio. `/api/v1/` y el schema de DRF no cambian
+(`manage.py spectacular --validate` sin diffs).
+
+**Riesgo**: ninguno. Si algo falla aquí, el resto no empieza.
+
+---
+
+### S2 — Estáticos vendorizados y plantilla base
+
+**Depende de**: S1.
+
+- `backend/datadesk/static/datadesk/vendor/`: `htmx.min.js` (2.x),
+  `alpine.min.js` (3.x), `tabulator.min.js` + `tabulator.min.css` (6.x).
+  Comprobar licencias y fijar versión exacta en un `VERSIONS.md` al lado.
+- `backend/datadesk/static/datadesk/datadesk.css`: tokens del mockup (colores,
+  densidad del grid, barra de commit).
+- `backend/datadesk/templates/datadesk/base.html`: topbar, barra de idioma,
+  bloque de contenido, `{% block extra_js %}`, `hx-headers` con CSRF.
+- `dashboard.html` pasa a extender `base.html`.
+
+**Aceptación**: `manage.py collectstatic --noinput` funciona con
+`CompressedManifestStaticFilesStorage` (whitenoise ya está configurado) y la
+página carga los 4 ficheros con `{% static %}`. En `DEBUG=True`, 200 en cada
+asset.
+
+**Riesgo**: el manifest storage rompe si algún template referencia un fichero
+inexistente. Se detecta en `collectstatic`, no en runtime.
+
+---
+
+### S3 — Autenticación, gate y throttling
+
+**Depende de**: S1, S2.
+
+- `datadesk/views/auth.py`:
+  - `DataDeskLoginView(LoginView)` → `template_name="datadesk/login.html"`,
+    `redirect_authenticated_user=True`, `next_page` a `/datadesk/`. **Obligatorio**:
+    `LOGIN_REDIRECT_URL` no está definido en settings, y sin `next_page` Django
+    manda a `/accounts/profile/`.
+  - Throttling dentro de `form_invalid()`: clave
+    `datadesk:login:{username}:{ip}`, 5 fallos / 5 min → 429 con `Retry-After`
+    (el contador se limpia en `form_valid()`).
+  - `CACHES["default"]` = `FileBasedCache` en `LOCATION = BASE_DIR / ".cache"`,
+    compartida por los 4 workers y con `.cache/` añadido a `.gitignore`. Sin
+    `createcachetable`, sin migración. LocMem queda descartado porque
+    multiplicaría el límite por worker.
+  - Clave por IP: se usa `REMOTE_ADDR` a secas. **Detrás de nginx esa IP es la del
+    proxy**, así que la clave colapsa a una sola: en la práctica el throttling
+    pasa a ser por usuario, que es justo lo que se quiere con un solo actor. No
+    hace falta `real_ip_header` ni leer `X-Forwarded-For` en Django.
+  - `DataDeskLogoutView(LogoutView)`: en Django 6 ya es POST-only, no hace falta
+    nada; solo plantilla/redirect.
+  - `datadesk/views/partials/login_form.html` para poder devolver 429 por HTMX.
+- `datadesk/mixins.py`: `DataDeskAccessMixin(LoginRequiredMixin, UserPassesTestMixin)`
+  con `login_url="/datadesk/login/"`, `test_func = user.is_active and user.is_staff`
+  y `raise_exception` para peticiones JSON (401/403 en vez de redirect HTML).
+  **No** se toca el `LOGIN_URL` global de settings: el admin ya tiene su propia
+  vista de login y DRF su `LOGIN_URL_V1`, así que cambiarlo solo añade riesgo.
+- `datadesk/middleware.py`: `DataDeskGateMiddleware` — para todo path bajo
+  `/datadesk/` que no sea login/logout, exige `is_staff`. Es el cinturón para los
+  endpoints JSON que se olviden del mixin.
+- `settings.py`: `MIDDLEWARE += ["datadesk.middleware.DataDeskGateMiddleware"]`
+  (después de `AuthenticationMiddleware`), `SESSION_COOKIE_AGE = 14 días`,
+  `SESSION_COOKIE_HTTPONLY`, `SESSION_COOKIE_SAMESITE="Lax"`.
+
+  Todo lo de TLS va condicionado a `DATADESK_TLS`, para que el mismo código corra
+  en local y en el servidor:
+  - `DATADESK_TLS=0` (local, `runserver`, sin nginx): cookies sin `Secure`,
+    sin `SECURE_PROXY_SSL_HEADER`. Login por HTTP en `localhost`.
+  - `DATADESK_TLS=1` (servidor, nginx delante): `SESSION_COOKIE_SECURE`,
+    `CSRF_COOKIE_SECURE`, `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`.
+    `ALLOWED_HOSTS` y `CSRF_TRUSTED_ORIGINS` ya se leen de entorno, así que no se
+    tocan: solo hay que rellenarlos en el despliegue.
+
+- `datadesk/templates/datadesk/login.html`: usuario, contraseña, error, `next`.
+- Comando de alta documentado en README:
+  `manage.py createsuperuser` o `shell` para crear `datadesk` staff no-superuser.
+
+**Aceptación** (`datadesk/tests/test_auth.py`, Django test client):
+- anónimo en `/datadesk/` → 302 a `/datadesk/login/?next=/datadesk/`
+- usuario no-staff → 403
+- staff → 200
+- `GET /datadesk/logout/` → 405; `POST` → 302 y sesión cerrada
+- 6 fallos seguidos → 429; el contador caduca a los 5 min (congelando caché)
+- login correcto limpia el contador
+- con `override_settings(DATADESK_TLS=True)` las cookies salen `Secure` y el
+  header del proxy queda configurado; con `False` no, y el login funciona por
+  HTTP sin nginx (que es el caso local)
+- el throttling funciona con la caché de fichero, no con LocMem: un test que
+  simula dos workers leyendo la misma entrada
+
+**Riesgo**: que lo probado en local no sea lo que corre en el servidor. Se evita
+no teniendo dos caminos de código: `DATADESK_TLS` solo cambia flags de cookies y
+un header, nunca lógica. El segundo riesgo es la IP del proxy (ver arriba): con
+nginx la clave de throttling colapsa, y eso es aceptable aquí.
+
+**Allowlist por IP**: queda **solo documentada** en el README, no implementada.
+Se añadirá cuando DataDesk esté terminado, como receta de nginx
+(`allow <ip>; deny all;` sobre `/datadesk/`), no como código de la app.
+
+---
+
+### S4 — i18n en/es
+
+**Depende de**: S1, S2.
+
+- `backend/datadesk/locale/{en,es}/LC_MESSAGES/django.po`.
+- `datadesk/management/commands/datadesk_make_messages.py`: recorre los `.po` y
+  escribe `.mo` con `polib` (añadir `polib` a `requirements.base.txt`).
+  Opciones `--check` para CI (falla si `.po` cambió y `.mo` está viejo).
+- `settings.py`: `LANGUAGE_CODE` se queda como está; añadir
+  `LocaleMiddleware` **solo si** no está ya (comprobar) y
+  `DATADESK_LANGUAGES = ("en", "es")`.
+- Selector EN/ES en `base.html` → `POST /datadesk/language/` que hace
+  `set_language` y vuelve al `next`. Nunca toca `assets/locales/*.json`.
+
+**Aceptación**: `datadesk_make_messages` genera `.mo` sin `gettext`; cambiar a ES
+traduce el dashboard y sobrevive a la recarga; el test comprueba que
+`assets/locales/en.json` y `es.json` siguen intactos (`git status` limpio).
+
+**Riesgo**: `polib` es una dependencia nueva en la imagen de producción (pura
+Python, ~50KB). Alternativa si molesta: commitear los `.mo`.
+
+---
+
+### S5 — Timestamps
+
+**Depende de**: S1.
+
+- `Issue.updated_at`, `Stamp.updated_at`: `DateTimeField(auto_now=True, db_index=True)`.
+- Migración limpia (la BD está al día, no hay backfill).
+- `__str__`/admin no cambian.
+
+**Aceptación**: migración aplica y revierte; un `save()` actualiza el campo;
+`updated_at` aparece en el admin como `readonly`.
+
+**Nota**: `db_index=True` en dos columnas de una tabla con pocos miles de filas
+es barato. Si S9 muestra que no se usa para ordenar, se puede quitar.
+
+**No hay más cambios de esquema** en todo el plan: `Stamp` no gana los 8 campos
+de serie (§2, opción A).
+
+---
+
+### S6 — Auditoría
+
+**Depende de**: S1 (y S5 por comodidad).
+
+- `datadesk/models.py`: `DataDeskChange` tal cual el diseño §5 (`commit_id` UUID,
+  `user` FK `SET_NULL`, `model_label`, `object_id`, `operation`, `before`,
+  `after`, `created_at`), más dos columnas nullable que necesita S21:
+  - `reverted_at` en las filas originales → un commit solo se puede revertir una
+    vez, y el motivo se ve en el log.
+  - `reverts_commit_id` en las filas del revert → enlaza el revert con el commit
+    que deshace, sin parsear JSON.
+- `datadesk/audit.py`: `snapshot(instance) -> dict` (solo campos editables,
+  `Decimal`/`date` serializados, FKs como ids y `colors` como lista de ids) y
+  `record(commit_id, user, instance, op, before, after)`.
+- `operation` admite `create|update|delete|merge`.
+- Admin mínimo **de solo lectura** para consultarlo desde `/admin/` mientras no
+  exista S21 (no permitir add/change/delete).
+
+**Aceptación**: test unitario de `snapshot()` con `Decimal`, `date`, FK y M2M
+(`colors` como lista de ids); `record()` agrupa por `commit_id`; el revert de
+S21 puede recrear un `Stamp` a partir del snapshot sin consultar otra tabla.
+
+---
+
+### S7 — Registry de lookups y querysets
+
+**Depende de**: S1.
+
+- `datadesk/registry.py`:
+
+```python
+LOOKUPS = {
+  "year":        {"model": Year,        "label": _("Year"),        "numeric": True,  "refs": [("issues_api.Issue", "year")]},
+  "country":     {"model": Country,     ...},
+  "color":       {"model": Color,       ...},   # refs vía Stamp.colors
+  "artist":      ..., "printer": ..., "paper_type": ...,
+  "print_type":  ..., "stamp_type": ...,
+}
+```
+
+Cada entrada sabe: modelo, `verbose_name`, si es numérico, y las relaciones que
+apuntan a ella (para S19: contadores de uso y merge).
+
+- `datadesk/service.py` (esqueleto):
+  - `issue_queryset()` con `select_related` de los 7 FK y
+    `annotate(stamp_count=Count("stamps"))`
+  - `stamp_queryset(issue_id)` con `prefetch_related("colors")`
+  - `missing_data_report()` → dict de contadores (sin país, sin fecha, sin
+    sellos, sellos sin color, sellos sin face_value, sin imagen)
+- `datadesk/tests/test_service_read.py` con datos mínimos por fixture.
+
+**Aceptación**: `issue_queryset()` hace **una** query para la lista (comprobado
+con `assertNumQueries`), y `missing_data_report()` devuelve los 6 contadores
+correctos sobre un dataset pequeño.
+
+**Riesgo**: `Count` + `prefetch` mal combinados duplican filas; el test de
+`assertNumQueries` lo caza.
+
+---
+
+### S8 — Workbench de solo lectura  ← primer hito
+
+**Depende de**: S2, S3, S7.
+
+- `GET /datadesk/grid/issues`: JSON para Tabulator con
+  `page`, `size`, `sort[]`, `filter[]` → `year_min/max`, `q` (nombre),
+  `country`, `stamp_type`, `attention`.
+  Devuelve `last_page`, `data[]`, `total`.
+- `GET /datadesk/issues/` → página con filtros (rango de años, buscador,
+  país, tipo, selector "needs attention") persistidos en URL y `localStorage`.
+  Delay de 300 ms en el buscador, igual que el frontend actual.
+- **Columnas visibles por defecto**: `year · date · name · country ·
+  stamp_type · printer · stamps · mnh · used`. Detrás de un toggle: `print_type ·
+  artist · paper_type · perforation · total_printed · badge de huecos`. La
+  elección se persiste con los filtros; 14 columnas fijas no caben legibles a
+  1366px.
+- **Badge de huecos por fila**: icono compacto con marcas (`◦` sin país, `◦` sin
+  fecha, `◦` sin sellos), calculado en la misma query que filtra — los `Exists`
+  ya están ahí, mostrarlo no cuesta nada. Es la señal que convierte la tabla en
+  una cola de trabajo.
+- Orden por columna, agrupación por año, paginación server-side.
+- Todo el JS en `datadesk/static/datadesk/workbench.js`, sin lógica inline.
+
+**Aceptación**: abre con las **2.540 series y 9.555 sellos** reales, primera
+página (100 filas) en menos de 300 ms en local y scroll fluido; los filtros y la
+selección de columnas sobreviven a recargar (URL); un `?attention=no_stamps`
+devuelve solo las series sin sellos; el badge marca lo mismo que ese filtro.
+`pytest` cubre el endpoint: paginación, orden, cada filtro y el caso sin
+resultados.
+
+**Riesgo**: es el paso más grande y el que decide si el resto tiene sentido.
+Con este volumen (≈10k sellos en total) el cliente **podría** cargar todo de una
+vez —unos cientos de KB—, pero se mantiene server-side: el día que la BD crezca
+diez veces no hay que rehacer el grid, y el coste es un endpoint con seis
+parámetros. Si Tabulator no rinde (poco probable a 2.540 filas), la alternativa
+es paging puro con HTMX y el plan cambia en S14–S16.
+
+---
+
+### S9 — Rendimiento e índices
+
+**Depende de**: S8.
+
+- Medir con el dataset real (**2.540 series / 9.555 sellos**): primera página,
+  última página (el `OFFSET` grande es el caso peor), filtro por año, búsqueda
+  de texto, cada cola de "needs attention" y la carga de la **serie más larga**
+  en el workspace. `EXPLAIN ANALYZE` de las dos primeras.
+- A 2.540 filas un seq scan de `Issue` es milisegundos: **no añadir índices por
+  reflejo**. Solo si el plan los pide (`Issue.name`/`unaccent` para búsqueda,
+  `(year_id, date)` para el orden por defecto), y comprobando que el planner los
+  usa de verdad.
+- Dejar los números escritos en `memory-bank/datadesk-perf.md` para comparar
+  después de S14.
+
+**Aceptación**: p95 < 300 ms en las cinco consultas medidas, ninguna query por
+fila (contador constante al cambiar `size`), y el `OFFSET` de la última página
+no se degrada respecto a la primera.
+
+---
+
+### S10 — Workspace `mode=edit` (lectura)
+
+**Depende de**: S8.
+
+- `GET /datadesk/issues/<id>/` → `datadesk/issue_workspace.html`, contexto con
+  `mode="edit"`, la serie y sus sellos.
+- Cabecera de metadatos en solo lectura (los 14 campos del mockup), fechas y
+  decimales formateados según idioma.
+- Grid de sellos con Tabulator en modo lectura: `edifil`, `fesofi`, `name`,
+  `face_value`, `colors`, `mnh`, `used`, `total_printed`, `img` (indicador).
+  Solo campos del sello: los 8 atributos de serie **no se repiten por fila**.
+- **Herencia**: los 8 campos de serie (`country`, `year`, `stamp_type`,
+  `print_type`, `printer`, `artist`, `paper_type`, `perforation`) viven solo en
+  la franja superior fija (§2). En el grid, las celdas de los 5 campos que el
+  sello sí almacena se pintan en gris claro cuando el valor coincide con el de
+  la serie; la comparación se resuelve en servidor y se envía ya como
+  `inherited: true` para no repetir lógica en JS.
+- Enlace "abrir" desde cada fila del workbench y `Enter`.
+
+**Aceptación**: una serie de 8 sellos carga con 1–2 queries; los grises
+coinciden con el mockup; `Esc` vuelve al workbench conservando filtros. Se
+prueba además con la **serie más larga real (24 sellos)**, que debe seguir
+pintándose sin paginar, y con un fixture de 100 para confirmar que no hay ningún
+límite duro escondido en la plantilla ni en el queryset.
+
+---
+
+### S11 — `mode=new` en seco
+
+**Depende de**: S10.
+
+- `GET /datadesk/issues/new` → **misma plantilla**, `mode="new"`, sellos vacíos.
+- Prefill de metadatos desde la última serie (`Issue.objects.order_by("-id").first()`),
+  con botón `↺ Use last issue` que reaplica.
+- Control `rows=N` que genera filas **en cliente** (nada se guarda todavía),
+  con `name` heredado de la serie y `face_value` marcado como requerido.
+- `Shift+Enter` deshabilitado con tooltip "todavía no guarda".
+
+**Aceptación**: alternar `new`/`edit` no rompe nada; el prefill es el de la
+última serie real; en `new` no aparece `Clone`/`Delete` y sí `Use last issue`;
+**recargar o salir descarta el borrador** (no hay recuperación posible en `new`,
+por decisión) y el `beforeunload` avisa antes de perderlo.
+
+---
+
+### S12 — Núcleo de escritura
+
+**Depende de**: S6, S7.
+
+Paso **sin interfaz**: se construye y se prueba solo con pytest. Así S13, S17,
+S18 y S19 pueden empezar sin esperarse entre sí.
+
+**Transporte**: vistas Django normales bajo `/datadesk/` que devuelven JSON. No es
+una API REST ni una capa DRF de exposición: sesión + CSRF + `DataDeskAccessMixin`,
+y los serializers de DRF se usan **solo para validar**. Nada nuevo bajo
+`/api/v1/`.
+
+Dos caminos, una transacción cada uno:
+
+- `POST /datadesk/issues/create` — `{issue: {...}, stamps: [{...}, ...]}` →
+  **todo o nada**. Sin ids temporales: los sellos van anidados y el servidor pone
+  el `issue_id`. Si un sello no valida, no se crea la serie.
+- `POST /datadesk/apply` — `{changes: [{model, object_id, op, patch,
+  expected_updated_at?}]}` → **savepoint por fila**: los válidos se aplican y los
+  rechazados vuelven como `{index, errors}` al buffer. Solo `create`/`update`;
+  **`delete` no se acepta aquí** (va por S17, con preview de dependencias).
+
+Comparten `_validate_row()` (`IssueRequestSerializer` /
+`StampRequestSerializer` en `partial=True`), el escritor de auditoría de S6 y el
+tope de 500 cambios por petición.
+
+Decisiones cerradas con el usuario:
+
+- **Sin ids temporales**: por eso crear serie tiene endpoint propio en vez de un
+  `apply` genérico. El 90% de los commits son "una serie con sus sellos" o "N
+  filas de una serie existente"; no compensa la maquinaria de referencias
+  pendientes.
+- **Borrado fuera de `/apply`**: si llega un `delete`, se responde 409 con
+  `{needs_confirmation: true}` y no se aplica nada. Cualquier bug del cliente no
+  puede borrar una serie de 24 sellos y sus `CollectionItem` sin preview.
+- **Fallo parcial**: `/issues/create` es todo o nada (un lote a medias dejaría
+  media serie); `/apply` mantiene savepoint por fila, que es lo correcto para 40
+  correcciones heterogéneas.
+- Lookups creadas desde una celda: `get_or_create` → `{id, name, created: bool}`;
+  un nombre duplicado devuelve el existente en vez de un 500.
+- `colors`: `.set()` en bloque dentro de la transacción, nunca fuera.
+- `expected_updated_at` opcional por fila: si no coincide, esa fila se rechaza
+  con "modificado en otra pestaña"; el resto se aplica.
+- Un `commit_id` por petición, devuelto al cliente y usado en todos los
+  `DataDeskChange`. Los rechazos no escriben auditoría; los aplicados sí.
+
+**Aceptación** (`datadesk/tests/test_service_write.py`):
+- create: serie + 8 sellos + colores + 8 filas de auditoría con el mismo
+  `commit_id`; un sello inválido → 0 filas creadas y 0 `DataDeskChange`
+- apply: 40 cambios válidos → 40 aplicados, 40 `DataDeskChange` con un `commit_id`
+- un cambio inválido en medio → 39 aplicados y el inválido devuelto con
+  `{index, errors}`; la BD queda coherente
+- fallo simulado a mitad (`mock` que lanza) → **rollback total**: cero filas y
+  cero `DataDeskChange`
+- `delete` en `/apply` → 409 y nada aplicado
+- `expected_updated_at` viejo → solo esa fila rechazada, el resto aplicado
+- más de 500 cambios → 400 antes de tocar la BD
+- sin `is_staff` → 403; sin CSRF → 403
+- lookup duplicada → devuelve la existente con `created: false`
+
+---
+
+### S13 — Commit de una fila desde el grid  ← segundo hito
+
+**Depende de**: S10, S12.
+
+- Edición inline de celdas en el grid de sellos (Tabulator `editModule`).
+- `Shift+Enter` → construye un change set de una fila → `POST /datadesk/apply`.
+- Celda optimista + marca de "guardado"; en error, revierte el valor y muestra
+  el mensaje del servidor en la fila.
+- Los campos de la cabecera de la serie se pueden editar igual, con el mismo
+  camino (una fila de `Issue`).
+
+**Aceptación**: cambiar un `edifil_code`, `Shift+Enter`, recargar y verlo
+persistido; un valor inválido deja la fila marcada y no pierde el foco; se crea
+una fila en `DataDeskChange`.
+
+---
+
+### S14 — Change set en cliente
+
+**Depende de**: S13.
+
+Lo que convierte el grid en un editor de verdad: los cambios dejan de enviarse
+solos y se acumulan hasta el commit (S15).
+
+- Estado en Alpine, **una entrada por objeto**, no por celda:
+
+```js
+buffer = {
+  rows: {
+    "stamp:412": { model: "stamp", object_id: 412, op: "update",
+                   patch: { edifil_code: "2745" },        // solo lo tocado
+                   base:  { edifil_code: "2744" },        // valor de servidor al cargar
+                   expected_updated_at: "2026-11-18T09:12:00Z" },
+    "stamp:new:3": { model: "stamp", object_id: null, op: "create",
+                     issue_id: 98, patch: { ... }, base: {} },
+  },
+  ops: [],   // pila de undo/redo
+}
+```
+
+- **Diff contra `base`**: si un campo vuelve al valor original, se borra del
+  `patch`; si la entrada se queda sin campos, desaparece del buffer. Así nunca se
+  envía un cambio que no cambia nada. Añadir un sello a una serie existente es
+  `op: "create"` con `issue_id`; en `mode=new` los sellos viajan en el array
+  `stamps` de `/datadesk/issues/create` y no necesitan id temporal.
+- **El `base` sale de Tabulator** (`cell.getOldValue()`), no de una copia
+  paralela: una sola fuente de verdad evita desincronizaciones cuando el grid se
+  reordena o filtra.
+- **Colores (M2M) no son un campo más**: el patch lleva `colors: [ids]` y el
+  buffer guarda también los nombres para que el panel de revisión pinte
+  `Carmín, Rojo` sin consultar al servidor.
+- **Undo/redo como log de operaciones**, no como snapshots:
+  `{type: "cell", key, field, from, to}` con puntero; deshacer escribe `from`.
+  Una edición nueva después de deshacer trunca la pila de redo. Tope de 200
+  operaciones. `Ctrl+Z` / `Ctrl+Shift+Z`.
+- **Mapa de herencia declarativo**, no lógica por campo:
+  `INHERITABLE = ["name", "description", "total_printed", "market_value_mnh", "market_value_used"]`
+  (los 5 que el sello almacena, §2). Cada celda consulta el mapa para decidir
+  gris/negro y para el `↺`. Añadir un campo en el futuro = una entrada más.
+- **Persistencia, solo en `mode=edit`**: `localStorage` con clave
+  `datadesk:buffer:edit:<issueId>`, escritura *debounced* (400 ms), más
+  `schemaVersion` y `savedAt`. Al entrar con un buffer guardado se ofrece
+  "recuperar 12 cambios" (nunca auto-restaurar). Se borra al commitear o al
+  descartar; una versión de esquema distinta se descarta con aviso.
+- **En `mode=new` NO se persiste nada** (decisión del usuario): una serie se
+  termina en el momento o se vuelve a empezar, no hay "lo acabo mañana". El
+  buffer vive en memoria y muere con la pestaña; `Ctrl+Z` sigue funcionando
+  dentro de la sesión. La única red es el `beforeunload`, que aquí es
+  imprescindible.
+- **Dos pestañas**: `storage` event → banner "otra pestaña tiene cambios en esta
+  serie". Aviso, no bloqueo. El chequeo duro es por fila con
+  `expected_updated_at` (S12), que rechaza justo las filas pisadas.
+- **`beforeunload`** si hay cambios sin guardar. Solo salta en navegación
+  completa; los enlaces HTMX internos no lo disparan, así que el botón de volver
+  al workbench pide confirmación explícita.
+- **Plurales en el footer**: "1 cambio" / "12 cambios" se resuelven con
+  `ngettext` en servidor y se inyectan como JSON (§4), para no duplicar reglas de
+  plural en JS.
+
+**Lo que NO entra en el buffer: los borrados.** `/datadesk/apply` rechaza
+`delete` (S12), así que borrar un sello o una serie es una acción **inmediata**
+con su propio diálogo de confirmación (S17) y queda **fuera del undo**: `Ctrl+Z`
+no resucita un sello borrado. Se avisa en la UI; el camino de vuelta es el log de
+actividad y el backup.
+
+**Aceptación**: 12 cambios acumulados en `edit` sobreviven a un F5 y se ofrecen
+al volver; en `new`, recargar descarta el borrador (y avisa antes); volver un
+campo a su valor original lo saca del buffer (el contador baja); `Ctrl+Z` deshace
+en orden y truncar el redo funciona; el contador cuadra con el panel de S15; dos
+pestañas muestran el banner sin bloquear; el commit con una fila tocada en otra
+pestaña la rechaza por `expected_updated_at` y mantiene el resto.
+
+---
+
+### S15 — Panel de revisión y commit por lotes
+
+**Depende de**: S14.
+
+- Panel lateral: agrupado por modelo, `antes → después` por campo, contador,
+  botón `Commit N changes` (`Ctrl+Enter`) y `Discard`.
+- Post a `/datadesk/apply` con el set completo; los rechazados **se quedan** en
+  el buffer con su error y los aplicados desaparecen.
+- Tras commit en `edit`: volver al workbench con foco en la fila guardada.
+- Botón `POST /datadesk/backup` (comando `stamps_db_backup` ya existente) cuando
+  el set supera N filas.
+
+**Aceptación**: commit de 40 filas en una sola transacción (contador de queries
+y `commit_id` único en BD); rechazo parcial deja 38 aplicados y 2 en el buffer;
+el backup se dispara por encima del umbral. Una serie completa entra siempre en
+un solo commit: con 24 sellos de techo actual y un límite de 500 cambios por
+petición, no hay commits por tramos.
+
+---
+
+### S16 — `mode=new` completo  ← tercer hito
+
+**Depende de**: S11, S14.
+
+- Herencia editable: al cambiar un campo de la serie sin overrides, se
+  actualizan las filas en cliente; `↺` restaura el valor de la serie en los 5
+  campos que sí existen en `Stamp` (§2).
+- `Fill series`: numera `edifil` consecutivamente preservando sufijo
+  (`2744a → 2744b`); si el primer código no es numérico, no hace nada y avisa.
+- `fast row`: solo `edifil`, `fesofi`, `face_value`, `colors` (por defecto ON).
+- `rows=N`: por defecto 4, máximo 100. Una serie de un solo sello es `rows=1`,
+  sin flujo especial; para series largas `Ctrl+D` y `Fill series` hacen el
+  trabajo.
+- `Ctrl+D` duplica fila; pegar TSV desde el portapapeles.
+- Commit → una transacción `Issue` + N `Stamp` + M2M + auditoría, vía
+  `/datadesk/issues/create` y **todo o nada**; después
+  `Create another in <year>` con los metadatos cargados (bucle sin salir).
+- `Shift+Enter` → crear la serie sola (los sellos no son obligatorios).
+- **Sin borradores**: nada de lo tecleado en `new` se guarda en `localStorage`.
+  Si se abandona, se empieza de cero; el `beforeunload` es la única red. La única
+  excepción es el bucle `Create another in <year>`, que conserva los metadatos
+  porque los reenvía el servidor, no el cliente.
+
+**Aceptación**: crear una serie de 8 sellos con 4 columnas de tecleo real,
+recargar y ver 8 sellos con colores; el bucle deja la segunda serie a un clic;
+`Fill series` probado con sufijos y con códigos no numéricos.
+
+---
+
+### S17 — Clonar y borrar
+
+**Depende de**: S12.
+
+- `POST /datadesk/issues/clone`: copia la serie y sus sellos (con colores), con
+  `year`/`date` sobreescribibles, y abre el workspace en `mode=edit` sobre la
+  copia.
+- Borrado con preview server-side: nº de sellos, nº de `CollectionItem`
+  afectados y nº de colecciones de usuario; confirmación escribiendo el año.
+- Ambas acciones auditadas (`operation="create"` enlazando el origen en `after`).
+
+**Aceptación**: clonar 8 sellos mantiene colores y `edifil`; borrar una serie
+con `CollectionItem` avisa del número exacto y no borra si el texto no coincide;
+sin `CollectionItem` el preview lo dice explícitamente. Probado también con la
+serie de 24 sellos: el preview cuenta los 24 y la confirmación por año no cambia.
+
+---
+
+### S18 — Crear lookup desde la celda
+
+**Depende de**: S12, S14.
+
+- Autocomplete en las celdas de lookup (`country`, `artist`, `printer`, …) que
+  busca en `/datadesk/lookups/<table>/search?q=`.
+- Si no existe, opción `+ Crear "X"` que hace `POST` y devuelve `{id, name}`;
+  el cambio entra en el change set como `create` de la lookup.
+- En `colors` (M2M) lo mismo, multi-selección con chips.
+
+**Aceptación**: crear un artista nuevo desde una celda y verlo en el
+autocomplete de otra serie sin recargar; nombre duplicado → error claro, no 500;
+el `create` de la lookup aparece en el panel de revisión.
+
+---
+
+### S19 — Pantalla de lookups y merge
+
+**Depende de**: S7, S12.
+
+Existen 9 tablas de lookup; **8 entran en DataDesk** (`ConditionType` se queda en
+el admin porque solo la usan las colecciones de usuario). Una sola plantilla
+para las 8, sin una vista por tabla.
+
+- `datadesk/registry.py` describe cada lookup sin código repetido:
+
+```python
+LOOKUPS = {
+  "year":    {"model": Year,    "name_field": "year", "kind": int,
+              "reverse": "issues",  "fk_on": ("issues_api.Issue", "year")},
+  "color":   {"model": Color,   "name_field": "name", "kind": str, "m2m": ("stamps_api.Stamp", "colors")},
+  "artist":  {"model": Artist,  "name_field": "name", "kind": str,
+              "reverse": "issues",  "fk_on": ("issues_api.Issue", "artist")},
+  ...
+}
+```
+
+- **Contadores de uso en una sola query**: cada entrada lleva el
+  `related_name` inverso (`issues`, `stamps`), así que el grid es
+  `Model.objects.annotate(usage=Count(reverse))` paginado. Nunca un `count()`
+  por fila.
+- **Renombrar** inline con el contador como preview ("usado por 143 sellos").
+  Si el nombre nuevo ya existe, `IntegrityError` → **409 con {"error":
+  "duplicate_name", "existing_id": id}** y la UI ofrece fusionar, que es lo que
+  el usuario quería el 90% de las veces.
+- **Fusionar** (`POST /datadesk/lookups/merge`,
+  `{table, from_id, to_id, keep_name_from: "a"|"b"}`), en una transacción. El
+  diálogo muestra los dos nombres con un selector de **qué nombre se queda**, así
+  que el caso "el bueno es el de B" no obliga a renombrar antes:
+  - **FKs** (`country`, `artist`, `printer`, `paper_type`, `print_type`,
+    `stamp_type`): un `update(fk=to)` — sin instanciar 2.540 objetos — y además
+    `.update(updated_at=timezone.now())`, porque `auto_now` **no** se dispara con
+    `update()` y sin eso el chequeo de conflicto de S12 se queda ciego.
+  - **`colors` (M2M)**: como un sello puede tener los dos colores, se resuelve
+    por la tabla intermedia y no con `.set()`: se insertan los pares que faltan
+    (`bulk_create(..., ignore_conflicts=True)`) y después se borran las filas del
+    color origen. Sin duplicados y sin depender de que `.add()` ignore
+    conflictos, que cambió entre versiones de Django.
+  - **`year`**: igual que un FK, pero es `CASCADE`; fusionar dos años mueve sus
+    series y no borra ninguna.
+  - Se borra el origen, y la auditoría es **una fila** `operation="merge"` con
+    `before={lookup: B, refs: n}` y `after={lookup: A, refs: m}`, no 143 filas
+    de ruido.
+  - Si `keep_name_from="b"`, el orden importa y es justo este: mover
+    referencias → borrar B (eso libera su nombre, que es `unique`) → renombrar A
+    con el nombre de B. Al revés choca contra la constraint. Un `IntegrityError`
+    en este último paso revierte la transacción entera y devuelve 409.
+  - **Un merge no es reversible** (decisión del usuario): la auditoría guarda el
+    recuento, no los ids movidos, así que S21 rechaza revertir cualquier commit
+    que contenga un `merge`. La pantalla lo advierte antes de confirmar y el
+    backup es la red de seguridad.
+- **Borrar** un lookup solo si `usage == 0` (se resalta en el grid); con uso,
+  la única vía es fusionar.
+- `Year`: acción "crear los próximos 10 años" (`get_or_create` en bucle).
+
+**Aceptación**: fusionar dos artistas mueve exactamente N referencias, deja 0
+filas apuntando al origen y borra el origen; fusionar dos colores donde un sello
+tiene ambos deja **una** fila en la tabla intermedia y ninguna duplicada;
+fusionar años mueve las series; `keep_name_from="b"` deja el nombre de B en el
+registro superviviente y no choca con `unique`; renombrar a un nombre existente
+devuelve 409 con el id del existente; borrar un lookup con uso devuelve 409; el
+contador del grid coincide con el número real de referencias (una query,
+comprobado con `assertNumQueries`); todo queda en auditoría, y un commit con
+`merge` queda marcado como no reversible y S21 lo rechaza con el motivo.
+
+---
+
+### S20 — Dashboard y colas
+
+**Depende de**: S8.
+
+- `/datadesk/` con los 6 contadores de `missing_data_report()` y enlaces a
+  `/datadesk/issues/?attention=...`.
+- Añadir "sin imagen" al selector del workbench si S8 no lo incluyó.
+
+**Aceptación**: los números del dashboard coinciden con el recuento del
+workbench filtrado; cada tarjeta es un enlace directo.
+
+---
+
+### S21 — Activity y revertir
+
+**Depende de**: S6, S12 (y del formato de auditoría de S19).
+
+- `/datadesk/activity/`: lista inversa por fecha, agrupada por `commit_id`, con
+  actor, tabla, objeto, operación y campos cambiados; paginada. Cada grupo
+  muestra el estado `reversible` / `no reversible (merge)` / `ya revertido el …`.
+- `POST /datadesk/activity/<commit_id>/revert`: **el commit entero o nada**. Un
+  revert parcial de un lote heterogéneo deja la BD en un estado que nadie pidió,
+  así que el botón aplica todo el grupo en una transacción (con preview de lo que
+  va a hacer).
+- Reglas de aplicación, por operación:
+  - `create` → borrar el objeto creado (la cascada se lleva sus dependientes, que
+    también se revierten por sus propias filas).
+  - `update` → escribir el `before` completo del snapshot, no un diff.
+  - `delete` → recrear **con el id original** (`Model(id=…, **before)`), porque
+    los `CollectionItem` y cualquier referencia externa apuntaban a ese id.
+  - `merge` → **rechazado**: el commit entero se marca no reversible.
+- Orden dentro del revert: por modelo (lookups → `Issue` → `Stamp`), no por el
+  orden en que se registraron. Si no, revertir un alta de serie intenta crear los
+  sellos antes que su serie y falla por FK.
+- Se rechaza (409 con motivo) si:
+  - el commit ya fue revertido (`reverted_at` no nulo);
+  - contiene un `merge`;
+  - algún objeto cambió después del commit (`updated_at` > `created_at` del
+    cambio) — el mensaje dice qué objeto;
+  - choca al recrear (PK ocupada, nombre `unique` ya usado, FK destino
+    desaparecida).
+- El revert se audita como un commit nuevo (`reverts_commit_id` apuntando al
+  original) y marca `reverted_at` en las filas originales.
+
+**Lo que el revert no puede devolver**, y la UI lo dice explícitamente al
+confirmar: los `CollectionItem` que la cascada borró al eliminar un sello o una
+serie **no se recrean** (el snapshot de auditoría es del catálogo, no de las
+colecciones de usuario). Se recupera la serie y sus sellos, no quién los tenía.
+
+**Aceptación**: commit de 5 cambios → revert → estado idéntico al previo; revert
+de un alta de serie recrea serie y sellos con los mismos ids y colores; segundo
+revert del mismo commit → 409 "ya revertido"; objeto modificado después → 409 con
+el objeto señalado; commit con `merge` → 409 no reversible; el revert deja sus
+propias filas de auditoría con `reverts_commit_id`.
+
+---
+
+### S22 — Cierre
+
+**Depende de**: todas.
+
+- Contrato de teclado completo y consistente (`/`, `j/k`, `N`, `Enter`, `Tab`,
+  `Esc`, `Shift+Enter`, `Ctrl+D`, `Ctrl+Z`, `Ctrl+Enter`).
+- Barrido de i18n: ningún literal fuera de `{% trans %}`; `datadesk_make_messages --check` en verde.
+- Repaso de accesibilidad: foco visible, `label` en inputs, contraste del gris
+  heredado.
+- `datadesk/tests/` con servicio, vistas y permisos; objetivo ≥ 80% en
+  `datadesk/service.py`.
+- `README` del módulo: variables de entorno (`DATADESK_ENABLED`,
+  `DATADESK_TLS`), alta de usuario staff, backup previo, cómo apagar el flag, y
+  la **receta de allowlist por IP para nginx** (documentada, no implementada).
+
+**Aceptación**: `pytest backend/datadesk` en verde dentro del runner de backend;
+`manage.py check --deploy` sin nuevos avisos atribuibles a DataDesk.
+
+---
+
+## 5. Riesgos y cómo se cortan
+
+| Riesgo | Se detecta en | Plan B |
+|---|---|---|
+| Tabulator no rinde con 2.540 filas | S8/S9 | Grid server-side con HTMX, sin Tabulator; S14–S16 se rehacen con menos JS |
+| `CompressedManifestStaticFilesStorage` rompe en prod | S2 | `collectstatic` en el build; probar con `DEBUG=False` antes de S8 |
+| Throttling inútil con 4 workers | S3 | `FileBasedCache` compartida (ya previsto) |
+| Local sin nginx vs servidor con TLS divergen | S3 | Un solo camino de código; `DATADESK_TLS` solo cambia flags, nunca lógica |
+| Cliente y servidor validan distinto | S12/S14 | Una sola fuente: los serializers de DRF validan en servidor, el cliente solo avisa |
+| Un `delete` llega por `/apply` y borra de más | S12 | `/apply` rechaza `delete` con 409; borrar solo existe con preview en S17 |
+| Merge de colores duplica filas en la M2M | S19 | Inserción explícita en la tabla intermedia con `ignore_conflicts` + borrado del origen, nunca `.set()` ni `.add()` |
+| Renombrar un lookup choca con `unique=True` | S19 | 409 `duplicate_name` con `existing_id`; la UI ofrece fusionar |
+| Un revert "recupera" una serie pero no quién la tenía | S21 | Los `CollectionItem` borrados por la cascada no vuelven; se avisa en la confirmación |
+| `polib` como dependencia nueva | S4 | Commitear `.mo` y borrar el comando |
+| Tests en SQLite vs prod en Postgres | S7 | Prohibido lo específico de Postgres en `service.py`; el test lo delata |
+| Escritura concurrente desde dos pestañas | S14 | `updated_at` como testigo: aviso, no bloqueo (un solo actor) |
+| Aparece una excepción real a nivel de sello | uso diario | Migración aditiva en Postgres + una entrada en `INHERITABLE`; la UI de S14 ya es genérica |
+
+---
+
+## 6. Si solo se hace una cosa
+
+S1 → S2 → S3 → S7 → S8: **login + workbench de lectura**. Es lo único que hace
+falta para saber si el enfoque sirve, y no compromete nada del resto.
+
+---
+
+## 7. Estado de implementación
+
+Bitácora de lo construido. Cada paso terminado añade su bloque aquí, con fecha,
+ficheros y las decisiones que se tomaron **al implementar** (las que no estaban
+en el diseño). Es lo primero que hay que leer al retomar el trabajo.
+
+Rama de trabajo: `development` (sin rama propia todavía). Nada de esto está
+commiteado: vive en el working tree. El plan y el diseño están dentro del repo
+(`memory-bank/`), no en `~/.opencode`, para que un rebuild del contenedor no los
+borre.
+
+### ✅ S1 — Esqueleto de app, flag y montaje (2026-11-18)
+
+Ficheros nuevos:
+
+```
+backend/datadesk/__init__.py
+backend/datadesk/apps.py                    DataDeskConfig (name="datadesk", verbose_name="DataDesk")
+backend/datadesk/urls.py                    app_name="datadesk", "" → DashboardView
+backend/datadesk/views/__init__.py
+backend/datadesk/views/dashboard.py         DashboardView(TemplateView), provisional
+backend/datadesk/templates/datadesk/dashboard.html
+backend/datadesk/tests/__init__.py
+backend/datadesk/tests/test_mount.py        3 tests
+```
+
+Ficheros modificados:
+
+```
+backend/_backend/settings.py    DATADESK_ENABLED (env, default False), DATADESK_URL="datadesk/",
+                                DATADESK_LOGIN_URL=f"/{DATADESK_URL}login/", "datadesk" en INSTALLED_APPS
+backend/_backend/urls.py        montaje condicional al final de urlpatterns
+backend/.env.example            DATADESK_ENABLED=False documentado
+```
+
+Decisión tomada al implementar (no estaba en el plan): el condicional de
+`_backend/urls.py` usa **`django.conf.settings`**, no `from _backend.settings
+import ...`. `_backend.settings` es un módulo normal, así que `override_settings`
+no lo alcanza y el test no podría encender el flag.
+
+Cómo se prueba: el URLconf se importa una vez por proceso, así que los tests
+hacen `clear_url_caches()` + `importlib.reload(_backend.urls)` dentro de un
+`override_settings` y lo restauran al terminar la fixture. Reutilizable para S3.
+
+Verificado: `manage.py check` limpio · `spectacular` con **0** referencias a
+`datadesk` · **1011** tests de backend en verde (1008 previos + 3 nuevos).
+
+### ⏭ Siguiente: S2
+
+Nada empezado. Pendiente de decidir antes de escribir código: si el HTMX,
+Alpine y Tabulator vendorizados los descargo yo (versiones a fijar en
+`vendor/VERSIONS.md`) o los pone el usuario.
+

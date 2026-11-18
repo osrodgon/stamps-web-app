@@ -70,6 +70,15 @@ backend/
 - **Development**: Separate Docker Compose files for dev, prod, and test environments
 - **Multi-stage Builds**: Optimized Dockerfiles for different deployment scenarios
 - **Database**: PostgreSQL for production, SQLite for testing
+- **Dev container = docker-outside-of-docker**: the devcontainer uses the **host**
+  daemon (feature `docker-outside-of-docker`, which mounts `/var/run/docker.sock`
+  as `/var/run/docker-host.sock`), so `stamps.sh` runs unchanged from inside it.
+  Chosen over docker-in-docker: it shares the host image cache and the existing
+  `stamps-network`, which is what `runArgs`/`initializeCommand` already rely on.
+  Consequences: containers are **siblings** on the host (reach them by service
+  name on `stamps-network`, never `localhost`; published ports land on the host),
+  and bind mounts in compose files resolve against **host** paths.
+  `devcontainer-lock.json` pins the feature digest — regenerate it on feature bumps.
 
 ### Testing Strategy
 - **Backend**: pytest with Django test framework, fixtures for test data
@@ -146,3 +155,58 @@ backend/
 - Type hints for better code documentation
 - Comprehensive test coverage requirements
 - Security vulnerability scanning and monitoring
+
+---
+
+## Logger Coverage Reference
+
+Classes inherit Logger through `BaseUI(Logger)`, `StandardPage(ft.View, BaseUI)`, or `BaseService(Logger)`.
+
+**Files whose classes DO have Logger in MRO:**
+```
+core/logger.py                          # Logger definition
+core/base_ui.py                         # BaseUI(Logger)
+components/templates/standard_page.py   # StandardPage(ft.View, BaseUI)
+components/layout/app_header.py         # AppHeader(ft.Container, Logger)
+components/auth/login_card.py           # LoginCard(ft.Container, BaseUI)
+components/auth/signup_card.py          # SignupCard(ft.Container, BaseUI)
+services/base_service.py                # BaseService(Logger)
+services/auth_service.py                # AuthService(BaseService)
+services/issue_service.py               # IssueService(BaseService)
+pages/auth/login_page.py                # LoginPage(ft.View, BaseUI)
+pages/auth/signup_page.py               # SignupPage(ft.View, BaseUI)
+pages/not_found_page.py                 # NotFoundPage(ft.View, BaseUI)
+pages/admin/stamps_manager_page.py      # StampsManagerPage(StandardPage)
+pages/collection/collections_page.py    # CollectionsPage(StandardPage)
+```
+
+**Files whose classes do NOT have Logger in MRO:**
+```
+components/buttons/alert_button.py
+components/buttons/default_button.py
+components/buttons/icon_button.py
+components/buttons/link_button.py
+components/buttons/primary_button.py
+components/buttons/text_button.py
+components/colors.py
+components/form/text_field.py
+components/form/year_range_selector.py
+components/layout/app_drawer.py
+components/layout/brand.py
+components/layout/horizontal_line.py
+components/layout/vertical_line.py
+components/table/column_def.py
+components/table/issue_detail/issue_detail_card.py
+components/table/issue_detail/stamp_card.py
+components/table/issue_detail/stamp_detail_dialog.py
+components/table/issue_row.py
+components/table/issue_table_app.py
+components/table/table_header.py
+components/table/table_pagination.py
+core/log_setup.py
+core/severity.py
+core/translations.py
+core/urls.py
+core/utils.py
+main.py
+settings.py

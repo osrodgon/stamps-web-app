@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -7,6 +8,7 @@ from drf_spectacular.views import (
 
 from _backend.settings import (
     ADMIN_URL,
+    DATADESK_URL,
     COLLECTION_ITEMS_ENDPOINT,
     COLLECTIONS_ENDPOINT,
     COLORS_ENDPOINT,
@@ -71,3 +73,8 @@ urlpatterns = [
         ]
     ))
 ]
+
+# DataDesk is an internal DB-maintenance UI, not part of the public API: it is
+# mounted on its own path and only when explicitly enabled.
+if settings.DATADESK_ENABLED:
+    urlpatterns += [path(DATADESK_URL, include("datadesk.urls"))]
