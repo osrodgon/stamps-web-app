@@ -30,6 +30,15 @@
       EN/ES control in the topbar as a POST form hitting `/datadesk/language/`.
       Templates now use `{% translate %}`; the frontend `assets/locales/*.json` are
       untouched. 13 tests; 1053 backend tests green. Next: S5 (`updated_at`)
+- [x] **S5 — `updated_at` on Issue and Stamp** (2026-11-18): `auto_now=True,
+      null=True, db_index=True` in both models, migrations generated locally
+      (`migrations/` is gitignored, CI builds the test schema from the models),
+      `exclude = ["updated_at"]` in both response serializers (public API and
+      OpenAPI schema unchanged), and `ModelAdmin` with `readonly_fields`. Verified
+      on a scratch database: `migrate` applies and reverses, `loaddata` of the July
+      backup installs 12.763 objects with the column NULL, and a later `save()`
+      moves it. 8 tests; 1062 backend tests green.
+      Next: S6 (`DataDeskChange` + audit writer)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

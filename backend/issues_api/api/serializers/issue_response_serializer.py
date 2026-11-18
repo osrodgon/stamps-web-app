@@ -18,5 +18,7 @@ class IssueResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = '__all__'
+        # `updated_at` is internal bookkeeping for DataDesk: keeping it out of the
+        # response leaves the public payload and the OpenAPI schema unchanged.
+        exclude = ["updated_at"]
         

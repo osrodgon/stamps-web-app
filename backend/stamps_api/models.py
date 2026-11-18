@@ -40,7 +40,10 @@ class Stamp(models.Model):
     market_value_mnh = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     market_value_used = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     total_printed = models.BigIntegerField(null=True, blank=True)
-    
+    # Last time the row changed. Nullable on purpose: fixtures dumped before this
+    # column existed still load, and DataDesk reads null as "no conflict info".
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True, db_index=True)
+
     class Meta:
         verbose_name = "Stamp"
         verbose_name_plural = "Stamps"

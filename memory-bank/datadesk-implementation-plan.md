@@ -85,7 +85,7 @@ el mockup ya están corregidos con esta decisión.
 | S2 | Estáticos vendorizados + `base.html` | S1 | S | no | ✅ 2026-11-18 |
 | S3 | Login, logout, gate, throttling | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | ✅ 2026-11-18 |
-| S5 | `updated_at` en Issue/Stamp | S1 | XS | no | — |
+| S5 | `updated_at` en Issue/Stamp | S1 | XS | no | ✅ 2026-11-18 |
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | — |
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | — |
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | — |
@@ -1098,8 +1098,65 @@ DataDesk", "Contraseña" y "Entrar"; sin cookie, "Sign in" y "Password" ·
 `manage.py check` limpio · `spectacular` con **0** referencias a `datadesk` ·
 **1053** tests de backend en verde (1040 previos + 13 nuevos).
 
-### ⏭ Siguiente: S5
+### ✅ S5 — `updated_at` en Issue y Stamp (2026-11-18)
 
-`updated_at` en `Issue` y `Stamp` (migración aditiva + `auto_now`), la base para
-el control de conflictos de S12 y el "needs attention" de S20.
+Ficheros nuevos:
+
+```
+backend/issues_api/migrations/0005_issue_updated_at.py   (no se versiona: `migrations/` está en .gitignore)
+backend/stamps_api/migrations/0005_stamp_updated_at.py   (ídem)
+backend/issues_api/test/test_issue_timestamps.py     4 tests
+backend/stamps_api/test/test_stamp_timestamps.py     4 tests
+```
+
+Ficheros modificados:
+
+```
+backend/issues_api/models.py            Issue.updated_at
+backend/stamps_api/models.py            Stamp.updated_at
+backend/issues_api/api/serializers/issue_response_serializer.py   exclude = ["updated_at"]
+backend/stamps_api/api/serializers/stamp_response_serializer.py   exclude = ["updated_at"]
+backend/issues_api/admin.py             IssueAdmin con readonly_fields
+backend/stamps_api/admin.py             StampAdmin con readonly_fields
+```
+
+Decisiones tomadas al implementar:
+
+- **`null=True` de verdad hace falta**, y está comprobado: con `null=True` y la
+  tabla vacía, `migrate` + `loaddata backups/latest__stamps.json` instala 12.763
+  objetos y deja los 2.540 issues y 9.558 sellos con `updated_at` NULL. Con el
+  campo no nulo eso es un `IntegrityError`.
+- **Las migraciones no van al repo**: `.gitignore` ignora `migrations/`, así que
+  0005 se genera con `makemigrations` y vive solo en el entorno. En CI no faltan:
+  las apps sin migraciones se crean desde los modelos al construir la BD de test.
+- **Django rellena las filas existentes al añadir la columna**: si la tabla ya
+  tiene datos cuando corre 0005, esas filas quedan con la hora de la migración,
+  no NULL (verificado con SQL directo sobre una BD de pruebas). Es el caso de una
+  BD de producción que migre; sirve de línea base para S12.
+- **`exclude` en vez de `fields` en los serializers de respuesta**: DRF no admite
+  `fields` y `exclude` a la vez, así que `fields = "__all__"` pasa a
+  `exclude = ["updated_at"]`. El schema de DRF queda con **0** menciones al campo,
+  o sea que `/api/v1/` no cambia.
+- **`ModelAdmin` explícito** en las dos apps: `admin.site.register(Model)` no
+  permitía `readonly_fields`.
+- **Los fixtures de test son de ámbito de módulo**, no globales: un test que usa
+  `stamps_table` tiene que importar también `issues_table`, `colors_table`,
+  `years_table`, `countries_table`, `stamp_types_table` y `print_types_table`, o
+  pytest no resuelve la cadena de dependencias.
+
+Verificado: `migrate` aplica 0005 en las dos apps y `migrate <app> 0004` las
+revierte sin error · `loaddata` del backup de julio deja los timestamps en NULL ·
+un `save()` posterior mueve el campo · `manage.py check` limpio · `spectacular`
+sin rastro del campo · **1062** tests de backend en verde (1053 previos + 8
+nuevos + el test de `--check` de S4). Las BD de pruebas (`s5_scratch`,
+`s5_probe`) se borraron; `backend_db` sigue intacta y vacía.
+
+### ⏭ Siguiente: S6
+
+Auditoría: `DataDeskChange` en `datadesk/models.py` (`commit_id` UUID, `user` FK
+`SET_NULL`, `model_label`, `object_id`, `operation`, `before`, `after`,
+`created_at`, más `reverted_at` y `reverts_commit_id` que necesita S21) y
+`datadesk/audit.py` con `snapshot()` (solo campos editables, `Decimal`/`date`
+serializados, FKs como ids, `colors` como lista de ids) y `record()`. Admin de
+solo lectura mientras no exista S21.
 
