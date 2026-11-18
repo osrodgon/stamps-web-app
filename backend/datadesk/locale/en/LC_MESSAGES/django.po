@@ -91,3 +91,103 @@ msgstr "Print type"
 #: datadesk/registry.py
 msgid "Stamp type"
 msgstr "Stamp type"
+
+#: datadesk/views/workbench.py
+msgid "Issues"
+msgstr "Issues"
+
+#: datadesk/views/workbench.py
+msgid "From year"
+msgstr "From year"
+
+#: datadesk/views/workbench.py
+msgid "To year"
+msgstr "To year"
+
+#: datadesk/views/workbench.py
+msgid "Name"
+msgstr "Name"
+
+#: datadesk/views/workbench.py
+msgid "Any"
+msgstr "Any"
+
+#: datadesk/views/workbench.py
+msgid "Needs attention"
+msgstr "Needs attention"
+
+#: datadesk/views/workbench.py
+msgid "Nothing"
+msgstr "Nothing"
+
+#: datadesk/views/workbench.py
+msgid "No country"
+msgstr "No country"
+
+#: datadesk/views/workbench.py
+msgid "No date"
+msgstr "No date"
+
+#: datadesk/views/workbench.py
+msgid "No stamps"
+msgstr "No stamps"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without colors"
+msgstr "Stamps without colors"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without face value"
+msgstr "Stamps without face value"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without image"
+msgstr "Stamps without image"
+
+#: datadesk/views/workbench.py
+msgid "Reset"
+msgstr "Reset"
+
+#: datadesk/views/workbench.py
+msgid "Columns"
+msgstr "Columns"
+
+#: datadesk/views/workbench.py
+msgid "Date"
+msgstr "Date"
+
+#: datadesk/views/workbench.py
+msgid "Stamps"
+msgstr "Stamps"
+
+#: datadesk/views/workbench.py
+msgid "MNH"
+msgstr "MNH"
+
+#: datadesk/views/workbench.py
+msgid "Used"
+msgstr "Used"
+
+#: datadesk/views/workbench.py
+msgid "Perforation"
+msgstr "Perforation"
+
+#: datadesk/views/workbench.py
+msgid "Total printed"
+msgstr "Total printed"
+
+#: datadesk/views/workbench.py
+msgid "Gaps"
+msgstr "Gaps"
+
+#: datadesk/views/workbench.py
+msgid "No issues match these filters."
+msgstr "No issues match these filters."
+
+#: datadesk/views/workbench.py
+msgid "issues"
+msgstr "issues"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Open the issues workbench"
+msgstr "Open the issues workbench"

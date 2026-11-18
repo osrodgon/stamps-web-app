@@ -257,6 +257,119 @@ kbd {
   background: var(--dd-green-soft);
 }
 
+/* --- Workbench --------------------------------------------------------- */
+
+.dd-workbench-page {
+  padding: 0;
+}
+
+.dd-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dd-filter-wide {
+  flex: 1 1 220px;
+}
+
+.dd-filter input,
+.dd-filter select {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 7px;
+  border: 1px solid #cfd5dc;
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+}
+
+.dd-filter input[type="number"] {
+  width: 82px;
+}
+
+.dd-filter input:focus,
+.dd-filter select:focus {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: -1px;
+}
+
+.dd-workbench-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-columns {
+  position: relative;
+  margin-left: auto;
+}
+
+.dd-columns summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.dd-columns summary::-webkit-details-marker {
+  display: none;
+}
+
+.dd-columns-list {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  box-shadow: 0 8px 24px rgba(20, 25, 35, 0.12);
+  white-space: nowrap;
+}
+
+.dd-columns-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Tabulator density: rows are read for hours, keep them compact. */
+#workbench {
+  font-size: 12px;
+}
+
+#workbench .tabulator-header .tabulator-col {
+  background: var(--dd-navy);
+  color: #fff;
+  border-color: #39485a;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+#workbench .tabulator-row {
+  height: var(--dd-row-height);
+  min-height: var(--dd-row-height);
+}
+
+#workbench .tabulator-cell {
+  padding: var(--dd-cell-padding-y) var(--dd-cell-padding-x);
+}
+
 /* --- Commit bar -------------------------------------------------------- */
 .dd-commitbar {
   display: flex;

@@ -1,0 +1,78 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {% translate "Issues" %}{% endblock %}
+
+{% block breadcrumbs %}<b>{% translate "Issues" %}</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page dd-workbench-page">
+    <form class="dd-filters" id="workbench-filters" method="get" action="">
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "From year" %}</span>
+        <input type="number" name="year_min" inputmode="numeric"
+               value="{{ filters.year_min|default_if_none:'' }}">
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "To year" %}</span>
+        <input type="number" name="year_max" inputmode="numeric"
+               value="{{ filters.year_max|default_if_none:'' }}">
+      </label>
+      <label class="dd-filter dd-filter-wide">
+        <span class="dd-label">{% translate "Name" %}</span>
+        <input type="search" name="q" value="{{ filters.q }}">
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "Country" %}</span>
+        <select name="country">
+          <option value="">{% translate "Any" %}</option>
+          {% for country in countries %}
+            <option value="{{ country.pk }}" {% if filters.country == country.pk %}selected{% endif %}>
+              {{ country.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "Stamp type" %}</span>
+        <select name="stamp_type">
+          <option value="">{% translate "Any" %}</option>
+          {% for stamp_type in stamp_types %}
+            <option value="{{ stamp_type.pk }}" {% if filters.stamp_type == stamp_type.pk %}selected{% endif %}>
+              {{ stamp_type.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "Needs attention" %}</span>
+        <select name="attention">
+          <option value="">{% translate "Nothing" %}</option>
+          <option value="no_country" {% if filters.attention == "no_country" %}selected{% endif %}>{% translate "No country" %}</option>
+          <option value="no_date" {% if filters.attention == "no_date" %}selected{% endif %}>{% translate "No date" %}</option>
+          <option value="no_stamps" {% if filters.attention == "no_stamps" %}selected{% endif %}>{% translate "No stamps" %}</option>
+          <option value="stamps_without_colors" {% if filters.attention == "stamps_without_colors" %}selected{% endif %}>{% translate "Stamps without colors" %}</option>
+          <option value="stamps_without_face_value" {% if filters.attention == "stamps_without_face_value" %}selected{% endif %}>{% translate "Stamps without face value" %}</option>
+          <option value="stamps_without_image" {% if filters.attention == "stamps_without_image" %}selected{% endif %}>{% translate "Stamps without image" %}</option>
+        </select>
+      </label>
+      <button type="reset" class="dd-btn dd-btn-ghost" id="workbench-reset">{% translate "Reset" %}</button>
+    </form>
+
+    <div class="dd-workbench-toolbar">
+      <span class="dd-hint" id="workbench-count"></span>
+      <details class="dd-columns">
+        <summary class="dd-hint">{% translate "Columns" %}</summary>
+        <div class="dd-columns-list" id="workbench-columns"></div>
+      </details>
+    </div>
+
+    <div id="workbench"></div>
+  </section>
+
+  {{ config|json_script:"workbench-config" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/workbench.js' %}"></script>
+{% endblock %}

@@ -88,7 +88,7 @@ el mockup ya están corregidos con esta decisión.
 | S5 | `updated_at` en Issue/Stamp | S1 | XS | no | ✅ 2026-11-18 |
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | ✅ 2026-11-18 |
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | ✅ 2026-11-18 |
-| S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | — |
+| S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | ✅ 2026-11-18 |
 | S9 | Prueba de rendimiento + índices | S8 | S | no | — |
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | — |
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | — |
@@ -1229,9 +1229,64 @@ los 6 contadores cuadran sobre un dataset con huecos explícitos · `manage.py
 check` limpio · **1088** tests de backend en verde en la imagen de test (1062
 previos + 12 nuevos + 14 de S6).
 
-### ⏭ Siguiente: S8
+### ✅ S8 — Workbench de solo lectura (2026-11-18) ← primer hito
 
-Workbench de solo lectura: endpoint JSON con paginación/filtros/orden para
-Tabulator, vista `issues/` sobre `issue_queryset()` y las 6 colas de "needs
-attention" conectadas a `missing_data_report()`. Es el primer hito visible.
+Ficheros nuevos:
+
+```
+backend/datadesk/views/workbench.py       WorkbenchView + COLUMNS + grid_config()
+backend/datadesk/views/workbench_api.py   IssueGridJsonView (JSON, no DRF)
+backend/datadesk/templates/datadesk/workbench.html   filtros + toolbar + #workbench
+backend/datadesk/static/datadesk/workbench.js        Tabulator, URL, localStorage, badge
+backend/datadesk/tests/test_workbench_api.py         27 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/service.py          IssueFilters, IssuePage, ATTENTION_KEYS, SORT_FIELDS,
+                                     filter_issues(), sort_issues(), issue_page(), serialize_issue()
+backend/datadesk/urls.py             issues/ y grid/issues
+backend/datadesk/templates/datadesk/dashboard.html   enlace al workbench
+backend/datadesk/static/datadesk/datadesk.css       filtros, toolbar, columnas y densidad de Tabulator
+backend/datadesk/locale/{es,en}/…/django.po (+ .mo)  25 msgids nuevos
+```
+
+Decisiones tomadas al implementar:
+
+- **Los tres filtros de "needs attention" a nivel de sello usan `Exists`**, no
+  joins: un join multiplicaría filas y rompería el `Count("stamps")` del grid.
+  Los de serie (sin país, sin fecha) y `no_stamps` también, así los seis comparten
+  forma y el badge y el filtro no pueden divergir.
+- **El badge marca solo los tres huecos acordados** (`no_country`, `no_date`,
+  `no_stamps`) y se calcula de la fila ya serializada: cero queries extra. Los
+  huecos de sellos siguen siendo contadores del dashboard (S20).
+- **`SORT_FIELDS` es una lista blanca** en el servicio: un `sort[0][field]`
+  desconocido o malicioso cae al orden cronológico por defecto, no a un error.
+- **La agrupación por año es por página**, no sobre el dataset: el precio de
+  agrupar globalmente sería renunciar a la paginación server-side. Queda como
+  limitación consciente hasta que S9 diga si el volumen permite otra cosa.
+- **La fila expandible con sus sellos se pospone a S10**: el enlace al workspace
+  aún no existe.
+- **Los títulos de columna los renderiza Django** dentro de un `json_script`, así
+  `workbench.js` no contiene texto de interfaz y las traducciones siguen saliendo
+  del catálogo.
+- **Filtros en la URL, columnas en `localStorage`**; el buscador lleva 300 ms de
+  debounce y `page`/`size` se limpian al cambiar un filtro.
+- **`page` se recorta a `last_page`** y `size` se limita a 200: un `size=100000`
+  no puede tumbar el endpoint.
+
+Verificado con los **datos reales** (2.540 series, 9.555 sellos): primera página
+de 100 filas en **138 ms** (26 páginas), `attention=no_stamps` en 63 ms, endpoint
+con las 18 claves por fila, página y grid a 302 sin sesión y a 200 con usuario
+staff · `manage.py check` limpio · `spectacular` con **0** referencias a
+`datadesk` · **1115** tests de backend en verde en la imagen de test (1088 previos
++ 27 nuevos).
+
+### ⏭ Siguiente: S9
+
+Prueba de rendimiento con el dataset real y decisión sobre índices: medir el
+grid con y sin índices (`year`, `country`, `stamp_type`, `date`), comprobar los
+`EXPLAIN` de los filtros de "needs attention" y dejar por escrito qué se añade y
+qué no.
 

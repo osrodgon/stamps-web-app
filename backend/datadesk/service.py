@@ -5,7 +5,12 @@ workbench grid (S8), the stamp grid of the workspace (S10) and the "needs
 attention" queues of the dashboard (S20). Keeping the querysets here means the
 query count is decided once, not per view.
 """
-from django.db.models import Count, F, Q, QuerySet
+from dataclasses import dataclass, field
+from decimal import Decimal
+from math import ceil
+from typing import Any
+
+from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
 
 from issues_api.models import Issue
 from stamps_api.models import Stamp
@@ -31,19 +36,209 @@ REPORT_KEYS: tuple[str, ...] = (
 )
 """The counters behind the "needs attention" selector."""
 
+ATTENTION_KEYS: tuple[str, ...] = (
+    "no_country",
+    "no_date",
+    "no_stamps",
+    "stamps_without_colors",
+    "stamps_without_face_value",
+    "stamps_without_image",
+)
+"""The "needs attention" filters of the workbench.
+
+Each one maps to a condition on the issue, so the grid and the badge tell the
+same story. The last three are expressed with ``Exists`` instead of a join: a
+join would multiply rows and break the stamp ``Count`` annotation.
+"""
+
+SORT_FIELDS: dict[str, str] = {
+    "year": "year__year",
+    "date": "date",
+    "name": "name",
+    "country": "country__name",
+    "stamp_type": "stamp_type__name",
+    "printer": "printer__name",
+    "stamps": "stamp_count",
+    "mnh": "market_value_mnh",
+    "used": "market_value_used",
+    "print_type": "print_type__name",
+    "artist": "artist__name",
+    "paper_type": "paper_type__name",
+    "perforation": "perforation",
+    "total_printed": "total_printed",
+}
+"""Sortable fields, mapped to their ORM path. Anything else is ignored."""
+
+DEFAULT_SORT: tuple[str, str] = ("year", "asc")
+DEFAULT_PAGE_SIZE = 100
+MAX_PAGE_SIZE = 200
+
+
+@dataclass(frozen=True)
+class IssueFilters:
+    """The filters the workbench can apply, as they arrive from the query string.
+
+    Attributes:
+        year_min: First year of the range, inclusive.
+        year_max: Last year of the range, inclusive.
+        q: Free text over the issue name.
+        country: Country id.
+        stamp_type: Stamp type id.
+        attention: One of ``ATTENTION_KEYS``.
+    """
+
+    year_min: int | None = None
+    year_max: int | None = None
+    q: str = ""
+    country: int | None = None
+    stamp_type: int | None = None
+    attention: str = ""
+
+    def to_query(self) -> dict[str, Any]:
+        """Returns the filters that are actually set, for rebuilding links."""
+        values: dict[str, Any] = {}
+        for name in ("year_min", "year_max", "q", "country", "stamp_type", "attention"):
+            value = getattr(self, name)
+            if value not in ("", None):
+                values[name] = value
+        return values
+
+
+@dataclass(frozen=True)
+class IssuePage:
+    """One page of workbench rows, already shaped for the grid.
+
+    Attributes:
+        data: Serialized rows.
+        total: Rows matching the filters.
+        last_page: Last page number, at least 1.
+        page: Page returned.
+        size: Page size used.
+    """
+
+    data: list[dict[str, Any]] = field(default_factory=list)
+    total: int = 0
+    last_page: int = 1
+    page: int = 1
+    size: int = DEFAULT_PAGE_SIZE
+
 
 def issue_queryset() -> QuerySet[Issue]:
     """Returns the workbench rows: issues with their lookups and stamp count.
 
     Ordering is chronological — year, then emission date, then name — with the
-    undated series at the end. That is a default, not a rule: S8 lets the user
-    sort by any column.
+    undated series at the end. That is a default, not a rule: the grid lets the
+    user sort by any column.
     """
     return (
         Issue.objects.select_related(*ISSUE_SELECT_RELATED)
         .annotate(stamp_count=Count("stamps"))
         .order_by("year__year", F("date").asc(nulls_last=True), "name")
     )
+
+
+def filter_issues(queryset: QuerySet[Issue], filters: IssueFilters) -> QuerySet[Issue]:
+    """Applies the workbench filters to an issue queryset."""
+    if filters.year_min is not None:
+        queryset = queryset.filter(year__year__gte=filters.year_min)
+    if filters.year_max is not None:
+        queryset = queryset.filter(year__year__lte=filters.year_max)
+    if filters.q:
+        queryset = queryset.filter(name__icontains=filters.q)
+    if filters.country is not None:
+        queryset = queryset.filter(country_id=filters.country)
+    if filters.stamp_type is not None:
+        queryset = queryset.filter(stamp_type_id=filters.stamp_type)
+
+    attention = ATTENTION_CONDITIONS.get(filters.attention)
+    if attention is not None:
+        queryset = queryset.filter(attention)
+
+    return queryset
+
+
+def sort_issues(
+    queryset: QuerySet[Issue], sort: str, direction: str
+) -> QuerySet[Issue]:
+    """Orders by a whitelisted column; unknown fields fall back to the default."""
+    path = SORT_FIELDS.get(sort)
+    if path is None:
+        return queryset.order_by(
+            "year__year", F("date").asc(nulls_last=True), "name"
+        )
+
+    descending = direction.lower() == "desc"
+    expression = F(path)
+    if sort == "date":
+        expression = F("date").desc(nulls_last=True) if descending else F("date").asc(
+            nulls_last=True
+        )
+        return queryset.order_by(expression, "name")
+    if sort == "year":
+        return queryset.order_by(
+            expression.desc() if descending else expression.asc(),
+            F("date").asc(nulls_last=True),
+            "name",
+        )
+    return queryset.order_by(expression.desc() if descending else expression.asc())
+
+
+def issue_page(
+    filters: IssueFilters,
+    sort: str = DEFAULT_SORT[0],
+    direction: str = DEFAULT_SORT[1],
+    page: int = 1,
+    size: int = DEFAULT_PAGE_SIZE,
+) -> IssuePage:
+    """Returns one page of workbench rows, ready to be serialized to JSON."""
+    size = max(1, min(size, MAX_PAGE_SIZE))
+    page = max(1, page)
+
+    queryset = sort_issues(filter_issues(issue_queryset(), filters), sort, direction)
+    total = queryset.count()
+    last_page = max(1, ceil(total / size))
+    page = min(page, last_page)
+    offset = (page - 1) * size
+
+    return IssuePage(
+        data=[serialize_issue(issue) for issue in queryset[offset : offset + size]],
+        total=total,
+        last_page=last_page,
+        page=page,
+        size=size,
+    )
+
+
+def serialize_issue(issue: Issue) -> dict[str, Any]:
+    """Turns an issue into the flat row the grid renders.
+
+    Decimals travel as strings: the grid only displays them, and it avoids
+    float drift between the query and the browser.
+    """
+    return {
+        "id": issue.pk,
+        "year": issue.year.year,
+        "date": issue.date.isoformat() if issue.date else None,
+        "name": issue.name,
+        "country": issue.country.name if issue.country else None,
+        "country_id": issue.country_id,
+        "stamp_type": issue.stamp_type.name if issue.stamp_type else None,
+        "stamp_type_id": issue.stamp_type_id,
+        "print_type": issue.print_type.name if issue.print_type else None,
+        "printer": issue.printer.name if issue.printer else None,
+        "artist": issue.artist.name if issue.artist else None,
+        "paper_type": issue.paper_type.name if issue.paper_type else None,
+        "perforation": issue.perforation,
+        "total_printed": issue.total_printed,
+        "mnh": _decimal(issue.market_value_mnh),
+        "used": _decimal(issue.market_value_used),
+        "stamps": issue.stamp_count,
+        "gaps": {
+            "no_country": issue.country_id is None,
+            "no_date": issue.date is None,
+            "no_stamps": issue.stamp_count == 0,
+        },
+    }
 
 
 def stamp_queryset(issue_id: int) -> QuerySet[Stamp]:
@@ -74,3 +269,26 @@ def missing_data_report() -> dict[str, int]:
             Q(image__isnull=True) | Q(image="")
         ).count(),
     }
+
+
+def _decimal(value: Decimal | None) -> str | None:
+    """Returns a decimal as string, or ``None`` when it is unset."""
+    return None if value is None else str(value)
+
+
+def _stamps_of_issue(**filters: Any) -> QuerySet[Stamp]:
+    """Stamps of the issue being annotated, for the ``Exists`` conditions."""
+    return Stamp.objects.filter(issue=OuterRef("pk"), **filters)
+
+
+ATTENTION_CONDITIONS: dict[str, Q | Exists] = {
+    "no_country": Q(country__isnull=True),
+    "no_date": Q(date__isnull=True),
+    "no_stamps": ~Exists(Stamp.objects.filter(issue=OuterRef("pk"))),
+    "stamps_without_colors": Exists(_stamps_of_issue(colors__isnull=True)),
+    "stamps_without_face_value": Exists(_stamps_of_issue(face_value="")),
+    "stamps_without_image": Exists(
+        _stamps_of_issue(image__isnull=True) | _stamps_of_issue(image="")
+    ),
+}
+"""Filter condition for each "needs attention" key."""
