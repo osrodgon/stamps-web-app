@@ -63,6 +63,18 @@
       JSON so the JS holds no UI text. Gap badge from the row itself, no extra
       queries. Measured on the real data: 100-row page in **138 ms**. 27 tests;
       1115 backend tests green. Next: S9 (perf check on the real dataset + indexes)
+- [x] **S9 — Performance check and indexes** (2026-11-18): measured on the real
+      data (2.540 issues / 9.558 stamps, longest series 57 stamps) — first page
+      68 ms, last page 67 ms (no OFFSET degradation), year filter 44 ms, name
+      search 35 ms, worst queue `stamps_without_colors` 82 ms; p95 under 300 ms
+      everywhere, 2 queries at any page size. `Planning Time` (42 ms) beats
+      `Execution Time` (24 ms), so the cost is planning the 8-table join, not
+      scanning. **No index added**: `icontains` compiles to
+      `UPPER(name) LIKE UPPER('%q%')` (a btree is useless, would need `pg_trgm`
+      + GIN), the year filter already uses the FK index, and the stamp-level
+      queues are semi joins over 9.558 rows. Numbers and the rejected
+      candidates written to `memory-bank/datadesk-perf.md`; one test fixes the
+      query count. 100 datadesk tests green. Next: S10 (workspace `mode=edit`)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

@@ -76,6 +76,22 @@ class TestIssueQueryset:
 
 
 @pytest.mark.django_db
+class TestPageCost:
+    """S9: the page costs the same number of queries whatever its size."""
+
+    def test_page_size_does_not_add_queries(
+        self, dataset, django_assert_num_queries
+    ) -> None:
+        with django_assert_num_queries(2):
+            small = service.issue_page(service.IssueFilters(), size=1)
+        with django_assert_num_queries(2):
+            large = service.issue_page(service.IssueFilters(), size=100)
+
+        assert len(small.data) == 1
+        assert len(large.data) == len(dataset["issues"])
+
+
+@pytest.mark.django_db
 class TestStampQueryset:
     """The workspace grid prefetches colors: one query per concern."""
 

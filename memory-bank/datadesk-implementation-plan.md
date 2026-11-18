@@ -89,7 +89,7 @@ el mockup ya están corregidos con esta decisión.
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | ✅ 2026-11-18 |
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | ✅ 2026-11-18 |
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | ✅ 2026-11-18 |
-| S9 | Prueba de rendimiento + índices | S8 | S | no | — |
+| S9 | Prueba de rendimiento + índices | S8 | S | no | ✅ 2026-11-18 |
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | — |
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | — |
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | — |
@@ -432,9 +432,9 @@ no se degrada respecto a la primera.
 
 **Aceptación**: una serie de 8 sellos carga con 1–2 queries; los grises
 coinciden con el mockup; `Esc` vuelve al workbench conservando filtros. Se
-prueba además con la **serie más larga real (24 sellos)**, que debe seguir
-pintándose sin paginar, y con un fixture de 100 para confirmar que no hay ningún
-límite duro escondido en la plantilla ni en el queryset.
+prueba además con la **serie más larga real (57 sellos, medido en S9)**, que debe
+seguir pintándose sin paginar, y con un fixture de 100 para confirmar que no hay
+ningún límite duro escondido en la plantilla ni en el queryset.
 
 ---
 
@@ -1283,10 +1283,42 @@ staff · `manage.py check` limpio · `spectacular` con **0** referencias a
 `datadesk` · **1115** tests de backend en verde en la imagen de test (1088 previos
 + 27 nuevos).
 
-### ⏭ Siguiente: S9
+### ✅ S9 — Rendimiento e índices (2026-11-18)
 
-Prueba de rendimiento con el dataset real y decisión sobre índices: medir el
-grid con y sin índices (`year`, `country`, `stamp_type`, `date`), comprobar los
-`EXPLAIN` de los filtros de "needs attention" y dejar por escrito qué se añade y
-qué no.
+Sin cambios de código: el entregable es `memory-bank/datadesk-perf.md` con los
+números, los planes y la decisión, más un test que fija el contador de queries.
+
+Decisiones tomadas al medir:
+
+- **No se añade ningún índice.** El cuello de botella no es leer: en la primera
+  página `Planning Time` son **42 ms** y `Execution Time` **24 ms**. El coste es
+  planificar el join de ocho tablas con filas de 2.350 bytes, no recorrer 2.540
+  filas. La misma SQL por cursor tarda 59,9 ms y por el ORM 62,3 ms: el ORM y la
+  serialización de 100 filas son ~2 ms.
+- **`Issue.name` no puede aprovechar un btree**: `name__icontains` se compila a
+  `UPPER(name::text) LIKE UPPER('%real%')`, con comodín inicial. Haría falta
+  `pg_trgm` + GIN, y hoy la búsqueda tarda **2 ms de ejecución**.
+- **El filtro por año ya usa el índice de la FK** (`year_id`), y el orden por
+  defecto ordena por `year.year` a través del join, así que un compuesto
+  `(year_id, date)` no entra en el plan.
+- **Las tres colas de sello son semi joins sobre 9.558 filas**: 32–49 ms de
+  ejecución con `Seq Scan`; un índice parcial (`face_value = ''`) no gana a este
+  volumen. `Issue.country` y `Issue.stamp_type` ya son FKs indexadas.
+- **La última página no se degrada** (p95 71,5 ms vs 70,3 ms): el `top-N
+  heapsort` ya recorre el conjunto y el `OFFSET` no añade un escaneo.
+- **El contador de queries es constante** (2: `COUNT` + página) con `size` 10,
+  50, 100 y 200, y los sellos de una serie son 2 queries. Se añade un test que
+  lo fija (`TestPageCost`).
+- **La serie más larga real tiene 57 sellos**, no 24: corregida la aceptación de
+  S10 y la nota de contexto.
+
+Peor p95 medido: **84 ms** (`stamps_without_colors`), muy por debajo de los
+300 ms de aceptación. Volumen real: 2.540 series / 9.558 sellos.
+
+### ⏭ Siguiente: S10
+
+Workspace `mode=edit` de solo lectura: `GET /datadesk/issues/<id>/` con la
+franja de metadatos de la serie, el grid de sellos (sin paginar, 57 es el techo
+real) y la herencia resuelta en servidor como `inherited: true`.
+
 
