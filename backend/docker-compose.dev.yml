@@ -11,10 +11,18 @@ services:
 
     # volumes:
     #   - ./backend:/usr/src/app:delegated
+    # Stamp pictures: the same folder the frontend mounts, read-only here so
+    # DataDesk can show thumbnails without importing anything into the database.
+    volumes:
+      - type: bind
+        source: ../frontend/assets/stamps
+        target: /srv/stamp-images
+        read_only: true
     # Use the Django dev server
     command: python manage.py runserver 0.0.0.0:8000
     environment:
       DJANGO_DEBUG: 'True'
+      DATADESK_STAMP_IMAGES: /srv/stamp-images
     networks:
       - stamps-network
 

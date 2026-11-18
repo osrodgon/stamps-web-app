@@ -76,6 +76,42 @@
     return column;
   };
 
+  /** Absolute-ish URL of the workspace of a row. */
+  const issueUrl = (row) => `${config.issueUrlPrefix}${row.id}/`;
+
+  /** A chevron drawn inline: no icon font, no extra request. */
+  const chevron = () => {
+    const namespace = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(namespace, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "dd-chevron");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(namespace, "path");
+    path.setAttribute("d", "M9 6l6 6-6 6");
+    svg.append(path);
+    return svg;
+  };
+
+  /** The "open" affordance: one link per row; a single click only selects. */
+  const openFormatter = (cell) => {
+    const link = document.createElement("a");
+    link.className = "dd-open";
+    link.href = issueUrl(cell.getRow().getData());
+    link.title = config.openText;
+    link.setAttribute("aria-label", config.openText);
+    link.append(chevron());
+    return link;
+  };
+
+  const openColumn = {
+    field: "open",
+    title: "",
+    width: 30,
+    headerSort: false,
+    hozAlign: "center",
+    formatter: openFormatter,
+  };
+
   const table = new Tabulator("#workbench", {
     ajaxURL: config.dataUrl,
     ajaxParams: () => Object.fromEntries(readFilters()),
@@ -91,7 +127,31 @@
     layout: "fitDataStretch",
     height: "calc(100vh - 260px)",
     placeholder: config.emptyText,
-    columns: config.columns.map(buildColumn),
+    selectableRows: 1,
+    columns: [openColumn, ...config.columns.map(buildColumn)],
+  });
+
+  /** Double click opens the row: what people try before finding the chevron. */
+  table.on("rowDblClick", (event, row) => {
+    window.location.assign(issueUrl(row.getData()));
+  });
+
+  /** `Enter` opens the selected row, unless the focus is in a control. */
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest("input, select, textarea, button, a")
+    ) {
+      return;
+    }
+    const selected = table.getSelectedRows();
+    if (selected.length === 1) {
+      window.location.assign(issueUrl(selected[0].getData()));
+    }
   });
 
   /** Shows how many rows the current filters match. */

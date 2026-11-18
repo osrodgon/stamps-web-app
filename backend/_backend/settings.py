@@ -158,6 +158,17 @@ DATADESK_LOGOUT_URL = f"/{DATADESK_URL}logout/"
 # logic, so the same code covers both deployments.
 DATADESK_TLS = os.getenv("DATADESK_TLS", "0").lower() in ("1", "true", "t", "yes")
 
+# Stamp pictures live with the frontend, one webp per FESOFI code under
+# <year>/<code>.webp, and are mounted read-only here (docker-compose.dev/prod).
+# The default is the repository copy, which is what dev uses; a path that does
+# not exist simply means "no pictures", never an error.
+DATADESK_STAMP_IMAGES = Path(
+    os.getenv(
+        "DATADESK_STAMP_IMAGES",
+        BASE_DIR.parent / "frontend" / "assets" / "stamps",
+    )
+)
+
 # Login throttling for DataDesk. A file cache instead of LocMem: gunicorn runs
 # 4 workers and LocMem would multiply the attempt limit by four. No table, no
 # migration, no createcachetable.

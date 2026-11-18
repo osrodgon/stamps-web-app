@@ -75,6 +75,31 @@
       queues are semi joins over 9.558 rows. Numbers and the rejected
       candidates written to `memory-bank/datadesk-perf.md`; one test fixes the
       query count. 100 datadesk tests green. Next: S10 (workspace `mode=edit`)
+- [x] **S10 — Read-only issue workspace** (2026-11-18): `GET
+      /datadesk/issues/<id>/` renders the series strip (15 fields, formatted by
+      locale) and its stamps; the workbench opens it from a per-row `↗` link or
+      `Enter`, and `Esc` returns with the filters intact. Rows travel in the
+      page (no second
+      endpoint); grid does not paginate (57 stamps is the real ceiling). Fixed
+      `<html lang>` (it always said `en` because `LANGUAGE_CODE` is not in the
+      context). Measured: 57-stamp series in 14 ms, 3 queries, 28 KB. 21 tests;
+      1137 backend tests green. Next: S11 (`mode=new`, dry, nothing saved)
+- [x] **S10b — Workspace polish** (2026-11-18): stamp thumbnails from the
+      mounted `<year>/<code>.webp` tree (8.419 of 9.558 stamps, 88%), served by
+      a staff-gated `/datadesk/stamps/<id>/image` with ETag and private cache;
+      the folder is a read-only bind (dev compose; prod defines its own mount in the
+      single deployment compose), so adding a picture needs no rebuild. The listing is
+      cached 60 s and passed to bulk callers, which took the "without image"
+      queue from 11.5 s (one file-cache read per stamp) to 36 ms. Colour chips
+      now carry a tone derived from the name (`palette.py`, Spanish keyword
+      stems + stable md5 fallback); the open icon is an inline SVG chevron with
+      double-click on the row. **The inheritance concept was removed entirely**
+      after review: name, market values and print run belong to the stamp or to
+      the set, never shared, so the `inherited` map, the tint, the legend and the
+      ⟲ markers are gone; the strip keeps a one-line note that series values
+      describe the whole set. `missing_data_report()` counts missing picture
+      files, not the empty `Stamp.image`. 33 tests; 1170 backend tests green.
+      Next: S11 (`mode=new`, dry, nothing saved)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -152,8 +177,8 @@
 - [x] Closed the decision: **no schema change** (option A). Country, artist and printer are
       series attributes shared by every stamp of the series, and no exception exists in the data
 - [x] Inheritance redefined: display-only for the 8 series fields (metadata strip), editable
-      grey/`⟲` only for the 5 fields a stamp stores (`name`, `description`, `total_printed`,
-      `market_value_mnh`, `market_value_used`)
+      **nothing**: series values describe the set (print run, value of the complete
+      series), so no field of a stamp is inherited; decided after S10b
 - [x] Corrected design §3.2 and §5, and the mockup: `1 override` removed from the `mode=new`
       footer, overrides moved to fields that can actually differ (total printed, used)
 - [x] Implementation plan written step by step (D0 + S1–S22, dependency map, per-step

@@ -99,4 +99,6 @@ def grid_config() -> dict[str, Any]:
         "pageSize": DEFAULT_PAGE_SIZE,
         "emptyText": str(_("No issues match these filters.")),
         "counterText": str(_("issues")),
+        "openText": str(_("Open")),
+        "issueUrlPrefix": reverse("datadesk:issues"),
     }

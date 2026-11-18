@@ -57,9 +57,13 @@ Consecuencias, que ya están incorporadas a los pasos:
 
 1. **La herencia de esos 8 campos es solo de presentación**: se muestran una vez,
    en la franja de metadatos de la serie (S10), nunca repetidos por fila.
-2. **La herencia editable se limita a 5 campos**: `name`, `description`,
-   `total_printed`, `market_value_mnh`, `market_value_used`, que el sello sí
-   almacena. Ahí aplica el gris heredado / negro propio / `↺` (S14, S16).
+2. **No hay herencia de valores** (decidido 2026-11-18, sustituye al diseño de
+   gris/`↺`): lo que la serie guarda describe el **conjunto** —la tirada es la
+   de la serie entera y el valor de mercado es lo que vale el conjunto completo,
+   normalmente **menos** que la suma de sus sellos— y lo que guarda el sello
+   describe el sello. Un número igual es coincidencia, nunca una copia; `name`
+   tampoco se hereda. Lo único que se rellena al crear filas es el nombre, porque
+   la columna es obligatoria: es un valor por defecto, no una herencia.
 3. `face_value` y `name` son **obligatorios** (`NOT NULL`, sin `blank=True`).
    Generar `rows=N` en blanco no vale: cada fila nueva nace con
    `name = <nombre de la serie>` y `face_value` vacío pero marcado requerido.
@@ -67,9 +71,9 @@ Consecuencias, que ya están incorporadas a los pasos:
    `pytest.ini`), así que el servicio **no puede usar nada exclusivo de
    Postgres** (`ArrayField`, `SearchVector`, `distinct on`) o los tests no pasan.
 5. Si algún día apareciera una excepción real (un valor impreso por otra
-   imprenta), añadir la columna es una migración aditiva barata en Postgres; lo
-   único que hay que respetar ahora es construir el mapa de herencia del cliente
-   de forma genérica (S14), para que sumar un campo no obligue a tocar la UI.
+   imprenta), añadir la columna es una migración aditiva barata en Postgres. No
+   hay mapa de herencia que mantener: el buffer de S14 compara el valor de cada
+   campo con el que traía la fila al abrirla.
 
 Pendiente fuera de este plan: el diseño `memory-bank/datadesk-app-plan.md` §3.2 y
 el mockup ya están corregidos con esta decisión.
@@ -90,7 +94,7 @@ el mockup ya están corregidos con esta decisión.
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | ✅ 2026-11-18 |
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | ✅ 2026-11-18 |
 | S9 | Prueba de rendimiento + índices | S8 | S | no | ✅ 2026-11-18 |
-| S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | — |
+| S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | ✅ 2026-11-18 |
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | — |
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | — |
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | — |
@@ -422,12 +426,11 @@ no se degrada respecto a la primera.
 - Grid de sellos con Tabulator en modo lectura: `edifil`, `fesofi`, `name`,
   `face_value`, `colors`, `mnh`, `used`, `total_printed`, `img` (indicador).
   Solo campos del sello: los 8 atributos de serie **no se repiten por fila**.
-- **Herencia**: los 8 campos de serie (`country`, `year`, `stamp_type`,
+- **Sin herencia**: los 8 campos de serie (`country`, `year`, `stamp_type`,
   `print_type`, `printer`, `artist`, `paper_type`, `perforation`) viven solo en
-  la franja superior fija (§2). En el grid, las celdas de los 5 campos que el
-  sello sí almacena se pintan en gris claro cuando el valor coincide con el de
-  la serie; la comparación se resuelve en servidor y se envía ya como
-  `inherited: true` para no repetir lógica en JS.
+  la franja superior fija (§2) y el grid muestra únicamente valores del sello.
+  No hay gris heredado, ni `⟲`, ni mapa `inherited`: lo de la serie describe el
+  conjunto (tirada, valor del conjunto) y lo del sello, el sello.
 - Enlace "abrir" desde cada fila del workbench y `Enter`.
 
 **Aceptación**: una serie de 8 sellos carga con 1–2 queries; los grises
@@ -446,7 +449,8 @@ ningún límite duro escondido en la plantilla ni en el queryset.
 - Prefill de metadatos desde la última serie (`Issue.objects.order_by("-id").first()`),
   con botón `↺ Use last issue` que reaplica.
 - Control `rows=N` que genera filas **en cliente** (nada se guarda todavía),
-  con `name` heredado de la serie y `face_value` marcado como requerido.
+  con el nombre de la serie como valor por defecto y `face_value` marcado como
+  requerido.
 - `Shift+Enter` deshabilitado con tooltip "todavía no guarda".
 
 **Aceptación**: alternar `new`/`edit` no rompe nada; el prefill es el de la
@@ -573,10 +577,10 @@ buffer = {
   `{type: "cell", key, field, from, to}` con puntero; deshacer escribe `from`.
   Una edición nueva después de deshacer trunca la pila de redo. Tope de 200
   operaciones. `Ctrl+Z` / `Ctrl+Shift+Z`.
-- **Mapa de herencia declarativo**, no lógica por campo:
-  `INHERITABLE = ["name", "description", "total_printed", "market_value_mnh", "market_value_used"]`
-  (los 5 que el sello almacena, §2). Cada celda consulta el mapa para decidir
-  gris/negro y para el `↺`. Añadir un campo en el futuro = una entrada más.
+- **Diff contra la fila original**, campo a campo: el buffer guarda `base` y
+  `patch` por objeto y una celda cuenta como cambiada solo si su valor difiere
+  del que traía la fila. No hay estados "heredado"/"propio" que mantener (ver
+  §2): el gris y el `↺` desaparecieron con el diseño de herencia.
 - **Persistencia, solo en `mode=edit`**: `localStorage` con clave
   `datadesk:buffer:edit:<issueId>`, escritura *debounced* (400 ms), más
   `schemaVersion` y `savedAt`. Al entrar con un buffer guardado se ofrece
@@ -830,8 +834,8 @@ propias filas de auditoría con `reverts_commit_id`.
 - Contrato de teclado completo y consistente (`/`, `j/k`, `N`, `Enter`, `Tab`,
   `Esc`, `Shift+Enter`, `Ctrl+D`, `Ctrl+Z`, `Ctrl+Enter`).
 - Barrido de i18n: ningún literal fuera de `{% trans %}`; `datadesk_make_messages --check` en verde.
-- Repaso de accesibilidad: foco visible, `label` en inputs, contraste del gris
-  heredado.
+- Repaso de accesibilidad: foco visible, `label` en inputs, contraste de las
+  celdas y del texto atenuado.
 - `datadesk/tests/` con servicio, vistas y permisos; objetivo ≥ 80% en
   `datadesk/service.py`.
 - `README` del módulo: variables de entorno (`DATADESK_ENABLED`,
@@ -859,7 +863,7 @@ propias filas de auditoría con `reverts_commit_id`.
 | `polib` como dependencia nueva | S4 | Commitear `.mo` y borrar el comando |
 | Tests en SQLite vs prod en Postgres | S7 | Prohibido lo específico de Postgres en `service.py`; el test lo delata |
 | Escritura concurrente desde dos pestañas | S14 | `updated_at` como testigo: aviso, no bloqueo (un solo actor) |
-| Aparece una excepción real a nivel de sello | uso diario | Migración aditiva en Postgres + una entrada en `INHERITABLE`; la UI de S14 ya es genérica |
+| Aparece una excepción real a nivel de sello | uso diario | Migración aditiva en Postgres; el buffer de S14 diffea campo a campo, así que la UI ya la recoge |
 
 ---
 
@@ -1315,10 +1319,144 @@ Decisiones tomadas al medir:
 Peor p95 medido: **84 ms** (`stamps_without_colors`), muy por debajo de los
 300 ms de aceptación. Volumen real: 2.540 series / 9.558 sellos.
 
-### ⏭ Siguiente: S10
+### ✅ S10 — Workspace `mode=edit` de solo lectura (2026-11-18)
 
-Workspace `mode=edit` de solo lectura: `GET /datadesk/issues/<id>/` con la
-franja de metadatos de la serie, el grid de sellos (sin paginar, 57 es el techo
-real) y la herencia resuelta en servidor como `inherited: true`.
+Ficheros nuevos:
+
+```
+backend/datadesk/views/workspace.py                  IssueWorkspaceView + metadata + config
+backend/datadesk/templates/datadesk/issue_workspace.html   franja y #stamp-grid
+backend/datadesk/static/datadesk/issue_workspace.js        Tabulator de solo lectura + Esc
+backend/datadesk/tests/test_workspace.py                   21 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/service.py                  stamp_rows(), serialize_stamp()
+backend/datadesk/views/workbench.py          grid_config(): openText + issueUrlPrefix
+backend/datadesk/static/datadesk/workbench.js       columna ↗, filas seleccionables, Enter
+backend/datadesk/urls.py                     issues/<int:pk>/
+backend/datadesk/templates/datadesk/base.html       <html lang> con get_current_language
+backend/datadesk/static/datadesk/datadesk.css       franja, chips, celda de imagen
+backend/datadesk/locale/{es,en}/…/django.po (+ .mo) 15 msgids nuevos
+```
+
+Decisiones tomadas al implementar:
+
+- **Sin herencia de valores** (ver §2): cada celdilla muestra lo que guarda el
+  sello y la franja lo que guarda la serie. Hubo un mapa `inherited` que se
+  calculaba en el servicio y se retiró al comprobar que los valores de la serie
+  son del conjunto, no de cada sello (832 sellos con el mismo MNH que su serie
+  son coincidencia, no copia).
+- **Las filas viajan dentro de la página** (`json_script`), sin endpoint nuevo:
+  una serie son decenas de filas (57 como techo real) y un segundo viaje cuesta
+  más que el payload.
+- **Formateo en la vista** con `date_format` + `number_format`, que sí leen el
+  locale activo: `SHORT_DATE_FORMAT` da 12/05/1987 en es y 05/12/1987 en en, y
+  los miles siguen CLDR (espacio duro en es, coma en en — no el punto del
+  mockup, que era una convención de diseño).
+- **`base.html` no tenía idioma real en `<html lang>`**: `LANGUAGE_CODE` no está
+  en el contexto (no hay context processor de i18n) y siempre salía `en`; ahora
+  sale de `{% get_current_language %}`.
+- **Enlace ↗ por fila, no navegación al clic**: `selectableRows: 1` para que
+  `Enter` abra la fila enfocada, pero un clic solo selecciona — abrir una serie
+  por accidente mientras se lee la tabla era peor que un clic de más.
+- **`Esc` usa `history.back()`** cuando se llega desde el workbench, así los
+  filtros siguen puestos sin serializarlos en la URL del workspace; si no hay
+  referrer, va a `issuesUrl`.
+- **El grid no pagina** (`height: false`): 57 sellos son una tirada de scroll, y
+  paginar una serie rompería la lectura de la herencia de un vistazo.
+
+Verificado con los datos reales: la serie de 57 sellos pinta **28 KB en 14 ms y
+3 queries** (serie + sellos + colores); una serie corta, 11 ms. Serie
+inexistente → 404, anónimo → 302 al login, no staff → 403 · `manage.py check`
+limpio · `spectacular` con **0** referencias a `datadesk` · **1137** tests de
+backend en verde (1116 previos + 21 nuevos).
+
+### ✅ S10b — Pulido del workspace: miniaturas, colores, icono y herencia (2026-11-18)
+
+Ficheros nuevos:
+
+```
+backend/datadesk/images.py                     índice <año>/<código>.webp + resolución segura
+backend/datadesk/palette.py                    tono estable por nombre de color
+backend/datadesk/views/images.py               StampImageView (staff, FileResponse, ETag)
+backend/datadesk/tests/test_images.py          30 tests (imágenes, borde y paleta)
+```
+
+Ficheros modificados:
+
+```
+backend/_backend/settings.py            DATADESK_STAMP_IMAGES
+backend/docker-compose.dev.yml          bind ../frontend/assets/stamps -> /srv/stamp-images (ro)
+backend/.env.example                    variable documentada
+backend/datadesk/service.py             has_image, colores con tono, cola "sin imagen" por archivo
+backend/datadesk/views/workspace.py     image_url por fila, columna has_image
+backend/datadesk/static/datadesk/issue_workspace.js   chips con tono, miniatura
+backend/datadesk/static/datadesk/workbench.js        chevron SVG + doble clic
+backend/datadesk/static/datadesk/datadesk.css        tonos de chip, thumb, chevron
+backend/datadesk/templates/datadesk/issue_workspace.html  aviso de que la serie describe el conjunto
+README.md                               cómo se montan las imágenes y qué pasa si faltan
+```
+
+Decisiones tomadas al implementar:
+
+- **Las imágenes se leen del montaje, no de la BD**: `Stamp.image` está vacío en las
+  9.558 filas y los archivos viven con el frontend. En datos reales hay 6.625 webp y
+  **8.419 de 9.558 sellos (88%) encuentran el suyo**; los 1.139 restantes pintan el
+  cuadradito. Importar a `MEDIA_ROOT` queda como tema aparte (también serviría a la app
+  Flet), porque exige `MEDIA_URL`/`MEDIA_ROOT`, servir `/media/` en producción y cambia
+  lo que devuelve la API.
+- **La carpeta va montada de solo lectura**, así que añadir una imagen en la VM no
+  obliga a reconstruir nada. En dev el bind está en `docker-compose.dev.yml`
+  (`../frontend/assets/stamps` → `/srv/stamp-images`). **En producción no se toca
+  `backend/docker-compose.prod.yml`** (2026-11-19): el despliegue usa un único compose
+  con los tres contenedores (db, backend y frontend) y solo él sabe dónde viven las
+  imágenes; ahí se define el montaje y se deja `DATADESK_STAMP_IMAGES` apuntando a esa
+  ruta, que puede cambiar de sitio sin tocar código. Una ruta que no existe —o que aún
+  no existe— tampoco es un error: se pinta `no_stamp.webp`.
+- **Un índice cacheado 60 s, pasado a quien resuelve en lote**: la caché compartida es de
+  fichero y leerla cuesta ~1 ms por llamada. La primera versión llamaba a `image_path()`
+  por sello (9.558 veces) y la cola tardaba **11,5 s**; con el índice pasado y
+  comprobación de pertenencia baja a **36 ms**, y el workspace vuelve a 15 ms.
+- **La cola "sin imagen" cuenta archivos que faltan**, no `Stamp.image`: es lo que la
+  pantalla puede enseñar. Hoy reporta 1.139.
+- **Los tonos de color se derivan del nombre** (`palette.py`): mapa de raíces en español
+  (el catálogo lo es) con prioridad para los marrones sobre los rojos ("Castaño rojizo"
+  es marrón), `Multicolor`/`Cuatricomía` al tono neutro y `md5 % 8` como reserva estable
+  (el `hash()` de Python está salteado por proceso y cambiaría el color entre workers).
+- **El icono de abrir es un chevron SVG en línea** en vez de `↗`, que prometía abrir otra
+  pestaña, y la fila se abre también con **doble clic**; un clic simple sigue solo
+  seleccionando.
+- **La herencia desapareció** (2026-11-18). El primer intento fue mejorar su
+  legibilidad —fondo teñido, barra interior y una leyenda bajo la franja—, pero al
+  revisar el significado quedó claro que el concepto no se sostiene: la tirada y
+  los valores de mercado de la serie describen el conjunto (que vale menos que la
+  suma de sus sellos), el nombre es de cada sello y la descripción nunca coincide
+  (0 de 9.558). Se retiraron el mapa `inherited`, el tinte, la leyenda, el `⟲` de
+  la franja y los tests; la franja queda con un aviso corto de que la serie
+  describe el conjunto. En S14 el buffer compara campo a campo contra la fila
+  original, sin estados "heredado"/"propio".
+- **El hueco de imagen usa `no_stamp.webp`**, copiado a
+  `datadesk/static/datadesk/` porque el montaje solo cubre `stamps/` y el
+  placeholder vive en `frontend/assets/`. Se sirve como estático de la app.
+- **La imagen se sirve por `/datadesk/stamps/<id>/image`**, detrás del gate de staff, con
+  `Content-Type: image/webp`, `Cache-Control: private, max-age=604800` y ETag por
+  mtime+tamaño, así que una revisita es un 304. No se publica por `/media/` ni por
+  `STATICFILES_DIRS`, que arrastraría 206 MB a `collectstatic`.
+
+Verificado con los datos reales dentro del contenedor: el índice se construye en 1 ms,
+la serie de 57 sellos pinta **15,5 ms con las 57 miniaturas**, la cola tarda 36 ms y
+reporta 1.139 sin imagen; anónimo → 302 en página e imagen · `manage.py check` limpio ·
+`spectacular` con **0** referencias a `datadesk` · **1167** tests de backend en verde.
+
+### ⏭ Siguiente: S11
+
+Workspace `mode=new` en seco: la misma plantilla con `mode="new"`, prefijado
+desde la última serie, `rows=N` (que rellena también el nombre, obligatorio),
+numeración Edifil automática y el interruptor de fila rápida, todavía sin enviar
+nada al servidor.
+
 
 

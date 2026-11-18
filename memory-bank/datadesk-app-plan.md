@@ -158,15 +158,15 @@ Shared behaviour, identical in both modes:
   perforation are **series attributes**: they live once in the metadata strip and
   are never repeated per row, because a stamp belongs to exactly one series and
   no exception exists (decided 2026-11-18).
-  What a stamp *can* differ on is the five fields it actually stores: `name`,
-  `description`, `total_printed`, `market_value_mnh`, `market_value_used`. Those
-  are pre-filled from the issue; a cell still equal to the issue value renders
-  light grey, editing it turns it black, and `↺` restores the inherited value.
-  Editing an issue field updates the inherited cells live.
-  In `edit` mode nothing extra is stored: a cell is "inherited" when its stored
-  value equals the issue value, computed on read. The client keeps this as one
-  declarative `INHERITABLE` list, so adding a field later is one entry, not a
-  UI rewrite.
+  **Nothing is inherited** (decided 2026-11-18, superseding the earlier grey/`↺`
+  design). Every value on a stamp belongs to the stamp: the series values
+  describe the **set**, not its members. The print run is the run of the whole
+  series and the two market values are what the complete series is worth — which
+  is normally *less* than the sum of its stamps — so an equal number is a
+  coincidence, never a copy. The stamp `name` is its own for the same reason.
+  In practice: the strip shows the series values, the grid shows the stamp
+  values, and nothing is pre-filled per row except the `name` required to create
+  a row, which is a default value and not an inheritance.
 - **Fast row mode** (default on): only `edifil`, `fesofi`, `face_value`, `colors`
   are visible; a toggle reveals the rest. Typing a series is 4 columns wide.
 - **Toolbar**: `rows=N` + generate, `fill series` (auto-numbers the `edifil`
@@ -323,7 +323,7 @@ In scope: `Issue`, `Stamp`, `Color`, `Year`, `Country`, `StampType`,
 
 Out of scope: `User`, `APIKey`, `Collection`, `CollectionItem`,
 `ConditionType`, `Location`, `Config`, `UserCollection`, `UserToken` (stay in
-Django Admin); **images** (upload/preview); **CSV import/export**.
+Django Admin); **image upload** (the pictures are displayed read-only from the frontend's folder since S10b, but nothing uploads or imports them); **CSV import/export**.
 
 ---
 

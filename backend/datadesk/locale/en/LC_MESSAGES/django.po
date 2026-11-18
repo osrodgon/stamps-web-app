@@ -191,3 +191,61 @@ msgstr "issues"
 #: datadesk/templates/datadesk/dashboard.html
 msgid "Open the issues workbench"
 msgstr "Open the issues workbench"
+
+#: datadesk/views/workspace.py
+msgid "Edifil"
+msgstr "Edifil"
+
+#: datadesk/views/workspace.py
+msgid "Fesofi"
+msgstr "Fesofi"
+
+#: datadesk/views/workspace.py
+msgid "Face value"
+msgstr "Face value"
+
+#: datadesk/views/workspace.py
+msgid "Colors"
+msgstr "Colors"
+
+#: datadesk/views/workspace.py
+msgid "Market value MNH"
+msgstr "Market value MNH"
+
+#: datadesk/views/workspace.py
+msgid "Market value used"
+msgstr "Market value used"
+
+#: datadesk/views/workspace.py
+msgid "Description"
+msgstr "Description"
+
+#: datadesk/views/workspace.py
+msgid "Note"
+msgstr "Note"
+
+#: datadesk/views/workspace.py
+msgid "No stamps in this issue."
+msgstr "No stamps in this issue."
+
+
+#: datadesk/views/workbench.py
+msgid "Open"
+msgstr "Open"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Issue metadata"
+msgstr "Issue metadata"
+
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Back to the issues workbench"
+msgstr "Back to the issues workbench"
+
+
+
+
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "as stored · series values describe the whole set, stamp values the stamp"
+msgstr "as stored · series values describe the whole set, stamp values the stamp"
