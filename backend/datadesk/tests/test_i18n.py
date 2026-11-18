@@ -1,4 +1,6 @@
 """S4 acceptance: English and Spanish, and the frontend locales untouched."""
+from pathlib import Path
+
 import pytest
 from django.conf import settings
 from django.core.management import call_command
@@ -111,6 +113,25 @@ class TestCatalogs:
 
         assert len(catalog) > 0
         assert [entry.msgid for entry in catalog if not entry.msgstr] == []
+
+    def test_check_notices_an_uncompiled_translation(self, tmp_path: Path) -> None:
+        """A translation edited in the .po is stale until the .mo is rebuilt."""
+        import polib
+
+        from datadesk.management.commands.datadesk_make_messages import Command
+
+        po_path = tmp_path / "django.po"
+        catalog = polib.POFile()
+        catalog.append(polib.POEntry(msgid="Sign in", msgstr="Entrar"))
+        catalog.save(str(po_path))
+        catalog.save_as_mofile(str(po_path.with_suffix(".mo")))
+
+        assert Command._is_stale(po_path) is False
+
+        catalog[0].msgstr = "Acceder"
+        catalog.save(str(po_path))
+
+        assert Command._is_stale(po_path) is True
 
     def test_the_frontend_locales_are_not_referenced(self) -> None:
         """`assets/locales/*.json` belongs to the public app and stays untouched."""

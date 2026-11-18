@@ -1,8 +1,9 @@
 """Compile the DataDesk translation catalogs without installing gettext.
 
 Contributors edit the ``.po`` files and run this command; ``polib`` writes the
-``.mo`` files Django reads at runtime. ``--check`` compares timestamps so CI can
-fail when a ``.po`` changed and its ``.mo`` was not rebuilt.
+``.mo`` files Django reads at runtime. ``--check`` compares the compiled catalog
+with its source so CI can fail when a ``.po`` changed and its ``.mo`` was not
+rebuilt.
 """
 from pathlib import Path
 
@@ -24,7 +25,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--check",
             action="store_true",
-            help="Fail if a .po is newer than its .mo instead of compiling.",
+            help="Fail if a .mo is missing or does not match its .po instead of compiling.",
         )
 
     def handle(self, *args, **options) -> None:
@@ -51,8 +52,16 @@ class Command(BaseCommand):
 
     @staticmethod
     def _is_stale(po_path: Path) -> bool:
-        """Tells whether the ``.mo`` is missing or older than its ``.po``."""
+        """Tells whether the ``.mo`` is missing or no longer matches its ``.po``.
+
+        The comparison is on catalog content, not on file timestamps: a git
+        checkout gives every file the same mtime in index order, so ``django.mo``
+        can look older than ``django.po`` while being perfectly up to date.
+        """
         mo_path = po_path.with_suffix(".mo")
         if not mo_path.exists():
             return True
-        return mo_path.stat().st_mtime < po_path.stat().st_mtime
+
+        source = {entry.msgid: entry.msgstr for entry in polib.pofile(str(po_path))}
+        compiled = {entry.msgid: entry.msgstr for entry in polib.mofile(str(mo_path))}
+        return source != compiled

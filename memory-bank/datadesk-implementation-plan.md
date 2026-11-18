@@ -1076,8 +1076,14 @@ Decisiones tomadas al implementar:
 - **El endpoint de idioma no está exento del gate**: cambiarlo exige sesión
   staff, y el middleware ya lo cubre sin `LoginRequiredMixin`.
 - **Los `.mo` se commitean** y además se regeneran en `Dockerfile.prod` antes de
-  `collectstatic`, para que la imagen nunca sirva un catálogo viejo. El comando
-  `--check` compara mtimes y es lo que puede colgarse en CI.
+  `collectstatic`, para que la imagen nunca sirva un catálogo viejo. Ojo: el
+  `.gitignore` estándar de Python ignora `*.mo`, así que hizo falta una excepción
+  (`!backend/datadesk/locale/*/LC_MESSAGES/django.mo`); sin ella la PR pasaba en
+  local y fallaba en CI, sin catálogos que cargar.
+- **`--check` compara contenido, no fechas**: un checkout de git escribe
+  `django.mo` antes que `django.po` (orden alfabético) y el `.mo` parece viejo
+  aunque esté al día. Compara `{msgid: msgstr}` de `polib.pofile` contra
+  `polib.mofile`, y un test cubre el caso de una traducción editada sin compilar.
 - **El test de "assets/locales intactos"** no usa `git status` (fallaría con
   cualquier cambio legítimo en el árbol): comprueba que ningún `.py`/`.html` de
   `datadesk` referencia `assets/locales`, que es el invariante que de verdad

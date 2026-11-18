@@ -108,7 +108,9 @@ location /datadesk/ {
 
 The interface is translated in English and Spanish. Catalogs live in
 `backend/datadesk/locale/`; after editing a `.po`, rebuild the `.mo` files without
-needing `gettext` installed:
+needing `gettext` installed. The compiled `.mo` files are versioned on purpose
+(`.gitignore` has an exception for them): CI runs no `gettext` and the test suite
+checks that they match their sources. To recompile them:
 
 ```bash
 docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
