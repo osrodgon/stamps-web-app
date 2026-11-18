@@ -54,6 +54,15 @@
       `missing_data_report()` (6 counters; `face_value` checked as `""` because the
       column is NOT NULL). Registry labels translated in both catalogs. 12 tests;
       1088 backend tests green. Next: S8 (read-only workbench, first milestone)
+- [x] **S8 — Read-only workbench** (2026-11-18, first milestone): `GET
+      /datadesk/grid/issues` (flat filters, `sort[0][field]`, page/size capped at
+      200, decimals as strings, `last_page`/`total`/`data`) and `GET
+      /datadesk/issues/` with year range, 300 ms debounced search, country, stamp
+      type and the six "needs attention" filters. Filters live in the URL, the
+      column choice in `localStorage`, column titles are rendered by Django as
+      JSON so the JS holds no UI text. Gap badge from the row itself, no extra
+      queries. Measured on the real data: 100-row page in **138 ms**. 27 tests;
+      1115 backend tests green. Next: S9 (perf check on the real dataset + indexes)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

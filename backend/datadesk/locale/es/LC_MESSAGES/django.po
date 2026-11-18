@@ -93,3 +93,103 @@ msgstr "Tipo de impresión"
 msgid "Stamp type"
 msgstr "Tipo de sello"
 
+
+#: datadesk/views/workbench.py
+msgid "Issues"
+msgstr "Series"
+
+#: datadesk/views/workbench.py
+msgid "From year"
+msgstr "Desde año"
+
+#: datadesk/views/workbench.py
+msgid "To year"
+msgstr "Hasta año"
+
+#: datadesk/views/workbench.py
+msgid "Name"
+msgstr "Nombre"
+
+#: datadesk/views/workbench.py
+msgid "Any"
+msgstr "Cualquiera"
+
+#: datadesk/views/workbench.py
+msgid "Needs attention"
+msgstr "Requiere atención"
+
+#: datadesk/views/workbench.py
+msgid "Nothing"
+msgstr "Nada"
+
+#: datadesk/views/workbench.py
+msgid "No country"
+msgstr "Sin país"
+
+#: datadesk/views/workbench.py
+msgid "No date"
+msgstr "Sin fecha"
+
+#: datadesk/views/workbench.py
+msgid "No stamps"
+msgstr "Sin sellos"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without colors"
+msgstr "Sellos sin colores"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without face value"
+msgstr "Sellos sin facial"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without image"
+msgstr "Sellos sin imagen"
+
+#: datadesk/views/workbench.py
+msgid "Reset"
+msgstr "Limpiar"
+
+#: datadesk/views/workbench.py
+msgid "Columns"
+msgstr "Columnas"
+
+#: datadesk/views/workbench.py
+msgid "Date"
+msgstr "Fecha"
+
+#: datadesk/views/workbench.py
+msgid "Stamps"
+msgstr "Sellos"
+
+#: datadesk/views/workbench.py
+msgid "MNH"
+msgstr "MNH"
+
+#: datadesk/views/workbench.py
+msgid "Used"
+msgstr "Usado"
+
+#: datadesk/views/workbench.py
+msgid "Perforation"
+msgstr "Perforación"
+
+#: datadesk/views/workbench.py
+msgid "Total printed"
+msgstr "Tirada"
+
+#: datadesk/views/workbench.py
+msgid "Gaps"
+msgstr "Huecos"
+
+#: datadesk/views/workbench.py
+msgid "No issues match these filters."
+msgstr "Ninguna serie coincide con estos filtros."
+
+#: datadesk/views/workbench.py
+msgid "issues"
+msgstr "series"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Open the issues workbench"
+msgstr "Abrir el banco de series"
