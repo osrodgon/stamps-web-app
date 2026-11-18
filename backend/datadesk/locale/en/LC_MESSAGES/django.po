@@ -59,3 +59,35 @@ msgid ""
 msgstr ""
 "This account is not staff, so DataDesk will not open for it. Sign in with "
 "the maintenance account."
+
+#: datadesk/registry.py
+msgid "Year"
+msgstr "Year"
+
+#: datadesk/registry.py
+msgid "Country"
+msgstr "Country"
+
+#: datadesk/registry.py
+msgid "Color"
+msgstr "Color"
+
+#: datadesk/registry.py
+msgid "Artist"
+msgstr "Artist"
+
+#: datadesk/registry.py
+msgid "Printer"
+msgstr "Printer"
+
+#: datadesk/registry.py
+msgid "Paper type"
+msgstr "Paper type"
+
+#: datadesk/registry.py
+msgid "Print type"
+msgstr "Print type"
+
+#: datadesk/registry.py
+msgid "Stamp type"
+msgstr "Stamp type"

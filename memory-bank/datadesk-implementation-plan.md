@@ -87,7 +87,7 @@ el mockup ya están corregidos con esta decisión.
 | S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S5 | `updated_at` en Issue/Stamp | S1 | XS | no | ✅ 2026-11-18 |
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | ✅ 2026-11-18 |
-| S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | — |
+| S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | ✅ 2026-11-18 |
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | — |
 | S9 | Prueba de rendimiento + índices | S8 | S | no | — |
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | — |
@@ -1189,13 +1189,49 @@ previos + 14 nuevos), ejecutados en la imagen de test (CI). `backend_db` sigue s
 tocar; las migraciones 0005 de S5 y 0001 de DataDesk se aplicarán cuando se lance
 `migrate`.
 
-### ⏭ Siguiente: S7
+### ✅ S7 — Registry de lookups y querysets de lectura (2026-11-18)
 
-Registry de lookups y querysets de lectura: `datadesk/registry.py` con los 8
-lookups (modelo, `verbose_name`, si es numérico y las relaciones que apuntan a
-cada uno, para los contadores y el merge de S19) y `datadesk/service.py` con
-`issue_queryset()` (7 `select_related` + `Count("stamps")` en una sola query),
-`stamp_queryset(issue_id)` con `prefetch_related("colors")` y
-`missing_data_report()` con los 6 contadores que luego usan el dashboard (S20) y
-las colas "needs attention".
+Ficheros nuevos:
+
+```
+backend/datadesk/registry.py              8 lookups con modelo, label traducible, columna, numeric y refs
+backend/datadesk/service.py               issue_queryset(), stamp_queryset(), missing_data_report()
+backend/datadesk/tests/test_service_read.py  12 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/locale/es/LC_MESSAGES/django.po (+ .mo)   etiquetas de los 8 lookups traducidas
+backend/datadesk/locale/en/LC_MESSAGES/django.po (+ .mo)   mismas entradas en inglés
+```
+
+Decisiones tomadas al implementar:
+
+- **`Lookup` es un dataclass congelado**, no un dict suelto: el modelo, la
+  columna que identifica la fila (`year` para años, `name` para el resto), si es
+  numérico y las relaciones entrantes quedan tipados y verificables.
+- **Las `refs` son `(model_label, field_name)`** y hay un test que resuelve cada
+  una con `apps.get_model()` y comprueba que el campo existe: si mañana se
+  renombra una FK, el test lo caza antes que el merge de S19.
+- **Orden del workbench: `year__year`, `date` (`nulls_last` explícito), `name`**,
+  ascendente. Es el valor por defecto, no una regla: S8 permitirá ordenar por
+  cualquier columna. Los NULL se fuerzan al final para no depender del motor.
+- **`face_value` se cuenta con `= ""`, no con `isnull`**: la columna no admite
+  NULL, así que "sin facial" solo puede ser cadena vacía. `image` sí comprueba
+  NULL **y** `""`.
+- **`stamp_queryset()` ordena por `id`**: el orden definitivo del grid del
+  workspace (edifil, etc.) es decisión de S10; aquí solo se garantiza estabilidad.
+
+Verificado: `issue_queryset()` consume **1** query con los 7 `select_related` y el
+`Count` (`assertNumQueries`) · `stamp_queryset()` consume 2 (sellos + colores) ·
+los 6 contadores cuadran sobre un dataset con huecos explícitos · `manage.py
+check` limpio · **1088** tests de backend en verde en la imagen de test (1062
+previos + 12 nuevos + 14 de S6).
+
+### ⏭ Siguiente: S8
+
+Workbench de solo lectura: endpoint JSON con paginación/filtros/orden para
+Tabulator, vista `issues/` sobre `issue_queryset()` y las 6 colas de "needs
+attention" conectadas a `missing_data_report()`. Es el primer hito visible.
 

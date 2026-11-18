@@ -46,6 +46,14 @@
       as string, ISO dates, M2M as sorted ids) and `record()` (validates the
       operation, stores anonymous actors as NULL); read-only admin. 14 tests;
       1076 backend tests green. Next: S7 (lookup registry + read querysets)
+- [x] **S7 — Lookup registry + read querysets** (2026-11-18): `datadesk/registry.py`
+      with the 8 editable lookups (model, translatable label, name column, numeric
+      flag, incoming refs for S19) and `datadesk/service.py` with
+      `issue_queryset()` (7 `select_related` + `Count("stamps")`, order year / date
+      nulls-last / name, 1 query), `stamp_queryset()` (2 queries with colors) and
+      `missing_data_report()` (6 counters; `face_value` checked as `""` because the
+      column is NOT NULL). Registry labels translated in both catalogs. 12 tests;
+      1088 backend tests green. Next: S8 (read-only workbench, first milestone)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
