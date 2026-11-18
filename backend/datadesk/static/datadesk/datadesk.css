@@ -15,6 +15,7 @@
   --dd-bg: #f4f5f7;
   --dd-surface: #fff;
   --dd-navy: #232f3e;
+  --dd-navy-hover: #1a2531;
 
   /* Semantic accents */
   --dd-green: #1e8e3e;
@@ -57,7 +58,7 @@ body {
 }
 
 a {
-  color: var(--dd-green);
+  color: var(--dd-navy);
 }
 
 /* --- Shell ------------------------------------------------------------- */
@@ -149,6 +150,17 @@ a {
   background: var(--dd-green-hover);
 }
 
+/* Neutral primary action for screens that are not committing data (the login
+ * form). Green stays reserved for the commit/apply action. */
+.dd-btn-dark {
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-btn-dark:hover {
+  background: var(--dd-navy-hover);
+}
+
 .dd-btn-ghost {
   font-size: 11.5px;
   font-weight: 400;
@@ -224,7 +236,6 @@ kbd {
 }
 
 /* --- Commit bar -------------------------------------------------------- */
-
 .dd-commitbar {
   display: flex;
   align-items: center;
@@ -248,4 +259,76 @@ kbd {
   align-items: center;
   gap: 10px;
   margin-left: auto;
+}
+
+/* --- Login ------------------------------------------------------------- */
+
+.dd-login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--dd-navy);
+}
+
+.dd-login {
+  width: 320px;
+}
+
+.dd-login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background: var(--dd-surface);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(20, 25, 35, 0.25);
+}
+
+.dd-login-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.dd-login-head .dd-brand {
+  font-size: 16px;
+  color: var(--dd-navy);
+}
+
+.dd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dd-field input {
+  font: inherit;
+  padding: 7px 9px;
+  border: 1px solid #cfd5dc;
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+}
+
+.dd-field input:focus {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: -1px;
+}
+
+.dd-alert {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: var(--dd-radius);
+}
+
+.dd-alert-error {
+  background: #fde8ec;
+  color: #8c1f34;
+}
+
+.dd-logout {
+  margin: 0;
 }

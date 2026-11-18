@@ -17,6 +17,13 @@
       Also: `STATIC_URL` → `/static/`, `STORAGES` uses plain storage when `DEBUG`,
       `sourceMappingURL` stripped from Tabulator. `collectstatic` clean, assets 200 in
       DEBUG, 1020 backend tests green. Next: S3 (login, logout, staff gate, throttling)
+- [x] **S3 — Login, logout, staff gate, throttling** (2026-11-18): `DataDeskLoginView`
+      (+ 429 with `Retry-After` after 5 failures in 5 min, sliding window),
+      `DataDeskLogoutView` (POST-only), `DataDeskAccessMixin` (401/403 for JSON,
+      redirect + `next` for browsers), `DataDeskGateMiddleware` scoped to `/datadesk/`
+      and disabled with the flag. `CACHES` = `FileBasedCache` in `backend/.cache/`;
+      sessions 14 days, `HttpOnly`, `SameSite=Lax`; `DATADESK_TLS` flips only cookie
+      and proxy-header flags. 20 tests; 1040 backend tests green. Next: S4 (i18n en/es)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

@@ -50,12 +50,20 @@ class TestBaseLayout:
 class TestDashboardOnTheBaseLayout:
     """``dashboard.html`` extends the shell instead of duplicating it."""
 
-    def test_dashboard_renders_inside_the_shell(self, reload_urlconf) -> None:
+    @pytest.mark.django_db
+    def test_dashboard_renders_inside_the_shell(
+        self, reload_urlconf, django_user_model
+    ) -> None:
+        django_user_model.objects.create_user(
+            username="curator", password="s3cret-pass", is_staff=True
+        )
         with override_settings(
             DATADESK_ENABLED=True, STORAGES=UNHASHED_STATIC_STORAGES
         ):
             reload_urlconf()
-            response = Client().get("/datadesk/")
+            client = Client()
+            client.login(username="curator", password="s3cret-pass")
+            response = client.get("/datadesk/")
 
         content = response.content.decode()
         assert response.status_code == 200
