@@ -10,6 +10,13 @@
       (dev only, not committed), backend up via `./stamps.sh dev start backend`,
       `GET http://localhost:8000/datadesk/` → 200 with the provisional page, and
       `pytest datadesk/tests -q` → 3 passed inside the dev container
+- [x] **S2 — Vendored static + `base.html`** (2026-11-18): htmx 2.0.11, Alpine 3.17.5,
+      Tabulator 6.7.1 pinned in `vendor/VERSIONS.md` with sha256 (a test enforces the
+      hashes); `datadesk.css` with the mockup tokens; `base.html` (topbar, breadcrumbs,
+      content/extra_css/extra_js blocks, `hx-headers` CSRF); `dashboard.html` extends it.
+      Also: `STATIC_URL` → `/static/`, `STORAGES` uses plain storage when `DEBUG`,
+      `sourceMappingURL` stripped from Tabulator. `collectstatic` clean, assets 200 in
+      DEBUG, 1020 backend tests green. Next: S3 (login, logout, staff gate, throttling)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

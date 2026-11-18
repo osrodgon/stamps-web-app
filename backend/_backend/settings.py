@@ -154,12 +154,22 @@ DATADESK_LOGIN_URL = f"/{DATADESK_URL}login/"
 
 # Application definition
 
+# Production serves hashed, compressed names through whitenoise. That backend
+# needs a collected manifest, so with DEBUG on (local development) plain
+# storage is used instead: `runserver` serves the assets from the finders and
+# DataDesk works without running collectstatic first.
+STATICFILES_BACKEND = (
+    "django.contrib.staticfiles.storage.StaticFilesStorage"
+    if DEBUG
+    else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": STATICFILES_BACKEND,
     },
 }
 
@@ -339,7 +349,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_collected')
 
 # Default primary key field type

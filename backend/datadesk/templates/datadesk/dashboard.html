@@ -1,12 +1,15 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DataDesk</title>
-</head>
-<body>
-  <h1>DataDesk</h1>
-  <p>Internal database maintenance.</p>
-</body>
-</html>
+{% extends "datadesk/base.html" %}
+
+{% block title %}DataDesk{% endblock %}
+
+{% block breadcrumbs %}<b>Dashboard</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page">
+    <h1 class="dd-label">DataDesk</h1>
+    <p class="dd-hint">
+      Internal database maintenance. The workbench, the issue workspace and the
+      lookup admin arrive in the next steps.
+    </p>
+  </section>
+{% endblock %}

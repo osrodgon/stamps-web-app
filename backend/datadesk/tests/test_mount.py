@@ -1,37 +1,12 @@
-"""S1 acceptance: DataDesk is mounted only when the flag is on.
-
-The URLconf is imported once per process, so the flag cannot be flipped by
-``override_settings`` alone: the module has to be reloaded after the override.
-These tests do exactly that and restore the original URLconf afterwards.
-"""
-import importlib
-
-import pytest
+"""S1 acceptance: DataDesk is mounted only when the flag is on."""
 from django.test import Client, override_settings
-from django.urls import clear_url_caches, reverse
+from django.urls import reverse
+
+from datadesk.tests.helpers import UNHASHED_STATIC_STORAGES
 
 DATADESK_PATH = "/datadesk/"
 
 
-@pytest.fixture
-def reload_urlconf():
-    """Reloads ``_backend.urls`` and restores it when the test ends."""
-
-    def _reload() -> None:
-        clear_url_caches()
-        import _backend.urls
-
-        importlib.reload(_backend.urls)
-
-    yield _reload
-
-    clear_url_caches()
-    import _backend.urls
-
-    importlib.reload(_backend.urls)
-
-
-@pytest.mark.django_db
 class TestDataDeskMount:
     """Checks the feature flag gates the `/datadesk/` mount."""
 
@@ -43,7 +18,9 @@ class TestDataDeskMount:
         assert response.status_code == 404
 
     def test_enabled_returns_200(self, reload_urlconf) -> None:
-        with override_settings(DATADESK_ENABLED=True):
+        with override_settings(
+            DATADESK_ENABLED=True, STORAGES=UNHASHED_STATIC_STORAGES
+        ):
             reload_urlconf()
             response = Client().get(DATADESK_PATH)
 

@@ -917,9 +917,62 @@ hacen `clear_url_caches()` + `importlib.reload(_backend.urls)` dentro de un
 Verificado: `manage.py check` limpio · `spectacular` con **0** referencias a
 `datadesk` · **1011** tests de backend en verde (1008 previos + 3 nuevos).
 
-### ⏭ Siguiente: S2
+### ✅ S2 — Estáticos vendorizados y plantilla base (2026-11-18)
 
-Nada empezado. Pendiente de decidir antes de escribir código: si el HTMX,
-Alpine y Tabulator vendorizados los descargo yo (versiones a fijar en
-`vendor/VERSIONS.md`) o los pone el usuario.
+Ficheros nuevos:
+
+```
+backend/datadesk/static/datadesk/vendor/htmx.min.js        htmx 2.0.11
+backend/datadesk/static/datadesk/vendor/alpine.min.js      Alpine 3.17.5 (cdn build)
+backend/datadesk/static/datadesk/vendor/tabulator.min.js   Tabulator 6.7.1
+backend/datadesk/static/datadesk/vendor/tabulator.min.css  Tabulator 6.7.1
+backend/datadesk/static/datadesk/vendor/VERSIONS.md        versión, licencia, URL y sha256
+backend/datadesk/static/datadesk/datadesk.css              tokens del mockup + primitivas
+backend/datadesk/templates/datadesk/base.html              topbar, breadcrumbs, bloques, CSRF
+backend/datadesk/tests/conftest.py                         fixture reload_urlconf (movida de test_mount)
+backend/datadesk/tests/helpers.py                          UNHASHED_STATIC_STORAGES
+backend/datadesk/tests/test_layout.py                      5 tests
+backend/datadesk/tests/test_assets.py                      4 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/templates/datadesk/dashboard.html   ahora extends base.html
+backend/_backend/settings.py                         STATIC_URL "/static/" + STATICFILES_BACKEND según DEBUG
+backend/datadesk/tests/test_mount.py                 usa la fixture de conftest + el override de STORAGES
+```
+
+Decisiones tomadas al implementar:
+
+- **`STATIC_URL = "/static/"`** (antes `"static/"`, relativa). Con URL relativa los
+  assets se rompen en cualquier página de más de un nivel (`/datadesk/issues/12/`);
+  whitenoise además los sirve siempre desde la raíz. Único cambio global del paso.
+- **`STORAGES` depende de `DEBUG`**: con DEBUG el backend es
+  `StaticFilesStorage` (runserver sirve desde los finders, DataDesk funciona sin
+  `collectstatic`); fuera de DEBUG sigue `CompressedManifestStaticFilesStorage`.
+  El backend con manifest lanza `ValueError` en cualquier asset que no esté en el
+  manifest, y CI no ejecuta `collectstatic`: los tests renderizan con el override
+  `UNHASHED_STATIC_STORAGES` de `tests/helpers.py`.
+- **Se quitaron los `sourceMappingURL`** de los dos ficheros de Tabulator: los
+  `.map` no se envían y `collectstatic` avisaba de la referencia rota. Los hashes
+  de `VERSIONS.md` son de los ficheros ya limpiados, y un test los compara.
+- **Scripts de vendor al final del body, sin `defer`**, justo antes de
+  `{% block extra_js %}`: así un script inline de página puede usar Tabulator o
+  htmx directamente. Con `defer` el inline correría antes que el vendor.
+- **Comentarios de plantilla con `{% comment %}`**: `{# ... #}` multilínea no es
+  válido en Django y se imprimía literalmente en el HTML.
+
+Verificado: `collectstatic --noinput` con `DEBUG=False` → 177 copiados, 509
+post-procesados, sin avisos · `static('datadesk/datadesk.css')` resuelve a nombre
+hasheado con el manifest real · con `DEBUG=True` los 4 assets y `datadesk.css`
+responden **200** y `/datadesk/` renderiza la shell con token CSRF · `manage.py
+check` limpio · `spectacular` con **0** referencias a `datadesk` · **1020** tests
+de backend en verde (1008 previos + 12 de DataDesk).
+
+### ⏭ Siguiente: S3
+
+Login, logout, gate de `is_staff` y throttling. Antes de escribir código:
+revisar el plan de S3 (ya cerrado en la revisión de diseño) y decidir si el
+logout cuelga de `/datadesk/logout/` o del admin.
 
