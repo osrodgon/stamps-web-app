@@ -2,8 +2,6 @@
 from django.test import Client, override_settings
 from django.urls import reverse
 
-from datadesk.tests.helpers import UNHASHED_STATIC_STORAGES
-
 DATADESK_PATH = "/datadesk/"
 
 
@@ -17,15 +15,14 @@ class TestDataDeskMount:
 
         assert response.status_code == 404
 
-    def test_enabled_returns_200(self, reload_urlconf) -> None:
-        with override_settings(
-            DATADESK_ENABLED=True, STORAGES=UNHASHED_STATIC_STORAGES
-        ):
+    def test_enabled_mounts_the_app(self, reload_urlconf) -> None:
+        """The flag on replaces the 404 with the app: anonymous hits the login."""
+        with override_settings(DATADESK_ENABLED=True):
             reload_urlconf()
             response = Client().get(DATADESK_PATH)
 
-        assert response.status_code == 200
-        assert b"DataDesk" in response.content
+        assert response.status_code == 302
+        assert response["Location"].startswith("/datadesk/login/")
 
     def test_enabled_mounts_on_its_own_path(self, reload_urlconf) -> None:
         with override_settings(DATADESK_ENABLED=True):

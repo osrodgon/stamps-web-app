@@ -23,6 +23,10 @@
         <span class="dd-lang"><b>EN</b> | ES</span>
         {% if user.is_authenticated %}
           <span class="dd-user">{{ user.get_username }}</span>
+          <form class="dd-logout" method="post" action="{% url 'datadesk:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dd-btn dd-btn-ghost">Sign out</button>
+          </form>
         {% endif %}
       </div>
     </header>

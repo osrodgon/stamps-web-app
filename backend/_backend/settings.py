@@ -151,6 +151,34 @@ PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
 DATADESK_ENABLED = os.getenv("DATADESK_ENABLED", "False").lower() in ("true", "1", "t")
 DATADESK_URL = "datadesk/"
 DATADESK_LOGIN_URL = f"/{DATADESK_URL}login/"
+DATADESK_LOGOUT_URL = f"/{DATADESK_URL}logout/"
+
+# DataDesk is deployed on a server behind nginx with TLS, but locally it runs on
+# plain HTTP with no proxy. This flag only flips cookie/header settings, never
+# logic, so the same code covers both deployments.
+DATADESK_TLS = os.getenv("DATADESK_TLS", "0").lower() in ("1", "true", "t", "yes")
+
+# Login throttling for DataDesk. A file cache instead of LocMem: gunicorn runs
+# 4 workers and LocMem would multiply the attempt limit by four. No table, no
+# migration, no createcachetable.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": BASE_DIR / ".cache",
+        "TIMEOUT": 300,
+    }
+}
+
+# DataDesk sessions. The app is a single-user maintenance tool, so a long
+# session is fine as long as the cookie is not reachable from JavaScript.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = DATADESK_TLS
+CSRF_COOKIE_SECURE = DATADESK_TLS
+
+if DATADESK_TLS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 
@@ -270,6 +298,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "datadesk.middleware.DataDeskGateMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

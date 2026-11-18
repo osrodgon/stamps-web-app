@@ -82,8 +82,8 @@ el mockup ya están corregidos con esta decisión.
 |---|---|---|---|---|---|
 | D0 | Decisiones | — | XS | no | — |
 | S1 | Esqueleto de app + flag + montaje | — | S | 404/200 | ✅ 2026-11-18 |
-| S2 | Estáticos vendorizados + `base.html` | S1 | S | no | — |
-| S3 | Login, logout, gate, throttling | S1, S2 | M | sí | — |
+| S2 | Estáticos vendorizados + `base.html` | S1 | S | no | ✅ 2026-11-18 |
+| S3 | Login, logout, gate, throttling | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | — |
 | S5 | `updated_at` en Issue/Stamp | S1 | XS | no | — |
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | — |
@@ -970,9 +970,74 @@ responden **200** y `/datadesk/` renderiza la shell con token CSRF · `manage.py
 check` limpio · `spectacular` con **0** referencias a `datadesk` · **1020** tests
 de backend en verde (1008 previos + 12 de DataDesk).
 
-### ⏭ Siguiente: S3
+### ✅ S3 — Login, logout, gate y throttling (2026-11-18)
 
-Login, logout, gate de `is_staff` y throttling. Antes de escribir código:
-revisar el plan de S3 (ya cerrado en la revisión de diseño) y decidir si el
-logout cuelga de `/datadesk/logout/` o del admin.
+Ficheros nuevos:
+
+```
+backend/datadesk/mixins.py                          DataDeskAccessMixin + wants_json()
+backend/datadesk/middleware.py                      DataDeskGateMiddleware
+backend/datadesk/views/auth.py                      DataDeskLoginView + throttling + DataDeskLogoutView
+backend/datadesk/templates/datadesk/login.html      página standalone (sin topbar ni user slot)
+backend/datadesk/templates/datadesk/partials/login_form.html
+backend/datadesk/templates/datadesk/forbidden.html  403 para usuario autenticado no-staff
+backend/datadesk/tests/test_auth.py                 20 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/urls.py                 + login/ y logout/
+backend/datadesk/views/dashboard.py      DashboardView hereda DataDeskAccessMixin
+backend/_backend/settings.py             CACHES (FileBasedCache), DATADESK_LOGOUT_URL, DATADESK_TLS,
+                                         cookies de sesión, SECURE_PROXY_SSL_HEADER condicional,
+                                         middleware del gate tras AuthenticationMiddleware
+backend/datadesk/templates/datadesk/base.html       formulario POST de "Sign out" en la topbar
+backend/datadesk/static/datadesk/datadesk.css       estilos del login (.dd-login*, .dd-field, .dd-alert)
+backend/datadesk/tests/test_mount.py     "flag on" ahora espera 302 al login (antes 200)
+backend/datadesk/tests/test_layout.py    el test del dashboard entra como staff
+backend/.env.example                     DATADESK_TLS=0 documentado
+README.md                                cuenta staff, login, DATADESK_TLS y receta nginx de allowlist
+```
+
+Decisiones tomadas al implementar:
+
+- **El middleware se salta el gate si `DATADESK_ENABLED` es False** (leído en cada
+  request, no al importar) y resuelve los paths exentos con `reverse()`, cayendo a
+  "no gatar" si la app no está montada (`NoReverseMatch`). Sin eso, el test de S1
+  "flag off → 404" pasaba a 302.
+- **Dos respuestas distintas en el gate**: anónimo + navegador → redirect al login
+  con `?next=`; anónimo + JSON/HTMX → 401 JSON; autenticado no-staff → 403 (JSON o
+  `forbidden.html` según el cliente). El mixin replica el mismo reparto.
+- **`wants_json()` mira `HX-Request` y `Accept`**, no la ruta: los endpoints JSON de
+  S12 no estarán bajo un prefijo reconocible.
+- **Throttle de ventana deslizante**: cada fallo re-arma los 5 minutos
+  (`cache.set` con timeout explícito). El 6º fallo y los siguientes dan 429 con
+  `Retry-After` (TTL restante de la clave). Un login correcto borra la clave.
+- **La IP es `REMOTE_ADDR` a secas**: detrás de nginx es la del proxy, así que la
+  clave colapsa al usuario, que es lo que se quiere con un solo actor. `X-Forwarded-For`
+  se ignora a propósito.
+- **`DATADESK_TLS` se evalúa al importar settings**, así que no se puede probar con
+  `override_settings`. El test lo comprueba en un subproceso con el módulo real
+  (`python -c` + `DATADESK_TLS=0/1`) y añade un invariante para el proceso actual:
+  `SESSION_COOKIE_SECURE is settings.DATADESK_TLS`.
+- **`backend/.cache/` ya estaba ignorado** por la regla `.cache` del `.gitignore`
+  estándar de Python: no hizo falta tocarlo.
+- La página de login **no extiende `base.html`** a propósito: la shell asume un
+  usuario y un breadcrumb que en el login no existen. El botón de "Sign in" usa
+  `dd-btn-dark` (navy) y no `dd-btn-primary`, y el foco de los inputs es navy: el
+  verde queda reservado para commit/apply y para la celda generada. Los enlaces
+  genéricos también van en navy.
+
+Verificado: `/datadesk/` anónimo → 302 a `/datadesk/login/?next=/datadesk/` ·
+`/datadesk/login/` 200 con el formulario · `/admin/login/` sigue 200 y el health de
+la API intacto con el flag encendido · `manage.py check` limpio · `spectacular` con
+**0** referencias a `datadesk` · **1040** tests de backend en verde (1020 previos +
+20 nuevos).
+
+### ⏭ Siguiente: S4
+
+i18n en/es: catálogo de Django en `datadesk/locale/`, compilador de `.po` y
+sustituir los literales ingleses de `base.html`, `login.html` y
+`partials/login_form.html` por `{% translate %}`.
 

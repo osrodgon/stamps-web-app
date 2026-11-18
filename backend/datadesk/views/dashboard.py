@@ -1,14 +1,15 @@
 """Views for DataDesk.
 
-Provisional in S1: it only proves the app is mounted and reachable. S3 adds the
-``is_staff`` gate and S20 turns this into the real dashboard with the
-"needs attention" counters.
+Provisional in S1/S3: it only proves the app is mounted, gated and reachable.
+S20 turns this into the real dashboard with the "needs attention" counters.
 """
 from django.views.generic import TemplateView
 
+from datadesk.mixins import DataDeskAccessMixin
 
-class DashboardView(TemplateView):
-    """Renders the DataDesk landing page.
+
+class DashboardView(DataDeskAccessMixin, TemplateView):
+    """Renders the DataDesk landing page for staff users.
 
     Attributes:
         template_name (str): Template rendered by the view.

@@ -70,6 +70,42 @@ Consequences worth knowing:
 docker-compose -f backend/docker-compose.prod.yml -f frontend/docker-compose.prod.yml up -d
 ```
 
+### DataDesk (internal DB maintenance)
+
+DataDesk is a staff-only Django app mounted at `/datadesk/`. It is **not** part of the
+public API: nothing lives under `/api/v1/`, it has no DRF exposure and it is not in the
+OpenAPI schema. It is off unless `DATADESK_ENABLED=True` in `backend/.env`.
+
+Create the account it uses — staff, not necessarily a superuser:
+
+```bash
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
+  exec stamps-backend python manage.py createsuperuser
+
+# or a plain staff user
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
+  exec stamps-backend python manage.py shell -c \
+  "from django.contrib.auth.models import User; User.objects.create_user('datadesk', password='<password>', is_staff=True)"
+```
+
+Log in at http://localhost:8000/datadesk/. Failed attempts are counted per username and
+IP in `backend/.cache/` (shared by the gunicorn workers): the sixth failure inside five
+minutes answers 429 with `Retry-After`.
+
+Set `DATADESK_TLS=1` in the deployment environment when nginx terminates TLS in front of
+Django. It only turns on `Secure` cookies and `SECURE_PROXY_SSL_HEADER`; the code path is
+the same locally and on the server.
+
+Restricting the app by IP is done at the proxy, not in Django:
+
+```nginx
+location /datadesk/ {
+    allow 203.0.113.10;
+    deny all;
+    proxy_pass http://stamps-backend:8000;
+}
+```
+
 ## 📋 Project Structure
 
 ```

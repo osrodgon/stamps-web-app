@@ -1,0 +1,44 @@
+{% comment %}
+  Login form. Kept in its own template so a throttled HTMX request can be
+  answered with this fragment alone (status 429, Retry-After header).
+{% endcomment %}
+<div class="dd-login" id="login-card">
+  <form class="dd-login-card"
+        method="post"
+        action="{% url 'datadesk:login' %}"
+        hx-post="{% url 'datadesk:login' %}"
+        hx-target="#login-card"
+        hx-swap="outerHTML">
+    {% csrf_token %}
+
+    <div class="dd-login-head">
+      <span class="dd-brand">DataDesk<span>.</span></span>
+      <span class="dd-hint">Internal database maintenance</span>
+    </div>
+
+    {% if throttled %}
+      <p class="dd-alert dd-alert-error">
+        Too many failed attempts. Try again in {{ retry_after }} seconds.
+      </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      <p class="dd-alert dd-alert-error">{{ form.non_field_errors|join:" " }}</p>
+    {% endif %}
+
+    <label class="dd-field">
+      <span class="dd-label">Username</span>
+      <input type="text" name="username" autocomplete="username" autofocus
+             value="{{ form.username.value|default:'' }}" required>
+    </label>
+
+    <label class="dd-field">
+      <span class="dd-label">Password</span>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+
+    <button type="submit" class="dd-btn dd-btn-dark">Sign in</button>
+
+    <input type="hidden" name="next" value="{{ next }}">
+  </form>
+</div>

@@ -1,0 +1,13 @@
+{% load static %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DataDesk login{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}">
+</head>
+{# Standalone layout on purpose: no topbar, no breadcrumbs, no user slot. #}
+<body class="dd-login-body">
+  {% include "datadesk/partials/login_form.html" %}
+</body>
+</html>
