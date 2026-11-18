@@ -87,8 +87,8 @@
 - [x] **S10b — Workspace polish** (2026-11-18): stamp thumbnails from the
       mounted `<year>/<code>.webp` tree (8.419 of 9.558 stamps, 88%), served by
       a staff-gated `/datadesk/stamps/<id>/image` with ETag and private cache;
-      the folder is a read-only bind in dev and prod (same host path the
-      frontend uses), so adding a picture needs no rebuild. The listing is
+      the folder is a read-only bind (dev compose; prod defines its own mount in the
+      single deployment compose), so adding a picture needs no rebuild. The listing is
       cached 60 s and passed to bulk callers, which took the "without image"
       queue from 11.5 s (one file-cache read per stamp) to 36 ms. Colour chips
       now carry a tone derived from the name (`palette.py`, Spanish keyword

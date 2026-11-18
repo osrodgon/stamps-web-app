@@ -1390,7 +1390,6 @@ Ficheros modificados:
 ```
 backend/_backend/settings.py            DATADESK_STAMP_IMAGES
 backend/docker-compose.dev.yml          bind ../frontend/assets/stamps -> /srv/stamp-images (ro)
-backend/docker-compose.prod.yml         bind /media/data/stamps-docker-data/images (ro)
 backend/.env.example                    variable documentada
 backend/datadesk/service.py             has_image, colores con tono, cola "sin imagen" por archivo
 backend/datadesk/views/workspace.py     image_url por fila, columna has_image
@@ -1409,9 +1408,14 @@ Decisiones tomadas al implementar:
   cuadradito. Importar a `MEDIA_ROOT` queda como tema aparte (también serviría a la app
   Flet), porque exige `MEDIA_URL`/`MEDIA_ROOT`, servir `/media/` en producción y cambia
   lo que devuelve la API.
-- **La carpeta va montada de solo lectura y en la misma ruta del host que ya usa el
-  frontend** (`/media/data/stamps-docker-data/images`), así que añadir una imagen en la
-  VM no obliga a reconstruir nada. En dev el bind es `../frontend/assets/stamps`.
+- **La carpeta va montada de solo lectura**, así que añadir una imagen en la VM no
+  obliga a reconstruir nada. En dev el bind está en `docker-compose.dev.yml`
+  (`../frontend/assets/stamps` → `/srv/stamp-images`). **En producción no se toca
+  `backend/docker-compose.prod.yml`** (2026-11-19): el despliegue usa un único compose
+  con los tres contenedores (db, backend y frontend) y solo él sabe dónde viven las
+  imágenes; ahí se define el montaje y se deja `DATADESK_STAMP_IMAGES` apuntando a esa
+  ruta, que puede cambiar de sitio sin tocar código. Una ruta que no existe —o que aún
+  no existe— tampoco es un error: se pinta `no_stamp.webp`.
 - **Un índice cacheado 60 s, pasado a quien resuelve en lote**: la caché compartida es de
   fichero y leerla cuesta ~1 ms por llamada. La primera versión llamaba a `image_path()`
   por sello (9.558 veces) y la cola tardaba **11,5 s**; con el índice pasado y
