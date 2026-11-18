@@ -70,7 +70,10 @@ class Issue(models.Model):
     )
     note = models.TextField(null=True, blank=True)
     perforation = models.CharField(max_length=255, null=True, blank=True)
-    
+    # Last time the row changed. Nullable on purpose: fixtures dumped before this
+    # column existed still load, and DataDesk reads null as "no conflict info".
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True, db_index=True)
+
     class Meta:
         verbose_name = "Issue"
         verbose_name_plural = "Issues"
