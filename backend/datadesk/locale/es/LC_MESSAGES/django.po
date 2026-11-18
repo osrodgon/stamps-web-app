@@ -60,3 +60,36 @@ msgid ""
 msgstr ""
 "Esta cuenta no es de personal, así que DataDesk no se abrirá con ella. "
 "Inicia sesión con la cuenta de mantenimiento."
+
+#: datadesk/registry.py
+msgid "Year"
+msgstr "Año"
+
+#: datadesk/registry.py
+msgid "Country"
+msgstr "País"
+
+#: datadesk/registry.py
+msgid "Color"
+msgstr "Color"
+
+#: datadesk/registry.py
+msgid "Artist"
+msgstr "Artista"
+
+#: datadesk/registry.py
+msgid "Printer"
+msgstr "Imprenta"
+
+#: datadesk/registry.py
+msgid "Paper type"
+msgstr "Tipo de papel"
+
+#: datadesk/registry.py
+msgid "Print type"
+msgstr "Tipo de impresión"
+
+#: datadesk/registry.py
+msgid "Stamp type"
+msgstr "Tipo de sello"
+
