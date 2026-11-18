@@ -21,16 +21,6 @@ THROTTLE_KEY = "datadesk:login:{username}:127.0.0.1"
 
 
 @pytest.fixture
-def mounted(reload_urlconf):
-    """Mounts DataDesk and renders templates without a collected manifest."""
-    with override_settings(
-        DATADESK_ENABLED=True, STORAGES=UNHASHED_STATIC_STORAGES
-    ):
-        reload_urlconf()
-        yield
-
-
-@pytest.fixture
 def local_cache(settings) -> None:
     """Keeps the throttle counters in memory, so tests never touch .cache/."""
     settings.CACHES = {

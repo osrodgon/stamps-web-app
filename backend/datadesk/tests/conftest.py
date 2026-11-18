@@ -2,7 +2,10 @@
 import importlib
 
 import pytest
+from django.test import override_settings
 from django.urls import clear_url_caches
+
+from datadesk.tests.helpers import UNHASHED_STATIC_STORAGES
 
 
 @pytest.fixture
@@ -25,3 +28,13 @@ def reload_urlconf():
     import _backend.urls
 
     importlib.reload(_backend.urls)
+
+
+@pytest.fixture
+def mounted(reload_urlconf):
+    """Mounts DataDesk and renders templates without a collected manifest."""
+    with override_settings(
+        DATADESK_ENABLED=True, STORAGES=UNHASHED_STATIC_STORAGES
+    ):
+        reload_urlconf()
+        yield

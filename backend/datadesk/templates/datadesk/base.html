@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static i18n %}<!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
   <meta charset="utf-8">
@@ -19,13 +19,21 @@
       <div class="dd-crumbs">{% block breadcrumbs %}{% endblock %}</div>
       <div class="dd-topbar-right">
         {% block topbar_actions %}{% endblock %}
-        {# Language switch placeholder: S4 wires the real set_language view. #}
-        <span class="dd-lang"><b>EN</b> | ES</span>
+        {% get_current_language as DATADESK_LANG %}
+        <form class="dd-lang" method="post" action="{% url 'datadesk:language' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" name="language" value="en"
+                  class="{% if DATADESK_LANG|slice:':2' == 'en' %}dd-lang-active{% endif %}">EN</button>
+          <span class="dd-lang-sep">|</span>
+          <button type="submit" name="language" value="es"
+                  class="{% if DATADESK_LANG|slice:':2' == 'es' %}dd-lang-active{% endif %}">ES</button>
+        </form>
         {% if user.is_authenticated %}
           <span class="dd-user">{{ user.get_username }}</span>
           <form class="dd-logout" method="post" action="{% url 'datadesk:logout' %}">
             {% csrf_token %}
-            <button type="submit" class="dd-btn dd-btn-ghost">Sign out</button>
+            <button type="submit" class="dd-btn dd-btn-ghost">{% translate "Sign out" %}</button>
           </form>
         {% endif %}
       </div>

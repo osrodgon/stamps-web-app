@@ -295,6 +295,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -371,6 +372,10 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 
 USE_I18N = True
+
+# DataDesk is translated in English and Spanish. The project default stays
+# untouched, and these are the only languages the DataDesk switch accepts.
+DATADESK_LANGUAGES = ("en", "es")
 
 USE_TZ = True
 

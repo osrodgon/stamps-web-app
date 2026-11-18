@@ -84,7 +84,7 @@ el mockup ya están corregidos con esta decisión.
 | S1 | Esqueleto de app + flag + montaje | — | S | 404/200 | ✅ 2026-11-18 |
 | S2 | Estáticos vendorizados + `base.html` | S1 | S | no | ✅ 2026-11-18 |
 | S3 | Login, logout, gate, throttling | S1, S2 | M | sí | ✅ 2026-11-18 |
-| S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | — |
+| S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S5 | `updated_at` en Issue/Stamp | S1 | XS | no | — |
 | S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | — |
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | — |
@@ -1035,9 +1035,71 @@ la API intacto con el flag encendido · `manage.py check` limpio · `spectacular
 **0** referencias a `datadesk` · **1040** tests de backend en verde (1020 previos +
 20 nuevos).
 
-### ⏭ Siguiente: S4
+### ✅ S4 — i18n en/es (2026-11-18)
 
-i18n en/es: catálogo de Django en `datadesk/locale/`, compilador de `.po` y
-sustituir los literales ingleses de `base.html`, `login.html` y
-`partials/login_form.html` por `{% translate %}`.
+Ficheros nuevos:
+
+```
+backend/datadesk/views/language.py                        set_datadesk_language (POST-only)
+backend/datadesk/management/commands/datadesk_make_messages.py   .po → .mo con polib, --check
+backend/datadesk/locale/es/LC_MESSAGES/django.po (+ .mo) catálogo español
+backend/datadesk/locale/en/LC_MESSAGES/django.po (+ .mo) catálogo inglés (msgstr = msgid)
+backend/datadesk/tests/test_i18n.py                      13 tests
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/templates/datadesk/base.html          {% translate %} + selector EN/ES como formulario POST
+backend/datadesk/templates/datadesk/dashboard.html     textos traducidos
+backend/datadesk/templates/datadesk/login.html         título traducido
+backend/datadesk/templates/datadesk/partials/login_form.html   textos y mensaje de 429 traducidos
+backend/datadesk/templates/datadesk/forbidden.html     textos traducidos
+backend/datadesk/urls.py                               language/
+backend/datadesk/static/datadesk/datadesk.css         .dd-lang como botones + estado activo
+backend/datadesk/tests/conftest.py                     fixture `mounted` compartida (movida de test_auth)
+backend/_backend/settings.py                           LocaleMiddleware + DATADESK_LANGUAGES
+backend/requirements.base.txt                          polib==1.2.0
+backend/Dockerfile.prod                                datadesk_make_messages antes de collectstatic
+README.md                                              cómo compilar los catálogos y el --check de CI
+```
+
+Decisiones tomadas al implementar:
+
+- **`LANGUAGE_CODE` no se toca** (`en-us`): Django resuelve el catálogo `en` por
+  prefijo, así que el inglés sigue funcionando sin cambiar el default del
+  proyecto ni el de la API pública.
+- **El selector es un formulario POST** (dos `button type=submit name=language`),
+  validado contra `DATADESK_LANGUAGES` antes de delegar en `set_language`. Un
+  idioma desconocido se ignora y redirige con `next`, que `set_language` valida
+  como URL segura. GET → 405.
+- **El endpoint de idioma no está exento del gate**: cambiarlo exige sesión
+  staff, y el middleware ya lo cubre sin `LoginRequiredMixin`.
+- **Los `.mo` se commitean** y además se regeneran en `Dockerfile.prod` antes de
+  `collectstatic`, para que la imagen nunca sirva un catálogo viejo. Ojo: el
+  `.gitignore` estándar de Python ignora `*.mo`, así que hizo falta una excepción
+  (`!backend/datadesk/locale/*/LC_MESSAGES/django.mo`); sin ella la PR pasaba en
+  local y fallaba en CI, sin catálogos que cargar.
+- **`--check` compara contenido, no fechas**: un checkout de git escribe
+  `django.mo` antes que `django.po` (orden alfabético) y el `.mo` parece viejo
+  aunque esté al día. Compara `{msgid: msgstr}` de `polib.pofile` contra
+  `polib.mofile`, y un test cubre el caso de una traducción editada sin compilar.
+- **El test de "assets/locales intactos"** no usa `git status` (fallaría con
+  cualquier cambio legítimo en el árbol): comprueba que ningún `.py`/`.html` de
+  `datadesk` referencia `assets/locales`, que es el invariante que de verdad
+  importa.
+- **`Client.logout()` de Django vacía también las cookies del cliente**, así que
+  el test de la página de login en español fija `django_language` a mano en vez de
+  encadenar login → logout.
+
+Verificado: `curl -b django_language=es /datadesk/login/` devuelve "Acceso a
+DataDesk", "Contraseña" y "Entrar"; sin cookie, "Sign in" y "Password" ·
+`datadesk_make_messages` compila los 2 catálogos dentro de la imagen ·
+`manage.py check` limpio · `spectacular` con **0** referencias a `datadesk` ·
+**1053** tests de backend en verde (1040 previos + 13 nuevos).
+
+### ⏭ Siguiente: S5
+
+`updated_at` en `Issue` y `Stamp` (migración aditiva + `auto_now`), la base para
+el control de conflictos de S12 y el "needs attention" de S20.
 

@@ -24,6 +24,11 @@ At the **very start of every session** (before any tool calls or responses), you
   nouns as they are written (`DataDesk authentication staff gate and login
   throttling`, not `datadesk authentication staff gate and login throttling`).
   GitHub lowercases it for the branch; the issue list keeps the readable form.
+- **Always state the type along with the suggested title** — `feature` (new
+  capability the user can see), `chore` (scaffolding, tooling, refactors,
+  styling, dependency bumps), `fix` (bug), `doc` (documentation only), `test`
+  (tests only). It is not part of the title, but it is part of the answer:
+  say which one and why in one line.
 - **Every GitHub operation is in English** — issue titles and descriptions,
   commit messages, PR titles and descriptions, review comments.
 - **GitHub operations are not authorized.** Never create, edit, close or comment

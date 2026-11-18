@@ -106,6 +106,23 @@ location /datadesk/ {
 }
 ```
 
+The interface is translated in English and Spanish. Catalogs live in
+`backend/datadesk/locale/`; after editing a `.po`, rebuild the `.mo` files without
+needing `gettext` installed. The compiled `.mo` files are versioned on purpose
+(`.gitignore` has an exception for them): CI runs no `gettext` and the test suite
+checks that they match their sources. To recompile them:
+
+```bash
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
+  exec stamps-backend python manage.py datadesk_make_messages
+
+# in CI: fail when a .po changed and its .mo was not rebuilt
+... python manage.py datadesk_make_messages --check
+```
+
+The frontend translations (`frontend/assets/locales/*.json`) belong to the public
+app and are never touched by DataDesk.
+
 ## 📋 Project Structure
 
 ```

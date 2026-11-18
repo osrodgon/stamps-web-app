@@ -1,0 +1,61 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DataDesk\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: datadesk/templates/datadesk/base.html
+msgid "Sign out"
+msgstr "Sign out"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid ""
+"Internal database maintenance. The workbench, the issue workspace and the "
+"lookup admin arrive in the next steps."
+msgstr ""
+"Internal database maintenance. The workbench, the issue workspace and the "
+"lookup admin arrive in the next steps."
+
+#: datadesk/templates/datadesk/login.html
+msgid "DataDesk login"
+msgstr "DataDesk login"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Internal database maintenance"
+msgstr "Internal database maintenance"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+#, python-format
+msgid "Too many failed attempts. Try again in %(seconds)s seconds."
+msgstr "Too many failed attempts. Try again in %(seconds)s seconds."
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Username"
+msgstr "Username"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Password"
+msgstr "Password"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Sign in"
+msgstr "Sign in"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid "Access denied"
+msgstr "Access denied"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid ""
+"This account is not staff, so DataDesk will not open for it. Sign in with "
+"the maintenance account."
+msgstr ""
+"This account is not staff, so DataDesk will not open for it. Sign in with "
+"the maintenance account."

@@ -24,6 +24,12 @@
       and disabled with the flag. `CACHES` = `FileBasedCache` in `backend/.cache/`;
       sessions 14 days, `HttpOnly`, `SameSite=Lax`; `DATADESK_TLS` flips only cookie
       and proxy-header flags. 20 tests; 1040 backend tests green. Next: S4 (i18n en/es)
+- [x] **S4 — i18n en/es** (2026-11-18): `.po` catalogs in `backend/datadesk/locale/`
+      (en + es) compiled to `.mo` by `datadesk_make_messages` (polib, no `gettext`
+      needed, `--check` for CI), `LocaleMiddleware` + `DATADESK_LANGUAGES`, and the
+      EN/ES control in the topbar as a POST form hitting `/datadesk/language/`.
+      Templates now use `{% translate %}`; the frontend `assets/locales/*.json` are
+      untouched. 13 tests; 1053 backend tests green. Next: S5 (`updated_at`)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

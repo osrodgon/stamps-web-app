@@ -57,6 +57,9 @@ cover/
 # Translations
 *.mo
 *.pot
+# DataDesk ships its compiled catalogs in the repo: CI runs no gettext and the
+# test suite checks that they match their .po sources.
+!backend/datadesk/locale/*/LC_MESSAGES/django.mo
 
 # Django stuff:
 logs/
