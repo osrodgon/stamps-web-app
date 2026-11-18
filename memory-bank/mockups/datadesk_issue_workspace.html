@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>DataDesk — New issue composer (mockup)</title>
+<style>
+  :root{
+    --ink:#16191d; --muted:#6b7480; --soft:#9aa2ab;
+    --navy:#232F3E; --line:#e3e6ea; --bg:#f4f5f7;
+    --green:#1e8e3e; --green-soft:#eef7ee;
+    --amber:#f0b429; --amber-soft:#fff8e1;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:28px 20px 40px; background:var(--bg);
+    font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+  }
+  .app{
+    max-width:1340px; margin:0 auto; background:#fff;
+    border:1px solid #d8dce1; border-radius:6px; overflow:hidden;
+    box-shadow:0 8px 28px rgba(20,25,35,.10);
+  }
+  kbd{
+    font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:rgba(255,255,255,.14); border-radius:3px; padding:3px 5px; margin-left:6px;
+  }
+
+  /* top bar */
+  .topbar{
+    display:flex; align-items:center; gap:18px;
+    background:var(--navy); color:#fff; padding:0 16px; height:44px;
+  }
+  .brand{font-weight:700; letter-spacing:.3px; font-size:14px}
+  .brand span{color:#8fd18f}
+  .crumbs{font-size:12px; color:#aab4c0}
+  .crumbs b{color:#fff; font-weight:600}
+  .topbar .right{margin-left:auto; display:flex; align-items:center; gap:14px; font-size:12px; color:#c3ccd6}
+  .lang b{color:#fff}
+
+  /* metadata */
+  .meta{border-bottom:1px solid var(--line); padding:14px 16px 10px}
+  .meta-head{display:flex; align-items:baseline; gap:10px; margin-bottom:12px}
+  .label{font-size:10.5px; letter-spacing:.9px; text-transform:uppercase; color:var(--muted); font-weight:700}
+  .hint{font-size:11.5px; color:var(--soft)}
+  .ghost{
+    font:inherit; font-size:11.5px; color:#2b3440; background:#fff;
+    border:1px solid #cfd5dc; border-radius:4px; padding:4px 9px; cursor:pointer;
+  }
+  .ghost:hover{background:#f5f7f9}
+  .meta-head .ghost{margin-left:auto}
+
+  .fields{display:grid; grid-template-columns:repeat(6,1fr); gap:12px 18px}
+  .f{min-width:0}
+  .f .k{display:block; font-size:10px; letter-spacing:.6px; text-transform:uppercase; color:var(--soft); margin-bottom:3px}
+  .f .v{
+    border-bottom:1px solid #d6dae0; padding:2px 0 4px; font-size:13px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .f.span2{grid-column:span 2}
+  .f.prefilled .k::after{content:" ⟲"; color:#b9c0c8}
+  .f.prefilled .v{color:#4a535e}
+
+  .collapsed{margin-top:10px; font-size:11.5px; color:var(--muted)}
+  .collapsed i{font-style:normal; color:var(--soft); margin-left:6px}
+
+  /* stamp grid */
+  .gridwrap{padding:12px 16px 0}
+  .grid-head{display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap}
+  .count{
+    font-size:11px; font-weight:700; color:#2b3440; background:#eef1f4;
+    border-radius:10px; padding:2px 8px;
+  }
+  .tools{margin-left:auto; display:flex; align-items:center; gap:8px}
+  .tools .num{
+    width:38px; font:inherit; font-size:12px; text-align:center;
+    border:1px solid #cfd5dc; border-radius:4px; padding:3px 4px; background:#fff;
+  }
+  .switch{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#2b3440; margin-left:4px}
+  .switch input{accent-color:var(--green)}
+
+  table{border-collapse:separate; border-spacing:0; width:100%; font-size:12px}
+  thead th{
+    background:var(--navy); color:#fff; font-size:10.5px; font-weight:600;
+    letter-spacing:.6px; text-transform:uppercase; text-align:left;
+    padding:7px 9px; white-space:nowrap;
+  }
+  thead th.n, tbody td.n{text-align:right; font-variant-numeric:tabular-nums}
+  tbody td{
+    padding:5px 9px; border-bottom:1px solid #f0f2f4; white-space:nowrap;
+    height:30px;
+  }
+  tbody tr:nth-child(even) td{background:#fafbfc}
+  tbody tr:hover td{background:#f1f5f8}
+  .inh{color:var(--soft)}                    /* inherited from the issue */
+  .ovr{background:var(--amber-soft)!important; box-shadow:inset 2px 0 0 var(--amber)}
+  .ovr::after{content:" ⟲"; color:#b98700; font-size:11px}
+  .auto{background:var(--green-soft)!important}
+  td.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px}
+  td.img{color:#c4cbd3; font-size:15px; text-align:center}
+
+  .chip{
+    display:inline-block; font-size:10.5px; line-height:1; padding:3px 6px;
+    border-radius:9px; background:#eef1f4; color:#2b3440; border:1px solid #e0e5ea;
+    margin-right:3px;
+  }
+  .chip.c1{background:#fde8ec; border-color:#f6c8d1; color:#8c1f34}
+  .chip.c2{background:#e7effc; border-color:#c6d8f5; color:#1f4a8c}
+  .chip.c3{background:#e9f4e9; border-color:#c9e4c9; color:#1e6b34}
+  .chip.c4{background:#f7f0e2; border-color:#e8dcc2; color:#7a5a1e}
+
+  .legend{
+    display:flex; gap:16px; align-items:center; padding:7px 2px 10px;
+    font-size:11px; color:var(--soft); border-bottom:1px solid var(--line);
+  }
+  .legend .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+  .legend .sw.inh{background:#eef1f4}
+  .legend .sw.ovr{background:var(--amber-soft); box-shadow:inset 2px 0 0 var(--amber)}
+  .legend .sw.auto{background:var(--green-soft); box-shadow:inset 0 0 0 1px #c9e4c9}
+
+  /* footer */
+  .commitbar{
+    display:flex; align-items:center; gap:14px;
+    padding:11px 16px; background:#fbfcfd; border-top:1px solid var(--line);
+  }
+  .commitbar .summary{font-size:12px; color:var(--muted)}
+  .commitbar .summary b{color:#2b3440}
+  .commitbar .summary .dot{color:#cdd3da; margin:0 7px}
+  .commitbar .right{margin-left:auto; display:flex; align-items:center; gap:10px}
+  .primary{
+    font:inherit; font-size:12.5px; font-weight:600; color:#fff; background:var(--green);
+    border:0; border-radius:4px; padding:8px 13px; cursor:pointer;
+  }
+  .primary:hover{background:#187a34}
+  .keys{
+    display:flex; gap:18px; flex-wrap:wrap; padding:8px 16px;
+    background:#fff; border-top:1px solid var(--line); font-size:11px; color:var(--soft);
+  }
+  .keys kbd{background:#eef1f4; color:#4a535e}
+
+  /* mode switch (mockup control, not part of the final app) */
+  .seg{display:flex; margin-left:6px; border:1px solid #4a5a6d; border-radius:4px; overflow:hidden}
+  .seg button{
+    font:inherit; font-size:11px; color:#c3ccd6; background:transparent; border:0;
+    padding:4px 10px; cursor:pointer;
+  }
+  .seg button.on{background:#39485a; color:#fff; font-weight:600}
+  .seg button + button{border-left:1px solid #4a5a6d}
+  .only-edit{display:none}
+  body.mode-edit .only-edit{display:inline-flex}
+  body.mode-edit button.only-edit{display:inline-block}
+  body.mode-edit .only-new{display:none !important}
+
+  /* annotation strip */
+  .notes{max-width:1340px; margin:22px auto 0}
+  .notes h1{font-size:13px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .step{background:#fff; border:1px solid #e0e4e9; border-radius:5px; padding:11px 13px}
+  .step .n{
+    display:inline-flex; width:19px; height:19px; border-radius:50%; background:var(--navy);
+    color:#fff; font-size:11px; font-weight:700; align-items:center; justify-content:center;
+    margin-right:7px;
+  }
+  .step b{font-size:12px}
+  .step p{margin:6px 0 0; font-size:11.5px; color:#5c6673; line-height:1.45}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">DataDesk<span>.</span></div>
+    <div class="crumbs">
+      <span class="only-new">Issues &nbsp;/&nbsp; <b>New issue</b></span>
+      <span class="only-edit">Issues &nbsp;/&nbsp; 1987 &nbsp;/&nbsp; <b>Exposición Filatélica de Málaga</b></span>
+    </div>
+    <div class="right">
+      <button class="ghost only-edit" style="color:#e6ebf1;border-color:#4a5a6d;background:transparent">Clone</button>
+      <button class="ghost only-edit" style="color:#f3b8b8;border-color:#6d4a4a;background:transparent">Delete</button>
+      <span class="lang"><b>EN</b> | ES</span>
+      <div class="seg">
+        <button data-mode="new" class="on">new</button>
+        <button data-mode="edit">edit</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-head">
+      <span class="label">Issue metadata</span>
+      <span class="hint only-new">pre-filled from the last issue — <b>Exposición de Málaga · 1987</b></span>
+      <span class="hint only-edit">as stored · fields inherited by stamps are marked ⟲</span>
+      <button class="ghost only-new">⟲ Use last issue</button>
+    </div>
+
+    <div class="fields">
+      <div class="f prefilled"><span class="k">Year</span><span class="v">1987</span></div>
+      <div class="f"><span class="k">Date</span><span class="v">12/05/1987</span></div>
+      <div class="f span2"><span class="k">Name</span><span class="v">Exposición Filatélica de Málaga</span></div>
+      <div class="f prefilled"><span class="k">Country</span><span class="v">Spain</span></div>
+      <div class="f prefilled"><span class="k">Stamp type</span><span class="v">Commemorative</span></div>
+
+      <div class="f prefilled"><span class="k">Print type</span><span class="v">Lithography</span></div>
+      <div class="f prefilled"><span class="k">Printer</span><span class="v">FNMT — Madrid</span></div>
+      <div class="f prefilled"><span class="k">Artist</span><span class="v">Bartolomé Maura</span></div>
+      <div class="f prefilled"><span class="k">Paper type</span><span class="v">Matte</span></div>
+      <div class="f prefilled"><span class="k">Perforation</span><span class="v">13 × 13</span></div>
+      <div class="f prefilled"><span class="k">Total printed</span><span class="v">500.000</span></div>
+
+      <div class="f prefilled"><span class="k">Market value MNH</span><span class="v">1,20 €</span></div>
+      <div class="f prefilled"><span class="k">Market value used</span><span class="v">0,80 €</span></div>
+      <div class="f span2"><span class="k">Note</span><span class="v"></span></div>
+      <div class="f"><span class="k">Stamps</span><span class="v">8</span></div>
+    </div>
+
+    <div class="collapsed">Description 1 line <i>· Note —</i></div>
+  </div>
+
+  <div class="gridwrap">
+    <div class="grid-head">
+      <span class="label">Stamps</span>
+      <span class="count only-new">8 new rows</span>
+      <span class="count only-edit">8 stamps</span>
+      <div class="tools">
+        <label class="switch">rows <input class="num" value="8"></label>
+        <button class="ghost">Generate</button>
+        <button class="ghost">Fill series from 2744</button>
+        <button class="ghost">Paste rows</button>
+        <label class="switch"><input type="checkbox" checked> Fast row</label>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:86px">Edifil</th>
+          <th style="width:74px">Fesofi</th>
+          <th>Name</th>
+          <th style="width:92px">Face value</th>
+          <th style="width:190px">Colors</th>
+          <th class="n" style="width:100px">Total printed</th>
+          <th class="n" style="width:66px">MNH</th>
+          <th class="n" style="width:66px">Used</th>
+          <th style="width:44px">Img</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code auto">2744</td><td class="code">1234</td><td>Retrato de Maura</td>
+          <td>15 Pta</td>
+          <td><span class="chip c1">Carmín</span><span class="chip c1">Rojo</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2745</td><td class="code">1235</td><td>Retrato de Maura</td>
+          <td>15 Pta</td>
+          <td><span class="chip c1">Carmín</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2746</td><td class="code">1236</td><td>Bandera nacional</td>
+          <td>20 Pta</td>
+          <td><span class="chip c2">Azul</span><span class="chip c3">Verde</span></td>
+          <td class="n ovr">750.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▣</td>
+        </tr>
+        <tr>
+          <td class="code auto">2747</td><td class="code">1237</td><td>Bandera nacional</td>
+          <td>20 Pta</td>
+          <td><span class="chip c2">Azul</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2748</td><td class="code">1238</td><td>Escudo de Málaga</td>
+          <td>45 Pta</td>
+          <td><span class="chip c4">Sepia</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n ovr">0,95</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2749</td><td class="code">1239</td><td>Escudo de Málaga</td>
+          <td>45 Pta</td>
+          <td><span class="chip c4">Sepia</span><span class="chip c4">Ocre</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2750</td><td class="code">1240</td><td>Vista del puerto</td>
+          <td>1 Pta</td>
+          <td><span class="chip c3">Verde</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+        <tr>
+          <td class="code auto">2751</td><td class="code">1241</td><td>Vista del puerto</td>
+          <td>2 Pta</td>
+          <td><span class="chip c3">Verde</span><span class="chip c2">Azul</span></td>
+          <td class="n inh">500.000</td><td class="n inh">1,20</td><td class="n inh">0,80</td>
+          <td class="img">▢</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="legend">
+      <span><span class="sw inh"></span>inherited from the issue</span>
+      <span><span class="sw ovr"></span>set on this stamp · ⟲ restores the inherited value</span>
+      <span class="only-new"><span class="sw auto"></span>auto-numbered 2744 – 2751</span>
+      <span style="margin-left:auto">country · artist · printer belong to the series, never per row</span>
+    </div>
+  </div>
+
+  <div class="commitbar">
+    <div class="summary only-new">
+      <b>New issue</b> + <b>8 stamps</b><span class="dot">·</span>nothing saved yet
+    </div>
+    <div class="summary only-edit">
+      <b>12 changes not saved</b><span class="dot">·</span>2002 Éxposicion <em>(2 stamps)</em>
+      <span class="dot">·</span>artist, colors, face value
+    </div>
+    <div class="right">
+      <button class="ghost only-new">Create issue only</button>
+      <button class="ghost only-edit">Discard changes</button>
+      <button class="primary only-new">Create issue + 8 stamps <kbd>Ctrl ↵</kbd></button>
+      <button class="primary only-edit">Commit 12 changes <kbd>Ctrl ↵</kbd></button>
+    </div>
+  </div>
+
+  <div class="keys">
+    <span><kbd>N</kbd> new issue</span>
+    <span><kbd>Ctrl D</kbd> duplicate row</span>
+    <span><kbd>Esc</kbd> revert cell</span>
+    <span><kbd>Tab</kbd> next cell</span>
+    <span><kbd>Ctrl ↵</kbd> commit all</span>
+  </div>
+</div>
+
+<div class="notes">
+  <h1>Issue workspace — one screen, two modes (use the <i>new / edit</i> switch top right)</h1>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><b>Open empty, already half-filled</b>
+      <p><kbd>N</kbd> opens the same screen in <i>new</i> mode, with metadata copied from the last issue: year, country, stamp type, print, printer, artist, paper, perforation.</p></div>
+    <div class="step"><span class="n">2</span><b>Type the differential fields</b>
+      <p>Name, date, total printed, market values. Everything marked ⟲ came from the previous issue.</p></div>
+    <div class="step"><span class="n">3</span><b>Generate the rows</b>
+      <p><i>rows = 8</i> creates 8 stamp rows that inherit the issue values, so those cells never get typed.</p></div>
+    <div class="step"><span class="n">4</span><b>Auto-number the catalog codes</b>
+      <p>First edifil <i>2744</i> + <i>Fill series</i> numbers 2744–2751, keeping variant suffixes (2744a → 2744b).</p></div>
+    <div class="step"><span class="n">5</span><b>Only 4 columns of real work</b>
+      <p>Fast row mode leaves edifil, fesofi, face value and colors. Of the rest, only name, total printed and the two market values can differ per stamp (grey = same as the series, black = set here, ⟲ restores).</p></div>
+    <div class="step"><span class="n">6</span><b>One commit, then keep going</b>
+      <p><kbd>Ctrl ↵</kbd> creates issue + stamps in a single transaction. Next screen offers <i>create another in 1987</i>, metadata still loaded.</p></div>
+  </div>
+  <div class="steps" style="margin-top:12px">
+    <div class="step"><span class="n">7</span><b>Editing an existing series is the same screen</b>
+      <p>Flip to <i>edit</i>: identical metadata strip, identical grid, identical inheritance greys and fast row toggle. Only the top-bar actions (<i>Clone</i>, <i>Delete</i>) and the footer wording change.</p></div>
+    <div class="step"><span class="n">8</span><b>The buffer is what you review</b>
+      <p>The footer always shows the pending change set — "new issue + 8 stamps" or "12 changes not saved" — and commits it in one transaction.</p></div>
+    <div class="step"><span class="n">9</span><b>No separate editor to drift</b>
+      <p>One template, one grid module, one test suite, <i>mode=new | edit</i>. Every improvement lands in both flows at once.</p></div>
+  </div>
+</div>
+
+<script>
+  const seg = document.querySelectorAll('.seg button');
+  seg.forEach(function (b) {
+    b.addEventListener('click', function () {
+      seg.forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.body.classList.toggle('mode-edit', b.dataset.mode === 'edit');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -7,6 +7,19 @@ NETWORK="stamps-network"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT" || { echo "❌ Failed to change directory to project root: $PROJECT_ROOT"; exit 1; }
 
+# --- Docker group guard ---
+# .devcontainer/setup.sh runs `usermod -aG docker vscode` at postCreate, so the
+# first session in a fresh container misses the docker group: /etc/group lists
+# the user but the running process cannot open the socket. Re-exec once with
+# the group applied instead of failing with "permission denied".
+DOCKER_SOCK="/var/run/docker.sock"
+if [ -z "${STAMPS_DOCKER_REEXEC:-}" ] && [ ! -w "$DOCKER_SOCK" ]; then
+    if getent group docker | cut -d: -f4 | tr ',' '\n' | grep -qx "$(id -un)"; then
+        export STAMPS_DOCKER_REEXEC=1
+        exec sg docker -c "$(printf '%q ' "$0" "$@")"
+    fi
+fi
+
 # Backend
 BACKEND_COMPOSE="-f backend/docker-compose.yml -f backend/docker-compose.dev.yml"
 BACKEND_SVC="stamps-backend"

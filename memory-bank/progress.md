@@ -1,465 +1,346 @@
 # Progress Tracker
 
-## Completed Tasks
+## Open / Next
 
-### Frontend Unit Testing Complete (2025-05-22)
-- [x] Implemented Tier 7: IssueDetailCard — 35 tests
-- [x] Implemented Tier 8: StandardPage 10 tests, NotFoundPage 6 tests
-- [x] Implemented Tier 9: StampsManagerPage static methods + 5 handler stubs — 15 tests
-- [x] Implemented Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
-- [x] Total: 618 tests (all passing)
-- [x] Deferred: login_card, signup_card, login_page, signup_page, collections_page (Flet descriptor system)
+### DataDesk app — implementation (design closed, see `datadesk-app-plan.md`)
+
+- [x] **S1 — Skeleton**: `backend/datadesk/` + `/datadesk/` mount behind `DATADESK_ENABLED`,
+      provisional `DashboardView`, 3 mount tests. Next: S2 (vendored static + `base.html`)
+- [x] S1 verified locally (2026-11-18): `DATADESK_ENABLED=True` added to `backend/.env`
+      (dev only, not committed), backend up via `./stamps.sh dev start backend`,
+      `GET http://localhost:8000/datadesk/` → 200 with the provisional page, and
+      `pytest datadesk/tests -q` → 3 passed inside the dev container
+- [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
+      login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
+      en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
+- [ ] Phase 2 — Read-only Workbench + Issue Workspace (both modes on one template):
+      grids, inheritance display, filters, "needs attention" queues, perf check on real data
+- [ ] Phase 3 — Inline editing + single-row commit + audit; `mode=new` flow
+      (last-issue defaults, `rows=N`, edifil auto-numbering, fast row mode,
+      create-another loop); add/duplicate stamp row; inline lookup creation from a cell
+- [ ] Phase 4 — Change set / review panel / transactional commit / clone issue / `Ctrl+Z`
+- [ ] Phase 5 — Lookup CRUD + usage counts + merge; dashboard queues; activity log +
+      revert; keyboard polish; tests
+- [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
+
+### Normal-user collections (plan only: `user-collections-plan.md`)
+
+- [ ] Step 1 — `CollectionService` + `CollectionForm` dialog
+- [ ] Step 2 — `CollectionsPage` grid + `CollectionCard`
+- [ ] Step 3 — `CollectionDetailPage` + `CollectionIssueCard`
+- [ ] Step 4 — `StampCatalogPicker` + "Select All in Series"
+- [ ] Step 5 — unit tests (`test_collection_service.py`, `test_collection_form.py`, `test_stamp_catalog_picker.py`)
+
+### Test debt (frontend)
+
+- [ ] Tier 6 auth components (`login_card`, `signup_card`) — deferred: `ft.Container._values`
+      issue, needs integration test
+- [ ] `login_page`, `signup_page`, `collections_page` — deferred: `ft.View` `_values`
+      descriptor issue
+
+### Code quality
+
+- [ ] Fix pre-existing LSP type errors in frontend code
+- [ ] Add type hints to remaining untyped functions (rule #2)
+
+### Known gaps
+
+- [ ] JWT validation runs on first page load only; API-level checks TBD
+
+---
+
+## Completed
+
+### Devcontainer — docker group guard in `stamps.sh` (2026-11-18)
+
+- [x] `./stamps.sh` failed with "permission denied … /var/run/docker.sock" in a fresh
+      container: `.devcontainer/setup.sh` runs `usermod -aG docker vscode` at postCreate, so
+      `/etc/group` lists the user (`docker:x:994:vscode`) but the already-running session has
+      no gid 994 and the socket is `root:docker 660`
+- [x] Added a re-exec guard right after the `cd "$PROJECT_ROOT"` block in `stamps.sh`: when the
+      socket is not writable and `getent group docker` lists the current user, it re-execs itself
+      through `sg docker` once (`STAMPS_DOCKER_REEXEC` prevents loops, args re-quoted with
+      `printf '%q '`)
+- [x] Verified `bash -n`, usage output, and `dev start db` — no permission errors, container
+      reported `Running`
+
+### DataDesk — S1 done: app skeleton, flag and mount (2026-11-18)
+
+- [x] `backend/datadesk/` with `apps.py` (`DataDeskConfig`), `urls.py`
+      (`app_name = "datadesk"`), `views/dashboard.py` (`DashboardView`, provisional
+      `TemplateView`) and `templates/datadesk/dashboard.html`
+- [x] `settings.py`: `DATADESK_ENABLED` (env, default `False`), `DATADESK_URL = "datadesk/"`,
+      `DATADESK_LOGIN_URL = "/datadesk/login/"`; `"datadesk"` added to `INSTALLED_APPS`
+- [x] `_backend/urls.py`: mounted **after** the list and only `if settings.DATADESK_ENABLED`,
+      using `django.conf.settings` (not the plain module) so `override_settings` can drive it
+- [x] `backend/.env.example`: documented `DATADESK_ENABLED=False`
+- [x] `datadesk/tests/test_mount.py`: flag off → 404, flag on → 200, `reverse("datadesk:dashboard")`
+      is `/datadesk/`; the URLconf is reloaded with `clear_url_caches()` + `importlib.reload`
+      because it is imported once per process
+- [x] Verified: `manage.py check` clean, `spectacular` schema has 0 `datadesk` mentions,
+      1011 backend tests pass (1008 existing + 3 new)
+
+### DataDesk — schema review + step plan (2026-11-18)
+
+- [x] Verified `Stamp` carries no series-level columns: model, `StampRequestSerializer`,
+      `StampForm` and `ai_api` all agree (11 stamp fields, no country/artist/printer)
+- [x] Closed the decision: **no schema change** (option A). Country, artist and printer are
+      series attributes shared by every stamp of the series, and no exception exists in the data
+- [x] Inheritance redefined: display-only for the 8 series fields (metadata strip), editable
+      grey/`⟲` only for the 5 fields a stamp stores (`name`, `description`, `total_printed`,
+      `market_value_mnh`, `market_value_used`)
+- [x] Corrected design §3.2 and §5, and the mockup: `1 override` removed from the `mode=new`
+      footer, overrides moved to fields that can actually differ (total printed, used)
+- [x] Implementation plan written step by step (D0 + S1–S22, dependency map, per-step
+      acceptance criteria) at `memory-bank/datadesk-implementation-plan.md` (moved into the repo
+      on 2026-11-18 so a devcontainer rebuild can't lose it)
+- [x] S3 auth review: `FileBasedCache` for throttling (shared by the 4 gunicorn workers, no
+      table), `DATADESK_TLS` toggles cookie/header flags only so local (no nginx) and deployed
+      (nginx + TLS) run the same code, global `LOGIN_URL` untouched, IP allowlist deferred to
+      the README after implementation
+- [x] S7+S8 review: real volume is **2.540 issues / 9.555 stamps**, heavily skewed (series of 1
+      to more than 10); one query for the grid via `select_related` + `Count`, attention filters
+      and the dashboard report share one function, flat endpoint params with Tabulator's
+      `last_page`/`last_row` shape, decimals sent as strings, no speculative indexes (seq scan is
+      milliseconds at this size)
+- [x] S12 write-core review: two endpoints with one transaction each — `/datadesk/issues/create`
+      (issue + nested stamps, all-or-nothing, no temp ids) and `/datadesk/apply` (existing rows,
+      savepoint per row); plain Django views returning JSON, not a REST API and nothing under
+      `/api/v1/`; `delete` excluded from `/apply` (409) and kept behind S17's dependency preview
+- [x] S19 merge review: `keep_name_from: "a"|"b"` selector (move refs → delete the loser to free its
+      `unique` name → rename the survivor); `.update()` doesn't fire `auto_now`, so merges set
+      `updated_at` explicitly or S12's conflict check goes blind; colors resolved through the M2M
+      table with `ignore_conflicts` instead of `.set()`/`.add()`; rename collision → 409 offering
+      merge; 8 lookups in scope, not 9 (`ConditionType` stays in admin)
+- [x] S21 revert review: commit-level revert (all or nothing), model order lookups → Issue → Stamp,
+      deletes recreated with their original ids, merge commits marked non-revertible, `reverted_at`
+      + `reverts_commit_id` added to `DataDeskChange`; the UI states that reverted deletes do **not**
+      restore `CollectionItem` rows removed by the cascade
+- [x] S14 buffer review: state per object (not per cell) with `patch`/`base`/`expected_updated_at`,
+      diff against base so no-op edits vanish, undo as an operation log, colours carry names for the
+      review panel, `localStorage` recovery **only in `mode=edit`** (no drafts for a new series:
+      finish it now or start again), deletes excluded from the buffer and therefore from undo
+- [x] **Renamed Curator → DataDesk** (2026-11-18): "Curator" described conservation, not the job;
+      the app edits the DB directly instead of going through `/api/v1/`. Migrated the two docs,
+      `index.md`, `activeContext.md`, `progress.md` and the mockup filename; nothing implemented
+      yet, so no code to rename
+
+### DataDesk App — DB Maintenance Design (2026-11-17)
+
+- [x] Surveyed schema: Issue→Stamp cascade, 9 unique-name lookup tables, no `updated_at` timestamps
+- [x] Evaluated stack options (internal Django+HTMX vs SPA vs Flet desktop vs TUI vs Django Admin)
+- [x] Wrote design doc `memory-bank/datadesk-app-plan.md`: workbench, issue workspace, lookup merge,
+      audit/undo, change-set commits, 5 phases
+- [x] Decisions closed: single user, **external server** → own login page + staff gate + throttling +
+      TLS/allowlist (revised from "no login screen"); images out of scope; EN+ES via Django i18n;
+      CSV import/export out of scope (DB is current)
+- [x] Merged the editor and new-issue specs into one "Issue workspace" with a `mode=new | edit`
+      differences table (create and edit share template, inheritance, fast row, footer)
+- [x] HTML mockup `memory-bank/mockups/datadesk_issue_workspace.html` with a working new/edit switch
+      (image generation blocked: invalid provider credential)
+- [x] Documented optional TOTP 2FA design in plan §8 (django-otp, CLI enrolment, two-step login,
+      `is_verified()` in middleware, recovery codes) — not built
 
 ### Stamp Edit Feature & Material 3 UI Improvements (2025-06-15)
+
 - [x] Added `update_stamp()` to IssueService (PUT /stamps/{id}/)
-- [x] Modified StampForm for edit mode: `stamp_data` param, pre-populates all fields + colors, `_on_save` dispatches to create/update
-- [x] Changed callback chain: StampCard passes `stamp_dict` → wrapped with `issue_id` in IssueDetailCard → StampsManagerPage opens StampForm
+- [x] StampForm edit mode: `stamp_data` param, pre-populates all fields + colors, `_on_save`
+      dispatches to create/update
+- [x] Callback chain: StampCard passes `stamp_dict` → wrapped with `issue_id` in IssueDetailCard →
+      StampsManagerPage opens StampForm
 - [x] Implemented `_handle_edit_stamp` in StampsManagerPage
 - [x] Added 4 locale keys: `edit_title`, `update_stamp`, `update_success`, `update_failed`
-- [x] Refined `issue_header_section.py` and `issue_specs_grid.py`: used clean `UNDERLINE` borders (`border_color=GREY_400`), preserved `prefix="€ "` for valuation fields, and constrained title/badge widths to prevent header layout shifts
+- [x] Refined `issue_header_section.py` and `issue_specs_grid.py`: clean `UNDERLINE` borders
+      (`border_color=GREY_400`), `prefix="€ "` for valuation fields, constrained title/badge widths
 - [x] 653 tests total passing
 
-### Frontend Docstring Updates (2025-05-11)
-- [x] Analyzed colors.py for readability improvements
-- [x] Added type hints to colors.py
-- [x] Added type hints to all 20 color constants
-- [x] Added docstrings to undocumented colors (RED, DARK_BLUE_GREY, etc.)
-- [x] Added `__all__` export list to colors.py
-- [x] Analyzed all frontend files for docstring needs
-- [x] Added docstrings to 11 files across all priority levels
-- [x] Fixed incorrect docstring in alert_button.py (PrimaryButton → AlertButton)
+### Inline Multi-Select Color Picker
 
-### File Analysis
-- [x] Analyzed main.py for unit testing options
-- [x] Created test plan for main.py
-- [x] Reviewed backend test patterns as reference
-- [x] Reviewed frontend_nicegui test structure as reference
-
-### Memory Bank Setup (2025-05-11)
-- [x] Created memory-bank/index.md (entry point)
-- [x] Created memory-bank/activeContext.md (current work)
-- [x] Created memory-bank/progress.md (completed tasks)
-
-## Pending Tasks
-
-### Testing
-- [x] Implement Step 1: pure function tests for core/utils.py (29 tests, all passing)
-- [x] Create frontend/tests/ directory with __init__.py, conftest.py
-- [x] Create frontend/pytest.ini with isolated config
-- [x] Implement Step 2: service layer tests (41 tests, all passing)
-  - test_base_service.py: 14 tests (HTTP methods, error handling, constants)
-  - test_auth_service.py: 9 tests (login, signup, API key headers)
-  - test_issue_service.py: 18 tests (get_issues filters, delete, stamps, years)
-- [x] Implement Step 3: translations + formatters tests (88 tests, all passing)
-  - test_translations.py: 33 tests (nested value, translate, _(), set/get_language, JSON load)
-  - test_column_def.py: 55 tests (fmt_currency, fmt_number, fmt_date, ColumnDef, COLUMNS)
-- [x] Implement Step 4: colors + BaseUI tests (61 tests, all passing)
-  - test_colors.py: 43 tests (lighten_color edge cases, hex validation, 30 color constants)
-  - test_base_ui.py: 20 tests (_set_background, _save_user, _delete_user)
-- [x] Implement Step 5: component tests (84 tests, all passing)
-  - test_app_header.py: 13 tests (three-area layout, add/clear, default state)
-  - test_year_range_selector.py: 14 tests (coordinate conversion, set_range, properties, track width)
-  - test_table_pagination.py: 18 tests (_format_range en/es, _total_pages, nav buttons, update_state)
-  - test_table_header.py: 10 tests (column count, sortable detection, toggle sort, indicators)
-  - test_issue_row.py: 10 tests (cell count, zebra striping, name color, expand, set_stamps, loading)
-  - test_issue_table_app.py: 19 tests (_parse_filter, state, filter/sort/page callbacks, _rebuild_rows)
-- [x] Implement log_setup tests (17 tests, all passing)
-  - test_log_setup.py: 17 tests (dictConfig, directory creation, path resolution, handlers, formatters, loggers)
-- [x] Implement Tier 3 button tests (30 tests, all passing)
-  - test_buttons.py: AlertButton (5), DefaultButton (5), PrimaryButton (5),
-    TextButton (5), LinkButton (5), IconButton (5)
-- [x] Implement Tier 4 form component tests (34 tests, all passing)
-  - test_text_field.py: FieldStyle (7), DEFAULT preset (3), APP_HEADER preset (9),
-    TextField (15)
-- [x] Implement Tier 5 layout component tests (14 tests, all passing)
-  - test_layout.py: HorizontalLine (7), VerticalLine (7)
-- [ ] Implement Tier 6: auth components — deferred (ft.Container._values issue, needs integration test)
-- [x] Implement Tier 7: table detail card — 35 tests (IssueDetailCard)
-- [x] Implement Tier 8: page templates — 16 tests (StandardPage 10, NotFoundPage 6)
-- [x] Implement Tier 9: full pages — 15 tests (StampsManagerPage static methods + stubs)
-  - login_page, signup_page, collections_page deferred (ft.View _values descriptor issue)
-- [x] Implement Tier 10: main.py — 24 tests (ROUTE_HANDLERS, configure_page, route_change, view_pop)
-
-### Stamp Deletion (2025-05-22)
-- [x] Added `delete_stamp()` to IssueService
-- [x] Confirmation dialog in StampCard + callback wrapping in IssueDetailCard
-- [x] 5 locale keys: `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
-- [x] Callback wiring through IssueRow → IssueTableApp → StampsManagerPage (API call commented out)
-- [x] All 488 tests passing
-
-### Database Backup/Restore Commands (2025-05-22)
-- [x] Created `stamps_db_backup.py` — interactive/non-interactive backup with `--mode` (system/stamps/full)
-- [x] Created `stamps_db_restore.py` — interactive restore with confirmation prompt
-- [x] Added `backend/backups/` to `.gitignore`
-- [x] 1008 backend tests + 491 frontend tests passing
-
-### Issue Deletion (2025-05-22)
-- [x] Confirmation dialog in `IssueDetailCard._handle_delete_issue` showing issue name + cascade warning
-- [x] Locale keys provided by user (not managed by automation)
-- [x] Live API call in `StampsManagerPage._handle_delete_issue` with success/error notifications and table reload
-- [x] 3 new tests for issue delete dialog (dialog shown, confirm fires callback, cancel does not fire)
-- [x] All 491 tests passing
-
-### DatePicker Styling & Future Dates (2025-05-24)
-- [x] Added `year_shape` to DatePickerTheme via post-construction assignment (skipped by __init__)
-- [x] Added `shape` to DatePickerTheme for dialog corner radius (8px)
-- [x] Changed DatePickerField default `last_date` from `today` to `today + 365 days`
-- [x] 2 new tests (year_shape, shape); 560 total passing
-
-### Client Timezone Detection (2025-05-26)
-- [x] `index.html` JS detects `Intl.DateTimeFormat().resolvedOptions().timeZone` and passes as `?tz=` query param
-- [x] `core/utils.py`: `init_client_timezone(page)` + `get_local_today()` — reads query param, returns today in client timezone
-- [x] `settings.py`: added `DEFAULT_TIMEZONE` env var
-- [x] `main.py`: calls `init_client_timezone(page)` on startup
-- [x] Replaced `datetime.date.today()` and `datetime.datetime.now()` with `get_local_today()` in `date_picker.py` and `issue_form.py`
-- [x] 3 new tests for `init_client_timezone`, 3 for `get_local_today`, updated 2 existing tests
-- [x] All 566 tests passing
-
-### Add Issue Form (2025-05-24)
-- [x] Added URL definitions for `countries`, `artists`, `paper_types`, `printers`
-- [x] Added 7 service methods: `create_issue`, `get_countries`, `get_artists`, `get_stamp_types`, `get_paper_types`, `get_print_types`, `get_printers`
-- [x] Created `IssueForm` dialog component with specs grid (3 cols), date picker + "Today" button, reference data dropdowns, multiline description/notes, Create/Cancel buttons
-- [x] Wired `_handle_add_issue` in StampsManagerPage → opens IssueForm → reloads table on success
-- [x] 28 service tests + 16 IssueForm tests = 44 new tests
-- [x] All 535 frontend tests passing
-- [x] Noted Flet 0.84.0 quirks: `ft.Dropdown` sets `on_change` after construction; `ft.TextButton` uses `content` not `text`
-
-### Code Improvements
-- [ ] Fix LSP type errors in frontend code (pre-existing)
-- [ ] Add type hints to remaining untyped functions
+- [x] Replaced the nested color-picker modal in `StampForm` with an inline Material 3 searchable
+      `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`,
+      `menu_height=200`) plus removable `ft.Chip` controls
+- [x] Updated `stamp_form.py` and `test_stamp_form.py`; 651 frontend tests passing
 
 ### IssueForm Visual Alignment with IssueDetailCard (2025-06-12)
-- [x] Added `hide_action_icons: bool = False` param to IssueHeaderSection — guards icon visibility in enter/exit_edit_mode
-- [x] Rebuilt IssueForm to use IssueHeaderSection + IssueSpecsGrid in permanent edit mode (reuses same components as edit flow)
-- [x] Kept Cancel/Create buttons at bottom of dialog
-- [x] Removed all hand-rolled form builder methods (`_build_name_section`, `_build_specs_grid`, `_paired_cell`, etc.) — now driven by shared components
-- [x] Rewrote `_on_create` to read from IssueHeaderSection properties + IssueSpecsGrid edit_state (same pattern as `_handle_save_edit`)
-- [x] Updated 24 tests (mock shared components, test via mock properties instead of old field attributes)
-- [x] All 624 tests passing
+
+- [x] `hide_action_icons: bool = False` on IssueHeaderSection — guards icon visibility in
+      enter/exit_edit_mode
+- [x] Rebuilt IssueForm on IssueHeaderSection + IssueSpecsGrid in permanent edit mode
+- [x] Cancel/Create kept at the bottom of the dialog
+- [x] Removed hand-rolled builders (`_build_name_section`, `_build_specs_grid`, `_paired_cell`, …)
+- [x] `_on_create` reads from IssueHeaderSection properties + IssueSpecsGrid edit_state
+      (same pattern as `_handle_save_edit`)
+- [x] 24 tests updated; 624 total passing
+
+### IssueDetailCard Read/Edit Toggle (2025-05-30)
+
+- [x] Added `update_issue()` to IssueService (PUT issues/{id}/)
+- [x] Local edit-mode toggle in IssueDetailCard for the `stamp_type` field
+- [x] Edit icon swaps to save/cancel; `stamp_type` cell replaced with `AutoCompleteField`
+- [x] Passes IssueService through IssueRow → IssueTableApp → IssueDetailCard
+- [x] On save: resolves stamp_type (select or create ref), calls PUT, updates local data,
+      fires `on_edit_issue`
+- [x] `_handle_edit_issue` in StampsManagerPage upgraded from stub to `self._table.load(reset_page=True)`
+- [x] 614 tests passing
+
+### DatePicker Timezone Fix (2025-05-30)
+
+- [x] `index.html` JS writes `Intl.DateTimeFormat().resolvedOptions().timeZone` to `localStorage`
+      (`flutter.stamps_app._timezone`, `JSON.stringify()`)
+- [x] `init_client_timezone()` reads it via `SharedPreferences`
+- [x] `get_local_today()` returns today in the client timezone via `zoneinfo.ZoneInfo`
+- [x] `to_local_date()` converts Flutter's UTC-normalised datetime back to client local date
+- [x] `DEFAULT_TIMEZONE` env var in `settings.py`; wired `init_client_timezone()` into `main.py`
+- [x] Replaced `datetime.date.today()` with `get_local_today()` in `date_picker.py` and `issue_form.py`
+- [x] 12 new tests; 597 total passing
+
+### Client-Side JWT Token Validation (2025-05-30)
+
+- [x] `validate_jwt_token()` in `core/utils.py` — decodes without signature verification, checks
+      `exp` against UTC
+- [x] Wired into `main.py` root route (redirect only when the stored JWT is still valid)
+- [x] Added `PyJWT==2.10.1` to `requirements.base.txt`
+- [x] Cleaned up unused imports in `login_view.py`
 
 ### IssueService + IssueForm Refactoring (2025-05-28)
-- [x] Extracted `_fetch_ref` / `_create_ref` helpers in IssueService — 14 boilerplate methods → 1-liners
-- [x] Split `_build_form()` into named methods (`_build_name_section`, `_build_date_row`, `_build_specs_grid`, `_build_notes_section`, `_build_actions`, `_assemble_card`)
+
+- [x] Extracted `_fetch_ref` / `_create_ref` helpers — 14 boilerplate methods → 1-liners
+- [x] Split `_build_form()` into `_build_name_section`, `_build_date_row`, `_build_specs_grid`,
+      `_build_notes_section`, `_build_actions`, `_assemble_card`
 - [x] Renamed `_mnh_field` → `_mint_field`, `_date_picker_icon` → `_date_picker`
 - [x] Removed dead `_on_field_change` handler and `_field_cell` static method
 - [x] Replaced `_make_dropdown` setattr pattern with `_build_dropdown` + explicit assignment
 - [x] Moved DatePicker overlay append from `_build_form()` to `show()`
-- [x] Added `super().__init__()` call in IssueForm
-- [x] Documented `_on_success` as sync-only
-- [x] Fixed stale docstrings in both files
-- [x] All 585 tests passing
+- [x] Added `super().__init__()`; documented `_on_success` as sync-only; fixed stale docstrings
+- [x] 585 tests passing
 
-### Stamp Deletion (2025-05-22)
-- [x] Step 1: Added `delete_stamp()` method to `IssueService` (issue_service.py)
-- [x] Step 2: Confirmation dialog in `StampCard._handle_delete` + callback wrapping in `IssueDetailCard`
-- [x] Step 3: Added 5 locale keys (en/es): `ui.delete`, `stamps.delete_confirm`, `stamps.delete_confirm_message`, `stamps.delete_success`, `stamps.delete_error`
-- [x] Step 4: Wired `on_delete_stamp(stamp_id, issue_id)` callback through → `StampsManagerPage` with live API call, success/error notifications, and stamps refresh
-- [x] All 488 tests passing
+### Client Timezone Detection (2025-05-26)
 
-### DatePicker Timezone Fix — Complete (2025-05-30)
-- [x] JS timezone detection in `index.html` — writes `Intl.DateTimeFormat().resolvedOptions().timeZone` to `localStorage` under `flutter.stamps_app._timezone` with `JSON.stringify()`
-- [x] `init_client_timezone()` in `utils.py` — reads the stored timezone via `SharedPreferences.get(TIMEZONE)`
-- [x] `get_local_today()` in `utils.py` — returns today in the client timezone using `zoneinfo.ZoneInfo`
-- [x] `to_local_date()` in `utils.py` — converts Flutter's UTC-normalised datetime back to client local date
-- [x] `DEFAULT_TIMEZONE` env var in `settings.py`
-- [x] Wired `init_client_timezone()` into `main.py` startup
-- [x] Replaced `datetime.date.today()` with `get_local_today()` in `date_picker.py` and `issue_form.py`
-- [x] 12 new tests for all three timezone functions — 597 total passing
+- [x] Timezone query param `?tz=` from `index.html`; `init_client_timezone(page)` + `get_local_today()`
+- [x] `DEFAULT_TIMEZONE` env var; called on startup in `main.py`
+- [x] Replaced naive `datetime` calls in `date_picker.py` and `issue_form.py`
+- [x] 6 new tests; 566 total passing
 
-### Client-Side JWT Token Validation (2025-05-30)
-- [x] Added `validate_jwt_token()` to `core/utils.py` — decodes JWT without signature verification, checks `exp` claim against UTC
-- [x] Wired validation into `main.py` root route (redirect only when stored JWT is still valid, not just present)
-- [x] Added `PyJWT==2.10.1` to `requirements.base.txt`
-- [x] Added 7 locale keys (en/es) for issue creation feedback
-- [x] Cleaned up unused imports in `login_view.py`
-- [x] Note: validation runs on first page load only; follow-ups for API-level checks TBD
+### Add Issue Form (2025-05-24)
+
+- [x] Added URL definitions for `countries`, `artists`, `paper_types`, `printers`
+- [x] 7 service methods: `create_issue`, `get_countries`, `get_artists`, `get_stamp_types`,
+      `get_paper_types`, `get_print_types`, `get_printers`
+- [x] `IssueForm` dialog with specs grid (3 cols), date picker + "Today", reference dropdowns,
+      multiline description/notes, Create/Cancel
+- [x] Wired `_handle_add_issue` → opens IssueForm → reloads table on success
+- [x] 44 new tests; 535 total passing
+- [x] Flet 0.84.0 quirks noted: `ft.Dropdown` sets `on_change` after construction;
+      `ft.TextButton` uses `content` not `text`
+
+### DatePicker Styling & Future Dates (2025-05-24)
+
+- [x] `year_shape` added to DatePickerTheme via post-construction assignment (skipped by `__init__`)
+- [x] `shape` added for dialog corner radius (8px)
+- [x] `DatePickerField.last_date` default changed from `today` to `today + 365 days`
+- [x] 2 new tests; 560 total passing
 
 ### Add Issues to Database (backend) — Complete
-- [x] Backend endpoint to persist issues from frontend IssueForm
-- [x] Wire up working tree changes on branch `212-feature-stamps-manager-add-issues`
-- [x] Fixed duplicate issue creation bug in `issue_form.py` (duplicated `_on_create` logic causing two API calls)
 
-### Add Stamps
-- [x] Create backend endpoint to add stamps to an issue
-- [ ] Build frontend stamp form dialog
-- [ ] Wire up in StampsManagerPage
+- [x] Backend endpoint to persist issues from the frontend IssueForm
+- [x] Wired working-tree changes on branch `212-feature-stamps-manager-add-issues`
+- [x] Fixed duplicate issue creation bug in `issue_form.py` (duplicated `_on_create` → two API calls)
 
-### Documentation
-- [x] Update opencode_rules.md to reflect Flet (not NiceGUI)
-- [x] Document test patterns in memory-bank
+### Add Stamps — Complete
 
-## Notes
-- Frontend framework: Flet (not NiceGUI)
-- Testing: pytest with pytest-asyncio
-- All docstring updates completed for Priority 1-4 files
-- IssueTable fully implemented with IssueDetailCard expansion
+- [x] Backend endpoint to add stamps to an issue
+- [x] `StampForm` dialog (`components/form/dialogs/stamp_form.py`) — create + edit modes
+- [x] Wired: `IssueStampGrid` add card → `IssueDetailCard._handle_add_stamp` →
+      `StampsManagerPage._handle_add_stamp` → `StampForm(issue_id=…)`, refresh on success
 
-### YearRangeSelector Implementation (2025-05-12)
-- [x] Created YearRangeSelector with Canvas-drawn two-thumb slider
-- [x] Added configurable track_height, thumb_radius, step, padding params
-- [x] Added hover aura, drag focus (thumb enlarges), tap-to-move support
-- [x] Added async callback support in _notify_change (sync/async transparent)
-- [x] Added set_range() public method for post-construction API initialization
-- [x] Added sel_min_year / sel_max_year properties for external range reads
-- [x] Added get_years() method to IssueService (GET /years/)
-- [x] Integrated into StampsManagerPage header with round-to-nearest-5 init
-- [x] Added debounced year range filter (300ms) → updates table via set_year_filter()
-- [x] Added SLIDER_INACTIVE color constant to colors.py
-- [x] Locale-aware number formatting in TablePagination range text
-- [x] Renamed StampIssueService → IssueService
-- [x] Docstring audit across all modified files
+### Stamp Deletion (2025-05-22)
+
+- [x] `delete_stamp()` in IssueService
+- [x] Confirmation dialog in `StampCard._handle_delete` + callback wrapping in IssueDetailCard
+- [x] Wired `on_delete_stamp(stamp_id, issue_id)` through → StampsManagerPage with live API call,
+      notifications and stamps refresh
+- [x] Delete locale keys supplied by the user (not managed by automation)
+- [x] All 488 tests passing
+
+### Issue Deletion (2025-05-22)
+
+- [x] Confirmation dialog in `IssueDetailCard._handle_delete_issue` (issue name + cascade warning)
+- [x] Live API call in `StampsManagerPage._handle_delete_issue` with notifications and table reload
+- [x] 3 new tests (dialog shown, confirm fires callback, cancel does not)
+- [x] 491 tests passing
+
+### Database Backup/Restore Commands (2025-05-22)
+
+- [x] `stamps_db_backup.py` — interactive/non-interactive with `--mode` (system/stamps/full)
+- [x] `stamps_db_restore.py` — interactive restore with confirmation prompt
+- [x] `backend/backups/` added to `.gitignore`
+- [x] 1008 backend + 491 frontend tests passing
+
+### Frontend Unit Testing (2025-05-22)
+
+- [x] `frontend/tests/` with `__init__.py`, `conftest.py`; isolated `frontend/pytest.ini`
+- [x] Pure functions — `core/utils.py` (29 tests)
+- [x] Service layer (41): `test_base_service.py` 14, `test_auth_service.py` 9,
+      `test_issue_service.py` 18
+- [x] Translations + formatters (88): `test_translations.py` 33, `test_column_def.py` 55
+- [x] Colors + BaseUI (61): `test_colors.py` 43, `test_base_ui.py` 20
+- [x] log_setup (17)
+- [x] Buttons (30): Alert, Default, Primary, Text, Link, Icon — 5 each
+- [x] Form components (34): `FieldStyle` 7, `DEFAULT` 3, `APP_HEADER` 9, `TextField` 15
+- [x] Layout (14): HorizontalLine 7, VerticalLine 7
+- [x] Components (84): app_header 13, year_range_selector 14, table_pagination 18,
+      table_header 10, issue_row 10, issue_table_app 19
+- [x] Table detail card (35), page templates (16), StampsManagerPage statics + stubs (15),
+      `main.py` (24)
+- [x] Total: 618 tests passing
+
+### IssueDetailCard Read/Edit + Add-Stamp Button (2025-05-21)
+
+- [x] `on_add_stamp` callback through IssueDetailCard → IssueRow → IssueTableApp
+- [x] Add-stamp card as last grid item: centered 48px `IconButton`, hover GREY_700→GREEN_700,
+      tooltip from locale
+- [x] Fixed `ft.Card.on_click` → `ft.Container.on_click` (Card lacks `on_click` in Flet 0.84.0)
+- [x] Locale key `stamps.add` → `stamps.add_tooltip`
+- [x] Add-issue `IconButton` in `AppHeader.right_area`; async `_handle_add_issue` stub
+- [x] Docstrings on handlers, callbacks and `show_stamp_detail_dialog()`
+- [x] 398 tests passing
 
 ### IssueDetailCard Implementation (2025-05-14)
-- [x] Created IssueDetailCard component (issue_detail_card.py) with 4 modules:
-  - Module A: Identity & Header (series name 32px bold + emission date)
-  - Module B: Technical Specification Matrix (ResponsiveRow 4→2 cols, GREY_50 bg)
-  - Module C: Description & Notes (between specs and valuation)
-  - Module D: Financial Valuation Summary (mint GREEN_700, used BLUE_700, total printed)
-  - Module E: Stamp Inventory DataTable (name, edifil, fesofi, face_value, color, total_printed, market_value_mnh, market_value_used, image)
-- [x] Added async stamp fetch in IssueTableApp._on_expand → _fetch_stamps_for_row
-- [x] Added set_stamps() method on IssueRow to update details after async fetch
-- [x] Added loading/empty states in stamp table section
-- [x] Added 7 new translation keys: year, mint, used, market_value_mnh, technical_specifications, valuation, image
-- [x] Fixed _kv_cell to properly set container.col property (not as kwargs)
 
-### Add-Stamp Button (2025-05-21)
-- [x] Added `on_add_stamp` callback param to IssueDetailCard, IssueRow, IssueTableApp
-- [x] Added `_handle_add_stamp` handler in IssueDetailCard (fires callback with issue_id)
-- [x] Added stub `_handle_add_stamp` in StampsManagerPage (logs only)
-- [x] Add-stamp card renders as last grid item: centered IconButton (48px ADD icon) in fixed-height Column, hover GREY_700→GREEN_700, tooltip from locale key
-- [x] Fixed ft.Card.on_click → ft.Container.on_click (Card lacks on_click in Flet 0.84.0)
-- [x] Renamed locale key stamps.add → stamps.add_tooltip
-- [x] All 398 tests passing after implementation
+- [x] Component with 4 modules: header (32px bold + emission date), technical spec matrix
+      (ResponsiveRow 4→2, GREY_50), description & notes, valuation summary
+      (mint GREEN_700, used BLUE_700, total printed) + stamp inventory DataTable
+- [x] Async stamp fetch in `IssueTableApp._on_expand` → `_fetch_stamps_for_row`
+- [x] `set_stamps()` on IssueRow; loading/empty states
+- [x] 7 translation keys: `year`, `mint`, `used`, `market_value_mnh`,
+      `technical_specifications`, `valuation`, `image`
+- [x] `_kv_cell` sets `container.col` as attribute, not kwarg
 
-### Add-Issue Button (2025-05-21)
-- [x] Added IconButton with ADD icon in AppHeader right_area
-- [x] Added async stub handler _handle_add_issue in StampsManagerPage
+### YearRangeSelector (2025-05-12)
 
-### Docstring Batch 2 (2025-05-21)
-- [x] Added docstrings to _handle_add_stamp in IssueDetailCard
-- [x] Added full docstring to show_stamp_detail_dialog()
-- [x] Documented all callback params in IssueRow.__init__ and IssueTableApp.__init__
-- [x] Added docstrings to 6 handler stubs in StampsManagerPage
-- [x] Updated class/init docstrings for add-issue button reference
+- [x] Canvas-drawn two-thumb slider; configurable `track_height`, `thumb_radius`, `step`,
+      `padding`; hover aura, drag focus, tap-to-move
+- [x] Async callback support in `_notify_change`; `set_range()`; `sel_min_year` / `sel_max_year`
+- [x] `get_years()` on IssueService (GET /years/)
+- [x] Integrated into StampsManagerPage header (round to nearest 5), 300ms debounced filter
+- [x] `SLIDER_INACTIVE` color constant; locale-aware pagination range text
 
-### IssueDetailCard Read/Edit Toggle (2025-05-30)
-- [x] Added `update_issue()` to IssueService (PUT issues/{id}/)
-- [x] Local edit mode toggle in IssueDetailCard for stamp_type field only
-- [x] Edit icon swaps to save/cancel icons, stamp_type cell replaced with AutoCompleteField
-- [x] Passes IssueService through IssueRow → IssueTableApp → IssueDetailCard
-- [x] On save: resolves stamp_type (select or create ref), calls PUT, updates local data, fires `on_edit_issue` callback
-- [x] Upgraded `_handle_edit_issue` in StampsManagerPage from stub to `self._table.load(reset_page=True)`
-- [x] All 614 tests passing
+### Memory Bank & Documentation (2025-05-11)
+
+- [x] Created `memory-bank/index.md`, `activeContext.md`, `progress.md`, `productContext.md`,
+      `techContext.md`, `opencode_rules.md` (Flet, not NiceGUI)
+- [x] Docstrings added to 11 frontend files and all 20 color constants in `colors.py`
+      (type hints + `__all__`); fixed wrong `PrimaryButton` docstring in `alert_button.py`
+- [x] Analyzed `main.py` for unit testing; reviewed backend and legacy frontend test structure
+- [x] Documented test patterns in `frontend-testing-patterns.md`
 
 ---
 
-# IssueTable Implementation Plan (Flet 0.84.0 Compatible)
+## Notes
 
-## 1. Component Hierarchy
-
-| Class | Base | Responsibility |
-|-------|------|-----------------|
-| `IssueTableApp` | `ft.Container` | Main container, state management, data fetching |
-| `TableHeader` | `ft.Container` | Column titles, sort indicators |
-| `IssueRow` | `ft.Container` | Single row with expansion (IssueDetailCard) |
-| `TablePagination` | `ft.Container` | Footer with dropdown, navigation |
-
-## 2. Data via API (no local models)
-
-All data comes from the backend API. The service layer handles response parsing.
-
-**Expected API response format:**
-```json
-{
-  "data": {
-    "issues": [
-      {
-        "id": 1,
-        "country": "France",
-        "year": "2023",
-        "date": "2023-06-15",
-        "name": "Marianne Series",
-        "perforation": "Zebra",
-        "stamp_type": "Definitive",
-        "print_type": "Lithography",
-        "total_printed": 500000,
-        "market_value_mnh": "1.20",
-        "market_value_used": "0.80"
-      }
-    ],
-    "pagination": {
-      "sort_by": "name",
-      "order": "asc",
-      "page": 1,
-      "page_size": 15,
-      "total": 65,
-      "has_more": true
-    }
-  }
-}
-```
-
-**Backend query params:** `sortBy`, `order`, `page`, `pageSize`, `name` (issue name filter)
-
-**Service methods:**
-- `get_issues(page, page_size, sort_by, order, name) -> requests.Response | None`
-- `delete_issue(id) -> requests.Response | None`
-- `get_issue_stamps(id) -> requests.Response | None`
-- `get_years() -> requests.Response | None`
-
-All return raw response objects — caller handles parsing and status checks (same pattern as AuthService).
-
-## 3. State Management
-
-```python
-class IssueTableApp(ft.Container):
-    def __init__(self, ...):
-        self._data: list[dict] = []
-        self._total: int = 0
-        self._current_page: int = 1
-        self._rows_per_page: int = 15
-        self._sort_key: str = "date"
-        self._sort_order: str = "asc"
-        self._lang: str = "en"
-```
-
-## 4. Visual Design
-
-- **Header BG**: `HEADER_BG` (#232F3E, dark navy)
-- **Zebra striping**: Even rows `BG_LIGHT` (#f5f5f5), odd rows white
-- **Hover**: `ROW_HOVER` (#E8E8E8) highlight
-- **Row divider**: `ROW_BORDER` (#EEEEEE)
-- **Font**: 12px data (Roboto), 12px headers (Roboto-Bold, white, uppercase)
-- **Value column**: `text_align=ft.TextAlign.RIGHT`
-- **Number formatting**: Locale-aware (en: 1,234.56 / es: 1.234,56)
-- **No text wrap**: `no_wrap=True`, `overflow=ELLIPSIS` on data cells
-
-## 5. UI Components
-
-### ColumnDef (`column_def.py`)
-- `ColumnDef` dataclass — `translation_key`, `api_key`, `width`, `text_align`, `sortable`, `fmt`
-- `COLUMNS` list — single source of truth (8 columns currently)
-- Locale-aware formatters: `fmt_currency()`, `fmt_number()`
-
-### TableHeader
-- Dark background container (`HEADER_BG`)
-- Builds cells by iterating `COLUMNS`
-- Any `sortable=True` column gets sort arrow + click handler
-- Sort icon rebuilt from scratch on each sort change
-
-### IssueRow
-- `ft.Container` with nested controls
-- Builds cells by iterating `COLUMNS` with formatters
-- Chevron toggle expands details panel with IssueDetailCard
-- Hover highlight via `_on_hover`
-- `set_stamps()` method updates card with async stamp data
-
-### TablePagination
-- Bottom-right aligned
-- Dropdown: [10, 15, 20, 50, 100, All] options
-- Text: "1-15 of 65"
-- Four IconButtons: first, prev, next, last
-- `update_state(page, page_size, total)` method for external sync
-
-## 6. Functionality
-
-| Feature | Implementation |
-|---------|-----------------|
-| Sorting | Click sortable column header → toggle `_sort_key` + `_sort_order` → call API → rebuild rows |
-| Pagination | Server-side via `page`/`pageSize` params → update state → rebuild rows |
-| Row expansion | Chevron toggles IssueDetailCard with specs, description, valuation, stamp table (async) |
-
-## 7. Details Expansion - Stamps Data
-
-**TODO**: Need to check the backend Stamp model to determine which fields to display in the expanded details section.
-
-## 8. File Structure
-
-```
-frontend/
-├── components/
-│   ├── form/
-│   │   ├── text_field.py          # FieldStyle, TextField class
-│   │   └── year_range_selector.py # YearRangeSelector class
-│   └── table/
-│       ├── column_def.py         # ColumnDef dataclass, COLUMNS list, formatters
-│       ├── issue_detail/
-│       │   ├── issue_detail_card.py  # IssueDetailCard class
-│       │   ├── stamp_card.py         # StampCard class
-│       │   └── stamp_detail_dialog.py # show_stamp_detail_dialog function
-│       ├── issue_table_app.py    # IssueTableApp class
-│       ├── issue_row.py          # IssueRow class
-│       ├── table_header.py       # TableHeader class
-│       └── table_pagination.py   # TablePagination class
-└── services/
-    └── issue_service.py          # IssueService class
-```
-
-## 9. Deployment Order
-
-- [x] Step 1: Add `IssueService` in `frontend/services/issue_service.py`
-- [x] Step 2: Build `IssueRow` (most complex, reusable)
-- [x] Step 3: Build `TableHeader` and `TablePagination`
-- [x] Step 4: Build `IssueTableApp` - assemble pieces, add state
-- [x] Step 5: Add events: sort, pagination, expand (delete still TODO)
-- [x] Step 6: Add `__init__.py` exports (skipped — not used elsewhere)
-- [x] Step 7: Integrate into StampsManagerPage content_area
-- [x] Step 8: Refactor to COLUMNS-driven architecture with column_def.py
-- [x] Step 9: Locale-aware number formatting (en/es)
-- [x] Step 10: Inline multi-select color selector with chips in `StampForm` (replacing modal dialog color picker)
-
----
-
-## Logger Coverage Reference
-
-Classes inherit Logger through `BaseUI(Logger)`, `StandardPage(ft.View, BaseUI)`, or `BaseService(Logger)`.
-
-**Files whose classes DO have Logger in MRO:**
-```
-core/logger.py                          # Logger definition
-core/base_ui.py                         # BaseUI(Logger)
-components/templates/standard_page.py   # StandardPage(ft.View, BaseUI)
-components/layout/app_header.py         # AppHeader(ft.Container, Logger)
-components/auth/login_card.py           # LoginCard(ft.Container, BaseUI)
-components/auth/signup_card.py          # SignupCard(ft.Container, BaseUI)
-services/base_service.py                # BaseService(Logger)
-services/auth_service.py                # AuthService(BaseService)
-services/issue_service.py               # IssueService(BaseService)
-pages/auth/login_page.py                # LoginPage(ft.View, BaseUI)
-pages/auth/signup_page.py               # SignupPage(ft.View, BaseUI)
-pages/not_found_page.py                 # NotFoundPage(ft.View, BaseUI)
-pages/admin/stamps_manager_page.py      # StampsManagerPage(StandardPage)
-pages/collection/collections_page.py    # CollectionsPage(StandardPage)
-```
-
-**Files whose classes do NOT have Logger in MRO:**
-```
-components/buttons/alert_button.py
-components/buttons/default_button.py
-components/buttons/icon_button.py
-components/buttons/link_button.py
-components/buttons/primary_button.py
-components/buttons/text_button.py
-components/colors.py
-components/form/text_field.py
-components/form/year_range_selector.py
-components/layout/app_drawer.py
-components/layout/brand.py
-components/layout/horizontal_line.py
-components/layout/vertical_line.py
-components/table/column_def.py
-components/table/issue_detail/issue_detail_card.py
-components/table/issue_detail/stamp_card.py
-components/table/issue_detail/stamp_detail_dialog.py
-components/table/issue_row.py
-components/table/issue_table_app.py
-components/table/table_header.py
-components/table/table_pagination.py
-core/log_setup.py
-core/severity.py
-core/translations.py
-core/urls.py
-core/utils.py
-main.py
-settings.py
-```
+- Frontend framework: **Flet 0.84.0** (not NiceGUI); backend Django 6.0 + DRF
+- Testing: pytest, `pytest-asyncio`, `pytest-mock`; frontend config is isolated in `frontend/pytest.ini`
+- Locale files (`assets/locales/en.json`, `es.json`) are user-managed — never edit them
+- Stamp create/edit lives in `StampForm`; `StampsManagerPage` only wires callbacks
+- Historic design docs: `memory-bank/archive/issue-table-plan.md` (implemented),
+  logger MRO reference moved to `techContext.md`

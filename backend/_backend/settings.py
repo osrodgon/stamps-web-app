@@ -145,6 +145,13 @@ ARTISTS_URL_V1=f"{SERVER_URL_V1}{ARTISTS_ENDPOINT}"
 PRINTERS_URL_V1=f"{SERVER_URL_V1}{PRINTERS_ENDPOINT}"
 PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
 
+# DataDesk: internal DB-maintenance app.
+# It lives outside SERVER_URL_V1 on purpose: it is not part of the public API,
+# it has no DRF exposure and it is only mounted when the flag is on.
+DATADESK_ENABLED = os.getenv("DATADESK_ENABLED", "False").lower() in ("true", "1", "t")
+DATADESK_URL = "datadesk/"
+DATADESK_LOGIN_URL = f"/{DATADESK_URL}login/"
+
 # Application definition
 
 STORAGES = {
@@ -185,7 +192,8 @@ INSTALLED_APPS = [
     "paper_types_api",      # All APIs for the table paper type
     "printers_api",         # All APIs for the table printer
     "ai_api",               # All APIs for the AI service
-    "health_api"            # All APIs for checking the system health
+    "health_api",           # All APIs for checking the system health
+    "datadesk",             # Internal DB-maintenance UI (not part of the public API)
 ]
 
 REST_FRAMEWORK = {

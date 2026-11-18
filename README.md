@@ -39,6 +39,30 @@ A modern, full-stack web application for managing and cataloging stamp collectio
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/stamps-backend/api/v1/swagger/
 
+### Dev container
+
+The dev container joins the `stamps-network` Docker network, so anything started with
+`stamps.sh` is reachable by service name (`db`, `stamps-backend`, `stamps-frontend`),
+never via `localhost`.
+
+It also mounts the **host** Docker socket (the `docker-outside-of-docker` feature), so
+`stamps.sh` runs unchanged from inside the container:
+
+```bash
+./stamps.sh dev start stamps-backend
+./stamps.sh test run
+```
+
+Consequences worth knowing:
+
+- Containers started that way are **siblings** on the host, not children of the dev
+  container. Published ports land on the host, so `localhost:8000` works from your
+  machine's browser but not from inside the dev container.
+- A bind mount declared in a compose file resolves against **host** paths. Keep the
+  workspace at the same absolute path on host and container (the VS Code default).
+- `docker` inside the container is root on the host. Fine on a personal machine, not
+  on a shared one.
+
 ### Production Deployment
 
 ```bash

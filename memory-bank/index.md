@@ -25,6 +25,14 @@ This folder contains essential context for working on the Stamps Web App.
 - Recent completed tasks
 - Pending work items
 
+### 6. datadesk-app-plan.md
+- Agreed design for DataDesk, the internal DB-maintenance app (closed, not implemented)
+
+### 7. datadesk-implementation-plan.md
+- DataDesk build plan: D0 + S1–S22, dependencies, files and acceptance criteria per step
+- **§7 at the end is the implementation log**: which steps are done, with date, files touched and
+  decisions taken while implementing. Read it first when resuming work after a rebuild
+
 ## How to Use
 
 1. At session start → read index.md
