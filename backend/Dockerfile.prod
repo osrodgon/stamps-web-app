@@ -38,4 +38,5 @@ RUN chown -R appuser:appuser /app
 
 # Switch to the non-root user
 USER appuser
+RUN python manage.py datadesk_make_messages
 RUN python manage.py collectstatic --noinput

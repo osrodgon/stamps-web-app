@@ -1,4 +1,4 @@
-{% comment %}
+{% load i18n %}{% comment %}
   Login form. Kept in its own template so a throttled HTMX request can be
   answered with this fragment alone (status 429, Retry-After header).
 {% endcomment %}
@@ -13,12 +13,12 @@
 
     <div class="dd-login-head">
       <span class="dd-brand">DataDesk<span>.</span></span>
-      <span class="dd-hint">Internal database maintenance</span>
+      <span class="dd-hint">{% translate "Internal database maintenance" %}</span>
     </div>
 
     {% if throttled %}
       <p class="dd-alert dd-alert-error">
-        Too many failed attempts. Try again in {{ retry_after }} seconds.
+        {% blocktranslate with seconds=retry_after %}Too many failed attempts. Try again in {{ seconds }} seconds.{% endblocktranslate %}
       </p>
     {% endif %}
 
@@ -27,17 +27,17 @@
     {% endif %}
 
     <label class="dd-field">
-      <span class="dd-label">Username</span>
+      <span class="dd-label">{% translate "Username" %}</span>
       <input type="text" name="username" autocomplete="username" autofocus
              value="{{ form.username.value|default:'' }}" required>
     </label>
 
     <label class="dd-field">
-      <span class="dd-label">Password</span>
+      <span class="dd-label">{% translate "Password" %}</span>
       <input type="password" name="password" autocomplete="current-password" required>
     </label>
 
-    <button type="submit" class="dd-btn dd-btn-dark">Sign in</button>
+    <button type="submit" class="dd-btn dd-btn-dark">{% translate "Sign in" %}</button>
 
     <input type="hidden" name="next" value="{{ next }}">
   </form>

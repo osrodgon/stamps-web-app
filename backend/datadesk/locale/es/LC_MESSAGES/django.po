@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DataDesk\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: datadesk/templates/datadesk/base.html
+msgid "Sign out"
+msgstr "Cerrar sesión"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Dashboard"
+msgstr "Panel"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid ""
+"Internal database maintenance. The workbench, the issue workspace and the "
+"lookup admin arrive in the next steps."
+msgstr ""
+"Mantenimiento interno de la base de datos. El banco de trabajo, el editor de "
+"series y la administración de tablas de referencia llegan en los próximos "
+"pasos."
+
+#: datadesk/templates/datadesk/login.html
+msgid "DataDesk login"
+msgstr "Acceso a DataDesk"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Internal database maintenance"
+msgstr "Mantenimiento interno de la base de datos"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+#, python-format
+msgid "Too many failed attempts. Try again in %(seconds)s seconds."
+msgstr "Demasiados intentos fallidos. Vuelve a intentarlo en %(seconds)s segundos."
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Username"
+msgstr "Usuario"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Password"
+msgstr "Contraseña"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Sign in"
+msgstr "Entrar"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid ""
+"This account is not staff, so DataDesk will not open for it. Sign in with "
+"the maintenance account."
+msgstr ""
+"Esta cuenta no es de personal, así que DataDesk no se abrirá con ella. "
+"Inicia sesión con la cuenta de mantenimiento."

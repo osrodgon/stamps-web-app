@@ -1,15 +1,15 @@
 {% extends "datadesk/base.html" %}
+{% load i18n %}
 
 {% block title %}DataDesk{% endblock %}
 
-{% block breadcrumbs %}<b>Dashboard</b>{% endblock %}
+{% block breadcrumbs %}<b>{% translate "Dashboard" %}</b>{% endblock %}
 
 {% block content %}
   <section class="dd-page">
     <h1 class="dd-label">DataDesk</h1>
     <p class="dd-hint">
-      Internal database maintenance. The workbench, the issue workspace and the
-      lookup admin arrive in the next steps.
+      {% blocktranslate %}Internal database maintenance. The workbench, the issue workspace and the lookup admin arrive in the next steps.{% endblocktranslate %}
     </p>
   </section>
 {% endblock %}
