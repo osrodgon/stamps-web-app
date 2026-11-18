@@ -20,6 +20,10 @@ At the **very start of every session** (before any tool calls or responses), you
   punctuation a branch name cannot hold (`:` `,` `!` `/` quotes). Do not add the
   issue number or the type yourself — the tooling that creates the branch adds
   both (`212-feature-stamps-manager-add-issues`).
+- **Use normal capitalisation in issue titles** — capital first word, and proper
+  nouns as they are written (`DataDesk authentication staff gate and login
+  throttling`, not `datadesk authentication staff gate and login throttling`).
+  GitHub lowercases it for the branch; the issue list keeps the readable form.
 - **Every GitHub operation is in English** — issue titles and descriptions,
   commit messages, PR titles and descriptions, review comments.
 - **GitHub operations are not authorized.** Never create, edit, close or comment

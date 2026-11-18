@@ -1,0 +1,44 @@
+{% load static %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DataDesk{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'datadesk/vendor/tabulator.min.css' %}">
+  <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+{% comment %}
+  hx-headers sends the CSRF token with every HTMX request, so partial views
+  never have to repeat it.
+{% endcomment %}
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div class="dd-app">
+    <header class="dd-topbar">
+      <a class="dd-brand" href="{% url 'datadesk:dashboard' %}">DataDesk<span>.</span></a>
+      <div class="dd-crumbs">{% block breadcrumbs %}{% endblock %}</div>
+      <div class="dd-topbar-right">
+        {% block topbar_actions %}{% endblock %}
+        {# Language switch placeholder: S4 wires the real set_language view. #}
+        <span class="dd-lang"><b>EN</b> | ES</span>
+        {% if user.is_authenticated %}
+          <span class="dd-user">{{ user.get_username }}</span>
+        {% endif %}
+      </div>
+    </header>
+
+    <main class="dd-main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% comment %}
+    Vendor scripts load at the end of the body, before extra_js, so page
+    scripts can use htmx, Alpine and Tabulator straight away.
+  {% endcomment %}
+  <script src="{% static 'datadesk/vendor/htmx.min.js' %}"></script>
+  <script src="{% static 'datadesk/vendor/alpine.min.js' %}"></script>
+  <script src="{% static 'datadesk/vendor/tabulator.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
