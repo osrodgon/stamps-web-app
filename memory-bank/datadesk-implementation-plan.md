@@ -86,7 +86,7 @@ el mockup ya están corregidos con esta decisión.
 | S3 | Login, logout, gate, throttling | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S4 | i18n en/es + compilador `.po` | S1, S2 | M | sí | ✅ 2026-11-18 |
 | S5 | `updated_at` en Issue/Stamp | S1 | XS | no | ✅ 2026-11-18 |
-| S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | — |
+| S6 | `DataDeskChange` + escritor de auditoría | S1 | S | no | ✅ 2026-11-18 |
 | S7 | Registry de lookups + `issue_queryset()` + informes | S1 | M | no | — |
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | — |
 | S9 | Prueba de rendimiento + índices | S8 | S | no | — |
@@ -1151,12 +1151,51 @@ sin rastro del campo · **1062** tests de backend en verde (1053 previos + 8
 nuevos + el test de `--check` de S4). Las BD de pruebas (`s5_scratch`,
 `s5_probe`) se borraron; `backend_db` sigue intacta y vacía.
 
-### ⏭ Siguiente: S6
+### ✅ S6 — `DataDeskChange` y escritor de auditoría (2026-11-18)
 
-Auditoría: `DataDeskChange` en `datadesk/models.py` (`commit_id` UUID, `user` FK
-`SET_NULL`, `model_label`, `object_id`, `operation`, `before`, `after`,
-`created_at`, más `reverted_at` y `reverts_commit_id` que necesita S21) y
-`datadesk/audit.py` con `snapshot()` (solo campos editables, `Decimal`/`date`
-serializados, FKs como ids, `colors` como lista de ids) y `record()`. Admin de
-solo lectura mientras no exista S21.
+Ficheros nuevos:
+
+```
+backend/datadesk/models.py            DataDeskChange (commit_id, user, model_label, object_id,
+                                     operation, before, after, reverted_at, reverts_commit_id)
+backend/datadesk/audit.py             snapshot(), record(), new_commit_id(), model_label()
+backend/datadesk/admin.py             DataDeskChangeAdmin de solo lectura
+backend/datadesk/tests/test_audit.py  14 tests
+```
+
+Generado (no versionado, `migrations/` está en `.gitignore`):
+`datadesk/migrations/0001_initial.py`.
+
+Decisiones tomadas al implementar:
+
+- **Las claves del snapshot son `attname`** (`issue_id`, `year_id`, no `issue`):
+  así `Stamp(**snapshot)` reconstruye la fila tal cual, que es el contrato que
+  necesita S21. Con el nombre del campo, Django exige una instancia, no un id.
+- **`id` se excluye por `primary_key`**: en Django 6 el `AutoField` no llega con
+  `editable=False`, así que filtrar solo por `editable` lo dejaba dentro.
+- **`updated_at` no entra** (lista negra explícita) aunque `auto_now` ya lo marca
+  como no editable: si algún día deja de serlo, el snapshot no cambia.
+- **`Decimal` se guarda como string y `date` como ISO-8601**, y un test comprueba
+  que el dict sobrevive a `json.dumps`/`json.loads` sin cambios. Ojo: ese string
+  solo aparece si la instancia viene de la BD (un `DecimalField` recién creado en
+  memoria sigue siendo `float`); DataDesk siempre lee de la BD.
+- **`record()` valida la operación** contra `DataDeskChange.OPERATIONS` y guarda
+  `user=None` para actores anónimos, para que un `AnonymousUser` no reviente la FK.
+- **El admin es de solo lectura en los tres permisos** (`add`, `change`,
+  `delete`): el trail no se toca a mano ni se borra.
+
+Verificado: `manage.py check` limpio · **1076** tests de backend en verde (1062
+previos + 14 nuevos), ejecutados en la imagen de test (CI). `backend_db` sigue sin
+tocar; las migraciones 0005 de S5 y 0001 de DataDesk se aplicarán cuando se lance
+`migrate`.
+
+### ⏭ Siguiente: S7
+
+Registry de lookups y querysets de lectura: `datadesk/registry.py` con los 8
+lookups (modelo, `verbose_name`, si es numérico y las relaciones que apuntan a
+cada uno, para los contadores y el merge de S19) y `datadesk/service.py` con
+`issue_queryset()` (7 `select_related` + `Count("stamps")` en una sola query),
+`stamp_queryset(issue_id)` con `prefetch_related("colors")` y
+`missing_data_report()` con los 6 contadores que luego usan el dashboard (S20) y
+las colas "needs attention".
 

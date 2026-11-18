@@ -39,6 +39,13 @@
       backup installs 12.763 objects with the column NULL, and a later `save()`
       moves it. 8 tests; 1062 backend tests green.
       Next: S6 (`DataDeskChange` + audit writer)
+- [x] **S6 — `DataDeskChange` + audit writer** (2026-11-18): `datadesk/models.py`
+      with `commit_id`/`user`/`model_label`/`object_id`/`operation`/`before`/`after`
+      plus `reverted_at` and `reverts_commit_id` for S21; `datadesk/audit.py` with
+      `snapshot()` (attname keys so `Model(**snapshot)` rebuilds the row, `Decimal`
+      as string, ISO dates, M2M as sorted ids) and `record()` (validates the
+      operation, stores anonymous actors as NULL); read-only admin. 14 tests;
+      1076 backend tests green. Next: S7 (lookup registry + read querysets)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
