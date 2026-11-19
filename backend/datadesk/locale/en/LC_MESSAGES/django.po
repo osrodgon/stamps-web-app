@@ -249,3 +249,35 @@ msgstr "Back to the issues workbench"
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "as stored · series values describe the whole set, stamp values the stamp"
 msgstr "as stored · series values describe the whole set, stamp values the stamp"
+
+#: datadesk/views/workspace.py
+msgid "No stamp rows yet."
+msgstr "No stamp rows yet."
+
+#: datadesk/views/workspace.py
+msgid "New series"
+msgstr "New series"
+
+#: datadesk/views/workspace.py
+msgid "Use last issue"
+msgstr "Use last issue"
+
+#: datadesk/views/workspace.py
+msgid "Rows"
+msgstr "Rows"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "series values describe the whole set, stamp values the stamp"
+msgstr "series values describe the whole set, stamp values the stamp"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Nothing is saved yet: this screen does not write to the database."
+msgstr "Nothing is saved yet: this screen does not write to the database."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter does not save yet."
+msgstr "Shift+Enter does not save yet."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This year does not exist yet: it will be created when the series is saved."
+msgstr "This year does not exist yet: it will be created when the series is saved."

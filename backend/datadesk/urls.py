@@ -7,13 +7,14 @@ from datadesk.views.images import StampImageView
 from datadesk.views.language import set_datadesk_language
 from datadesk.views.workbench import WorkbenchView
 from datadesk.views.workbench_api import IssueGridJsonView
-from datadesk.views.workspace import IssueWorkspaceView
+from datadesk.views.workspace import IssueCreateView, IssueWorkspaceView
 
 app_name = "datadesk"
 
 urlpatterns = [
     path("", DashboardView.as_view(), name="dashboard"),
     path("issues/", WorkbenchView.as_view(), name="issues"),
+    path("issues/new/", IssueCreateView.as_view(), name="issue_new"),
     path("issues/<int:pk>/", IssueWorkspaceView.as_view(), name="issue_workspace"),
     path("stamps/<int:pk>/image", StampImageView.as_view(), name="stamp_image"),
     path("grid/issues", IssueGridJsonView.as_view(), name="issue_grid"),

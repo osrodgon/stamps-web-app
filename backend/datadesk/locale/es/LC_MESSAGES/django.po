@@ -251,3 +251,35 @@ msgstr "Volver al banco de series"
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "as stored · series values describe the whole set, stamp values the stamp"
 msgstr "tal como está guardado · los valores de la serie describen el conjunto y los del sello, el sello"
+
+#: datadesk/views/workspace.py
+msgid "No stamp rows yet."
+msgstr "Aún no hay filas de sellos."
+
+#: datadesk/views/workspace.py
+msgid "New series"
+msgstr "Nueva serie"
+
+#: datadesk/views/workspace.py
+msgid "Use last issue"
+msgstr "Usar la última serie"
+
+#: datadesk/views/workspace.py
+msgid "Rows"
+msgstr "Filas"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "series values describe the whole set, stamp values the stamp"
+msgstr "los valores de la serie describen el conjunto y los del sello, el sello"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Nothing is saved yet: this screen does not write to the database."
+msgstr "Todavía no se guarda nada: esta pantalla no escribe en la base de datos."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter does not save yet."
+msgstr "Mayús+Intro todavía no guarda."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This year does not exist yet: it will be created when the series is saved."
+msgstr "Este año todavía no existe: se creará al guardar la serie."

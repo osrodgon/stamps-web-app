@@ -79,6 +79,12 @@ backend/
   name on `stamps-network`, never `localhost`; published ports land on the host),
   and bind mounts in compose files resolve against **host** paths.
   `devcontainer-lock.json` pins the feature digest — regenerate it on feature bumps.
+  `stamps.sh`'s socket guard follows `DOCKER_HOST` (falling back to
+  `/var/run/docker.sock`) and only re-execs through `sg docker` when the socket
+  exists but is not writable. A nested engine is **not** installed: it cannot use
+  overlayfs (the container root is already overlay), so it needs `vfs` and fails to
+  pull images. If `docker` misbehaves after a rebuild, check `docker context ls` /
+  `echo $DOCKER_HOST` before touching anything else.
 
 ### Testing Strategy
 - **Backend**: pytest with Django test framework, fixtures for test data

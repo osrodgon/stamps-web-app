@@ -26,7 +26,7 @@ un rebuild del contenedor, lee esa sección antes que nada.
 | Herencia sello → serie | **Solo lectura, sin columnas nuevas** (opción A de §2) | País, artista e impresor son de serie por definición y un sello pertenece a una única serie |
 | Transporte | Vistas Django que devuelven JSON, **no una API REST** | Sin capa DRF de exposición, sin `/api/v1/`, sin versionado. Sesión + CSRF + `is_staff`; los serializers de DRF solo validan |
 | Alcance | Solo `Issue`, `Stamp` y **8 lookups** (`ConditionType` queda en el admin) | Igual que §6 del diseño: existen 9 tablas de lookup, 8 entran en DataDesk |
-| Volumen actual | **2.540 series · 9.555 sellos** (≈3,8 de media, **máximo 24** en una serie) con dispersión amplia: desde 1 sello | El grid del workbench pagina server-side; el de sellos del workspace **no pagina**, porque es siempre una sola serie. No se asume techo: si mañana aparece una serie de 100, debe seguir funcionando sin rediseño |
+| Volumen actual | **2.540 series · 9.558 sellos** (≈3,8 de media, **máximo 57** medido en S9) con dispersión amplia: desde 1 sello | El grid del workbench pagina server-side; el de sellos del workspace **no pagina**, porque es siempre una sola serie. No se asume techo: si mañana aparece una serie de 100, debe seguir funcionando sin rediseño |
 
 ---
 
@@ -95,7 +95,7 @@ el mockup ya están corregidos con esta decisión.
 | S8 | Workbench de solo lectura (JSON + Tabulator) | S2, S3, S7 | L | **sí, primer hito** | ✅ 2026-11-18 |
 | S9 | Prueba de rendimiento + índices | S8 | S | no | ✅ 2026-11-18 |
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | ✅ 2026-11-18 |
-| S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | — |
+| S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | ✅ 2026-11-19 |
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | — |
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | — |
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | — |
@@ -445,18 +445,61 @@ ningún límite duro escondido en la plantilla ni en el queryset.
 
 **Depende de**: S10.
 
-- `GET /datadesk/issues/new` → **misma plantilla**, `mode="new"`, sellos vacíos.
-- Prefill de metadatos desde la última serie (`Issue.objects.order_by("-id").first()`),
-  con botón `↺ Use last issue` que reaplica.
-- Control `rows=N` que genera filas **en cliente** (nada se guarda todavía),
-  con el nombre de la serie como valor por defecto y `face_value` marcado como
-  requerido.
-- `Shift+Enter` deshabilitado con tooltip "todavía no guarda".
+- `GET /datadesk/issues/new/` → **misma plantilla**, `mode="new"`, sellos vacíos.
+  La ruta va antes de `issues/<int:pk>/` y usa convertidor `int:` en el detalle,
+  así que `new` nunca compite con un id ni un id inválido abre una serie.
+- La franja de metadatos se convierte en **formulario editable** con los 15 campos
+  de `Issue`; en `edit` la franja sigue siendo de solo lectura. El formulario no
+  se envía: todavía no existe endpoint de escritura.
+- **Prefill solo de `country` y `year`** desde la última serie
+  (`Issue.objects.order_by("-id").first()`, 1 query). El botón `↺ Use last issue`
+  los reaplica **sin recargar**: los valores viajan en la configuración de la
+  página. El resto no se copia, por probabilidad de repetición y por daño:
+
+  | Campo | Se prefija | Por qué |
+  | --- | --- | --- |
+  | `country` | sí | casi constante; si cambia, se ve en la primera celda |
+  | `year` | sí | la entrada es secuencial por año y es el contexto de la pantalla |
+  | `stamp_type`, `print_type`, `printer`, `artist`, `paper_type`, `perforation` | no | cambian por serie; copiarlos obliga a limpiarlos |
+  | `date`, `name` | no | identifican la serie; la fecha heredada es el error más caro |
+  | `description`, `note` | no | texto libre que acabaría describiendo otra serie |
+  | `total_printed`, `market_value_mnh`, `market_value_used` | no | son del conjunto: copiarlos corrompe datos |
+
+  Sin series en la BD no hay prefill y el botón se **oculta** (no se deshabilita:
+  un botón muerto invita a pulsarlo).
+- El **año no es un desplegable**: un `input[type=number]` con los años existentes
+  como `<datalist>`, porque una serie casi siempre inaugura año y un `select` no
+  puede expresar uno que todavía no tiene fila. El valor viaja como **número, no
+  como id**, y al guardar se resuelve con `get_or_create` igual que el resto de
+  lookups creados en línea (S12). Rango 1800–año actual+2 contra erratas, y un
+  aviso silencioso «se creará al guardar» cuando el número tecleado no está en la
+  lista de sugerencias.
+- El workbench gana un enlace `+ New series` a la derecha de la barra: sin él la
+  pantalla solo se abre escribiendo la URL. El bucle «Create another» y los
+  atajos siguen en S16.
+- Control `rows=N`: **1–100, por defecto 4** (la media real es 3,8 sellos por
+  serie), y S16 no lo cambia. Genera filas **en cliente**, sin petición de red y
+  sin fila en la BD. Cambiar `N` **solo añade o quita filas vacías por el final**;
+  nunca reescribe una fila tocada ni borra por debajo de ellas.
+- Cada fila nueva nace con `name = <nombre de la serie>` (la columna es NOT NULL)
+  y `face_value` vacío pero requerido. Nace `touched: false`, y su nombre **sigue
+  al de la serie** mientras nadie la toque; el primer keystroke o color la marca y
+  deja de seguir. Ese flag es la línea base que S14 comparará campo a campo.
+- Identidad de fila `new-1`, `new-2`…: los ids reales son números, así que el
+  prefijo no puede colisionar con ellos; lo manda el servidor en la configuración
+  y nunca se reutiliza un número al borrar una fila.
+- `Shift+Enter` no hace nada y el aviso «todavía no guarda» está **visible bajo el
+  pie de la pantalla**, no en un tooltip (un atajo deshabilitado no recibe hover).
+- `beforeunload` solo con la pantalla **sucia**: algún campo distinto del
+  prefijado, o filas añadidas/quitadas. Sin borradores: recargar descarta.
 
 **Aceptación**: alternar `new`/`edit` no rompe nada; el prefill es el de la
-última serie real; en `new` no aparece `Clone`/`Delete` y sí `Use last issue`;
-**recargar o salir descarta el borrador** (no hay recuperación posible en `new`,
-por decisión) y el `beforeunload` avisa antes de perderlo.
+última serie real y solo `country`+`year`; en `new` no aparece `Clone`/`Delete` y
+sí `Use last issue`; el año se teclea, admite uno que todavía no tiene fila (con
+su aviso) y el rango descarta lo que no es un año; `rows=N` genera exactamente N
+filas sin red y sin BD; bajar `N` no toca filas marcadas; **recargar o salir
+descarta el borrador** (no hay recuperación posible en `new`, por decisión) y el
+`beforeunload` avisa antes de perderlo.
 
 ---
 
@@ -640,9 +683,9 @@ petición, no hay commits por tramos.
 
 **Depende de**: S11, S14.
 
-- Herencia editable: al cambiar un campo de la serie sin overrides, se
-  actualizan las filas en cliente; `↺` restaura el valor de la serie en los 5
-  campos que sí existen en `Stamp` (§2).
+- Sin herencia que editar: lo único que se rellena al crear filas es `name`
+  (obligatorio) y ya lo hace S11 con el flag `touched`; `↺ Use last issue`
+  reaplica `country` y `year`, nunca valores de sellos.
 - `Fill series`: numera `edifil` consecutivamente preservando sufijo
   (`2744a → 2744b`); si el primer código no es numérico, no hace nada y avisa.
 - `fast row`: solo `edifil`, `fesofi`, `face_value`, `colors` (por defecto ON).
@@ -1451,12 +1494,87 @@ la serie de 57 sellos pinta **15,5 ms con las 57 miniaturas**, la cola tarda 36 
 reporta 1.139 sin imagen; anónimo → 302 en página e imagen · `manage.py check` limpio ·
 `spectacular` con **0** referencias a `datadesk` · **1167** tests de backend en verde.
 
-### ⏭ Siguiente: S11
+### ✅ S11 — `mode=new` en seco (2026-11-19)
 
-Workspace `mode=new` en seco: la misma plantilla con `mode="new"`, prefijado
-desde la última serie, `rows=N` (que rellena también el nombre, obligatorio),
-numeración Edifil automática y el interruptor de fila rápida, todavía sin enviar
-nada al servidor.
+Ficheros nuevos:
+
+```
+backend/datadesk/tests/test_workspace_new.py  23 tests (nuevo, prefijado, filas, modos, acceso)
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/urls.py                                issues/new/ antes del int:pk
+backend/datadesk/views/workspace.py                     IssueCreateView, last_issue_prefill,
+                                                        series_form_fields, NewRowSettings
+backend/datadesk/templates/datadesk/issue_workspace.html formulario de serie + control rows=N
+backend/datadesk/templates/datadesk/workbench.html      enlace «+ New series» en la barra
+backend/datadesk/static/datadesk/issue_workspace.js     filas new-<n>, touched, beforeunload, prefill
+backend/datadesk/static/datadesk/datadesk.css           .dd-input, .dd-rows, .dd-req, .dd-hint-flash
+backend/datadesk/locale/{en,es}/…/django.po (+ .mo)     7 msgids nuevos
+```
+
+Decisiones tomadas al implementar (D1–D5 de la revisión):
+
+- **El prefijado es `country` + `year`, y nada más** (D1). Se descartó el
+  "país/año automáticos + chip de clasificatorios" por superficie sin datos que
+  lo justifiquen; si S16 demuestra que se teclean los mismos seis campos serie
+  tras serie, se añade entonces. Sin series en la BD, `prefill` es `None` y el
+  botón no se pinta (un botón deshabilitado invita a pulsarlo).
+- **`rows=N` nace en 4, rango 1–100, y S16 no lo cambia** (D2). Derivarlo de la
+  última serie generaría 57 filas vacías tras una serie larga. Cambiar `N`
+  crece por el final y encoge **solo** mientras la última fila esté intacta; por
+  debajo de una fila tocada no baja. El borrado de filas sueltas llega con la
+  edición (S13), no aquí.
+- **El nombre de la serie es un valor por defecto, no una herencia** (D3): las
+  filas nacen `touched: false` y siguen al campo `name`; el primer
+  `cellEdited` las marca y dejan de seguir. Ese flag es la línea base de S14.
+  En este paso no hay editores, así que el hook existe pero solo lo ejercita el
+  nombre; se dejó puesto para no reinventarlo en S13.
+- **Ids `new-1`, `new-2`…** (D4), con el prefijo enviado por el servidor en la
+  configuración: los ids reales son números y no hay colisión posible, y el
+  script no guarda convenciones propias. Nunca se reutiliza un número.
+- **`beforeunload` solo con la pantalla sucia** (D5): se compara una instantánea
+  de los campos del formulario y de los ids de las filas con la del arranque.
+  Volver a lo prefijado deja de estar sucio, que es lo correcto: no hay nada que
+  perder. El aviso de `Shift+Enter` es texto fijo bajo el grid que parpadea al
+  pulsar el atajo, no un tooltip, porque un atajo inerte no recibe hover.
+- **El formulario es un `div`, no un `<form>`**: sin endpoint no hay nada que
+  enviar, y un `<form>` recargaría la página al pulsar Intro en un campo,
+  tirando el borrador que este paso promete descartar solo al salir.
+- **El prefijado viaja en la página** (dentro de `stamp-config`) y el botón lo
+  reaplica en cliente: así no se pierde lo ya montado en el grid y no hace falta
+  un endpoint nuevo para leer "la última serie".
+- **Ruta con `int:` en el detalle** y `issues/new/` declarada antes: `new` no
+  compite con el patrón de id, y un id no numérico da 404 en vez de abrir un
+  workspace vacío.
+- **El workbench gana un enlace «+ New series»**: sin él la pantalla solo se abre
+  escribiendo la URL, y su aceptación pide comprobarla a mano. El flujo completo
+  (bucle «Create another», atajos) sigue siendo S16.
+
+- **El año se teclea, no se elige** (2026-11-19, tras revisión con el usuario):
+  con `select` no había forma de crear una serie del año en curso, porque la fila
+  de `Year` no existe hasta que alguien la crea. Ahora es `input[type=number]` con
+  los años existentes como `<datalist>`, el prefill lleva el **número** (no el id)
+  y el servidor resolverá `get_or_create` al guardar. Rango 1800–año actual+2 y
+  aviso «se creará al guardar» cuando el número no está en la lista; sin el
+  rango, `126` pasaría y crearía una fila basura que luego hay que fusionar.
+  Efecto colateral anotado, no corregido: `↺ Use last issue` es un no-op mientras
+  país y año conserven el valor prefijado — solo se nota tras cambiarlos.
+
+Verificado: `pytest datadesk/tests` → **178 en verde** (150 previos + 28 nuevos);
+suite completa **1189 en verde** · prefijado con la última fila real (el año de
+la otra serie es posterior: se ordena por `-id`, no por año) · base de datos vacía
+→ sin prefill ni botón · anónimo → 302 al login, no staff → 403 · `manage.py
+check` limpio · `spectacular` con **0** referencias a `datadesk`.
+
+### ⏭ Siguiente: S12
+
+Núcleo de escritura, sin interfaz: `POST /datadesk/issues/create` (serie + sellos
+anidados, todo o nada) y `POST /datadesk/apply` (filas existentes, savepoint por
+fila), con auditoría y validación por serializers de DRF.
+
 
 
 

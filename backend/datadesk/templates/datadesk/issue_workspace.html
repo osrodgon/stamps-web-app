@@ -1,14 +1,18 @@
 {% extends "datadesk/base.html" %}
 {% load i18n static %}
 
-{% block title %}DataDesk — {{ issue.name }}{% endblock %}
+{% block title %}DataDesk — {% if mode == "new" %}{% translate "New series" %}{% else %}{{ issue.name }}{% endif %}{% endblock %}
 
 {% block breadcrumbs %}
   <a href="{% url 'datadesk:issues' %}">{% translate "Issues" %}</a>
   <span class="dd-crumb-sep">/</span>
-  {{ issue.year.year }}
-  <span class="dd-crumb-sep">/</span>
-  <b>{{ issue.name }}</b>
+  {% if mode == "new" %}
+    <b>{% translate "New series" %}</b>
+  {% else %}
+    {{ issue.year.year }}
+    <span class="dd-crumb-sep">/</span>
+    <b>{{ issue.name }}</b>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -16,30 +20,114 @@
     <div class="dd-meta">
       <div class="dd-meta-head">
         <span class="dd-label">{% translate "Issue metadata" %}</span>
-        <span class="dd-hint">{% translate "as stored · series values describe the whole set, stamp values the stamp" %}</span>
-        <a class="dd-btn dd-btn-ghost dd-meta-back" href="{% url 'datadesk:issues' %}">
-          {% translate "Back to the issues workbench" %}
-        </a>
+        <span class="dd-hint">
+          {% if mode == "new" %}
+            {% translate "series values describe the whole set, stamp values the stamp" %}
+          {% else %}
+            {% translate "as stored · series values describe the whole set, stamp values the stamp" %}
+          {% endif %}
+        </span>
+        {% if mode == "new" %}
+          {% if prefill %}
+            <button type="button" id="use-last-issue" class="dd-btn dd-btn-ghost dd-meta-back">
+              ↺ {% translate "Use last issue" %}
+            </button>
+          {% endif %}
+        {% else %}
+          <a class="dd-btn dd-btn-ghost dd-meta-back" href="{% url 'datadesk:issues' %}">
+            {% translate "Back to the issues workbench" %}
+          </a>
+        {% endif %}
       </div>
 
-      <div class="dd-fields">
-        {% for field in metadata %}
-          <div class="dd-field{% if field.wide %} dd-field-wide{% endif %}">
-            <span class="dd-field-key">{{ field.label }}</span>
-            <span class="dd-field-value" title="{{ field.value }}">{{ field.value }}</span>
-          </div>
-        {% endfor %}
-      </div>
-
+      {% if mode == "new" %}
+        {% comment %}
+          A plain container, not a form: there is no endpoint to submit to yet,
+          and a form would reload the page on Enter and throw the draft away.
+        {% endcomment %}
+        <div class="dd-fields" id="series-form">
+          {% for field in form_fields %}
+            <label class="dd-field{% if field.wide %} dd-field-wide{% endif %}"
+                   for="field-{{ field.name }}">
+              <span class="dd-field-key">
+                {{ field.label }}{% if field.required %} <span class="dd-req">*</span>{% endif %}
+              </span>
+              {% if field.kind == "year" %}
+                <input class="dd-input" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="number" inputmode="numeric"
+                       list="year-options" step="1"
+                       {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                       min="{{ field.min }}" max="{{ field.max }}"
+                       {% if field.required %}required{% endif %}>
+                <datalist id="year-options">
+                  {% for option in field.options %}
+                    <option value="{{ option.value }}"></option>
+                  {% endfor %}
+                </datalist>
+                <span class="dd-hint dd-year-hint" id="year-new-hint" hidden>
+                  {% translate "This year does not exist yet: it will be created when the series is saved." %}
+                </span>
+              {% elif field.kind == "select" %}
+                <select class="dd-input" id="field-{{ field.name }}"
+                        name="{{ field.name }}"{% if field.required %} required{% endif %}>
+                  <option value="">—</option>
+                  {% for option in field.options %}
+                    <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+                  {% endfor %}
+                </select>
+              {% elif field.kind == "textarea" %}
+                <textarea class="dd-input" id="field-{{ field.name }}"
+                          name="{{ field.name }}" rows="2">{{ field.value }}</textarea>
+              {% else %}
+                <input class="dd-input" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="{{ field.kind }}"
+                       {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                       {% if field.step %}step="{{ field.step }}"{% endif %}
+                       {% if "min" in field %}min="{{ field.min }}"{% endif %}
+                       {% if field.required %}required{% endif %}>
+              {% endif %}
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="dd-fields">
+          {% for field in metadata %}
+            <div class="dd-field{% if field.wide %} dd-field-wide{% endif %}">
+              <span class="dd-field-key">{{ field.label }}</span>
+              <span class="dd-field-value" title="{{ field.value }}">{{ field.value }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     <div class="dd-gridwrap">
       <div class="dd-grid-head">
         <span class="dd-label">{% translate "Stamps" %}</span>
-        <span class="dd-count">{{ stamp_count }}</span>
+        <span class="dd-count" id="stamp-count">{{ stamp_count }}</span>
+        {% if mode == "new" %}
+          <label class="dd-rows" for="row-count">
+            {% translate "Rows" %}
+            <input class="dd-input dd-rows-input" id="row-count" type="number"
+                   step="1" inputmode="numeric"
+                   min="{{ config.rows.min }}" max="{{ config.rows.max }}"
+                   value="{{ config.rows.default }}">
+          </label>
+        {% endif %}
       </div>
       <div id="stamp-grid"></div>
     </div>
+
+    {% if mode == "new" %}
+      <div class="dd-commitbar">
+        <span class="dd-hint" id="new-save-hint">
+          {% translate "Nothing is saved yet: this screen does not write to the database." %}
+        </span>
+        <span class="dd-hint dd-right">
+          {% translate "Shift+Enter does not save yet." %}
+        </span>
+      </div>
+    {% endif %}
   </section>
 
   {{ config|json_script:"stamp-config" }}
