@@ -370,7 +370,14 @@ kbd {
 
 .dd-columns {
   position: relative;
+  margin-left: 12px;
+}
+
+/* The only route into mode=new until S16 adds the loop: a page nobody can reach
+ * cannot be checked by hand. */
+.dd-new-issue {
   margin-left: auto;
+  text-decoration: none;
 }
 
 .dd-columns summary {
@@ -503,6 +510,81 @@ kbd {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Form controls of the series strip (mode=new). The `.dd-field` prefix beats
+ * the login form's `.dd-field input` rule, which shares this class name. */
+.dd-field .dd-input {
+  font: inherit;
+  font-size: 12.5px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #cfd5dc;
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+}
+
+.dd-field .dd-input:focus {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: -1px;
+}
+
+.dd-field textarea.dd-input {
+  min-height: 46px;
+  resize: vertical;
+}
+
+/* Required, but as a quiet mark: the whole form is required-ish when writing a
+ * series, so red asterisks everywhere would shout. */
+.dd-req {
+  color: var(--dd-amber);
+}
+
+/* A year that does not exist yet is not an error: it will be created on save,
+ * so the note is quiet and sits under the field. */
+.dd-field .dd-year-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+}
+
+.dd-field .dd-year-hint[hidden] {
+  display: none;
+}
+
+.dd-rows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--dd-muted);
+}
+
+/* The rows control sits in the grid head, not in the strip, so it repeats the
+ * control look instead of inheriting the scoped one. */
+.dd-rows .dd-input {
+  font: inherit;
+  font-size: 12.5px;
+  width: 64px;
+  padding: 3px 5px;
+  border: 1px solid #cfd5dc;
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+  text-align: right;
+}
+
+.dd-rows .dd-input:focus {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: -1px;
+}
+
+/* Shift+Enter has nothing to commit yet: the notice flashes instead. */
+.dd-hint-flash {
+  color: var(--dd-amber);
+  font-weight: 600;
 }
 
 .dd-gridwrap {

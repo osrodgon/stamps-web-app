@@ -61,6 +61,9 @@
 
     <div class="dd-workbench-toolbar">
       <span class="dd-hint" id="workbench-count"></span>
+      <a class="dd-btn dd-btn-dark dd-new-issue" href="{% url 'datadesk:issue_new' %}">
+        + {% translate "New series" %}
+      </a>
       <details class="dd-columns">
         <summary class="dd-hint">{% translate "Columns" %}</summary>
         <div class="dd-columns-list" id="workbench-columns"></div>

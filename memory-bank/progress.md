@@ -99,7 +99,25 @@
       ⟲ markers are gone; the strip keeps a one-line note that series values
       describe the whole set. `missing_data_report()` counts missing picture
       files, not the empty `Stamp.image`. 33 tests; 1170 backend tests green.
-      Next: S11 (`mode=new`, dry, nothing saved)
+- [x] **S11 — `mode=new` en seco** (2026-11-19): `GET /datadesk/issues/new/`
+      on the same template with `mode="new"` and the series form (15 fields);
+      prefill of **`country` + `year` only** from the highest id, re-applied by
+      `↺ Use last issue` from the page config; `rows=N` 1–100 (default 4) that
+      appends and trims only untouched trailing rows; client rows `new-<n>` with
+      `touched: false` following the series name until edited; `beforeunload`
+      only when the form or the row set changed; inert `Shift+Enter` with a fixed
+      notice; detail route switched to `int:` so `new` cannot be an id; the year
+      is typed (`input[type=number]` + datalist) because a series usually
+      opens a new year. 28 tests; 1194 backend tests green. Next: S12 (write
+      core, no UI)
+- [ ] **S11 follow-up — the prefill button looks dead**: `↺ Use last issue` only
+      acts on `country` and `year`, which already hold those values on load, so
+      clicking does nothing visible until one of them is changed. Label it with
+      what it will set (`España · 1987`), disable it while nothing differs and
+      flash the two controls on apply
+- [ ] **S12 — Write core**: `POST /datadesk/issues/create` (issue + nested stamps,
+      one transaction, all or nothing) and `POST /datadesk/apply` (existing rows,
+      savepoint per row), audit writer, DRF serializers for validation only
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -140,6 +158,43 @@
 ---
 
 ## Completed
+
+### Devcontainer — docker without a nested engine (2026-11-19)
+
+- [x] Recreating the container left `docker` unusable for two reasons: `setup.sh`
+      installed an engine inside the container and added the user to the `docker`
+      group at postCreate (the running session could not open the socket), and that
+      nested engine had to run with `storage-driver: vfs` because overlayfs cannot
+      back another overlay2 — so pulls and builds failed.
+- [x] `devcontainer.json`: added
+      `ghcr.io/devcontainers/features/docker-outside-of-docker:1`, dropped
+      `--privileged` and the unused `--add-host`. `--network=stamps-network` and
+      `initializeCommand` stay: they are exactly what the host-daemon setup needs.
+- [x] `setup.sh`: removed `curl get.docker.com | sh`, `service docker start`, the
+      `usermod` and the unrelated yarn apt source; pip and opencode remain.
+- [x] `stamps.sh`: the socket guard reads `${DOCKER_HOST:-/var/run/docker.sock}` and
+      only re-execs through `sg docker` when the socket exists but is not writable.
+- [x] The hand-made `/etc/docker/daemon.json` (vfs) disappears with the container and
+      is no longer needed. Rebuild is required so the feature mounts the host socket;
+      the CLI then refreshes `devcontainer-lock.json` with the new digest (commit it).
+
+### Devcontainer — OpenCode 2 in `setup.sh` (2026-11-19)
+
+- [x] `setup.sh` ended with `opencode upgrade --major`, which failed on every rebuild.
+      Cause: `https://opencode.ai/install` only serves the 1.x channel (currently
+      1.19.6) and its lines 70–74 **refuse** `>= 2.0`; 1.x's `upgrade --major`
+      re-runs that same installer with `VERSION` set, so it hit the guard. The flag
+      is not missing, the path is closed.
+- [x] Replaced both lines by
+      `curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.3.2`.
+      The v2 installer writes the same `~/.opencode/bin` (plus the `opencode2` shim
+      it generates), checks the version exists for the target before downloading,
+      and `--version` pins it — an agent that upgrades itself on every rebuild is
+      how a session gets lost.
+- [x] Verified in a throwaway `HOME`: exit 0 and `opencode v2.3.2`, so the pinned
+      version and asset resolution are fine without touching the live binary.
+- [x] From 2.x on, `opencode upgrade` has no `--major` (only a positional target and
+      `--method`), so no upgrade step goes back into the postCreate.
 
 ### Devcontainer — docker group guard in `stamps.sh` (2026-11-18)
 
