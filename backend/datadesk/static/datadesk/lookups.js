@@ -28,6 +28,11 @@
   const deleteStatus = document.getElementById("delete-status");
   const deleteConfirm = document.getElementById("delete-confirm");
   const nextYears = document.getElementById("next-years");
+  const newRowButton = document.getElementById("new-row-button");
+  const newRowPanel = document.getElementById("new-row-panel");
+  const newRowName = document.getElementById("new-row-name");
+  const newRowStatus = document.getElementById("new-row-status");
+  const newRowConfirm = document.getElementById("new-row-confirm");
 
   const DEBOUNCE_MS = 300;
   let total = 0;
@@ -132,8 +137,83 @@
     ],
   });
 
+  /** The row a create just produced, until the grid shows it. */
+  let pending = null;
+
+  const reveal = (row) => {
+    table.deselectRow();
+    row.select();
+    row.getElement().scrollIntoView({ block: "nearest" });
+    row.getElement().classList.add("dd-row-flash");
+    window.setTimeout(
+      () => row.getElement().classList.remove("dd-row-flash"),
+      1200
+    );
+  };
+
   table.on("dataLoaded", () => {
     countLabel.textContent = plural("rows", total);
+
+    if (!pending) {
+      return;
+    }
+    const row = table.getRow(pending.id);
+    if (row) {
+      reveal(row);
+      pending = null;
+      return;
+    }
+    if (!pending.searched) {
+      /* The grid is sorted by name, so a new row can land on another page.
+       * Searching for it shows what was just created instead of leaving the
+       * user to guess which page it went to. */
+      pending.searched = true;
+      search.value = pending.name;
+      table.setData();
+      return;
+    }
+    pending = null;
+  });
+
+  /* ---------------------------------------------------------------- *
+   * Creating a row: the endpoint already existed for the workspace.
+   * -------------------------------------------------------------- */
+
+  const closeNewRow = () => {
+    newRowPanel.hidden = true;
+    newRowStatus.textContent = "";
+  };
+
+  const openNewRow = () => {
+    newRowPanel.hidden = false;
+    newRowName.value = "";
+    newRowStatus.textContent = "";
+    newRowConfirm.disabled = false;
+    newRowName.focus();
+  };
+
+  newRowConfirm.addEventListener("click", async () => {
+    const name = newRowName.value.trim();
+    if (name === "") {
+      newRowName.focus();
+      return;
+    }
+    newRowConfirm.disabled = true;
+    newRowStatus.textContent = texts.saved;
+    newRowStatus.className = "dd-hint dd-status-pending";
+
+    const body = await post(config.createUrl, { value: name });
+    newRowConfirm.disabled = false;
+    if (!body || !body.success || !body.data) {
+      newRowStatus.textContent = (body && body.message) || texts.failed;
+      newRowStatus.className = "dd-hint dd-status-error";
+      return;
+    }
+
+    closeNewRow();
+    setStatus(body.data.created ? texts.rowCreated : texts.rowExists, "ok");
+    pending = { id: body.data.id, name: body.data.name, searched: false };
+    table.setData();
   });
 
   /* ---------------------------------------------------------------- *
@@ -330,10 +410,14 @@
 
   wireDialog(mergePanel, closeMerge);
   wireDialog(deletePanel, closeDelete);
+  wireDialog(newRowPanel, closeNewRow);
   document.getElementById("merge-close").addEventListener("click", closeMerge);
   document.getElementById("merge-cancel").addEventListener("click", closeMerge);
   document.getElementById("delete-close").addEventListener("click", closeDelete);
   document.getElementById("delete-cancel").addEventListener("click", closeDelete);
+  document.getElementById("new-row-close").addEventListener("click", closeNewRow);
+  document.getElementById("new-row-cancel").addEventListener("click", closeNewRow);
+  newRowButton.addEventListener("click", openNewRow);
 
   search.addEventListener("input", () => {
     window.clearTimeout(timer);
@@ -376,6 +460,11 @@
     if (event.key === "j" || event.key === "k") {
       event.preventDefault();
       moveSelection(event.key === "j" ? 1 : -1);
+      return;
+    }
+    if (event.key.toLowerCase() === "n" && newRowPanel.hidden) {
+      event.preventDefault();
+      openNewRow();
     }
   });
 })();

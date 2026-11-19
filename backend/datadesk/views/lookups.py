@@ -25,6 +25,7 @@ from datadesk.lookups import (
 )
 from datadesk.mixins import DataDeskAccessMixin
 from datadesk.registry import LOOKUPS, get_lookup
+from datadesk.rules import series_year_bounds
 from datadesk.texts import plural_forms
 from datadesk.views.envelope import JsonPostView, written
 from datadesk.write import WriteError
@@ -175,6 +176,7 @@ def lookup_config(key: str) -> dict[str, Any]:
         "nameField": lookup.name_field,
         "numeric": lookup.numeric,
         "rowsUrl": reverse("datadesk:lookup_rows", args=[key]),
+        "createUrl": reverse("datadesk:lookup_create", args=[key]),
         "renameUrl": reverse("datadesk:lookup_rename", args=[key]),
         "deleteUrl": reverse("datadesk:lookup_delete", args=[key]),
         "mergeUrl": reverse("datadesk:lookup_merge"),
@@ -210,7 +212,16 @@ def lookup_config(key: str) -> dict[str, Any]:
             "deleteTitle": str(_("Delete this row")),
             "removed": str(_("Source row: it disappears after the merge.")),
             "survivor": str(_("Surviving row: it keeps every reference.")),
+            "newRow": str(_("New row")),
+            "createRow": str(_("Create the row")),
+            "rowCreated": str(_("The row was created.")),
+            "rowExists": str(_("That row already existed.")),
         },
+        # The years are a number and a typo in one is 20.216: the dialog carries
+        # the same bounds the workspace uses, both from datadesk.rules.
+        "bounds": (
+            dict(zip(("min", "max"), series_year_bounds())) if lookup.numeric else {}
+        ),
         "plurals": {
             "usage": plural_forms("Used by %(count)s row", "Used by %(count)s rows"),
             "rows": plural_forms("%(count)s row", "%(count)s rows"),

@@ -1356,6 +1356,13 @@ kbd {
   text-transform: uppercase;
 }
 
+/* The row a create just produced, for a moment: the grid is sorted by name, so
+ * it may have landed far from where the eye was. */
+.dd-row-flash,
+.dd-row-flash .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
 .dd-state-reversible {
   background: #eef4fb;
   color: var(--dd-navy);

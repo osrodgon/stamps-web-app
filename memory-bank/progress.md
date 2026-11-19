@@ -349,10 +349,14 @@
       typed confirmation (one row is not a set), dimmed and refusing while the
       change set has edits. 20 tests; 471 datadesk and 1487 backend tests green;
       the edit-mode harness is at 89 checks.
-- [ ] **S26 — New row in the reference tables** (S): rename, merge and delete
-      exist, creation lives only in the workspace's `+` button. A `New row`
-      dialog on `/datadesk/lookups/<key>/` reusing the existing create endpoint,
-      numeric for years, a duplicate selects the row that already existed.
+- [x] **S26 — New row in the reference tables** (2026-11-19): rename, merge and
+      delete existed; creation lived only in the workspace's `+`. `New row` and
+      `N` open a one-field dialog that posts to the existing create endpoint
+      (numeric with the workspace's year bounds for the years), a duplicate
+      selects the row that already existed instead of failing, and the new row is
+      revealed — selected and flashed — even when the sort put it on another
+      page, by searching for it. 4 tests; 475 datadesk and 1491 backend tests
+      green; the lookups harness is at 12 checks.
 - [ ] **S27 — Move between series and delete from the list** (M, depends on S15
       and S17): two versions of "do not make me go back to the list". **A**, the
       workspace gets previous/next for the neighbour in the workbench's filtered
