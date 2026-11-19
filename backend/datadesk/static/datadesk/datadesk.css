@@ -1135,6 +1135,46 @@ kbd {
   margin-left: auto;
 }
 
+/* --- Dashboard ---------------------------------------------------------
+ *
+ * The six counters, each one a door into the workbench with its filter on.
+ */
+
+.dd-section-title {
+  margin: 18px 0 10px;
+}
+
+.dd-dash-totals {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--dd-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The second line of a stamp card: the series the stamps live in, because the
+ * grid behind the link counts series. */
+.dd-card-note {
+  font-size: 11px;
+  color: var(--dd-soft);
+}
+
+.dd-dash-done {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--dd-line);
+  border-left: 3px solid var(--dd-green);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+}
+
+.dd-dash-done .dd-hint {
+  margin: 6px 0 0;
+}
+
+.dd-dash-clear {
+  margin: 16px 0 0;
+}
+
 /* --- Reference tables --------------------------------------------------
  *
  * One screen for eight tables: the tabs are the registry, the cards are how

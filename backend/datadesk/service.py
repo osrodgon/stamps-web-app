@@ -11,6 +11,7 @@ from math import ceil
 from typing import Any
 
 from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
+from django.utils.translation import gettext_lazy as _
 
 from datadesk.images import ImageIndex, has_picture, image_index
 from datadesk.palette import tone_for
@@ -155,9 +156,13 @@ def filter_issues(queryset: QuerySet[Issue], filters: IssueFilters) -> QuerySet[
     if filters.stamp_type is not None:
         queryset = queryset.filter(stamp_type_id=filters.stamp_type)
 
-    attention = ATTENTION_CONDITIONS.get(filters.attention)
-    if attention is not None:
-        queryset = queryset.filter(attention)
+    if filters.attention == "stamps_without_image":
+        # The only queue that is not a queryset condition: see ATTENTION_CONDITIONS.
+        queryset = queryset.filter(pk__in=picture_gaps()[1])
+    else:
+        attention = ATTENTION_CONDITIONS.get(filters.attention)
+        if attention is not None:
+            queryset = queryset.filter(attention)
 
     return queryset
 
@@ -326,6 +331,144 @@ def serialize_stamp(
     }
 
 
+ISSUES = "issues"
+STAMPS = "stamps"
+"""Which number a counter is about.
+
+Three of the six queues count stamps and the workbench filters series, so those
+cards carry both numbers instead of pretending the grid lost rows.
+"""
+
+
+@dataclass(frozen=True)
+class Queue:
+    """One "needs attention" card.
+
+    Attributes:
+        key: Counter in ``missing_data_report()``.
+        attention: Filter value of the workbench that opens the same rows.
+        label: Translated card title.
+        unit: ``ISSUES`` or ``STAMPS``, what the counter counts.
+    """
+
+    key: str
+    attention: str
+    label: Any
+    unit: str
+
+
+QUEUES: tuple[Queue, ...] = (
+    Queue(
+        "issues_without_country",
+        "no_country",
+        _("Series with no country"),
+        ISSUES,
+    ),
+    Queue("issues_without_date", "no_date", _("Series with no date"), ISSUES),
+    Queue("issues_without_stamps", "no_stamps", _("Series with no stamps"), ISSUES),
+    Queue(
+        "stamps_without_colors",
+        "stamps_without_colors",
+        _("Stamps with no colour"),
+        STAMPS,
+    ),
+    Queue(
+        "stamps_without_face_value",
+        "stamps_without_face_value",
+        _("Stamps with no value"),
+        STAMPS,
+    ),
+    Queue(
+        "stamps_without_image",
+        "stamps_without_image",
+        _("Stamps with no picture"),
+        STAMPS,
+    ),
+)
+"""The six cards of the dashboard, in the order they are shown.
+
+One entry per counter of the report, and the pair is what makes the card
+honest: the counter says how many rows need work, the filter says where they
+are. The mapping lives here, once, because the two names differ (``no_country``
+against ``issues_without_country``) and a second copy of it in the template would
+be a counter added in one place and forgotten in the other.
+"""
+
+
+@dataclass(frozen=True)
+class QueueCard:
+    """One queue with today's numbers.
+
+    Attributes:
+        key: Counter in the report.
+        attention: Workbench filter that opens the rows.
+        label: Translated card title.
+        unit: What ``count`` counts.
+        count: Rows that need attention.
+        issues: Series holding those rows, for the stamp queues (else ``None``).
+    """
+
+    key: str
+    attention: str
+    label: str
+    unit: str
+    count: int
+    issues: int | None = None
+
+
+def dashboard_queues() -> list[QueueCard]:
+    """Returns the six counters with the series count behind the stamp ones.
+
+    The series count uses ``filter_issues``, the same function the workbench
+    uses, so "412 series" on the card and the total of the filtered grid cannot
+    disagree: they are the same query.
+    """
+    report = missing_data_report()
+    cards: list[QueueCard] = []
+    for queue in QUEUES:
+        series = None
+        if queue.unit == STAMPS:
+            series = filter_issues(
+                Issue.objects.all(), IssueFilters(attention=queue.attention)
+            ).count()
+        cards.append(
+            QueueCard(
+                key=queue.key,
+                attention=queue.attention,
+                label=str(queue.label),
+                unit=queue.unit,
+                count=report.get(queue.key, 0),
+                issues=series,
+            )
+        )
+    return cards
+
+
+def picture_gaps() -> tuple[int, set[int]]:
+    """Returns the stamps with no picture file, and the series holding them.
+
+    The pictures are served from the mounted ``<year>/<code>.webp`` tree, not
+    from ``Stamp.image`` (empty in every row of the real database), so "has a
+    picture" is a lookup in the file index and not a column. The index is cached
+    for a minute, so this is a scan of one column of ``Stamp`` and no disk.
+
+    Both numbers come from the same walk on purpose: the counter on the
+    dashboard and the rows the workbench filter returns are the same question,
+    and they were answering it differently before S20.
+    """
+    index = image_index()
+    series: set[int] = set()
+    count = 0
+    rows = Stamp.objects.values_list(
+        "fesofi_code", "issue_id", "issue__year__year"
+    )
+    for code, issue_id, year in rows:
+        if not has_picture(year, code, index):
+            count += 1
+            series.add(issue_id)
+    return count, series
+
+
 def missing_data_report() -> dict[str, int]:
     """Counts the rows that still need work, for the dashboard queues.
 
@@ -335,21 +478,14 @@ def missing_data_report() -> dict[str, int]:
     ``face_value`` cannot be NULL (the column has no ``null=True``), so the only
     way to be missing is an empty string.
     """
-    stamps = Stamp.objects.all()
-    index = image_index()
-    with_image = sum(
-        1
-        for code, year in stamps.values_list("fesofi_code", "issue__year__year")
-        if has_picture(year, code, index)
-    )
-
+    without_picture, _ = picture_gaps()
     return {
         "issues_without_country": Issue.objects.filter(country__isnull=True).count(),
         "issues_without_date": Issue.objects.filter(date__isnull=True).count(),
         "issues_without_stamps": Issue.objects.filter(stamps__isnull=True).count(),
-        "stamps_without_colors": stamps.filter(colors__isnull=True).count(),
-        "stamps_without_face_value": stamps.filter(face_value="").count(),
-        "stamps_without_image": stamps.count() - with_image,
+        "stamps_without_colors": Stamp.objects.filter(colors__isnull=True).count(),
+        "stamps_without_face_value": Stamp.objects.filter(face_value="").count(),
+        "stamps_without_image": without_picture,
     }
 
 
@@ -402,8 +538,12 @@ ATTENTION_CONDITIONS: dict[str, Q | Exists] = {
     "no_stamps": ~Exists(Stamp.objects.filter(issue=OuterRef("pk"))),
     "stamps_without_colors": Exists(_stamps_of_issue(colors__isnull=True)),
     "stamps_without_face_value": Exists(_stamps_of_issue(face_value="")),
-    "stamps_without_image": Exists(
-        _stamps_of_issue(image__isnull=True) | _stamps_of_issue(image="")
-    ),
 }
+"""The filters that are one queryset condition.
+
+``stamps_without_image`` is deliberately absent: the pictures live in the
+mounted folder and ``Stamp.image`` is empty in every row of the real database, so
+that queue cannot be expressed in SQL — it is ``picture_gaps()`` below, and
+``filter_issues`` applies it by hand.
+"""
 """Filter condition for each "needs attention" key."""

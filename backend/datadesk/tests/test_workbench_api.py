@@ -2,6 +2,7 @@
 import json
 
 import pytest
+from django.core.cache import cache
 from django.test import Client
 
 from colors_api.models import Color
@@ -17,8 +18,19 @@ PAGE_URL = "/datadesk/issues/"
 
 
 @pytest.fixture
-def dataset(db) -> dict:
-    """Four issues covering every filter and every gap."""
+def grid_dataset(db, tmp_path, settings) -> dict:
+    """Four issues covering every filter and every gap.
+
+    The "without image" queue reads the mounted picture folder, not
+    ``Stamp.image``: one stamp gets a file there, so the queue has a row that is
+    complete and rows that are not.
+    """
+    pictures = tmp_path / "stamps"
+    (pictures / "1980").mkdir(parents=True)
+    (pictures / "1980" / "1234.webp").write_bytes(b"RIFF\x00\x00\x00\x00WEBPVP8 ")
+    settings.DATADESK_STAMP_IMAGES = pictures
+    cache.clear()
+
     year_1980 = Year.objects.create(year=1980)
     year_1990 = Year.objects.create(year=1990)
     spain = Country.objects.create(name="España")
@@ -41,7 +53,11 @@ def dataset(db) -> dict:
     )
 
     with_color = Stamp.objects.create(
-        issue=alfa, face_value="15 Ptas", name="Con color", image="stamps/a.jpg"
+        issue=alfa,
+        face_value="15 Ptas",
+        name="Con color",
+        image="stamps/a.jpg",
+        fesofi_code="1234",
     )
     with_color.colors.set([color])
     Stamp.objects.create(issue=beta, face_value="5 Ptas", name="Sin color")
@@ -70,14 +86,14 @@ def names(response) -> list[str]:
 class TestGridContainers:
     """Shape of the JSON Tabulator consumes."""
 
-    def test_returns_the_expected_envelope(self, staff_client, dataset) -> None:
+    def test_returns_the_expected_envelope(self, staff_client, grid_dataset) -> None:
         payload = staff_client.get(GRID_URL).json()
 
         assert payload["total"] == 4
         assert payload["last_page"] == 1
         assert len(payload["data"]) == 4
 
-    def test_decimals_travel_as_strings(self, staff_client, dataset) -> None:
+    def test_decimals_travel_as_strings(self, staff_client, grid_dataset) -> None:
         row = staff_client.get(GRID_URL, {"q": "Alfa"}).json()["data"][0]
 
         assert row["mnh"] == "5.75"
@@ -93,13 +109,13 @@ class TestGridContainers:
 class TestPagination:
     """Server-side paging with Tabulator's `last_page` shape."""
 
-    def test_last_page_matches_the_page_size(self, staff_client, dataset) -> None:
+    def test_last_page_matches_the_page_size(self, staff_client, grid_dataset) -> None:
         payload = staff_client.get(GRID_URL, {"size": 2}).json()
 
         assert payload["last_page"] == 2
         assert len(payload["data"]) == 2
 
-    def test_second_page_returns_the_rest(self, staff_client, dataset) -> None:
+    def test_second_page_returns_the_rest(self, staff_client, grid_dataset) -> None:
         first = names(staff_client.get(GRID_URL, {"size": 3}))
         second = names(staff_client.get(GRID_URL, {"size": 3, "page": 2}))
 
@@ -107,7 +123,7 @@ class TestPagination:
         assert len(second) == 1
         assert set(first) | set(second) == {"Alfa", "Beta", "Gamma", "Delta"}
 
-    def test_a_page_beyond_the_end_clamps(self, staff_client, dataset) -> None:
+    def test_a_page_beyond_the_end_clamps(self, staff_client, grid_dataset) -> None:
         payload = staff_client.get(GRID_URL, {"size": 2, "page": 99}).json()
 
         assert payload["page"] == 2
@@ -118,10 +134,10 @@ class TestPagination:
 class TestOrdering:
     """Sorting stays inside the whitelist."""
 
-    def test_default_order_is_chronological(self, staff_client, dataset) -> None:
+    def test_default_order_is_chronological(self, staff_client, grid_dataset) -> None:
         assert names(staff_client.get(GRID_URL)) == ["Alfa", "Delta", "Beta", "Gamma"]
 
-    def test_sorting_by_name(self, staff_client, dataset) -> None:
+    def test_sorting_by_name(self, staff_client, grid_dataset) -> None:
         response = staff_client.get(
             GRID_URL, {"sort[0][field]": "name", "sort[0][dir]": "desc"}
         )
@@ -129,7 +145,7 @@ class TestOrdering:
         assert names(response) == ["Gamma", "Delta", "Beta", "Alfa"]
 
     def test_unknown_sort_field_falls_back_to_the_default(
-        self, staff_client, dataset
+        self, staff_client, grid_dataset
     ) -> None:
         response = staff_client.get(
             GRID_URL,
@@ -143,24 +159,24 @@ class TestOrdering:
 class TestFilters:
     """Each filter, and the "needs attention" selector."""
 
-    def test_year_range(self, staff_client, dataset) -> None:
+    def test_year_range(self, staff_client, grid_dataset) -> None:
         response = staff_client.get(GRID_URL, {"year_min": 1990})
 
         assert set(names(response)) == {"Beta", "Gamma"}
 
-    def test_name_search(self, staff_client, dataset) -> None:
+    def test_name_search(self, staff_client, grid_dataset) -> None:
         response = staff_client.get(GRID_URL, {"q": "amm"})
 
         assert names(response) == ["Gamma"]
 
-    def test_country(self, staff_client, dataset) -> None:
+    def test_country(self, staff_client, grid_dataset) -> None:
         spain = Country.objects.get(name="España")
 
         response = staff_client.get(GRID_URL, {"country": spain.pk})
 
         assert set(names(response)) == {"Alfa", "Delta"}
 
-    def test_stamp_type(self, staff_client, dataset) -> None:
+    def test_stamp_type(self, staff_client, grid_dataset) -> None:
         stamp_type = StampType.objects.get(name="Conmemorativo")
 
         response = staff_client.get(GRID_URL, {"stamp_type": stamp_type.pk})
@@ -179,18 +195,18 @@ class TestFilters:
         ),
     )
     def test_attention_filters(
-        self, staff_client, dataset, attention: str, expected: set[str]
+        self, staff_client, grid_dataset, attention: str, expected: set[str]
     ) -> None:
         response = staff_client.get(GRID_URL, {"attention": attention})
 
         assert set(names(response)) == expected
 
-    def test_unknown_attention_is_ignored(self, staff_client, dataset) -> None:
+    def test_unknown_attention_is_ignored(self, staff_client, grid_dataset) -> None:
         response = staff_client.get(GRID_URL, {"attention": "whatever"})
 
         assert response.json()["total"] == 4
 
-    def test_filters_combine(self, staff_client, dataset) -> None:
+    def test_filters_combine(self, staff_client, grid_dataset) -> None:
         spain = Country.objects.get(name="España")
 
         response = staff_client.get(
@@ -199,7 +215,7 @@ class TestFilters:
 
         assert set(names(response)) == {"Alfa", "Delta"}
 
-    def test_no_results_is_an_empty_page(self, staff_client, dataset) -> None:
+    def test_no_results_is_an_empty_page(self, staff_client, grid_dataset) -> None:
         payload = staff_client.get(GRID_URL, {"q": "nothing matches this"}).json()
 
         assert payload["total"] == 0
@@ -211,13 +227,13 @@ class TestFilters:
 class TestGapBadge:
     """The badge and the "needs attention" filter tell the same story."""
 
-    def test_badge_matches_the_no_stamps_filter(self, staff_client, dataset) -> None:
+    def test_badge_matches_the_no_stamps_filter(self, staff_client, grid_dataset) -> None:
         rows = staff_client.get(GRID_URL, {"attention": "no_stamps"}).json()["data"]
 
         assert rows
         assert all(row["gaps"]["no_stamps"] for row in rows)
 
-    def test_badge_flags_every_gap_of_a_row(self, staff_client, dataset) -> None:
+    def test_badge_flags_every_gap_of_a_row(self, staff_client, grid_dataset) -> None:
         row = staff_client.get(GRID_URL, {"q": "Gamma"}).json()["data"][0]
 
         assert row["gaps"] == {

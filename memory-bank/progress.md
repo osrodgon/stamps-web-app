@@ -256,8 +256,21 @@
       cannot be undone (S21 will refuse it). `Create the next 10 years` for the
       years. The JSON envelope moved to `datadesk/views/envelope.py` and the
       plurals to `datadesk/texts.py`, now shared with the workspace. 40 tests;
-      389 datadesk and 1405 backend tests green. Next: S20 (dashboard and the
-      "needs attention" queues)
+      389 datadesk and 1405 backend tests green.
+- [x] **S20 — Dashboard and the "needs attention" queues** (2026-11-19):
+      `/datadesk/` shows the six counters as cards that open the workbench with
+      the filter already applied; the stamp-level ones carry the series count too
+      ("1.177 · in 1.044 series") because the grid behind them counts series, and
+      that number comes from `filter_issues()`, the same query the grid uses. One
+      table (`service.QUEUES`) maps counter → filter → label → unit, checked both
+      ways by a test so a new counter cannot be missing from the dashboard;
+      counters at zero are listed apart instead of looking like work; numbers are
+      grouped by the active language. **Bug fixed on the way**: the workbench's
+      `stamps_without_image` filter still read `Stamp.image` (empty in all 9.560
+      real rows) and matched 2.542 of 2.543 series while the counter said 1.177;
+      both now come from `picture_gaps()`, one walk of the image index (1.177
+      stamps in 1.044 series, 28 ms with the cache warm). 19 tests; 408 datadesk
+      and 1424 backend tests green. Next: S21 (activity log and revert)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
