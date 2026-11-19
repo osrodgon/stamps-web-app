@@ -97,3 +97,73 @@ class TestTheRefusedCellMark:
         rule = rule.split("}", 1)[0]
 
         assert "z-index" in rule
+
+class TestButtons:
+    """A button that happens to be an <a> is still a button.
+
+    Without the reset the browser underlines it and the label sits on the text
+    baseline instead of the middle of the box, so the same-looking control was
+    underlined and short on the dashboard and clean inside the workspace. The
+    local patches S17 added hid the cause instead of fixing the class.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_the_button_class_removes_the_underline(self) -> None:
+        assert "text-decoration: none" in self.rule(".dd-btn")
+
+    def test_the_label_is_centred_in_the_box(self) -> None:
+        rule = self.rule(".dd-btn")
+
+        assert "display: inline-flex" in rule
+        assert "align-items: center" in rule
+        assert "justify-content: center" in rule
+
+    def test_the_height_comes_from_the_class_not_from_a_variant(self) -> None:
+        """Every button is the same height, including side by side.
+
+        The height is fixed on the base class and does not depend on the
+        variant's padding or on how long the label is: a ghost button next to a
+        dark one cannot end up shorter.
+        """
+        assert "height: var(--dd-btn-height)" in self.rule(".dd-btn")
+        assert "height" not in self.rule(".dd-btn-ghost")
+
+
+class TestTheTypeScale:
+    """One scale, in tokens, and nothing below 11 px.
+
+    "The GUI feels dated" was, measured, a stylesheet where `--dd-base-size` was
+    declared and then bypassed by fifty hardcoded sizes. These tests keep the
+    scale from drifting back: a new screen can pick a token, not a number.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def tokens(self) -> dict[str, int]:
+        pairs = re.findall(
+            r"(--dd-text[a-z-]*|--dd-label):\s*(\d+)px;", self.stylesheet()
+        )
+        return {name: int(size) for name, size in pairs}
+
+    def test_no_rule_writes_its_own_pixel_size(self) -> None:
+        assert re.search(r"font-size:\s*\d", self.stylesheet()) is None
+
+    def test_every_size_comes_from_a_token(self) -> None:
+        used = set(re.findall(r"font-size:\s*var\((--dd-[a-z-]+)\)", self.stylesheet()))
+
+        assert used
+        assert used <= set(self.tokens())
+
+    def test_nothing_is_below_eleven_pixels(self) -> None:
+        assert min(self.tokens().values()) >= 11
+
+    def test_the_body_uses_the_scale(self) -> None:
+        assert "font: var(--dd-text) /" in self.stylesheet()

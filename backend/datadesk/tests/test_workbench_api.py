@@ -278,6 +278,31 @@ class TestWorkbenchPage:
         assert "Year" in titles
         assert "Name" in titles
 
+    def test_every_visible_column_asks_for_a_share_of_the_width(
+        self, staff_client
+    ) -> None:
+        """The grid fits the page instead of scrolling: the columns share it.
+
+        ``fitColumns`` divides evenly unless every column says how much it
+        wants, and an even split would leave the name as narrow as the stamp
+        count.
+        """
+        response = staff_client.get(PAGE_URL)
+        config = json.loads(
+            response.content.decode()
+            .split('id="workbench-config" type="application/json">')[1]
+            .split("</script>")[0]
+        )
+        grows = {
+            column["field"]: column.get("grow")
+            for column in config["columns"]
+            if column["visible"]
+        }
+
+        assert all(grows.values()), grows
+        assert grows["name"] > grows["stamps"]
+        assert config["columns"][2]["min"] == 180
+
 
 @pytest.mark.django_db
 class TestFocus:

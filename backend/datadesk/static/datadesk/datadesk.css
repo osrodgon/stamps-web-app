@@ -31,19 +31,31 @@
     sans-serif;
   --dd-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* The type scale. Every font-size in this file is one of these five: a scale
+   * that only exists in tokens is not a scale if a rule can quietly write 10px.
+   * Nothing here is below 11px — the uppercase micro-labels earn their size
+   * back with letter-spacing, not by shrinking. */
+  --dd-text-xl: 22px;
+  --dd-text-lg: 16px;
+  --dd-text: 14px;
+  --dd-text-sm: 13px;
+  --dd-text-xs: 12px;
+  --dd-label: 11px;
+
   /* Density: the grids are read for hours, so rows stay compact and the
-   * numbers line up in columns. */
-  --dd-base-size: 13px;
-  --dd-row-height: 30px;
-  --dd-cell-padding-y: 5px;
-  --dd-cell-padding-x: 9px;
-  --dd-topbar-height: 44px;
-  --dd-radius: 4px;
+   * numbers line up in columns — but 36px is still a row you can hit. */
+  --dd-row-height: 36px;
+  --dd-cell-padding-y: 7px;
+  --dd-cell-padding-x: 10px;
+  --dd-topbar-height: 48px;
+  --dd-radius: 6px;
+  --dd-btn-height: 32px;
 
   /* Commit bar */
   --dd-commitbar-bg: #fbfcfd;
 
-  /* Tabulator theming */
+  /* Tabulator theming: the grid's lines are the app's lines, not the
+   * library's #aaa. */
   --tabulator-border: var(--dd-line);
 }
 
@@ -56,7 +68,7 @@ body {
   padding: 0;
   background: var(--dd-bg);
   color: var(--dd-ink);
-  font: var(--dd-base-size) / 1.4 var(--dd-font);
+  font: var(--dd-text) / 1.5 var(--dd-font);
 }
 
 a {
@@ -82,7 +94,7 @@ a {
 }
 
 .dd-brand {
-  font-size: 14px;
+  font-size: var(--dd-text);
   font-weight: 700;
   letter-spacing: 0.3px;
   color: #fff;
@@ -93,13 +105,20 @@ a {
   color: #8fd18f;
 }
 
+/* A long series name truncates instead of pushing the right side of the bar:
+ * the current screen is the title, not a reason to overflow. */
 .dd-crumbs {
-  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--dd-text-xs);
   color: #aab4c0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dd-crumbs b {
   color: #fff;
+  font-size: var(--dd-text-lg);
   font-weight: 600;
 }
 
@@ -118,7 +137,7 @@ a {
   align-items: center;
   gap: 14px;
   margin-left: auto;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   color: #c3ccd6;
 }
 
@@ -131,7 +150,7 @@ a {
 
 .dd-lang button {
   font: inherit;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   color: #c3ccd6;
   background: none;
   border: 0;
@@ -150,29 +169,47 @@ a {
 
 .dd-main {
   flex: 1 1 auto;
-  padding: 20px 16px 32px;
+  padding: 24px 20px 40px;
 }
 
+/* Wide enough for the nine default columns at the new type size, narrow enough
+ * that the six-column strip of the workspace is still a form and not a desert:
+ * past this the page reads worse, not bigger. */
 .dd-page {
-  max-width: 1340px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 20px;
   background: var(--dd-surface);
-  border: 1px solid #d8dce1;
-  border-radius: 6px;
-  box-shadow: 0 8px 28px rgba(20, 25, 35, 0.1);
+  border: 1px solid var(--dd-line);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.05);
 }
 
 /* --- Buttons ----------------------------------------------------------- */
 
+/* A button that happens to be an <a> is still a button: without this the
+ * browser underlines it and it reads as an unstyled link. */
+/* One button, one height. The height is fixed and not derived from padding or
+ * content, so a variant can tighten its sides without getting shorter and two
+ * buttons side by side always line up; the label is centred by the flex box,
+ * which is also what made an <a> styled as a button sit on the same baseline
+ * as a <button>. */
 .dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--dd-btn-height);
+  padding: 0 14px;
+  white-space: nowrap;
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
   font-weight: 600;
-  padding: 8px 13px;
+  line-height: 1;
   border: 0;
   border-radius: var(--dd-radius);
   cursor: pointer;
+  text-decoration: none;
 }
 
 .dd-btn-primary {
@@ -196,9 +233,9 @@ a {
 }
 
 .dd-btn-ghost {
-  font-size: 11.5px;
+  padding: 0 10px;
+  font-size: var(--dd-text-xs);
   font-weight: 400;
-  padding: 4px 9px;
   border: 1px solid #cfd5dc;
   background: #fff;
   color: #2b3440;
@@ -246,13 +283,13 @@ textarea:focus-visible {
 /* The line under a grid that says what the keyboard does here. */
 .dd-keys {
   margin: 8px 0 0;
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
 }
 
 /* --- Small text primitives -------------------------------------------- */
 
 .dd-label {
-  font-size: 10.5px;
+  font-size: var(--dd-label);
   font-weight: 700;
   letter-spacing: 0.9px;
   text-transform: uppercase;
@@ -260,7 +297,7 @@ textarea:focus-visible {
 }
 
 .dd-hint {
-  font-size: 11.5px;
+  font-size: var(--dd-text-xs);
   color: var(--dd-soft);
 }
 
@@ -275,7 +312,7 @@ kbd {
 
 .dd-chip {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: var(--dd-text-xs);
   line-height: 1;
   padding: 3px 6px;
   margin-right: 3px;
@@ -389,7 +426,7 @@ kbd {
 .dd-filter input,
 .dd-filter select {
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
   padding: 5px 7px;
   border: 1px solid #cfd5dc;
   border-radius: var(--dd-radius);
@@ -409,8 +446,9 @@ kbd {
 
 .dd-workbench-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--dd-line);
 }
@@ -455,13 +493,21 @@ kbd {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
 }
 
-/* Tabulator density: rows are read for hours, keep them compact. */
+/* Tabulator, themed with the app's own tokens instead of its defaults: the
+ * library ships #aaa cell borders and a #9abcea selected row, which is what
+ * made the grid look older than the rest of the screens. */
 #workbench,
 #stamp-grid {
-  font-size: 12px;
+  font-size: var(--dd-text-sm);
+  border-color: var(--tabulator-border);
+}
+
+#workbench .tabulator-header,
+#stamp-grid .tabulator-header {
+  border-bottom: 1px solid var(--tabulator-border);
 }
 
 #workbench .tabulator-header .tabulator-col,
@@ -469,21 +515,47 @@ kbd {
   background: var(--dd-navy);
   color: #fff;
   border-color: #39485a;
-  font-size: 10.5px;
+  padding: 8px var(--dd-cell-padding-x);
+  font-size: var(--dd-label);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
 }
 
 #workbench .tabulator-row,
 #stamp-grid .tabulator-row {
   height: var(--dd-row-height);
   min-height: var(--dd-row-height);
+  border-bottom: 1px solid var(--tabulator-border);
+  background: var(--dd-surface);
+}
+
+#workbench .tabulator-row-even,
+#stamp-grid .tabulator-row-even {
+  background: #fafbfc;
+}
+
+#workbench .tabulator-row.tabulator-selectable:hover,
+#stamp-grid .tabulator-row.tabulator-selectable:hover {
+  background: #f3f6fa;
+}
+
+#workbench .tabulator-row.tabulator-selected,
+#stamp-grid .tabulator-row.tabulator-selected {
+  background: #e9eef5;
+}
+
+#workbench .tabulator-row.tabulator-selected:hover,
+#stamp-grid .tabulator-row.tabulator-selected:hover {
+  background: #dfe6ef;
 }
 
 #workbench .tabulator-cell,
 #stamp-grid .tabulator-cell {
   padding: var(--dd-cell-padding-y) var(--dd-cell-padding-x);
+  border-color: var(--tabulator-border);
 }
+
 
 .dd-open {
   display: block;
@@ -523,7 +595,6 @@ kbd {
 
 .dd-meta-back {
   margin-left: auto;
-  text-decoration: none;
 }
 
 .dd-fields {
@@ -544,7 +615,7 @@ kbd {
   display: block;
   margin-bottom: 3px;
   color: var(--dd-soft);
-  font-size: 10px;
+  font-size: var(--dd-label);
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
@@ -553,7 +624,7 @@ kbd {
   display: block;
   padding: 2px 0 4px;
   border-bottom: 1px solid #d6dae0;
-  font-size: 13px;
+  font-size: var(--dd-text-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -563,7 +634,7 @@ kbd {
  * the login form's `.dd-field input` rule, which shares this class name. */
 .dd-field .dd-input {
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
   width: 100%;
   padding: 4px 6px;
   border: 1px solid #cfd5dc;
@@ -615,7 +686,7 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
   font: inherit;
-  font-size: 10.5px;
+  font-size: var(--dd-text-xs);
   padding: 2px 8px;
   border: 1px dashed #cfd5dc;
   border-radius: 999px;
@@ -642,7 +713,7 @@ kbd {
 .dd-field .dd-year-hint {
   display: block;
   margin-top: 2px;
-  font-size: 10.5px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-field .dd-year-hint[hidden] {
@@ -654,7 +725,7 @@ kbd {
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  font-size: 11.5px;
+  font-size: var(--dd-text-xs);
   color: var(--dd-muted);
 }
 
@@ -662,7 +733,7 @@ kbd {
  * control look instead of inheriting the scoped one. */
 .dd-rows .dd-input {
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
   width: 64px;
   padding: 3px 5px;
   border: 1px solid #cfd5dc;
@@ -699,18 +770,18 @@ kbd {
   border-radius: 10px;
   background: #eef1f4;
   color: #2b3440;
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
   font-weight: 700;
 }
 
 .dd-mono {
   font-family: var(--dd-font-mono);
-  font-size: 11.5px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-image-cell {
   color: #c4cbd3;
-  font-size: 15px;
+  font-size: var(--dd-text-lg);
 }
 
 .dd-thumb {
@@ -793,15 +864,16 @@ kbd {
 /* --- Commit bar -------------------------------------------------------- */
 .dd-commitbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: 8px 14px;
   padding: 11px 16px;
   background: var(--dd-commitbar-bg);
   border-top: 1px solid var(--dd-line);
 }
 
 .dd-commitbar .dd-summary {
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   color: var(--dd-muted);
 }
 
@@ -817,7 +889,7 @@ kbd {
   padding: 9px 16px;
   background: var(--dd-amber-soft);
   border-top: 1px solid var(--dd-line);
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-recover[hidden] {
@@ -837,7 +909,7 @@ kbd {
   padding: 7px 12px;
   background: var(--dd-amber-soft);
   border-left: 3px solid var(--dd-amber);
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   color: #6b4f00;
 }
 
@@ -846,7 +918,7 @@ kbd {
 }
 
 .dd-commitbar .dd-count {
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--dd-ink);
 }
@@ -863,7 +935,7 @@ kbd {
   z-index: 20;
   display: flex;
   flex-direction: column;
-  width: 340px;
+  width: 380px;
   background: var(--dd-surface);
   border-left: 1px solid var(--dd-line);
   box-shadow: -8px 0 24px rgba(20, 25, 35, 0.08);
@@ -886,7 +958,7 @@ kbd {
   padding: 0 6px;
   border: 0;
   background: none;
-  font-size: 18px;
+  font-size: var(--dd-text-xl);
   line-height: 1;
   color: var(--dd-muted);
   cursor: pointer;
@@ -910,7 +982,7 @@ kbd {
   display: block;
   margin-bottom: 6px;
   color: var(--dd-soft);
-  font-size: 10px;
+  font-size: var(--dd-label);
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
@@ -930,7 +1002,7 @@ kbd {
   display: flex;
   gap: 6px;
   align-items: baseline;
-  font-size: 12px;
+  font-size: var(--dd-text-sm);
 }
 
 .dd-review-field {
@@ -950,7 +1022,7 @@ kbd {
 .dd-review-error {
   margin-top: 4px;
   color: var(--dd-red);
-  font-size: 11.5px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-review-foot {
@@ -1008,10 +1080,6 @@ kbd {
   margin-left: auto;
 }
 
-.dd-meta-actions a {
-  text-decoration: none;
-}
-
 /* A ghost button that says what it does: the colour is the warning, the box
  * keeps it from competing with the primary action of the page. */
 .dd-btn-danger-text {
@@ -1062,7 +1130,7 @@ kbd {
 
 .dd-dialog-warning {
   margin: 0 0 12px;
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
   color: var(--dd-ink);
 }
 
@@ -1075,7 +1143,7 @@ kbd {
 }
 
 .dd-dialog-counts dt {
-  font-size: 9.5px;
+  font-size: var(--dd-label);
   font-weight: 700;
   letter-spacing: 0.55px;
   text-transform: uppercase;
@@ -1084,7 +1152,8 @@ kbd {
 
 .dd-dialog-counts dd {
   margin: 2px 0 0;
-  font-size: 18px;
+  font-size: var(--dd-text-lg);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--dd-ink);
 }
@@ -1095,7 +1164,7 @@ kbd {
 
 .dd-review-note {
   color: var(--dd-soft);
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-dialog-foot {
@@ -1141,7 +1210,7 @@ kbd {
   border: 0;
   background: none;
   color: #b6bfc9;
-  font-size: 15px;
+  font-size: var(--dd-text-lg);
   line-height: 1;
   cursor: pointer;
 }
@@ -1187,7 +1256,7 @@ kbd {
 
 .dd-dash-totals {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   color: var(--dd-soft);
   font-variant-numeric: tabular-nums;
 }
@@ -1195,7 +1264,7 @@ kbd {
 /* The second line of a stamp card: the series the stamps live in, because the
  * grid behind the link counts series. */
 .dd-card-note {
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
   color: var(--dd-soft);
 }
 
@@ -1226,7 +1295,7 @@ kbd {
   margin: 0 0 14px;
   padding: 9px 12px;
   border-radius: var(--dd-radius);
-  font-size: 12.5px;
+  font-size: var(--dd-text-sm);
 }
 
 .dd-banner-error {
@@ -1256,7 +1325,7 @@ kbd {
   gap: 10px;
   padding: 9px 12px;
   border-bottom: 1px solid var(--dd-line);
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-commit-when {
@@ -1275,7 +1344,7 @@ kbd {
 .dd-state {
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: var(--dd-label);
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -1303,7 +1372,7 @@ kbd {
 .dd-commit-rows {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--dd-text-sm);
 }
 
 .dd-commit-rows td {
@@ -1329,13 +1398,13 @@ kbd {
 .dd-commit-fields {
   color: var(--dd-soft);
   font-family: var(--dd-font-mono);
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
 }
 
 .dd-undo-list {
   margin: 0 0 10px;
   padding-left: 16px;
-  font-size: 12px;
+  font-size: var(--dd-text-sm);
 }
 
 .dd-undo-list li {
@@ -1393,7 +1462,7 @@ kbd {
 }
 
 .dd-card-label {
-  font-size: 10.5px;
+  font-size: var(--dd-label);
   font-weight: 700;
   letter-spacing: 0.9px;
   text-transform: uppercase;
@@ -1401,7 +1470,7 @@ kbd {
 }
 
 .dd-card-value {
-  font-size: 22px;
+  font-size: var(--dd-text-xl);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1414,7 +1483,7 @@ kbd {
 
 .dd-lookup-tab {
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   border: 1px solid var(--dd-line);
   border-radius: 999px;
   background: var(--dd-surface);
@@ -1442,7 +1511,7 @@ kbd {
  * quieter than the merge, which is what the screen is for. */
 .dd-row-delete {
   font: inherit;
-  font-size: 11px;
+  font-size: var(--dd-text-xs);
   padding: 2px 8px;
   border: 1px solid var(--dd-red-soft);
   border-radius: var(--dd-radius);
@@ -1480,7 +1549,7 @@ kbd {
 }
 
 .dd-merge-name {
-  font-size: 13px;
+  font-size: var(--dd-text-sm);
   font-weight: 600;
 }
 
@@ -1521,7 +1590,7 @@ kbd {
 }
 
 .dd-login-head .dd-brand {
-  font-size: 16px;
+  font-size: var(--dd-text-lg);
   color: var(--dd-navy);
 }
 
@@ -1548,7 +1617,7 @@ kbd {
 .dd-alert {
   margin: 0;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: var(--dd-text-xs);
   border-radius: var(--dd-radius);
 }
 
