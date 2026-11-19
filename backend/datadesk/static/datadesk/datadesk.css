@@ -1220,6 +1220,12 @@ kbd {
   color: var(--dd-red);
 }
 
+/* The per-row delete of a real stamp. Dimmed while the change set has edits:
+ * a deletion is not an edit and cannot queue behind one. */
+.dd-grid-locked .dd-stamp-delete {
+  opacity: 0.4;
+}
+
 /* Once the series is written the workspace has nothing left to edit: further
  * typing would have nowhere to go, and pretending otherwise is worse than
  * taking the fields away and offering the two things that remain. */
@@ -1526,6 +1532,12 @@ kbd {
 
 .dd-dialog-wide {
   width: 520px;
+}
+
+/* Two numbers instead of three: a stamp takes its collection items and their
+ * collections, not a set. */
+.dd-dialog-counts-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .dd-merge-rows {

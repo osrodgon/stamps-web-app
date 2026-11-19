@@ -338,20 +338,33 @@
       only sets the sides, so the ghost variant tightening its padding no longer
       makes it shorter than the dark button next to it. 451 datadesk and 1467
       backend tests green.
-- [ ] **S25 — Delete a stamp with a dependency preview** (M): the change set
-      refuses `delete` on purpose (S12) and S17 only solved it for a series.
-      `GET stamps/<pk>/dependencies` + `POST stamps/<pk>/delete`, audited, the
-      cascade takes the `CollectionItem` rows (the dialog says so), the revert of
-      S21 brings the stamp back with its colours but not who owned it. Per-row
-      action in `mode=edit`, disabled while the buffer has edits.
+- [x] **S25 — Delete a stamp with a dependency preview** (2026-11-19): the
+      change set refuses `delete` on purpose (S12) and S17 only solved it for a
+      series. `stamp_dependencies()` counts collection items, their collections
+      and the sibling stamps; `stamp_warning()` words the four cases (held or
+      not, last of the series or not); `delete_stamp()` writes one `delete` row
+      with the full snapshot, which is what S21 uses to bring the stamp back with
+      its id and colours — the `CollectionItem` rows do not come back and the
+      dialog says so. Per-row `×` in `mode=edit` with its own preview dialog, no
+      typed confirmation (one row is not a set), dimmed and refusing while the
+      change set has edits. 20 tests; 471 datadesk and 1487 backend tests green;
+      the edit-mode harness is at 89 checks.
 - [ ] **S26 — New row in the reference tables** (S): rename, merge and delete
       exist, creation lives only in the workspace's `+` button. A `New row`
       dialog on `/datadesk/lookups/<key>/` reusing the existing create endpoint,
       numeric for years, a duplicate selects the row that already existed.
-- [ ] **S27 — Delete a series from the workbench row** (S): the S17 dialog
-      exists but only inside the workspace, where nobody looks for it. Add a
-      per-row action that opens the same preview and POST, reload the grid and
-      say what went; `Supr` on the selected row opens the dialog, never deletes.
+- [ ] **S27 — Move between series and delete from the list** (M, depends on S15
+      and S17): two versions of "do not make me go back to the list". **A**, the
+      workspace gets previous/next for the neighbour in the workbench's filtered
+      order — not `id ± 1` — reusing the pk list `page_of_issue()` already walks
+      (`issue_positions()` + `neighbours_of_issue()`), with the filter query
+      travelling in the link from `↗`/`Enter`, a `1.234 / 2.540` counter, arrows
+      disabled at the ends, `[`/`]` on the keyboard and a fallback to the
+      unfiltered order when the series is not in the filter. It also fixes the
+      "Back to the issues workbench" link, which drops the filters today. **B**,
+      a per-row delete in the workbench that opens the S17 dialog (the preview
+      and POST already exist), reloads the grid and says what went; `Supr` opens
+      the dialog and never deletes.
 
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,

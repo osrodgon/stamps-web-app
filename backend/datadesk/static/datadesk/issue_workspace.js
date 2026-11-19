@@ -383,11 +383,40 @@
     },
   };
 
+  /** What a row's delete button does, wired by the mode that understands it. */
+  let deleteStampRow = null;
+
+  /** Deleting a real stamp: a dialog, not a change in the buffer. */
+  const stampDeleteColumn = {
+    field: "delete_stamp",
+    title: "",
+    width: 40,
+    headerSort: false,
+    hozAlign: "center",
+    cssClass: "dd-remove-cell",
+    formatter: (cell) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dd-remove dd-stamp-delete";
+      button.textContent = "×";
+      button.title = ((config.texts || {}).deleteStamp) || "";
+      button.setAttribute("aria-label", button.title);
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (deleteStampRow) {
+          deleteStampRow(cell.getRow().getData());
+        }
+      });
+      return button;
+    },
+  };
+
   const grid = new Tabulator("#stamp-grid", {
     data: config.data,
     columns: [
       ...config.columns.map(buildColumn),
       ...(config.mode === "new" ? [removeColumn] : []),
+      ...(config.mode === "edit" ? [stampDeleteColumn] : []),
     ],
     layout: "fitColumns",
     height: false,
@@ -437,6 +466,16 @@
       items: document.getElementById("delete-items"),
       collections: document.getElementById("delete-collections"),
     };
+    const stampPanel = document.getElementById("stamp-delete-panel");
+    const stampClose = document.getElementById("stamp-delete-close");
+    const stampCancel = document.getElementById("stamp-delete-cancel");
+    const stampConfirm = document.getElementById("stamp-delete-confirm");
+    const stampWarning = document.getElementById("stamp-delete-warning");
+    const stampIdentity = document.getElementById("stamp-delete-identity");
+    const stampStatus = document.getElementById("stamp-delete-status");
+    const stampItems = document.getElementById("stamp-delete-items");
+    const stampCollections = document.getElementById("stamp-delete-collections");
+    const badge = document.getElementById("stamp-count");
     const texts = config.texts || {};
     const commitLabel = saveButton.textContent;
 
@@ -866,6 +905,11 @@
       deleteButton.disabled = count > 0;
       cloneButton.title = count > 0 ? texts.commitFirst || "" : "";
       deleteButton.title = count > 0 ? texts.commitFirst || "" : "";
+      /* The per-row delete cannot run with a change set open; dimming it is
+       * the cue, refusing on click is the rule. */
+      document
+        .getElementById("stamp-grid")
+        .classList.toggle("dd-grid-locked", count > 0);
       paintRows();
       if (!reviewPanel.hidden) {
         renderReview();
@@ -1147,6 +1191,108 @@
       if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         commitTarget();
+      }
+    });
+
+    /* ---------------------------------------------------------------- *
+     * Deleting one stamp: its own preview, its own dialog.
+     *
+     * It is not an edit, so it cannot queue behind the change set: with
+     * something pending the button refuses and says why, the same rule the
+     * series-level Clone and Delete follow.
+     * -------------------------------------------------------------- */
+
+    let deletingStamp = null;
+
+    const closeStampDelete = () => {
+      stampPanel.hidden = true;
+      deletingStamp = null;
+    };
+
+    const openStampDelete = async (row) => {
+      if (changeCount() > 0) {
+        setStatus(texts.commitFirst, "error");
+        return;
+      }
+
+      deletingStamp = row;
+      stampPanel.hidden = false;
+      stampWarning.textContent = "";
+      stampIdentity.textContent = "";
+      stampStatus.textContent = "";
+      stampItems.textContent = "·";
+      stampCollections.textContent = "·";
+      stampConfirm.disabled = true;
+
+      let body = null;
+      try {
+        const response = await fetch(row.dependencies_url, {
+          headers: { Accept: "application/json" },
+        });
+        body = await response.json();
+      } catch (error) {
+        body = null;
+      }
+      if (!body || !body.success || !body.data) {
+        stampStatus.textContent = (body && body.message) || texts.previewFailed;
+        return;
+      }
+
+      const data = body.data;
+      stampItems.textContent = data.items;
+      stampCollections.textContent = data.collections;
+      stampWarning.textContent = data.warning;
+      stampIdentity.textContent = [data.code, data.name].filter(Boolean).join(" · ");
+      stampConfirm.disabled = false;
+    };
+
+    const confirmStampDelete = async () => {
+      if (!deletingStamp) {
+        return;
+      }
+      const row = deletingStamp;
+      stampConfirm.disabled = true;
+      stampStatus.textContent = texts.deleting;
+
+      let body = null;
+      try {
+        body = await post(row.delete_url, {});
+      } catch (error) {
+        body = null;
+      }
+      if (!body || !body.success) {
+        stampConfirm.disabled = false;
+        stampStatus.textContent =
+          firstError(body && body.errors) ||
+          (body && body.message) ||
+          texts.stampDeleteFailed;
+        return;
+      }
+
+      closeStampDelete();
+      const gridRow = grid.getRow(row.id);
+      if (gridRow) {
+        gridRow.delete();
+      }
+      if (badge) {
+        badge.textContent = String(Math.max(grid.getRows().length, 0));
+      }
+      setStatus(texts.stampDeleted, "ok");
+    };
+
+    deleteStampRow = openStampDelete;
+    stampClose.addEventListener("click", closeStampDelete);
+    stampCancel.addEventListener("click", closeStampDelete);
+    stampConfirm.addEventListener("click", confirmStampDelete);
+    stampPanel.addEventListener("click", (event) => {
+      if (event.target === stampPanel) {
+        closeStampDelete();
+      }
+    });
+    stampPanel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeStampDelete();
       }
     });
 

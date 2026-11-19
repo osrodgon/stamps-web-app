@@ -780,3 +780,35 @@ msgstr "Slash focuses the search, J and K move the selection, Enter opens the se
 #: datadesk/templates/datadesk/lookups.html
 msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
 msgstr "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this stamp"
+msgstr "Delete this stamp"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the stamp"
+msgstr "Delete the stamp"
+
+#: datadesk/views/workspace.py
+msgid "The stamp was deleted."
+msgstr "The stamp was deleted."
+
+#: datadesk/views/workspace.py
+msgid "The stamp was not deleted."
+msgstr "The stamp was not deleted."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series, and its collections go too."
+msgstr "It is the last stamp of the series, and its collections go too."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series: the series is left empty."
+msgstr "It is the last stamp of the series: the series is left empty."
+
+#: datadesk/dependencies.py
+msgid "This stamp is in user collections, which lose it too."
+msgstr "This stamp is in user collections, which lose it too."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds this stamp."
+msgstr "No user collection holds this stamp."

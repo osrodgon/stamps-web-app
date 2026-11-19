@@ -39,7 +39,12 @@ from django.db import models, transaction
 from django.utils.dateparse import parse_date, parse_datetime
 
 from datadesk.audit import new_commit_id, record, snapshot
-from datadesk.dependencies import Dependencies, series_dependencies
+from datadesk.dependencies import (
+    Dependencies,
+    StampDependencies,
+    series_dependencies,
+    stamp_dependencies,
+)
 from datadesk.registry import Lookup, get_lookup
 from datadesk.rules import series_year_bounds
 from datadesk.service import issue_queryset
@@ -208,6 +213,39 @@ class DeletedSeries:
                 "id": self.issue_id,
                 "name": self.name,
                 "year": self.year,
+                **self.dependencies.as_dict(),
+            },
+        }
+
+
+@dataclass(frozen=True)
+class DeletedStamp:
+    """A stamp removed by ``delete_stamp()``.
+
+    Attributes:
+        commit_id: Id of the audit row written.
+        stamp_id: Primary key of the row that no longer exists.
+        name: Its name, so the page can say what went.
+        code: Edifil or Fesofi, whichever it had: the catalogue is how one
+            stamp is told from another.
+        dependencies: Collection items and siblings the deletion found.
+    """
+
+    commit_id: uuid.UUID
+    stamp_id: int
+    name: str
+    code: str
+    dependencies: StampDependencies
+
+    def as_dict(self) -> dict[str, Any]:
+        """Returns the identity that is gone and what went with it."""
+        return {
+            "applied": 1,
+            "rejected": [],
+            "data": {
+                "id": self.stamp_id,
+                "name": self.name,
+                "code": self.code,
                 **self.dependencies.as_dict(),
             },
         }
@@ -492,6 +530,51 @@ def delete_series(pk: int, confirmation: Any, user) -> DeletedSeries:
         issue_id=issue_id,
         name=name,
         year=year,
+        dependencies=dependencies,
+    )
+
+
+def delete_stamp(pk: int, user) -> DeletedStamp:
+    """Deletes one stamp, and whatever the cascade takes with it.
+
+    The series-level deletion has a typed confirmation because a set of stamps is
+    a decision; one row is not, so this one is a dialog with the counts and no
+    secret handshake. The audit writes the full ``before`` snapshot, which is
+    what lets S21 bring the stamp back with its original id and colours — the
+    ``CollectionItem`` rows the cascade removes do not come back, and the dialog
+    says so.
+
+    Args:
+        pk: Primary key of the stamp.
+        user: Actor, stored in the audit trail.
+
+    Returns:
+        What was deleted and what went with it.
+
+    Raises:
+        WriteError: 404 when the stamp does not exist.
+    """
+    commit_id = new_commit_id()
+
+    with transaction.atomic():
+        stamp = Stamp.objects.select_for_update().filter(pk=pk).first()
+        if stamp is None:
+            raise WriteError("The stamp does not exist.", status=404)
+
+        dependencies = stamp_dependencies(stamp)
+        identity = {
+            "id": stamp.pk,
+            "name": stamp.name,
+            "code": stamp.edifil_code or stamp.fesofi_code or "",
+        }
+        record(commit_id, user, stamp, "delete", snapshot(stamp), None)
+        stamp.delete()
+
+    return DeletedStamp(
+        commit_id=commit_id,
+        stamp_id=identity["id"],
+        name=identity["name"],
+        code=identity["code"],
         dependencies=dependencies,
     )
 

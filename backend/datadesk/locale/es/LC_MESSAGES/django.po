@@ -778,3 +778,35 @@ msgstr "La barra diagonal lleva al buscador, J y K mueven la selección, Enter a
 #: datadesk/templates/datadesk/lookups.html
 msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
 msgstr "La barra diagonal lleva al buscador y J y K mueven la selección. Dos filas seleccionadas se pueden fusionar."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this stamp"
+msgstr "Eliminar este sello"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the stamp"
+msgstr "Eliminar el sello"
+
+#: datadesk/views/workspace.py
+msgid "The stamp was deleted."
+msgstr "El sello se ha eliminado."
+
+#: datadesk/views/workspace.py
+msgid "The stamp was not deleted."
+msgstr "El sello no se ha eliminado."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series, and its collections go too."
+msgstr "Es el último sello de la serie y sus colecciones se van con él."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series: the series is left empty."
+msgstr "Es el último sello de la serie: la serie se queda sin sellos."
+
+#: datadesk/dependencies.py
+msgid "This stamp is in user collections, which lose it too."
+msgstr "Este sello está en colecciones de usuario, que lo pierden también."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds this stamp."
+msgstr "Ninguna colección de usuario tiene este sello."

@@ -314,6 +314,47 @@
           </div>
         </div>
       </div>
+
+      {% comment %}
+        One row is not a set, so this dialog has no typed confirmation: it names
+        the stamp and says what the cascade takes. The sentence and the identity
+        come from the preview, which is why the body starts empty.
+      {% endcomment %}
+      <div class="dd-dialog-backdrop" id="stamp-delete-panel" hidden>
+        <div class="dd-dialog" role="dialog" aria-modal="true"
+             aria-labelledby="stamp-delete-title">
+          <div class="dd-review-head">
+            <span class="dd-label" id="stamp-delete-title">
+              {% translate "Delete this stamp" %}
+            </span>
+            <button type="button" class="dd-review-close" id="stamp-delete-close"
+                    aria-label="{% translate 'Close' %}">×</button>
+          </div>
+          <div class="dd-dialog-body">
+            <p class="dd-dialog-warning" id="stamp-delete-warning"></p>
+            <dl class="dd-dialog-counts dd-dialog-counts-pair">
+              <div>
+                <dt>{% translate "Collection items" %}</dt>
+                <dd id="stamp-delete-items">·</dd>
+              </div>
+              <div>
+                <dt>{% translate "User collections" %}</dt>
+                <dd id="stamp-delete-collections">·</dd>
+              </div>
+            </dl>
+            <p class="dd-hint" id="stamp-delete-identity"></p>
+            <p class="dd-hint dd-status-error" id="stamp-delete-status"></p>
+          </div>
+          <div class="dd-dialog-foot">
+            <button type="button" class="dd-btn dd-btn-ghost" id="stamp-delete-cancel">
+              {% translate "Cancel" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-danger" id="stamp-delete-confirm">
+              {% translate "Delete the stamp" %}
+            </button>
+          </div>
+        </div>
+      </div>
     {% endif %}
   </section>
 
