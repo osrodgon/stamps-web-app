@@ -98,7 +98,7 @@ el mockup ya están corregidos con esta decisión.
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | ✅ 2026-11-19 |
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | ✅ 2026-11-19 |
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | ✅ 2026-11-19 |
-| S14 | Change set en cliente + footer + undo | S13 | L | sí | — |
+| S14 | Change set en cliente + footer + undo | S13 | L | sí | ✅ 2026-11-19 |
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | — |
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | — |
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | — |
@@ -1724,9 +1724,69 @@ limpio · `pnpm`-free: `node --check` del JS · catálogos recompilados y
 campos llegan con su valor, el `select` de país marcado, la barra de commit y el
 meta del token presentes.
 
-### ⏭ Siguiente: S14
+### ✅ S14 — Change set en cliente (2026-11-19)
 
-Change set en cliente: estado por objeto con `patch`/`base`/`expected_updated_at`,
-diff contra la base, footer con el resumen, `Ctrl+Z` como registro de operaciones
-y recuperación en `localStorage` (sólo en `mode=edit`).
+Ficheros modificados:
+
+```
+backend/datadesk/views/workspace.py             texts (saving), plurals con ngettext, storageKey,
+                                                schemaVersion, undoLimit; BUFFER_SCHEMA, UNDO_LIMIT
+backend/datadesk/templates/datadesk/issue_workspace.html  contador, Undo/Redo/Discard/Save changes,
+                                                barra de recuperación, aviso de otra pestaña
+backend/datadesk/static/datadesk/issue_workspace.js       buffer por objeto, undo/redo, localStorage,
+                                                recuperación, storage event, Ctrl+Z de mode=new
+backend/datadesk/static/datadesk/datadesk.css             dd-recover, dd-tabnotice, dd-count, :disabled
+backend/datadesk/locale/{en,es}/LC_MESSAGES/django.po     8 textos + 2 entradas plurales
+backend/datadesk/tests/test_workspace_edit.py             5 tests nuevos (plurals, ajustes, pie)
+backend/datadesk/tests/test_workspace_new.py             1 test (new no lleva change set)
+backend/datadesk/tests/test_i18n.py                      el test de catálogo entiende msgstr_plural
+```
+
+Decisiones tomadas al implementar:
+
+- **JS a mano, no Alpine** (se aparta de lo que decía el diseño): el pie son
+  cuatro nodos y un contador, y Alpine habría metido un segundo idioma en un
+  fichero que ya es JS plano, con su paso de compilación en cliente. El estado
+  sigue siendo un `Map` por objeto, que es lo que el diseño pedía; lo que cambia
+  es quién pinta.
+- **Guardar sigue existiendo en este paso** (`Save changes`, `Shift+Enter`):
+  S15 añade el panel de revisión y la confirmación, pero un paso que deja la app
+  sin forma de guardar no es entregable. El commit por lotes ya está hecho
+  (`/apply` acepta N cambios desde S12); S15 le pone delante el diff y la
+  decisión. Con esto, el commit de una fila de S13 queda sustituido: ahora
+  `Shift+Enter` guarda el buffer entero.
+- **El contador cuenta campos, no objetos**: es lo que el panel de S15 va a
+  listar (`stamp:412 → edifil_code`), así que el número del pie y el del panel
+  no pueden discrepar.
+- **Plurales en servidor con `ngettext`**, y el navegador solo sustituye
+  `%(count)s`. Los catálogos ganan dos entradas plurales y el test de i18n
+  aprende a leer `msgstr_plural` (antes habría dado por vacías todas las
+  traducciones plurales).
+- **El borrador nunca se restaura solo** y, mientras la oferta está en pantalla,
+  `persist()` **no lo borra**: sin ese detalle, el guardado diferido de 400 ms
+  habría echado a la basura el draft del día anterior justo al abrir la página.
+- **Granularidad del undo en la franja**: `input` recalcula el diff (contador en
+  vivo) y `change` apunta el paso de deshacer. Un paso por tecla convertiría
+  `Ctrl+Z` en deletrear lo que acabas de escribir.
+- **`Ctrl+Z` es nuestro salvo dentro de los campos de la franja**, donde se deja
+  el undo del navegador; en el grid manda el nuestro, que es donde el usuario
+  espera deshacer una edición.
+- **Descartar revierte los valores, borra el borrador y vacía la pila**: dejar
+  historial después de descartar permitiría "rehacer" un draft que ya no existe.
+- **En `mode=new` no se persiste nada y el undo vive en memoria**, como pedía el
+  diseño: un borrador de serie nueva se termina ahora o se empieza otra vez.
+- **Verificado con un arnés desechable** (`jsdom` + un Tabulator falso, fuera del
+  repo: no hay Node en el proyecto): 33 comprobaciones sobre contador, volver al
+  valor original, undo/redo y truncado del redo, franja, descartar, `storage`,
+  borrador/recuperación y commit. Repetible si otro paso toca este fichero.
+
+Verificado: `pytest datadesk` → **254 en verde**; suite completa **1270 en
+verde** · catálogos recompilados y `--check` en verde · el test de i18n ahora
+valida las formas plurales · 27 comprobaciones del arnés de JS en verde.
+
+### ⏭ Siguiente: S15
+
+Panel de revisión y commit por lotes: lista de cambios agrupada por serie y
+sello con `antes → después`, confirmación explícita, y el post-commit (recarga o
+poda) sobre el buffer de S14.
 

@@ -269,6 +269,15 @@ class TestEditModeIsUnchanged:
         assert "rows" not in config
         assert response.context["form_fields"]
 
+    def test_the_new_series_page_has_no_change_set(self, staff_client, series) -> None:
+        response = staff_client.get(NEW_URL)
+        config = config_of(response)
+
+        assert "recovery-bar" not in response.content.decode()
+        assert "undo-button" not in response.content.decode()
+        assert "storageKey" not in config
+        assert "plurals" not in config
+
     def test_the_detail_page_has_no_new_series_controls(
         self, staff_client, series
     ) -> None:

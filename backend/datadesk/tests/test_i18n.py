@@ -112,7 +112,26 @@ class TestCatalogs:
         catalog = polib.pofile(str(path / "django.po"))
 
         assert len(catalog) > 0
-        assert [entry.msgid for entry in catalog if not entry.msgstr] == []
+
+        def untranslated(entry) -> bool:
+            """A plural entry keeps its forms in ``msgstr_plural``, not ``msgstr``."""
+            if entry.msgid_plural:
+                return any(not form for form in entry.msgstr_plural.values())
+            return not entry.msgstr
+
+        assert [entry.msgid for entry in catalog if untranslated(entry)] == []
+
+    @pytest.mark.parametrize("language", ["en", "es"])
+    def test_every_plural_has_the_forms_the_language_needs(self, language: str) -> None:
+        """Both catalogs declare two forms; a plural entry must fill both."""
+        import polib
+
+        path = settings.BASE_DIR / "datadesk" / "locale" / language / "LC_MESSAGES"
+        catalog = polib.pofile(str(path / "django.po"))
+
+        for entry in catalog:
+            if entry.msgid_plural:
+                assert set(entry.msgstr_plural) == {0, 1}
 
     def test_check_notices_an_uncompiled_translation(self, tmp_path: Path) -> None:
         """A translation edited in the .po is stale until the .mo is rebuilt."""

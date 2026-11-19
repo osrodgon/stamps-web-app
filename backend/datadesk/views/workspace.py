@@ -12,6 +12,7 @@ from django.db.models import QuerySet
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from django.views.generic import DetailView, TemplateView
 
 from datadesk.mixins import DataDeskAccessMixin
@@ -126,6 +127,17 @@ series' numbers into another.
 DEFAULT_NEW_ROWS = 4
 MIN_NEW_ROWS = 1
 MAX_NEW_ROWS = 100
+BUFFER_SCHEMA = 1
+"""Version of the draft a browser may keep for a series.
+
+A change in shape (a field renamed, a new piece of state) bumps this: the old
+draft is discarded with a notice instead of being restored into code that no
+longer understands it.
+"""
+
+UNDO_LIMIT = 200
+"""How many edits the browser keeps for Ctrl+Z. Beyond this the oldest goes."""
+
 NEW_ROW_PREFIX = "new-"
 """Rows of ``mode=new`` exist only in the browser, so their ids are made up.
 
@@ -343,11 +355,22 @@ def workspace_config(
         }
         config["texts"] = {
             "saved": str(_("Saved")),
-            "unsaved": str(_("Edited, not saved yet.")),
             "rejected": str(_("The change was refused.")),
             "noChanges": str(_("Nothing changed.")),
-            "seriesSaved": str(_("Series saved.")),
+            "saving": str(_("Saving…")),
         }
+        # The plural rules stay on the server: the browser only substitutes the
+        # number into the form it was given, so Spanish and English keep their
+        # own agreement.
+        config["plurals"] = {
+            "changes": _plural_forms("%(count)s change", "%(count)s changes"),
+            "recover": _plural_forms(
+                "%(count)s saved change", "%(count)s saved changes"
+            ),
+        }
+        config["storageKey"] = f"datadesk:buffer:edit:{series.pk}"
+        config["schemaVersion"] = BUFFER_SCHEMA
+        config["undoLimit"] = UNDO_LIMIT
 
     if mode == "new":
         config.update(
@@ -359,6 +382,15 @@ def workspace_config(
             prefill=prefill,
         )
     return config
+
+
+def _plural_forms(one: str, other: str) -> dict[str, str]:
+    """Returns the two translated templates the script fills with the number.
+
+    ``ngettext`` resolves which form belongs to each count, so the browser does
+    not need a plural rule; it only replaces ``%(count)s``.
+    """
+    return {"one": str(ngettext(one, other, 1)), "other": str(ngettext(one, other, 2))}
 
 
 def _amount(value: Any) -> str:

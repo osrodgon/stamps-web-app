@@ -287,10 +287,6 @@ msgid "Saved"
 msgstr "Saved"
 
 #: datadesk/views/workspace.py
-msgid "Edited, not saved yet."
-msgstr "Edited, not saved yet."
-
-#: datadesk/views/workspace.py
 msgid "The change was refused."
 msgstr "The change was refused."
 
@@ -299,13 +295,47 @@ msgid "Nothing changed."
 msgstr "Nothing changed."
 
 #: datadesk/views/workspace.py
-msgid "Series saved."
-msgstr "Series saved."
+msgid "Saving…"
+msgstr "Saving…"
 
 #: datadesk/templates/datadesk/issue_workspace.html
-msgid "Shift+Enter saves the row you are editing."
-msgstr "Shift+Enter saves the row you are editing."
+msgid "Recover"
+msgstr "Recover"
 
 #: datadesk/templates/datadesk/issue_workspace.html
-msgid "Save"
-msgstr "Save"
+msgid "Discard"
+msgstr "Discard"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Undo"
+msgstr "Undo"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Redo"
+msgstr "Redo"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Save changes"
+msgstr "Save changes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter saves the pending changes."
+msgstr "Shift+Enter saves the pending changes."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Another tab has changes on this series."
+msgstr "Another tab has changes on this series."
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "%(count)s change"
+msgid_plural "%(count)s changes"
+msgstr[0] "%(count)s change"
+msgstr[1] "%(count)s changes"
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "%(count)s saved change"
+msgid_plural "%(count)s saved changes"
+msgstr[0] "%(count)s saved change"
+msgstr[1] "%(count)s saved changes"

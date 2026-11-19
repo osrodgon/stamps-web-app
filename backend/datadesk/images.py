@@ -98,14 +98,27 @@ def image_path(
 
 
 def _scan(root: Path) -> ImageIndex:
-    """Walks the tree once and returns the pairs that exist."""
+    """Walks the tree once and returns the pairs that exist.
+
+    An empty folder is warned about as well as a missing one: a bind mount whose
+    host path does not exist is silently created as an empty directory, and the
+    only symptom is every thumbnail falling back to the placeholder. The message
+    says where to look instead of leaving the cause to a guess.
+    """
     if not root.is_dir():
         logger.warning("DataDesk stamp images folder not found: %s", root)
         return frozenset()
 
-    return frozenset(
+    found = frozenset(
         (folder.name, picture.stem)
         for folder in root.iterdir()
         if folder.is_dir()
         for picture in folder.glob(f"*{IMAGE_SUFFIX}")
     )
+    if not found:
+        logger.warning(
+            "DataDesk stamp images folder is empty: %s (a bind mount whose host "
+            "path does not exist is created empty, with no error)",
+            root,
+        )
+    return found

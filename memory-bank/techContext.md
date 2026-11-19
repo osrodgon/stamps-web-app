@@ -77,7 +77,17 @@ backend/
   `stamps-network`, which is what `runArgs`/`initializeCommand` already rely on.
   Consequences: containers are **siblings** on the host (reach them by service
   name on `stamps-network`, never `localhost`; published ports land on the host),
-  and bind mounts in compose files resolve against **host** paths.
+  and bind mounts in compose files resolve against **host** paths. The workspace
+  is mounted at a different path there (`/home/<user>/Development/stamps-web-app`
+  vs `/workspaces/stamps-web-app`), so a relative bind source such as
+  `../frontend/assets/stamps` does **not** exist on the host and Docker silently
+  creates an **empty directory**: the stamp pictures then never appear and the
+  only symptom is every thumbnail showing `no_stamp.webp`. `stamps.sh` derives
+  the host path with
+  `docker inspect --format '{{range .Mounts}}{{.Destination}}...'` on its own
+  container and exports `STAMP_IMAGES_DIR`, which is what
+  `backend/docker-compose.dev.yml` interpolates; an explicit `STAMP_IMAGES_DIR`
+  overrides it. `images._scan()` warns when the folder exists but is empty.
   `devcontainer-lock.json` pins the feature digest — regenerate it on feature bumps.
   `stamps.sh`'s socket guard follows `DOCKER_HOST` (falling back to
   `/var/run/docker.sock`) and only re-execs through `sg docker` when the socket

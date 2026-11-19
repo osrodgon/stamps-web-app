@@ -13,9 +13,12 @@ services:
     #   - ./backend:/usr/src/app:delegated
     # Stamp pictures: the same folder the frontend mounts, read-only here so
     # DataDesk can show thumbnails without importing anything into the database.
+    # The source is a *host* path (the dev container shares the host daemon and
+    # the workspace lives elsewhere there), so `stamps.sh` exports it; the
+    # default is right when the container runs its own engine.
     volumes:
       - type: bind
-        source: ../frontend/assets/stamps
+        source: ${STAMP_IMAGES_DIR:-../frontend/assets/stamps}
         target: /srv/stamp-images
         read_only: true
     # Use the Django dev server

@@ -158,13 +158,33 @@ class TestTheSeriesStripIsAForm:
     def test_the_commit_texts_come_from_the_server(self, staff_client, issue) -> None:
         texts = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["texts"]
 
-        assert set(texts) == {
-            "saved",
-            "unsaved",
-            "rejected",
-            "noChanges",
-            "seriesSaved",
+        assert set(texts) == {"saved", "rejected", "noChanges", "saving"}
+
+    def test_the_plurals_are_resolved_by_the_server(self, staff_client, issue) -> None:
+        plurals = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["plurals"]
+
+        assert plurals["changes"] == {
+            "one": "%(count)s change",
+            "other": "%(count)s changes",
         }
+        assert set(plurals) == {"changes", "recover"}
+
+    def test_the_plurals_follow_the_language(self, staff_client, issue) -> None:
+        staff_client.cookies["django_language"] = "es"
+
+        plurals = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["plurals"]
+
+        assert plurals["changes"] == {
+            "one": "%(count)s cambio",
+            "other": "%(count)s cambios",
+        }
+
+    def test_the_config_carries_the_draft_settings(self, staff_client, issue) -> None:
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["storageKey"] == f"datadesk:buffer:edit:{issue.pk}"
+        assert config["schemaVersion"] == 1
+        assert config["undoLimit"] == 200
 
     def test_the_page_offers_the_shortcut_and_the_button(
         self, staff_client, issue
@@ -174,6 +194,30 @@ class TestTheSeriesStripIsAForm:
         assert 'id="commit-status"' in content
         assert 'id="commit-button"' in content
         assert 'name="csrf-token"' in content
+
+    def test_the_footer_carries_the_change_set_controls(
+        self, staff_client, issue
+    ) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        for element in (
+            "change-count",
+            "undo-button",
+            "redo-button",
+            "discard-button",
+            "recovery-bar",
+            "recover-button",
+            "recovery-discard",
+            "tab-notice",
+        ):
+            assert f'id="{element}"' in content
+
+    def test_the_controls_start_disabled(self, staff_client, issue) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        for element in ("commit-button", "discard-button", "undo-button"):
+            marker = content.split(f'id="{element}"')[1].split(">")[0]
+            assert "disabled" in marker
 
 
 @pytest.mark.django_db

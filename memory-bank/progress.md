@@ -146,8 +146,24 @@
       green. **Fix from the first real use**: Save answered "nothing changed"
       on the strip because the click moved the focus out of the form before the
       target was decided; the target now falls back to "the strip is dirty" and
-      the strip reports its unsaved state while typing. Next: S14 (client
-      change set)
+      the strip reports its unsaved state while typing.
+- [x] **S14 — Client change set, footer, undo, draft recovery** (2026-11-19):
+      edits accumulate in the browser instead of being sent one row at a time:
+      one entry per object with `patch`/`base`/`expected_updated_at`, the diff
+      recomputed against the value the page loaded, and an entry that disappears
+      when a field returns to its original value. Footer with the count (fields,
+      not objects), Undo/Redo/Discard/Save changes, `Shift+Enter` commits the
+      buffer. Undo/redo is a log of values (200 ops) with redo truncated on a
+      new edit; `Ctrl+Z` yields to the browser inside the strip's text fields.
+      Draft in `localStorage` (`datadesk:buffer:edit:<id>`, `schemaVersion`,
+      400 ms debounce), offered on return and never auto-restored; `mode=new`
+      persists nothing and keeps its undo in memory. A `storage` event shows the
+      "another tab" banner without blocking. Plurals resolved server-side with
+      `ngettext`. Kept a batch "Save changes" because a step must leave the app
+      usable: S15 puts the review panel in front of it. Supersedes S13's
+      single-row commit. 9 tests added; 254 datadesk and 1270 backend tests
+      green, plus a throwaway jsdom harness (33 checks) for the browser logic.
+      Next: S15 (review panel + batch commit)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -207,6 +223,26 @@
 - [x] The hand-made `/etc/docker/daemon.json` (vfs) disappears with the container and
       is no longer needed. Rebuild is required so the feature mounts the host socket;
       the CLI then refreshes `devcontainer-lock.json` with the new digest (commit it).
+
+### Devcontainer — stamp pictures were an empty mount (2026-11-19)
+
+- [x] Every thumbnail showed `no_stamp.webp` after the container rebuild. Cause:
+      with docker-outside-of-docker a bind source is resolved on the **host**, and
+      the workspace lives there at `/home/oscarro/Development/stamps-web-app`
+      while inside the devcontainer it is `/workspaces/stamps-web-app`. The
+      relative source `../frontend/assets/stamps` did not exist on the host, so
+      Docker created an **empty directory** with no error and the image index came
+      back empty. Nothing to do with S13/S14.
+- [x] `backend/docker-compose.dev.yml` interpolates
+      `${STAMP_IMAGES_DIR:-../frontend/assets/stamps}` and `stamps.sh` exports the
+      host path, derived by asking docker where its own container mounts the
+      project root (skipped when the paths match, and an explicit
+      `STAMP_IMAGES_DIR` wins). Documented in `backend/.env.example`.
+- [x] `images._scan()` now warns when the folder exists but is empty, naming the
+      silent-empty-mount cause instead of leaving it to a guess. One test.
+- [x] Verified in the running container: mount source is the host path, 6.625
+      picture pairs indexed, 1.177 of 9.558 stamps without a picture (the 88%
+      coverage from S10b). 1271 backend tests green.
 
 ### Devcontainer — OpenCode 2 in `setup.sh` (2026-11-19)
 

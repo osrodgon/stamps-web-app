@@ -88,6 +88,12 @@
       </div>
     </div>
 
+    {% if mode == "edit" %}
+      <div class="dd-tabnotice" id="tab-notice" hidden>
+        {% translate "Another tab has changes on this series." %}
+      </div>
+    {% endif %}
+
     <div class="dd-gridwrap">
       <div class="dd-grid-head">
         <span class="dd-label">{% translate "Stamps" %}</span>
@@ -115,13 +121,35 @@
         </span>
       </div>
     {% else %}
+      <div class="dd-recover" id="recovery-bar" hidden>
+        <span class="dd-recover-text" id="recovery-text"></span>
+        <span class="dd-right">
+          <button type="button" class="dd-btn dd-btn-dark" id="recover-button">
+            {% translate "Recover" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-ghost" id="recovery-discard">
+            {% translate "Discard" %}
+          </button>
+        </span>
+      </div>
+
       <div class="dd-commitbar">
+        <span class="dd-count" id="change-count"></span>
         <span class="dd-hint" id="commit-status">
-          {% translate "Shift+Enter saves the row you are editing." %}
+          {% translate "Shift+Enter saves the pending changes." %}
         </span>
         <span class="dd-hint dd-right">
-          <button type="button" class="dd-btn dd-btn-dark" id="commit-button">
-            {% translate "Save" %}
+          <button type="button" class="dd-btn dd-btn-ghost" id="undo-button" disabled>
+            {% translate "Undo" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-ghost" id="redo-button" disabled>
+            {% translate "Redo" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-ghost" id="discard-button" disabled>
+            {% translate "Discard" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-dark" id="commit-button" disabled>
+            {% translate "Save changes" %}
           </button>
         </span>
       </div>

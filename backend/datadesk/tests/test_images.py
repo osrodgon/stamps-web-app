@@ -92,6 +92,20 @@ class TestImageResolution:
         assert image_path(1987, "1234") is None
 
     @pytest.mark.django_db
+    def test_an_empty_folder_is_reported(self, tmp_path, settings, caplog) -> None:
+        """A bind mount with a host path that does not exist is created empty."""
+        empty = tmp_path / "images"
+        empty.mkdir()
+        settings.DATADESK_STAMP_IMAGES = empty
+        cache.clear()
+
+        with caplog.at_level("WARNING"):
+            assert image_index() == set()
+
+        assert "is empty" in caplog.text
+        assert str(empty) in caplog.text
+
+    @pytest.mark.django_db
     def test_a_new_file_appears_after_the_cache_expires(self, pictures) -> None:
         assert image_path(1987, "1234") is not None  # warms the cached listing
 
