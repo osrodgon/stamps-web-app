@@ -97,7 +97,7 @@ el mockup ya están corregidos con esta decisión.
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | ✅ 2026-11-18 |
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | ✅ 2026-11-19 |
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | ✅ 2026-11-19 |
-| S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | — |
+| S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | ✅ 2026-11-19 |
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | — |
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | — |
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | — |
@@ -1645,9 +1645,88 @@ completa **1250 en verde** · `manage.py check` limpio · `spectacular` con **0*
 referencias a `datadesk` · `datadesk_make_messages --check` sin cambios (S12 no
 añade cadenas al catálogo).
 
-### ⏭ Siguiente: S13
+### ✅ S13 — Commit de una fila desde el grid (2026-11-19, segundo hito)
 
-Commit de una fila desde el grid: edición inline con Tabulator, `Shift+Enter`
-construye un change set de una fila y llama a `/datadesk/apply`; error del
-servidor → se revierte el valor y se marca la fila.
+Ficheros nuevos:
+
+```
+backend/datadesk/tests/test_workspace_edit.py  14 tests (baseline, columnas, strip, ida y vuelta)
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/service.py                 serialize_stamp() añade updated_at (dato de fila, no columna)
+backend/datadesk/write.py                   ApplyResult.rows → data.rows [{index, id, updated_at}]
+backend/datadesk/views/workspace.py         STAMP_COLUMNS con patch/editor; series_values();
+                                            workspace_config(series=…) con applyUrl, series y texts;
+                                            fuera issue_metadata(), _display() y _name_of()
+backend/datadesk/templates/datadesk/issue_workspace.html  un solo formulario para los dos modos,
+                                            barra de commit del modo edit
+backend/datadesk/templates/datadesk/base.html              <meta name="csrf-token">
+backend/datadesk/static/datadesk/issue_workspace.js        editMode(): editores, Shift+Enter, Save,
+                                            estados de fila y mensajes del servidor
+backend/datadesk/static/datadesk/datadesk.css              dd-row-dirty/saved/error, dd-status-*
+backend/datadesk/locale/{en,es}/LC_MESSAGES/django.po     5 textos de la barra + 2 de la plantilla
+backend/datadesk/tests/test_workspace.py                   el test de herencia mira `form_fields`
+```
+
+Decisiones tomadas al implementar:
+
+- **La franja de la serie pasa a ser un formulario** y comparte las definiciones
+  de S11 (`SERIES_FIELDS` + `series_form_fields`), así que escribir una serie y
+  corregirla usan los mismos quince campos y las mismas listas de opciones. Por
+  eso desaparecen `issue_metadata()`, `_display()`, `_name_of()` y los tests de
+  formato por idioma: **la franja ya no formatea números ni fechas con la
+  locale**, los muestra como los manda el campo (`1.20`, `1987-05-12`), que es lo
+  que un `input` necesita. Si se echa de menos la lectura formateada, el sitio es
+  S22 (vista de sólo lectura), no un formato a medias aquí.
+- **`updated_at` viaja como dato de fila, no como columna**: el grid lo necesita
+  para el `expected_updated_at`, pero nadie lo lee. `serialize_stamp()` lo añade
+  y `STAMP_COLUMNS` no lo declara, así que no hay celda que lo muestre.
+- **`/apply` devuelve la referencia de cada fila escrita** (`data.rows` con
+  `index`, `id` y `updated_at`). Sin eso el cliente no tiene la nueva línea base
+  y la segunda edición de la misma fila se rechazaría como pisada. Es un cambio
+  mínimo del contrato de S12, no un endpoint nuevo.
+- **`patch` en la definición de columna**: la presencia de `patch` (el campo del
+  modelo) es lo que decide si la celda tiene editor; `colors` y `has_image` no lo
+  llevan y quedan de sólo lectura. El script no conoce ningún nombre de campo.
+- **El editor abierto se cierra antes de leer**: `Shift+Enter` hace `blur()`
+  primero, porque Tabulator escribe el valor tecleado en la fila al perder el
+  foco y comitear antes mandaría el valor viejo. La alternativa (cancelar el
+  evento y leer el DOM del editor) es código que Tabulator ya tiene resuelto.
+- **Al rechazar, la celda se revierte y la franja no**: un valor suelto se
+  vuelve a teclear en dos segundos, pero borrar medio formulario que el usuario
+  acaba de rellenar es peor que el error. La fila se queda marcada en rojo con el
+  mensaje del servidor y la franja conserva lo tecleado.
+- **`Esc` deja de navegar si el foco está en un campo**: con la franja editable,
+  el primer `Esc` pertenece al control (hace `blur`), no a "volver al workbench".
+- **Mensajes de la barra desde el servidor** (`config.texts`), como los títulos de
+  columna: el JS sigue sin texto de interfaz. Los textos de los errores son los
+  que devuelve `/apply` (DRF incluido), en inglés hasta S16.
+- **`<meta name="csrf-token">` en `base.html`**: `fetch` no pasa por HTMX ni por
+  un `<form>`, y leer la cookie obligaría a depender de que no sea `HttpOnly`.
+- **Barra de estado y botón Save**: el atajo es el camino corto, pero una acción
+  que sólo existe en un atajo no se descubre. El botón llama a la misma función.
+- **El objetivo del commit se decide por el foco *y* por lo que está sucio**
+  (corregido el 2026-11-19 al primer uso real): pulsar el botón mueve el foco
+  fuera del campo —el botón no está dentro de `#series-form`—, así que mirar solo
+  el foco hacía que Save respondiera «no ha cambiado nada» con la franja llena de
+  cambios. Ahora: foco en la franja y sucia → serie; si no, la fila pendiente; si
+  no hay fila, la serie sucia. Y la franja avisa al teclear («Edited, not saved
+  yet.»), que era la otra mitad del problema: no había señal de que hubiera algo
+  por guardar.
+
+Verificado: `pytest datadesk` → **246 en verde** (234 previos + 14 nuevos − 2 de
+formato que ya no aplican); suite completa **1262 en verde** · `manage.py check`
+limpio · `pnpm`-free: `node --check` del JS · catálogos recompilados y
+`datadesk_make_messages --check` en verde · HTML comprobado a mano: los quince
+campos llegan con su valor, el `select` de país marcado, la barra de commit y el
+meta del token presentes.
+
+### ⏭ Siguiente: S14
+
+Change set en cliente: estado por objeto con `patch`/`base`/`expected_updated_at`,
+diff contra la base, footer con el resumen, `Ctrl+Z` como registro de operaciones
+y recuperación en `localStorage` (sólo en `mode=edit`).
 

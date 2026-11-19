@@ -267,7 +267,7 @@ class TestEditModeIsUnchanged:
         assert response.context["mode"] == "edit"
         assert config["mode"] == "edit"
         assert "rows" not in config
-        assert response.context["metadata"]
+        assert response.context["form_fields"]
 
     def test_the_detail_page_has_no_new_series_controls(
         self, staff_client, series

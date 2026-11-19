@@ -3,6 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% comment %}
+    The page scripts write JSON with fetch, which does not go through HTMX or a
+    <form>, so the token needs a place they can read without parsing a cookie.
+  {% endcomment %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}DataDesk{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'datadesk/vendor/tabulator.min.css' %}">
   <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}">

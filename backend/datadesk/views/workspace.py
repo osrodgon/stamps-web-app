@@ -11,7 +11,6 @@ from typing import Any
 from django.db.models import QuerySet
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils.formats import date_format, number_format
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
 
@@ -22,25 +21,55 @@ from datadesk.service import Issue, issue_queryset, stamp_rows
 from years_api.models import Year
 
 STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
-    {"field": "edifil", "title": _("Edifil"), "width": 90, "mono": True},
-    {"field": "fesofi", "title": _("Fesofi"), "width": 90, "mono": True},
-    {"field": "name", "title": _("Name")},
-    {"field": "face_value", "title": _("Face value"), "width": 110},
+    {
+        "field": "edifil",
+        "patch": "edifil_code",
+        "title": _("Edifil"),
+        "width": 90,
+        "mono": True,
+    },
+    {
+        "field": "fesofi",
+        "patch": "fesofi_code",
+        "title": _("Fesofi"),
+        "width": 90,
+        "mono": True,
+    },
+    {"field": "name", "patch": "name", "title": _("Name")},
+    {"field": "face_value", "patch": "face_value", "title": _("Face value"),
+     "width": 110},
     {"field": "colors", "title": _("Colors"), "width": 220},
     {
         "field": "total_printed",
+        "patch": "total_printed",
+        "editor": "number",
         "title": _("Total printed"),
         "align": "right",
     },
-    {"field": "mnh", "title": _("MNH"), "align": "right", "width": 90},
-    {"field": "used", "title": _("Used"), "align": "right", "width": 90},
+    {
+        "field": "mnh",
+        "patch": "market_value_mnh",
+        "title": _("MNH"),
+        "align": "right",
+        "width": 90,
+    },
+    {
+        "field": "used",
+        "patch": "market_value_used",
+        "title": _("Used"),
+        "align": "right",
+        "width": 90,
+    },
     {"field": "has_image", "title": _("Image"), "align": "center", "width": 64},
 )
 """The stamp's own columns.
 
 Only fields a stamp stores: the eight series attributes (country, year, stamp
 type, print type, printer, artist, paper type, perforation) are shown once, in
-the strip above, and never repeated per row.
+the strip above, and never repeated per row. ``patch`` is the model field the
+column writes when it is edited and the key the change is sent with; a column
+without it is read-only (colours are a multi-select, the picture is served from
+the frontend's tree).
 """
 
 SERIES_FIELDS: tuple[dict[str, Any], ...] = (
@@ -123,11 +152,10 @@ class IssueWorkspaceView(DataDeskAccessMixin, DetailView):
 
         context.update(
             mode="edit",
-            metadata=issue_metadata(issue),
             stamp_count=len(rows),
             prefill=None,
-            form_fields=[],
-            config=workspace_config(rows),
+            form_fields=series_form_fields(series_values(issue)),
+            config=workspace_config(rows, series=issue),
         )
         return context
 
@@ -242,44 +270,38 @@ class NewRowSettings:
         return {"default": self.default, "min": self.min, "max": self.max}
 
 
-def issue_metadata(issue: Issue) -> list[dict[str, Any]]:
-    """Returns the strip above the grid, already formatted for the language.
+def series_values(issue: Issue) -> dict[str, Any]:
+    """Returns the current value of every series field, as the form shows it.
 
-    The strip is the only place the series values appear: the eight series
-    attributes are not repeated per row, and nothing is inherited by a stamp.
+    The strip and the new-series form read the same definitions, so the two
+    screens cannot disagree on a field name, a kind or an option list. Empty
+    means empty: a cleared date travels as ``""`` and the writer turns it into
+    ``NULL``, because that is what the form sends when a field is erased.
     """
-    return [
-        {"label": _("Year"), "value": _display(issue.year.year)},
-        {"label": _("Date"), "value": _display(issue.date, "date")},
-        {"label": _("Name"), "value": _display(issue.name), "wide": True},
-        {"label": _("Country"), "value": _display(_name_of(issue.country))},
-        {"label": _("Stamp type"), "value": _display(_name_of(issue.stamp_type))},
-        {"label": _("Print type"), "value": _display(_name_of(issue.print_type))},
-        {"label": _("Printer"), "value": _display(_name_of(issue.printer))},
-        {"label": _("Artist"), "value": _display(_name_of(issue.artist))},
-        {"label": _("Paper type"), "value": _display(_name_of(issue.paper_type))},
-        {"label": _("Perforation"), "value": _display(issue.perforation)},
-        {
-            "label": _("Total printed"),
-            "value": _display(issue.total_printed, "count"),
-        },
-        {
-            "label": _("Market value MNH"),
-            "value": _display(issue.market_value_mnh, "money"),
-        },
-        {
-            "label": _("Market value used"),
-            "value": _display(issue.market_value_used, "money"),
-        },
-        {"label": _("Description"), "value": _display(issue.description), "wide": True},
-        {"label": _("Note"), "value": _display(issue.note), "wide": True},
-    ]
+    return {
+        "year": issue.year.year,
+        "date": issue.date.isoformat() if issue.date else "",
+        "name": issue.name,
+        "country": issue.country_id or "",
+        "stamp_type": issue.stamp_type_id or "",
+        "print_type": issue.print_type_id or "",
+        "printer": issue.printer_id or "",
+        "artist": issue.artist_id or "",
+        "paper_type": issue.paper_type_id or "",
+        "perforation": issue.perforation or "",
+        "total_printed": issue.total_printed if issue.total_printed else "",
+        "market_value_mnh": _amount(issue.market_value_mnh),
+        "market_value_used": _amount(issue.market_value_used),
+        "description": issue.description or "",
+        "note": issue.note or "",
+    }
 
 
 def workspace_config(
     rows: list[dict[str, Any]],
     mode: str = "edit",
     prefill: dict[str, Any] | None = None,
+    series: Issue | None = None,
 ) -> dict[str, Any]:
     """Returns what the JavaScript needs to build the stamp grid.
 
@@ -289,7 +311,9 @@ def workspace_config(
     so the grid never builds one.
 
     ``mode=new`` adds the three element ids and the row bounds the script needs:
-    it reads them instead of hardcoding names the template owns.
+    it reads them instead of hardcoding names the template owns. ``mode=edit``
+    adds the baseline of the series row and the texts the commit bar shows, so
+    the script still holds no interface text.
     """
     for row in rows:
         row["image_url"] = (
@@ -310,6 +334,20 @@ def workspace_config(
     config["emptyText"] = str(
         _("No stamp rows yet.") if mode == "new" else _("No stamps in this issue.")
     )
+    config["applyUrl"] = reverse("datadesk:apply")
+
+    if mode == "edit" and series is not None:
+        config["series"] = {
+            "id": series.pk,
+            "updated_at": series.updated_at.isoformat() if series.updated_at else None,
+        }
+        config["texts"] = {
+            "saved": str(_("Saved")),
+            "unsaved": str(_("Edited, not saved yet.")),
+            "rejected": str(_("The change was refused.")),
+            "noChanges": str(_("Nothing changed.")),
+            "seriesSaved": str(_("Series saved.")),
+        }
 
     if mode == "new":
         config.update(
@@ -323,24 +361,6 @@ def workspace_config(
     return config
 
 
-def _name_of(related: Any) -> str | None:
-    """Returns the name of a lookup, or ``None`` when the FK is empty."""
-    return related.name if related else None
-
-
-def _display(value: Any, kind: str = "text") -> str:
-    """Formats a value for the strip, following the active language.
-
-    ``count`` adds the thousand separator and ``money`` also fixes two
-    decimals; both read the locale, so Spanish gets ``500.000`` and English
-    ``500,000``. A missing value is a dash, never an empty cell.
-    """
-    if value is None or value == "":
-        return "—"
-    if kind == "date":
-        return date_format(value, "SHORT_DATE_FORMAT")
-    if kind == "money":
-        return f"{number_format(value, 2, force_grouping=True)} €"
-    if kind == "count":
-        return number_format(value, force_grouping=True)
-    return str(value)
+def _amount(value: Any) -> str:
+    """Returns a decimal as the string the form shows, or ``""`` when unset."""
+    return "" if value is None else str(value)

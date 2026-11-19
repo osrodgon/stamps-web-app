@@ -248,10 +248,6 @@ msgstr "Volver al banco de series"
 
 
 
-#: datadesk/templates/datadesk/issue_workspace.html
-msgid "as stored · series values describe the whole set, stamp values the stamp"
-msgstr "tal como está guardado · los valores de la serie describen el conjunto y los del sello, el sello"
-
 #: datadesk/views/workspace.py
 msgid "No stamp rows yet."
 msgstr "Aún no hay filas de sellos."
@@ -283,3 +279,31 @@ msgstr "Mayús+Intro todavía no guarda."
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "This year does not exist yet: it will be created when the series is saved."
 msgstr "Este año todavía no existe: se creará al guardar la serie."
+
+#: datadesk/views/workspace.py
+msgid "Saved"
+msgstr "Guardado"
+
+#: datadesk/views/workspace.py
+msgid "Edited, not saved yet."
+msgstr "Editado, sin guardar todavía."
+
+#: datadesk/views/workspace.py
+msgid "The change was refused."
+msgstr "El cambio se ha rechazado."
+
+#: datadesk/views/workspace.py
+msgid "Nothing changed."
+msgstr "No ha cambiado nada."
+
+#: datadesk/views/workspace.py
+msgid "Series saved."
+msgstr "Serie guardada."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter saves the row you are editing."
+msgstr "Mayús+Intro guarda la fila que estás editando."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Save"
+msgstr "Guardar"

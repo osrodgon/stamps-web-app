@@ -111,11 +111,14 @@ class ApplyResult:
         commit_id: Id shared by every audit row written.
         applied: Rows written.
         rejected: ``{"index", "errors"}`` per refused row, in request order.
+        rows: ``{"index", "id", "updated_at"}`` per written row, so the client
+            can keep editing without reloading.
     """
 
     commit_id: uuid.UUID
     applied: int = 0
     rejected: list[dict[str, Any]] = field(default_factory=list)
+    rows: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def success(self) -> bool:
@@ -124,7 +127,11 @@ class ApplyResult:
 
     def as_dict(self) -> dict[str, Any]:
         """Returns the keys this operation adds to the response envelope."""
-        return {"applied": self.applied, "rejected": self.rejected}
+        return {
+            "applied": self.applied,
+            "rejected": self.rejected,
+            "data": {"rows": self.rows},
+        }
 
 
 @dataclass(frozen=True)
@@ -227,18 +234,22 @@ def apply_changes(changes: Any, user) -> ApplyResult:
     commit_id = new_commit_id()
     applied = 0
     rejected: list[dict[str, Any]] = []
+    written: list[dict[str, Any]] = []
 
     with transaction.atomic():
         for index, change in enumerate(rows):
             try:
                 with transaction.atomic():
-                    _apply_row(change, commit_id, user)
+                    obj = _apply_row(change, commit_id, user)
             except RowRejected as rejection:
                 rejected.append({"index": index, "errors": rejection.errors})
             else:
                 applied += 1
+                written.append({"index": index, **row_ref(obj)})
 
-    return ApplyResult(commit_id=commit_id, applied=applied, rejected=rejected)
+    return ApplyResult(
+        commit_id=commit_id, applied=applied, rejected=rejected, rows=written
+    )
 
 
 def create_lookup(key: str, value: Any, user) -> LookupResult:
@@ -462,7 +473,9 @@ def _check_batch(changes: Any) -> list[dict[str, Any]]:
     return changes
 
 
-def _apply_row(change: dict[str, Any], commit_id: uuid.UUID, user) -> None:
+def _apply_row(
+    change: dict[str, Any], commit_id: uuid.UUID, user
+) -> models.Model:
     """Applies one change inside its savepoint, or raises ``RowRejected``."""
     model = MODEL_ALIASES[change["model"]]
     patch = _prepare_patch(model, dict(change.get("patch") or {}))
@@ -470,9 +483,8 @@ def _apply_row(change: dict[str, Any], commit_id: uuid.UUID, user) -> None:
     colors = _colors_of(model, patch)
 
     if change["op"] == "create":
-        _insert_row(model, patch, colors, commit_id, user)
-    else:
-        _update_row(model, change, patch, colors, commit_id, user)
+        return _insert_row(model, patch, colors, commit_id, user)
+    return _update_row(model, change, patch, colors, commit_id, user)
 
 
 def _serializer(model: type[models.Model], *args, **kwargs):
@@ -522,7 +534,7 @@ def _insert_row(
     colors: list[Color] | None,
     commit_id: uuid.UUID,
     user,
-) -> None:
+) -> models.Model:
     """Creates one row of the batch, with its audit entry."""
     serializer = _serializer(model, data=patch)
     if not serializer.is_valid():
@@ -532,6 +544,7 @@ def _insert_row(
     if colors is not None:
         obj.colors.set(colors)
     record(commit_id, user, obj, "create", None, snapshot(obj))
+    return obj
 
 
 def _update_row(
@@ -541,7 +554,7 @@ def _update_row(
     colors: list[Color] | None,
     commit_id: uuid.UUID,
     user,
-) -> None:
+) -> models.Model:
     """Updates one row of the batch, with its audit entry and conflict check."""
     obj = model.objects.select_for_update().filter(pk=_object_id(change)).first()
     if obj is None:
@@ -560,6 +573,7 @@ def _update_row(
     if colors is not None:
         obj.colors.set(colors)
     record(commit_id, user, obj, "update", before, snapshot(obj))
+    return obj
 
 
 def _object_id(change: dict[str, Any]) -> int:

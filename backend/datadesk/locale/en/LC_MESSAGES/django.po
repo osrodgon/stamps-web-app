@@ -281,3 +281,31 @@ msgstr "Shift+Enter does not save yet."
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "This year does not exist yet: it will be created when the series is saved."
 msgstr "This year does not exist yet: it will be created when the series is saved."
+
+#: datadesk/views/workspace.py
+msgid "Saved"
+msgstr "Saved"
+
+#: datadesk/views/workspace.py
+msgid "Edited, not saved yet."
+msgstr "Edited, not saved yet."
+
+#: datadesk/views/workspace.py
+msgid "The change was refused."
+msgstr "The change was refused."
+
+#: datadesk/views/workspace.py
+msgid "Nothing changed."
+msgstr "Nothing changed."
+
+#: datadesk/views/workspace.py
+msgid "Series saved."
+msgstr "Series saved."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter saves the row you are editing."
+msgstr "Shift+Enter saves the row you are editing."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Save"
+msgstr "Save"

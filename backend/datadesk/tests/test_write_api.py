@@ -175,6 +175,10 @@ class TestApplyEndpoint:
         assert response.status_code == 200
         assert body["success"] is True
         assert body["applied"] == 1
+        written = body["data"]["rows"][0]
+        assert written["index"] == 0
+        assert written["id"] == issue.pk
+        assert written["updated_at"] is not None
         issue.refresh_from_db()
         assert issue.name == "Otro nombre"
 

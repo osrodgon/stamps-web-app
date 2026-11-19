@@ -291,6 +291,10 @@ def serialize_stamp(
         "mnh": _decimal(stamp.market_value_mnh),
         "used": _decimal(stamp.market_value_used),
         "has_image": has_picture(issue.year.year, stamp.fesofi_code, index),
+        # The baseline the next write compares against: the grid sends it back
+        # as ``expected_updated_at`` so a row changed in another tab is refused
+        # instead of overwritten. Not a column — it travels as row data.
+        "updated_at": stamp.updated_at.isoformat() if stamp.updated_at else None,
     }
 
 

@@ -23,6 +23,8 @@
   --dd-green-soft: #eef7ee;
   --dd-amber: #f0b429;
   --dd-amber-soft: #fff8e1;
+  --dd-red: #c5221f;
+  --dd-red-soft: #fdecec;
 
   /* Fonts */
   --dd-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
@@ -650,6 +652,31 @@ kbd {
   }
 }
 
+/* --- Edit states -------------------------------------------------------
+ * One row at a time is committed, so the row itself says where it stands:
+ * amber while it holds something unsaved, green for a moment after the write,
+ * red when the server refused it. The colour is never the only signal — the
+ * commit bar carries the message.
+ */
+.dd-row-dirty,
+.dd-row-dirty .tabulator-cell {
+  background: var(--dd-amber-soft);
+}
+
+.dd-row-saved,
+.dd-row-saved .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
+.dd-row-error,
+.dd-row-error .tabulator-cell {
+  background: var(--dd-red-soft);
+}
+
+.dd-meta-error .dd-fields {
+  box-shadow: inset 0 0 0 1px var(--dd-red-soft);
+}
+
 /* --- Commit bar -------------------------------------------------------- */
 .dd-commitbar {
   display: flex;
@@ -674,6 +701,18 @@ kbd {
   align-items: center;
   gap: 10px;
   margin-left: auto;
+}
+
+.dd-status-ok {
+  color: var(--dd-green);
+}
+
+.dd-status-pending {
+  color: var(--dd-amber);
+}
+
+.dd-status-error {
+  color: var(--dd-red);
 }
 
 /* --- Login ------------------------------------------------------------- */
