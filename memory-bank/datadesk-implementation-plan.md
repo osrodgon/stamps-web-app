@@ -100,7 +100,7 @@ el mockup ya están corregidos con esta decisión.
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | ✅ 2026-11-19 |
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | ✅ 2026-11-19 |
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | ✅ 2026-11-19 |
-| S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | — |
+| S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | ✅ 2026-11-19 |
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | — |
 | S18 | Crear lookup desde la celda | S12, S14 | M | sí | — |
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | — |
@@ -1844,8 +1844,126 @@ comprobaciones** (panel, etiquetas, antes→después, Esc, `Ctrl+Enter`, rechazo
 mensaje, umbral de copia) · `page_of_issue()` testeado con más de una página y
 con filtros.
 
-### ⏭ Siguiente: S16
+### ✅ S16 — `mode=new` completo (2026-11-19)
 
-`mode=new` completo: el formulario de serie ya escribe, auto-numeración de
-edifil, modo fila rápida y bucle «Create another».
+Ficheros modificados:
+
+```
+backend/datadesk/views/workspace.py            REPEAT_FIELDS, FAST_FIELDS, repeat_values(),
+                                               IssueNewView (?from=), colour_options(),
+                                               config de `new`: ids, fastRow, colours, createUrl,
+                                               newUrl, fieldLabels, texts
+backend/datadesk/templates/datadesk/issue_workspace.html  Fill series, Fast row, Create series,
+                                               barra `created-bar`; se va el aviso «no guarda»
+backend/datadesk/static/datadesk/issue_workspace.js       create, refuse, showCreated, fillSeries,
+                                               nextCode/bumpLetters, duplicate (Ctrl+D), paste TSV,
+                                               fast row, editor de colores, Shift+Enter
+backend/datadesk/static/datadesk/datadesk.css  dd-grid-tools, dd-fast, dd-created(-page)
+backend/datadesk/locale/{en,es}/…              textos nuevos, dos avisos retirados
+backend/datadesk/tests/test_workspace_new.py   14 pruebas nuevas (configuración, payload y bucle)
+```
+
+Decisiones tomadas al implementar:
+
+- **El bucle es una página del servidor, no un borrador**: tras crear, la barra
+  ofrece `Create another in <year>`, que abre `/datadesk/issues/new/?from=<pk>` y
+  el servidor rellena el formulario desde esa serie. Así `mode=new` sigue sin
+  escribir nada en `localStorage` (regla de S11) y el bucle se puede probar con
+  Django, sin navegador.
+- **`REPEAT_FIELDS` no contradice a `PREFILL_FIELDS`, y la diferencia es la
+  fuente**: el prefill copia país y año de la *última* serie, que puede ser de
+  hace meses; el bucle copia además la clasificación y la perforación de una
+  serie guardada hace segundos, que casi seguro es de la misma emisión. Lo que
+  identifica a una serie (`name`, `date`) y lo que es del conjunto
+  (`total_printed`, valores de mercado, textos) se limpia en los dos casos.
+- **Tras crear, el workspace deja de editarse**: el formulario y el grid se
+  ocultan y quedan las dos acciones que tienen sentido (abrir la serie o crear
+  otra). Dejar los campos vivos habría prometido un guardado que ya no existe.
+- **`?from=` no redefine el botón `↺ Use last issue`**: el botón sigue
+  significando «la última serie» y lleva sus propios valores; el bucle solo
+  rellena el formulario. Coinciden en la práctica porque la última serie suele
+  ser la que se acaba de crear, pero la etiqueta no miente.
+- **Filas vacías no son sellos**: se descartan las que nadie ha tocado y no
+  tienen ni código ni valor facial ni colores, para que `rows=4` no obligue a
+  teclear cuatro sellos. Una fila tocada y vaciada sí se envía y el servidor la
+  rechaza con su mensaje, que es más honesto que borrarla por su cuenta.
+- **`Fill series` avanza lo que varía**: con sufijo alfabético mueve la letra
+  (`2744a → 2744b`, `z → aa`) y conserva el número; sin sufijo incrementa el
+  número conservando los ceros (`0069 → 0070`). Un primer código sin dígitos no
+  inventa secuencia: avisa y no escribe nada. Cada celda pasa por `cellEdited`,
+  así que `Ctrl+Z` deshace el relleno igual que si se hubiera tecleado.
+- **`Ctrl+D` inserta debajo de la fila del cursor**, no al final: numerar es
+  copiar y seguir. La copia nace marcada como tocada, para que el nombre de la
+  serie ya no la reescriba.
+- **El pegado TSV se alinea con lo que se ve**: columnas visibles (con fila
+  rápida activa son cuatro), desde la celda del cursor hacia abajo y a la
+  derecha. Un pegado de una sola celda no se intercepta: es el pegado normal del
+  editor.
+- **Editor de colores solo en `mode=new`**: la aceptación de S16 pide colores al
+  crear, y en `mode=edit` las filas llevan `{name, tone}` sin id y el change set
+  no transporta M2M. Se usa el editor `list` con `multiselect` y los ids viajan
+  al servidor; la búsqueda y la creación al vuelo llegarán con S18. Ojo:
+  `autocomplete` **desactiva** `multiselect` en Tabulator 6, así que no se usa.
+- **Mensajes de rechazo por campo**: los errores de la franja se muestran como
+  `Etiqueta: mensaje` con las etiquetas del servidor (`fieldLabels`), y los del
+  sello como `Sello N: mensaje`, marcando la fila en rojo. Los textos de DRF
+  siguen en inglés hasta que una pantalla los traduzca (decisión de S12).
+
+Revisión tras el primer uso real (2026-11-19):
+
+- **Quitar una fila**: el grid de `mode=new` gana una columna `×` (34 px, oculta
+  nunca: se borra mientras se teclea). El borrado **es un paso de deshacer**: se
+  guarda la fila y su posición en el historial, así que `Ctrl+Z` la devuelve
+  donde estaba y `Ctrl+Shift+Z` la vuelve a quitar. Sin eso, un clic en la
+  columna equivocada se llevaba una fila con colores y no había forma de
+  recuperarla.
+- **Los colores se cortaban**: la celda recorta lo que no cabe y el navegador
+  contestaba con `...`, que no dice nada. Ahora pinta **un** chip y `+N` con el
+  resto, y la lista completa viaja en el `title`; el editor sigue enseñándolos
+  todos. Es deliberadamente un chip y no dos: un nombre largo más `+N` cabe
+  siempre, y adivinar cuántos caben según el ancho volvería a cortar.
+- **`Fill series` numera Edifil y Fesofi**: las dos catalogan el mismo conjunto
+  con secuencias distintas, así que el botón avanza **cada columna que tenga
+  primer código** y se salta en silencio la que esté vacía (lo normal es tener
+  una sola). Las columnas se planifican **antes** de escribir ninguna: si la
+  segunda no se puede numerar, la primera no queda a medias y el mensaje nombra
+  la columna (`The first Fesofi code has no number to continue from.`). Las
+  columnas y sus etiquetas vienen del servidor (`fillColumns`), no del script.
+- **La fecha decide el año (2026-11-19, tras el primer uso)**: la pantalla de
+  `mode=new` abre con **la fecha de hoy** cuando la serie que se va a teclear es
+  del año en curso (o cuando no hay año que copiar, base vacía), y el campo año
+  sigue a la fecha y queda **de solo lectura** mientras haya fecha: una serie se
+  fecha una vez, no dos, y «1987» con fecha de 2026 no es una serie que nadie
+  quisiera guardar. Vaciar la fecha devuelve el año a mano, que es como se
+  registra una serie de la que solo se conoce el año: el año sigue siendo el
+  único obligatorio de los dos. Para una serie de otro año la fecha nace **vacía**
+  a propósito — inventar un día de 1987 es peor que dejarlo en blanco, y es la
+  herencia contra la que avisaba el plan—; el prefill y el bucle siguen mandando
+  el año y la fecha se teclea si se conoce. La fecha lleva los mismos límites
+  (1800-01-01 a año+2-12-31) que el año, para que el navegador frene la errata
+  antes de que llegue al servidor. Efecto lateral aceptado: `↺ Use last issue`
+  ya solo cambia el país cuando hay fecha, porque el año no es suyo.
+- **El error se marca en el campo, no en la pantalla**: `markFields()` pone
+  `dd-input-invalid` en los controles que el servidor nombró (el mensaje ya era
+  `Etiqueta: mensaje`, pero no decía dónde), lleva el foco al primero y lo
+  desplaza a la vista; el anillo del formulario entero (`dd-meta-error`) queda
+  solo como recurso cuando el error no nombra ningún campo. En el grid,
+  `markCells()`/`markStampCells()` ponen `dd-cell-invalid` en la celda concreta
+  —la fila en rojo es el contexto, la celda es el campo— y si esa columna está
+  oculta por la fila rápida, la fila rápida **se apaga** para que el anillo tenga
+  dónde verse. Toda marca desaparece al editar ese campo o al reintentar.
+
+Verificado: `pytest datadesk` → **290 en verde**; suite completa **1306 en
+verde** · catálogos recompilados · arnés de jsdom de `mode=new` con **57
+comprobaciones** (filas, fila rápida, numeración de las dos columnas con sufijo,
+con ceros y con una bloqueada, código no numérico, `Ctrl+D`, quitar fila y
+`Ctrl+Z`, pegado TSV, payload con nombres de modelo, colores como ids, barra de
+creado, rechazo por sello y por campo con su anillo, columna oculta revelada,
+fecha por defecto, año derivado y liberado al vaciar la fecha, y `Shift+Enter`)
+y las **42** de `mode=edit` siguen pasando.
+
+### ⏭ Siguiente: S17
+
+Clonar una serie (con sellos y colores) y borrar con preview de dependencias,
+las dos auditadas.
 

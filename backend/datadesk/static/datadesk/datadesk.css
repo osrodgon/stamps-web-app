@@ -254,6 +254,20 @@ kbd {
   color: #2b3440;
 }
 
+/* The colour cell shows one name and how many more there are: a cell clips and
+ * "..." hides the only information it had. The full list is in the title. */
+.dd-chips {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dd-chip-more {
+  background: #eef1f4;
+  border-color: #e0e5ea;
+  color: #5b6675;
+}
+
 /* Chip tones: one pastel per colour family, decided in datadesk/palette.py so
  * the same colour keeps its look on every screen. */
 .dd-chip-red {
@@ -532,6 +546,23 @@ kbd {
   outline-offset: -1px;
 }
 
+/* Derived from the date, so it reads as a value and not as an empty box the
+ * user forgot to fill. */
+.dd-field .dd-input-derived {
+  background: #f3f5f8;
+  color: var(--dd-muted);
+  cursor: default;
+}
+
+/* The field the server refused, not just the form it lives in: the message
+ * says what is wrong, this says where. */
+.dd-field .dd-input-invalid,
+.dd-field .dd-input-invalid:focus {
+  border-color: var(--dd-red);
+  background: var(--dd-red-soft);
+  outline-color: var(--dd-red);
+}
+
 .dd-field textarea.dd-input {
   min-height: 46px;
   resize: vertical;
@@ -675,6 +706,15 @@ kbd {
 
 .dd-meta-error .dd-fields {
   box-shadow: inset 0 0 0 1px var(--dd-red-soft);
+}
+
+/* Same idea inside the grid: the row is the context, the cell is the field. */
+.dd-cell-invalid {
+  box-shadow: inset 0 0 0 1px var(--dd-red);
+}
+
+.dd-row-error .dd-cell-invalid {
+  box-shadow: inset 0 0 0 2px var(--dd-red);
 }
 
 /* --- Commit bar -------------------------------------------------------- */
@@ -884,6 +924,75 @@ kbd {
 
 .dd-status-error {
   color: var(--dd-red);
+}
+
+/* --- New series: the typing aids and the created state ------------------ */
+
+.dd-grid-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* The Rows label already pushes itself right; inside the tools it does not. */
+.dd-grid-tools .dd-rows {
+  margin-left: 0;
+}
+
+.dd-fast {
+  gap: 5px;
+  cursor: pointer;
+}
+
+.dd-fast input {
+  accent-color: var(--dd-navy);
+}
+
+/* Removing a draft row is a click, not a confirmation: Ctrl+Z puts it back. */
+.dd-remove-cell {
+  padding: 0 !important;
+}
+
+.dd-remove {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: #b6bfc9;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dd-remove:hover,
+.dd-remove:focus-visible {
+  color: var(--dd-red);
+}
+
+/* Once the series is written the workspace has nothing left to edit: further
+ * typing would have nowhere to go, and pretending otherwise is worse than
+ * taking the fields away and offering the two things that remain. */
+.dd-created-page .dd-meta,
+.dd-created-page .dd-gridwrap,
+.dd-created-page .dd-commitbar {
+  display: none;
+}
+
+.dd-created {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
+.dd-created .dd-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
 /* --- Login ------------------------------------------------------------- */

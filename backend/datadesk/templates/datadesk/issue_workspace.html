@@ -81,6 +81,7 @@
                      {% if field.value != "" %}value="{{ field.value }}"{% endif %}
                      {% if field.step %}step="{{ field.step }}"{% endif %}
                      {% if "min" in field %}min="{{ field.min }}"{% endif %}
+                     {% if "max" in field %}max="{{ field.max }}"{% endif %}
                      {% if field.required %}required{% endif %}>
             {% endif %}
           </label>
@@ -99,13 +100,22 @@
         <span class="dd-label">{% translate "Stamps" %}</span>
         <span class="dd-count" id="stamp-count">{{ stamp_count }}</span>
         {% if mode == "new" %}
-          <label class="dd-rows" for="row-count">
-            {% translate "Rows" %}
-            <input class="dd-input dd-rows-input" id="row-count" type="number"
-                   step="1" inputmode="numeric"
-                   min="{{ config.rows.min }}" max="{{ config.rows.max }}"
-                   value="{{ config.rows.default }}">
-          </label>
+          <span class="dd-grid-tools">
+            <button type="button" class="dd-btn dd-btn-ghost" id="fill-series">
+              {% translate "Fill series" %}
+            </button>
+            <label class="dd-rows dd-fast" for="fast-row">
+              <input type="checkbox" id="fast-row" checked>
+              {% translate "Fast row" %}
+            </label>
+            <label class="dd-rows" for="row-count">
+              {% translate "Rows" %}
+              <input class="dd-input dd-rows-input" id="row-count" type="number"
+                     step="1" inputmode="numeric"
+                     min="{{ config.rows.min }}" max="{{ config.rows.max }}"
+                     value="{{ config.rows.default }}">
+            </label>
+          </span>
         {% endif %}
       </div>
       <div id="stamp-grid"></div>
@@ -113,11 +123,31 @@
 
     {% if mode == "new" %}
       <div class="dd-commitbar">
-        <span class="dd-hint" id="new-save-hint">
-          {% translate "Nothing is saved yet: this screen does not write to the database." %}
+        <span class="dd-hint" id="create-status">
+          {% translate "Shift+Enter creates the series." %}
         </span>
         <span class="dd-hint dd-right">
-          {% translate "Shift+Enter does not save yet." %}
+          <button type="button" class="dd-btn dd-btn-dark" id="create-button">
+            {% translate "Create series" %}
+          </button>
+        </span>
+      </div>
+
+      {% comment %}
+        After a clean create the workspace stops editing: the series is in the
+        database and further typing here would have nowhere to go. The bar is
+        the two things left to do, and the loop is a fresh page the server
+        pre-fills — never a draft kept by the browser.
+      {% endcomment %}
+      <div class="dd-created" id="created-bar" hidden>
+        <span class="dd-hint dd-status-ok" id="created-text"></span>
+        <span class="dd-right">
+          <a class="dd-btn dd-btn-ghost" id="created-open" href="#">
+            {% translate "Open the series" %}
+          </a>
+          <a class="dd-btn dd-btn-dark" id="created-again" href="#">
+            {% translate "Create another" %}
+          </a>
         </span>
       </div>
     {% else %}

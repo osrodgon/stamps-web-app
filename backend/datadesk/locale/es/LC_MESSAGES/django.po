@@ -269,14 +269,6 @@ msgid "series values describe the whole set, stamp values the stamp"
 msgstr "los valores de la serie describen el conjunto y los del sello, el sello"
 
 #: datadesk/templates/datadesk/issue_workspace.html
-msgid "Nothing is saved yet: this screen does not write to the database."
-msgstr "Todavía no se guarda nada: esta pantalla no escribe en la base de datos."
-
-#: datadesk/templates/datadesk/issue_workspace.html
-msgid "Shift+Enter does not save yet."
-msgstr "Mayús+Intro todavía no guarda."
-
-#: datadesk/templates/datadesk/issue_workspace.html
 msgid "This year does not exist yet: it will be created when the series is saved."
 msgstr "Este año todavía no existe: se creará al guardar la serie."
 
@@ -372,3 +364,59 @@ msgid "Commit %(count)s change"
 msgid_plural "Commit %(count)s changes"
 msgstr[0] "Confirmar %(count)s cambio"
 msgstr[1] "Confirmar %(count)s cambios"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter creates the series."
+msgstr "Mayús+Intro crea la serie."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create series"
+msgstr "Crear serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Open the series"
+msgstr "Abrir la serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create another"
+msgstr "Crear otra"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fill series"
+msgstr "Numerar serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fast row"
+msgstr "Fila rápida"
+
+#: datadesk/views/workspace.py
+msgid "The series was created."
+msgstr "La serie se ha creado."
+
+#: datadesk/views/workspace.py
+msgid "The series was not created."
+msgstr "La serie no se ha creado."
+
+#: datadesk/views/workspace.py
+msgid "Create another in %(year)s"
+msgstr "Crear otra en %(year)s"
+
+#: datadesk/views/workspace.py
+msgid "Stamp %(row)s: %(message)s"
+msgstr "Sello %(row)s: %(message)s"
+
+#: datadesk/views/workspace.py
+msgid "Type the first code to number the rest."
+msgstr "Teclea el primer código para numerar el resto."
+
+#: datadesk/views/workspace.py
+msgid "The first %(column)s code has no number to continue from."
+msgstr "El primer código %(column)s no tiene número del que continuar."
+
+#: datadesk/views/workspace.py
+msgid "Remove this row"
+msgstr "Quitar esta fila"
+
+#: datadesk/views/workspace.py
+msgid "The year comes from the date."
+msgstr "El año viene de la fecha."
