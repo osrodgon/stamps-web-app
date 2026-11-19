@@ -68,6 +68,12 @@
     if (definition.align) {
       column.hozAlign = definition.align;
     }
+    if (definition.grow) {
+      column.widthGrow = definition.grow;
+    }
+    if (definition.min) {
+      column.minWidth = definition.min;
+    }
     if (definition.field === "gaps") {
       column.formatter = gapFormatter;
       column.headerSort = false;
@@ -125,8 +131,11 @@
     paginationInitialPage: config.initialPage || 1,
     paginationCounter: "rows",
     sortMode: "remote",
-    layout: "fitDataStretch",
-    height: "calc(100vh - 260px)",
+    /* Columns share the card's width instead of asking for what their content
+     * wants: fitting is what keeps the default nine visible without a
+     * horizontal scrollbar. */
+    layout: "fitColumns",
+    height: "calc(100vh - 300px)",
     placeholder: config.emptyText,
     selectableRows: 1,
     columns: [openColumn, ...config.columns.map(buildColumn)],

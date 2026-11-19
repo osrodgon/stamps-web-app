@@ -123,7 +123,7 @@ propósito y una puerta que existe pero no donde se busca.
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
 | S23 | El anillo del campo rechazado no se pierde | — | XS | sí (bug) | ✅ 2026-11-19 |
-| S24 | Escala tipográfica y ritmo del interfaz | S23 | M | sí | — |
+| S24 | Escala tipográfica y ritmo del interfaz | S23 | M | sí | ✅ 2026-11-19 |
 | S25 | Borrar un sello con preview de dependencias | S17, S21 | M | sí | — |
 | S26 | Nueva fila en las tablas de referencia | S19 | S | sí | — |
 | S27 | Borrar la serie desde la fila del workbench | S17 | S | sí | — |
@@ -2490,13 +2490,65 @@ defecto de Tabulator.
 - El contraste se vuelve a medir con los tamaños nuevos (`--dd-soft` está en
   4,8:1 y no debe empeorar).
 
-**Aceptación**: no queda ningún `font-size` por debajo de 10,5 px en la hoja de
-estilos; cada pantalla revisada a 1366×768 sin scroll horizontal (el grid del
-workbench pagina, que es otra cosa); el grid sigue enseñando ~15 filas; no se
-pierde ninguna columna ni información.
+**Aceptación**: no queda ningún `font-size` por debajo de **11 px** en la hoja de
+estilos y **ninguno escrito a mano**: todos salen de un token. Cada pantalla
+revisada a 1366×768 sin scroll horizontal (el grid del workbench pagina, que es
+otra cosa); el grid sigue enseñando ~14 filas; no se pierde ninguna columna ni
+información.
 
 **Tamaño**: M · `datadesk.css` casi entero, `base.html`, `workbench.html`,
 `dashboard.html`.
+
+**Hecho (2026-11-19)**: la escala queda en seis tokens (`--dd-text-xl` 22,
+`--dd-text-lg` 16, `--dd-text` 14, `--dd-text-sm` 13, `--dd-text-xs` 12,
+`--dd-label` 11) y **las 52 reglas de `font-size` que había pasan por ellos**; el
+cuerpo sube a 14/1,5, el grid a 13 con filas de 36 px y celdas de 7/10, y la
+barra superior a 48. Lo que más cambia la sensación no es el tamaño: es que el
+grid deja de llevar el cromo de Tabulator —`1px solid #aaa` en las celdas, cebra
+`#efefef` y fila seleccionada `#9abcea`— y pasa a usar `--tabulator-border`
+(`--dd-line`), cebra casi blanca, selección en azul grisáceo y hover que no
+compite. La tarjeta de página pasa de borde `#d8dce1` y sombra de 28 px a borde
+`--dd-line` y dos sombras de 2/24 px, y el título de pantalla es el último
+migajón de pan a 16 px (evita añadir un `h1` que repita el mismo texto). Además:
+las barras de commit y del workbench envuelven en vez de desbordar a 1366, el
+panel de revisión pasa a 380 px para que los `antes → después` no bailen con el
+texto nuevo, y los migajones truncan un nombre de serie largo en vez de empujar
+la barra. Cuatro tests sujetan la escala: ningún `font-size` literal, todos desde
+un token, ninguno por debajo de 11 y el cuerpo usando `--dd-text`. 4 tests; 447
+datadesk y 1463 backend en verde; arneses sin cambios (no se tocó JavaScript).
+
+**Remate del mismo paso, tras verlo en un 2560**: con la letra nueva el workbench
+ya pedía scroll horizontal, así que la aceptación no se cumplía. Cuatro cosas:
+
+- **La tarjeta pasa de 1340 a 1600 px**: a 2560 se queda centrada con aire en vez
+  de estirarse, y a 1366 ocupa todo el ancho disponible.
+- **El workbench y la tabla de lookups pasan a `fitColumns`**: las columnas se
+  reparten el ancho de la tarjeta y **nunca** aparece barra horizontal, en vez de
+  que Tabulator mida el contenido (`fitDataStretch`) y scrollee cuando un nombre
+  es largo. Como `fitColumns` reparte a partes iguales si no se le dice otra cosa,
+  cada columna declara su `grow` en las definiciones de `workbench.py` (nombre 4,
+  país y clasificación 2, números 1) y el nombre lleva `minWidth: 180`; sin eso
+  «Name» acabaría tan estrecha como «Stamps».
+- **`text-decoration: none` en `.dd-btn`**: un `<a>` con clase de botón se
+  subrayaba y un `<button>` no, así que el mismo control se veía distinto en el
+  dashboard y dentro del workspace. S17 había tapado el síntoma con parches
+  locales (`.dd-meta-actions a`, `.dd-meta-back`), que ahora sobran.
+- La altura del grid del workbench baja a `calc(100vh - 300px)`: con la barra a 48
+  y las filas a 36, el `-260px` hacía que la página entera scrolleara un poco.
+
+Dos tests más (449 datadesk, 1465 backend): uno comprueba que toda columna visible
+declara su parte del ancho y que el nombre es la mayor, otro que `.dd-btn` quita el
+subrayado.
+
+**Tercer remate, los botones**: no todos medían lo mismo ni centraban el texto.
+La causa era la misma de antes, el `<a>` con clase de botón: su texto se alinea a
+la línea base y su alto salía del padding, no de una caja. `.dd-btn` pasa a
+`inline-flex` con `align-items`/`justify-content` centrados, **alto fijo**
+(`--dd-btn-height: 32px`) y `padding: 0 14px`; `.dd-btn-ghost` sólo aprieta los lados (`0 10px`) y ya no
+declara alto, así que un `Undo` al lado de un `Save` mide igual que él. Con
+`line-height: 1` el texto deja de bailar según la variante. 3 tests en
+`TestButtons` (subrayado, centrado y que el alto no dependa de la variante); 451
+datadesk y 1467 backend en verde.
 
 ---
 
@@ -4028,8 +4080,14 @@ Un bug de orden de pintado, no de clase: `.dd-cell-invalid` dejó de perder el
 borde inferior. Causa y arreglo en el detalle del paso; dos tests en
 `test_layout.py` sujetan la declaración.
 
-### ⏭ Siguiente: S24
+### S24 — Escala tipográfica y ritmo (2026-11-19)
 
-La escala tipográfica: nada pasa de 12,5 px, y eso es la mitad de por qué el
-interfaz se lee como anticuado.
+La app dejó de ser un interfaz de 12 px: cinco tokens y 52 reglas que pasan por
+ellos, grid de 13 en filas de 36 con el cromo de Tabulator sustituido por los
+tokens de la app, tarjeta de página más plana y el último migajón como título.
+Detalle y decisiones en el paso; cuatro tests sujetan la escala.
+
+### ⏭ Siguiente: S25
+
+Borrar un sello suelto, con el preview de dependencias que ya tiene la serie.
 

@@ -100,7 +100,7 @@
     paginationMode: "remote",
     paginationSize: config.pageSize,
     paginationCounter: "rows",
-    layout: "fitDataStretch",
+    layout: "fitColumns",
     height: "calc(100vh - 300px)",
     placeholder: texts.empty,
     selectableRows: 2,

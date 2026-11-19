@@ -1,4 +1,5 @@
 """Workbench page: the issues grid with its filters."""
+
 import json
 from typing import Any
 
@@ -13,31 +14,41 @@ from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters, page_of_issue
 from stamp_types_api.models import StampType
 
 COLUMNS: tuple[dict[str, Any], ...] = (
-    {"field": "year", "title": _("Year"), "visible": True, "align": "right"},
-    {"field": "date", "title": _("Date"), "visible": True},
-    {"field": "name", "title": _("Name"), "visible": True},
-    {"field": "country", "title": _("Country"), "visible": True},
-    {"field": "stamp_type", "title": _("Stamp type"), "visible": True},
-    {"field": "printer", "title": _("Printer"), "visible": True},
-    {"field": "stamps", "title": _("Stamps"), "visible": True, "align": "right"},
-    {"field": "mnh", "title": _("MNH"), "visible": True, "align": "right"},
-    {"field": "used", "title": _("Used"), "visible": True, "align": "right"},
-    {"field": "print_type", "title": _("Print type"), "visible": False},
-    {"field": "artist", "title": _("Artist"), "visible": False},
-    {"field": "paper_type", "title": _("Paper type"), "visible": False},
-    {"field": "perforation", "title": _("Perforation"), "visible": False},
+    {"field": "year", "title": _("Year"), "visible": True, "align": "right", "grow": 1},
+    {"field": "date", "title": _("Date"), "visible": True, "grow": 1},
+    {"field": "name", "title": _("Name"), "visible": True, "grow": 4, "min": 180},
+    {"field": "country", "title": _("Country"), "visible": True, "grow": 2},
+    {"field": "stamp_type", "title": _("Stamp type"), "visible": True, "grow": 2},
+    {"field": "printer", "title": _("Printer"), "visible": True, "grow": 2},
+    {
+        "field": "stamps",
+        "title": _("Stamps"),
+        "visible": True,
+        "align": "right",
+        "grow": 1,
+    },
+    {"field": "mnh", "title": _("MNH"), "visible": True, "align": "right", "grow": 1},
+    {"field": "used", "title": _("Used"), "visible": True, "align": "right", "grow": 1},
+    {"field": "print_type", "title": _("Print type"), "visible": False, "grow": 2},
+    {"field": "artist", "title": _("Artist"), "visible": False, "grow": 2},
+    {"field": "paper_type", "title": _("Paper type"), "visible": False, "grow": 2},
+    {"field": "perforation", "title": _("Perforation"), "visible": False, "grow": 1},
     {
         "field": "total_printed",
         "title": _("Total printed"),
         "visible": False,
         "align": "right",
+        "grow": 1,
     },
-    {"field": "gaps", "title": _("Gaps"), "visible": False},
+    {"field": "gaps", "title": _("Gaps"), "visible": False, "grow": 1},
 )
 """Column definitions, translated here so the JavaScript holds no UI text.
 
-Fourteen columns do not fit legibly at 1366px, so only the first nine are shown
-by default and the rest live behind the column toggle.
+Fourteen columns do not fit legibly side by side, so only the first nine are
+shown by default and the rest live behind the column toggle. ``grow`` is how
+much of the width a column asks for when the grid fits itself to the page: the
+name takes four shares and the numbers one, so fitting never squeezes the only
+column whose content is long.
 """
 
 
