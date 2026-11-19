@@ -557,6 +557,22 @@ kbd {
 }
 
 
+/* The per-row delete of a series in the list: the same affordance as the stamp
+ * one in the workspace. */
+.dd-row-delete-action {
+  border: 0;
+  background: none;
+  color: #b6bfc9;
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dd-row-delete-action:hover,
+.dd-row-delete-action:focus-visible {
+  color: var(--dd-red);
+}
+
 .dd-open {
   display: block;
   color: var(--dd-muted);
@@ -1078,6 +1094,22 @@ kbd {
   align-items: center;
   gap: 6px;
   margin-left: auto;
+}
+
+/* The arrows walk the workbench list, filters included. */
+.dd-nav {
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+}
+
+.dd-nav[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dd-nav-count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* A ghost button that says what it does: the colour is the warning, the box

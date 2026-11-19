@@ -278,6 +278,32 @@ class TestWorkbenchPage:
         assert "Year" in titles
         assert "Name" in titles
 
+    def test_every_row_carries_the_urls_its_delete_needs(
+        self, staff_client, grid_dataset
+    ) -> None:
+        """The grid pages on the server: the row's URLs travel with the row."""
+        row = staff_client.get(GRID_URL).json()["data"][0]
+
+        assert row["dependencies_url"] == f"/datadesk/issues/{row['id']}/dependencies"
+        assert row["delete_url"] == f"/datadesk/issues/{row['id']}/delete"
+
+    def test_the_page_carries_the_delete_dialog_and_its_texts(
+        self, staff_client, grid_dataset
+    ) -> None:
+        response = staff_client.get(PAGE_URL)
+        config = json.loads(
+            response.content.decode()
+            .split('id="workbench-config" type="application/json">')[1]
+            .split("</script>")[0]
+        )
+        content = response.content.decode()
+
+        assert 'id="delete-panel"' in content
+        assert 'id="delete-confirm"' in content
+        assert config["texts"]["deleteSeries"] == "Delete this series"
+        assert config["texts"]["confirmYear"] == "Type %(year)s to confirm"
+        assert config["texts"]["deleted"] == "The series was deleted."
+
     def test_every_visible_column_asks_for_a_share_of_the_width(
         self, staff_client
     ) -> None:

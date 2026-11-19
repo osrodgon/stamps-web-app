@@ -59,6 +59,8 @@
       <button type="reset" class="dd-btn dd-btn-ghost" id="workbench-reset">{% translate "Reset" %}</button>
     </form>
 
+    <p class="dd-banner dd-banner-ok" id="workbench-banner" hidden></p>
+
     <div class="dd-workbench-toolbar">
       <span class="dd-hint" id="workbench-count"></span>
       <a class="dd-btn dd-btn-dark dd-new-issue" href="{% url 'datadesk:issue_new' %}">
@@ -71,6 +73,8 @@
     </div>
 
     <div id="workbench"></div>
+
+    {% include "datadesk/partials/series_delete_dialog.html" %}
 
     <p class="dd-hint dd-keys">
       {% translate "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one." %}

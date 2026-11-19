@@ -357,18 +357,18 @@
       revealed — selected and flashed — even when the sort put it on another
       page, by searching for it. 4 tests; 475 datadesk and 1491 backend tests
       green; the lookups harness is at 12 checks.
-- [ ] **S27 — Move between series and delete from the list** (M, depends on S15
-      and S17): two versions of "do not make me go back to the list". **A**, the
-      workspace gets previous/next for the neighbour in the workbench's filtered
-      order — not `id ± 1` — reusing the pk list `page_of_issue()` already walks
-      (`issue_positions()` + `neighbours_of_issue()`), with the filter query
-      travelling in the link from `↗`/`Enter`, a `1.234 / 2.540` counter, arrows
-      disabled at the ends, `[`/`]` on the keyboard and a fallback to the
-      unfiltered order when the series is not in the filter. It also fixes the
-      "Back to the issues workbench" link, which drops the filters today. **B**,
-      a per-row delete in the workbench that opens the S17 dialog (the preview
-      and POST already exist), reloads the grid and says what went; `Supr` opens
-      the dialog and never deletes.
+- [x] **S27 — Move between series and delete from the list** (2026-11-19):
+      `issue_positions()` shares the pk list `page_of_issue()` already walked, so
+      `neighbours_of_issue()` answers previous/next/position/total in the same
+      query; the filters travel from the workbench in the `↗`/`Enter` link, come
+      back in the arrows, the counter and **Back to the issues workbench**, and a
+      series outside the filter falls back to the whole list instead of leaving
+      dead arrows. `[`/`]` do the same from the keyboard, with a field guard. In
+      the list, a `×` column opens the **same dialog** as the workspace — now a
+      shared partial, with the preview and POST that already existed — a banner
+      says what went and `Supr` only opens the dialog. Rows carry their two URLs
+      in the grid JSON. 13 tests; 488 datadesk and 1504 backend tests green;
+      harnesses at 23 (workbench), 89 (edit), 79 (new) and 12 (lookups) checks.
 
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,

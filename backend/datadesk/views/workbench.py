@@ -131,4 +131,12 @@ def grid_config(focus: int | None = None, initial_page: int = 1) -> dict[str, An
         "issueUrlPrefix": reverse("datadesk:issues"),
         "initialPage": initial_page,
         "focus": focus,
+        "texts": {
+            "deleteSeries": str(_("Delete this series")),
+            "deleting": str(_("Deleting…")),
+            "deleteFailed": str(_("The series was not deleted.")),
+            "previewFailed": str(_("The preview could not be loaded.")),
+            "confirmYear": str(_("Type %(year)s to confirm")),
+            "deleted": str(_("The series was deleted.")),
+        },
     }

@@ -32,13 +32,35 @@
           {% endif %}
         {% else %}
           <span class="dd-meta-actions">
+            {% comment %}
+              The neighbour in the list the user came from, filters included; a
+              span when there is none, so the arrows do not move and do not lie
+              about it. [ and ] do the same from the keyboard.
+            {% endcomment %}
+            {% if navigation.previous %}
+              <a class="dd-btn dd-btn-ghost dd-nav" id="nav-previous"
+                 href="{{ navigation.previous }}"
+                 title="{% translate 'Previous series' %}"
+                 aria-label="{% translate 'Previous series' %}">‹</a>
+            {% else %}
+              <span class="dd-btn dd-btn-ghost dd-nav" aria-disabled="true">‹</span>
+            {% endif %}
+            <span class="dd-hint dd-nav-count">{{ navigation.position }} / {{ navigation.total }}</span>
+            {% if navigation.next %}
+              <a class="dd-btn dd-btn-ghost dd-nav" id="nav-next"
+                 href="{{ navigation.next }}"
+                 title="{% translate 'Next series' %}"
+                 aria-label="{% translate 'Next series' %}">›</a>
+            {% else %}
+              <span class="dd-btn dd-btn-ghost dd-nav" aria-disabled="true">›</span>
+            {% endif %}
             <button type="button" class="dd-btn dd-btn-ghost" id="clone-button">
               {% translate "Clone" %}
             </button>
             <button type="button" class="dd-btn dd-btn-ghost dd-btn-danger-text" id="delete-button">
               {% translate "Delete" %}
             </button>
-            <a class="dd-btn dd-btn-ghost" href="{% url 'datadesk:issues' %}">
+            <a class="dd-btn dd-btn-ghost" href="{{ navigation.back }}">
               {% translate "Back to the issues workbench" %}
             </a>
           </span>
@@ -262,58 +284,7 @@
         </div>
       </aside>
 
-      {% comment %}
-        Deleting is the one action with a preview in front of it. The numbers are
-        counted by the server when the dialog opens and recounted when the button
-        is pressed; the year is checked there too, so the dialog is a courtesy
-        rather than the rule. A series held in somebody's collection is said out
-        loud: the cascade takes those items and nothing brings them back.
-      {% endcomment %}
-      <div class="dd-dialog-backdrop" id="delete-panel" hidden>
-        <div class="dd-dialog" role="dialog" aria-modal="true"
-             aria-labelledby="delete-title">
-          <div class="dd-review-head">
-            <span class="dd-label" id="delete-title">
-              {% translate "Delete this series" %}
-            </span>
-            <button type="button" class="dd-review-close" id="delete-close"
-                    aria-label="{% translate 'Close' %}">×</button>
-          </div>
-          <div class="dd-dialog-body">
-            <p class="dd-dialog-warning" id="delete-warning"></p>
-            <dl class="dd-dialog-counts">
-              <div>
-                <dt>{% translate "Stamps" %}</dt>
-                <dd id="delete-stamps">·</dd>
-              </div>
-              <div>
-                <dt>{% translate "Collection items" %}</dt>
-                <dd id="delete-items">·</dd>
-              </div>
-              <div>
-                <dt>{% translate "User collections" %}</dt>
-                <dd id="delete-collections">·</dd>
-              </div>
-            </dl>
-            <label class="dd-field" for="delete-confirm">
-              <span class="dd-field-key" id="delete-confirm-label">
-                {% translate "Type the year to confirm" %}
-              </span>
-              <input class="dd-input" id="delete-confirm" type="text"
-                     inputmode="numeric" autocomplete="off">
-            </label>
-            <p class="dd-hint dd-status-error" id="delete-status"></p>
-          </div>
-          <div class="dd-dialog-foot">
-            <button type="button" class="dd-btn dd-btn-ghost" id="delete-cancel">
-              {% translate "Cancel" %}
-            </button>
-            <button type="button" class="dd-btn dd-btn-danger" id="delete-confirm-button">
-              {% translate "Delete the series" %}
-            </button>
-          </div>
-        </div>
-      </div>
+      {% include "datadesk/partials/series_delete_dialog.html" %}
 
       {% comment %}
         One row is not a set, so this dialog has no typed confirmation: it names

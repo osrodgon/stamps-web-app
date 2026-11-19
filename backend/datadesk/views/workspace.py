@@ -9,9 +9,11 @@ fresh ``mode=new`` page prefilled by the server from the series just saved.
 """
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlencode
 
 from django.db.models import QuerySet
 from django.templatetags.static import static
+from django.utils.formats import number_format
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -22,8 +24,15 @@ from datadesk.mixins import DataDeskAccessMixin
 from datadesk.palette import tone_for
 from datadesk.registry import LOOKUPS
 from datadesk.rules import series_year_bounds
-from datadesk.service import Issue, issue_queryset, stamp_rows
+from datadesk.service import (
+    Issue,
+    IssueFilters,
+    issue_queryset,
+    neighbours_of_issue,
+    stamp_rows,
+)
 from datadesk.texts import plural_forms
+from datadesk.views.workbench import filters_from
 from years_api.models import Year
 
 STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
@@ -219,7 +228,7 @@ class IssueWorkspaceView(DataDeskAccessMixin, DetailView):
         return issue_queryset()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        """Adds the metadata strip, the stamp rows and the grid configuration."""
+        """Adds the strip, the stamp rows, the arrows and the grid config."""
         context = super().get_context_data(**kwargs)
         issue: Issue = self.object
         rows = stamp_rows(issue)
@@ -230,6 +239,7 @@ class IssueWorkspaceView(DataDeskAccessMixin, DetailView):
             prefill=None,
             form_fields=series_form_fields(series_values(issue)),
             config=workspace_config(rows, series=issue),
+            navigation=navigation_for(issue, self.request),
         )
         return context
 
@@ -284,6 +294,43 @@ class IssueNewView(DataDeskAccessMixin, TemplateView):
         except ValueError:
             return None
         return issue_queryset().filter(pk=pk).first()
+
+
+def navigation_for(issue: Issue, request: Any) -> dict[str, Any]:
+    """Returns the previous/next links, the position and the way back.
+
+    The neighbour is the series beside this one **in the workbench list the user
+    came from**: the filters travel in the query string, so walking the 1987
+    series without a country keeps walking those and not whatever has the next
+    id. A series outside that list (a stale link, or one opened from the
+    dashboard) falls back to the unfiltered order instead of leaving the arrows
+    dead.
+    """
+    filters = filters_from(request)
+    neighbours = neighbours_of_issue(issue.pk, filters)
+    if not neighbours.found and filters.to_query():
+        filters = IssueFilters()
+        neighbours = neighbours_of_issue(issue.pk, filters)
+
+    query = urlencode(filters.to_query())
+    suffix = f"?{query}" if query else ""
+
+    def url(pk: int | None) -> str:
+        return "" if pk is None else reverse("datadesk:issue_workspace", args=[pk]) + suffix
+
+    return {
+        "previous": url(neighbours.previous),
+        "next": url(neighbours.next),
+        "position": _number(neighbours.position) if neighbours.found else "",
+        "total": _number(neighbours.total),
+        "back": reverse("datadesk:issues") + suffix,
+        "query": suffix,
+    }
+
+
+def _number(value: int | None) -> str:
+    """Returns a count grouped the way the active language groups numbers."""
+    return "" if value is None else number_format(value, force_grouping=True)
 
 
 def with_default_date(values: dict[str, Any]) -> dict[str, Any]:

@@ -4,6 +4,7 @@ Plain Django returning JSON, not a DRF view: DataDesk is not part of the public
 API and nothing here belongs under ``/api/v1/``.
 """
 from django.http import HttpRequest, JsonResponse
+from django.urls import reverse
 from django.views import View
 
 from datadesk.mixins import DataDeskAccessMixin
@@ -44,9 +45,23 @@ class IssueGridJsonView(DataDeskAccessMixin, View):
                 "last_page": page.last_page,
                 "total": page.total,
                 "page": page.page,
-                "data": page.data,
+                "data": [_with_urls(row) for row in page.data],
             }
         )
+
+
+def _with_urls(row: dict) -> dict:
+    """Adds the two URLs the row's delete needs, so the script composes none.
+
+    The grid pages on the server, so a row only exists in the answer to this
+    request: the URLs travel with it, the same way the picture's does in the
+    workspace.
+    """
+    return {
+        **row,
+        "dependencies_url": reverse("datadesk:issue_dependencies", args=[row["id"]]),
+        "delete_url": reverse("datadesk:issue_delete", args=[row["id"]]),
+    }
 
 
 def _int(request: HttpRequest, name: str) -> int | None:
