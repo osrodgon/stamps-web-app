@@ -71,6 +71,202 @@
     }
   };
 
+  /* ------------------------------------------------------------------ *
+   * Reference fields: typed with completion instead of chosen.
+   *
+   * The strip would otherwise ship every artist, printer and colour with each
+   * series, and those tables only grow. Instead the field asks
+   * /datadesk/lookups/<key>/search as the user types, and the + button creates
+   * the row nobody had yet. The API speaks ids and a person types names, so
+   * these two maps are the dictionary between them: seeded with what the page
+   * rendered, grown by every search and every row created from here.
+   * ------------------------------------------------------------------ */
+
+  const lookupById = new Map();
+  const lookupByLabel = new Map();
+
+  const lookupIdKey = (field, id) => field + ":" + String(id);
+  const lookupLabelKey = (field, label) =>
+    field + ":" + String(label).trim().toLowerCase();
+
+  const rememberLookup = (field, id, label) => {
+    if (id === null || id === undefined || String(id) === "") {
+      return;
+    }
+    lookupById.set(lookupIdKey(field, id), label);
+    lookupByLabel.set(lookupLabelKey(field, label), String(id));
+  };
+
+  /** The id behind a typed name, or "" when the name is new to the page. */
+  const lookupIdOf = (field, label) =>
+    lookupByLabel.get(lookupLabelKey(field, label)) || "";
+
+  const lookupLabelOf = (field, id) =>
+    lookupById.get(lookupIdKey(field, id)) || "";
+
+  const lookupControls = () =>
+    Array.from(document.querySelectorAll("[data-lookup]"));
+
+  const lookupControl = (field) =>
+    document.querySelector('[data-lookup="' + field + '"]');
+
+  /** The value the API sees for a control: an id when the field is a lookup. */
+  const formValue = (control) => {
+    const field = control.dataset ? control.dataset.lookup : "";
+    return field ? lookupIdOf(field, control.value) : control.value;
+  };
+
+  /** Writes a lookup control from an id, showing the name it identifies. */
+  const setLookup = (control, field, id) => {
+    control.value = lookupLabelOf(field, id) || "";
+  };
+
+  /** A typed name that matches no row: it cannot become an id by itself. */
+  const unresolvedLookup = () =>
+    lookupControls().find(
+      (control) =>
+        control.value.trim() !== "" &&
+        !lookupIdOf(control.dataset.lookup, control.value)
+    ) || null;
+
+  /** What the modes plug into: a line of status, and a row worth reviewing. */
+  const lookupHooks = { notice: () => {}, created: () => {} };
+  const lookupTexts = config.lookupText || {};
+  let lookupSearchTimer = null;
+
+  lookupControls().forEach((control) => {
+    if (control.value.trim() !== "" && control.dataset.value) {
+      rememberLookup(control.dataset.lookup, control.dataset.value, control.value);
+    }
+  });
+
+  /** The + button only makes sense for a name the page does not know. */
+  const paintLookupButton = (control) => {
+    const field = control.dataset.lookup;
+    const button = document.querySelector('[data-create-for="' + field + '"]');
+    if (!button) {
+      return;
+    }
+    const name = control.value.trim();
+    const known = name !== "" && lookupIdOf(field, name) !== "";
+    button.hidden = name === "" || known;
+    button.textContent = (lookupTexts.create || "+ %(name)s").replace(
+      "%(name)s",
+      name
+    );
+  };
+
+  const renderLookupOptions = (field, rows) => {
+    const list = document.getElementById("lookup-" + field);
+    if (!list) {
+      return;
+    }
+    list.textContent = "";
+    rows.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = row.label;
+      list.append(option);
+    });
+  };
+
+  const searchLookup = async (field, query) => {
+    const endpoints = (config.lookups || {})[field] || {};
+    if (!endpoints.search) {
+      return;
+    }
+    try {
+      const response = await fetch(
+        endpoints.search + "?q=" + encodeURIComponent(query),
+        { headers: { Accept: "application/json" } }
+      );
+      const body = await response.json();
+      if (!body || !body.success) {
+        return;
+      }
+      const rows = body.data.results || [];
+      rows.forEach((row) => rememberLookup(field, row.value, row.label));
+      renderLookupOptions(field, rows);
+    } catch (error) {
+      /* A search that fails leaves the list as it was: the field still takes a
+       * name, it just cannot suggest one. */
+    }
+  };
+
+  const requestLookupSearch = (field, query) => {
+    window.clearTimeout(lookupSearchTimer);
+    lookupSearchTimer = window.setTimeout(
+      () => searchLookup(field, query),
+      250
+    );
+  };
+
+  /** Creates the row being typed, or returns the one that already existed. */
+  const createLookupRow = async (field, name) => {
+    const endpoints = (config.lookups || {})[field] || {};
+    try {
+      const response = await fetch(endpoints.create, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify({ value: name }),
+      });
+      const body = await response.json();
+      if (!body || !body.success || !body.data) {
+        lookupHooks.notice(
+          (body && body.message) || lookupTexts.failed,
+          "error"
+        );
+        return null;
+      }
+      rememberLookup(field, body.data.id, body.data.name);
+      return body.data;
+    } catch (error) {
+      lookupHooks.notice(lookupTexts.failed, "error");
+      return null;
+    }
+  };
+
+  lookupControls().forEach((control) => {
+    const field = control.dataset.lookup;
+    control.addEventListener("focus", () => {
+      paintLookupButton(control);
+      searchLookup(field, control.value.trim());
+    });
+    control.addEventListener("input", () => {
+      paintLookupButton(control);
+      requestLookupSearch(field, control.value.trim());
+    });
+    control.addEventListener("change", () => paintLookupButton(control));
+  });
+
+  Array.from(document.querySelectorAll("[data-create-for]")).forEach((button) => {
+    button.addEventListener("click", async () => {
+      const field = button.dataset.createFor;
+      const control = lookupControl(field);
+      const name = control.value.trim();
+      if (name === "") {
+        return;
+      }
+      button.disabled = true;
+      const row = await createLookupRow(field, name);
+      button.disabled = false;
+      if (!row) {
+        return;
+      }
+      setLookup(control, field, row.id);
+      control.dataset.value = String(row.id);
+      paintLookupButton(control);
+      lookupHooks.notice(lookupTexts.created, "ok");
+      lookupHooks.created(field, row);
+      /* The modes listen to their own events, so the change is remembered (and
+       * becomes undoable) without either of them knowing how it was chosen. */
+      control.dispatchEvent(new Event("input", { bubbles: true }));
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+
   /** The colour behind a cell value: `mode=edit` sends objects, `new` ids. */
   const colourOf = (value) => {
     if (value && typeof value === "object") {
@@ -146,8 +342,8 @@
     if (definition.field === "colors") {
       column.formatter = colorsFormatter;
       /* Only `mode=new` offers the editor: there the colours are the row's and
-       * travel as ids. In `mode=edit` the change set does not carry colours
-       * yet — that arrives with the lookup cell of S18. */
+       * travel as ids. In `mode=edit` the change set still carries no M2M, so
+       * the cell stays read-only; the lookup screen of S19 owns that. */
       if ((config.colours || []).length) {
         column.editor = "list";
         column.editorParams = {
@@ -268,6 +464,9 @@
     /** Undo/redo as a log of values, so nothing has to be snapshotted. */
     const history = [];
     let pointer = 0;
+    /** Reference rows created while editing: they are saved, so they are not
+     * changes, but the review panel says which ones it was. */
+    const createdLookups = [];
 
     const keyOf = (model, id) => model + ":" + id;
 
@@ -281,7 +480,7 @@
     const readValue = (model, id, field) => {
       if (model === "issue") {
         const control = controlOf(field);
-        return control ? control.value : undefined;
+        return control ? formValue(control) : undefined;
       }
       const row = grid.getRow(id);
       const cell = row && fieldOf[field] ? row.getCell(fieldOf[field]) : null;
@@ -291,7 +490,14 @@
     const writeValue = (model, id, field, value) => {
       if (model === "issue") {
         const control = controlOf(field);
-        if (control) {
+        if (!control) {
+          return;
+        }
+        /* A lookup is shown by its name and sent by its id, so undo and redo
+         * write the name the map remembers for that id. */
+        if (control.dataset.lookup) {
+          setLookup(control, field, value);
+        } else {
           control.value = value === null || value === undefined ? "" : value;
         }
         return;
@@ -313,7 +519,7 @@
     const formValues = () => {
       const values = {};
       Array.from(form.querySelectorAll("[name]")).forEach((control) => {
-        values[control.name] = control.value;
+        values[control.name] = formValue(control);
       });
       return values;
     };
@@ -343,16 +549,8 @@
       if (model !== "issue") {
         return String(value);
       }
-      const control = controlOf(field);
-      if (control && control.tagName === "SELECT") {
-        const option = Array.from(control.options).find(
-          (item) => item.value === String(value)
-        );
-        if (option) {
-          return option.textContent.trim();
-        }
-      }
-      return String(value);
+      const label = lookupLabelOf(field, value);
+      return label === "" ? String(value) : label;
     };
 
     /** Recomputes one object's patch against its base, and drops it when empty. */
@@ -414,6 +612,32 @@
     const refusal = (body, fallback) =>
       firstError(body.errors) || body.message || fallback;
 
+
+    lookupHooks.notice = (message, kind) => setStatus(message, kind);
+    lookupHooks.created = (field, row) => {
+      createdLookups.push({ field, name: row.name });
+      paint();
+    };
+
+    /** A typed name with no row behind it cannot be sent as an id. */
+    const refuseUnresolved = () => {
+      const control = unresolvedLookup();
+      if (!control) {
+        return false;
+      }
+      control.classList.add("dd-input-invalid");
+      setStatus(
+        (lookupTexts.unresolved || "%(name)s").replace(
+          "%(name)s",
+          control.value.trim()
+        ),
+        "error"
+      );
+      control.focus();
+      control.scrollIntoView({ block: "nearest" });
+      return true;
+    };
+
     /** Rings the cells a refused row names, so the row is not the only hint. */
     const markStampCells = (row, errors) => {
       if (!row || !errors || typeof errors !== "object") {
@@ -471,6 +695,10 @@
               schemaVersion: config.schemaVersion,
               savedAt: new Date().toISOString(),
               bases: Array.from(bases.entries()),
+              /* The ids a draft carries mean nothing without their names: a
+               * lookup change restored into a page that never searched it would
+               * show an id and undo into an empty box. */
+              lookups: Array.from(lookupById.entries()),
               entries: Array.from(buffer.values()).filter(
                 (entry) => Object.keys(entry.patch).length
               ),
@@ -574,6 +802,37 @@
 
         reviewBody.append(group);
       });
+
+      /* Reference rows were written when they were created, so they are not
+       * pending: they are listed apart, with the reason they are not. */
+      if (createdLookups.length) {
+        const group = document.createElement("div");
+        group.className = "dd-review-group";
+        const title = document.createElement("span");
+        title.className = "dd-review-model";
+        title.textContent = lookupTexts.newRows || "";
+        group.append(title);
+
+        createdLookups.forEach((row) => {
+          const item = document.createElement("div");
+          item.className = "dd-review-item";
+          const name = document.createElement("span");
+          name.className = "dd-review-name";
+          name.textContent =
+            ((config.lookupLabels || {})[row.field] || row.field) +
+            " · " +
+            row.name;
+          item.append(name);
+
+          const note = document.createElement("div");
+          note.className = "dd-review-diff dd-review-note";
+          note.textContent = lookupTexts.savedRow || "";
+          item.append(note);
+          group.append(item);
+        });
+
+        reviewBody.append(group);
+      }
     };
 
     /** How a row is named in the panel: what the user recognises it by. */
@@ -595,7 +854,7 @@
       counter.textContent = count ? plural("changes", count) : "";
       undoButton.disabled = pointer === 0;
       redoButton.disabled = pointer >= history.length;
-      reviewButton.disabled = count === 0;
+      reviewButton.disabled = count === 0 && createdLookups.length === 0;
       saveButton.disabled = count === 0;
       saveButton.textContent = count ? plural("commit", count) : commitLabel;
       discardButton.disabled = count === 0;
@@ -672,7 +931,7 @@
     form.addEventListener("focusin", (event) => {
       const control = event.target;
       if (control.name) {
-        previous[control.name] = control.value;
+        previous[control.name] = formValue(control);
       }
     });
 
@@ -695,14 +954,15 @@
       if (!control.name) {
         return;
       }
+      const value = formValue(control);
       push({
         model: "issue",
         id: config.series.id,
         field: control.name,
         from: control.name in previous ? previous[control.name] : loaded[control.name],
-        to: control.value,
+        to: value,
       });
-      previous[control.name] = control.value;
+      previous[control.name] = value;
     });
 
     /* ---------------------------------------------------------------- *
@@ -710,6 +970,10 @@
      * -------------------------------------------------------------- */
 
     const commit = async () => {
+      if (refuseUnresolved()) {
+        return;
+      }
+
       const changes = Array.from(buffer.values()).filter(
         (entry) => Object.keys(entry.patch).length
       );
@@ -1062,6 +1326,10 @@
       recovery.hidden = false;
 
       recoverButton.addEventListener("click", () => {
+        (draft.lookups || []).forEach(([key, label]) => {
+          const split = key.indexOf(":");
+          rememberLookup(key.slice(0, split), key.slice(split + 1), label);
+        });
         (draft.bases || []).forEach(([key, fields]) => bases.set(key, fields));
         draft.entries.forEach((entry) => {
           Object.entries(entry.patch || {}).forEach(([field, value]) => {
@@ -1578,7 +1846,7 @@
     const seriesPayload = () => {
       const issue = {};
       Array.from(form.querySelectorAll("[name]")).forEach((control) => {
-        const value = control.value.trim();
+        const value = String(formValue(control)).trim();
         if (value !== "") {
           issue[control.name] = value;
         }
@@ -1689,8 +1957,110 @@
       setStatus("", "");
     };
 
+    /* ---------------------------------------------------------------- *
+     * A colour typed for the first time.
+     *
+     * The cell editor is Tabulator's list, which takes no free text, so the
+     * row is created from the toolbar and added to the list the editor will
+     * offer next time it opens. Editing the cell is still the only way to
+     * choose it: creating a colour is not the same as putting it on a stamp.
+     * -------------------------------------------------------------- */
+
+    const colourButton = document.getElementById("new-colour");
+    const colourPanel = document.getElementById("colour-panel");
+    const colourName = document.getElementById("colour-name");
+    const colourStatus = document.getElementById("colour-status");
+    const colourCreate = document.getElementById("colour-create");
+
+    const closeColour = () => {
+      colourPanel.hidden = true;
+    };
+
+    colourButton.addEventListener("click", () => {
+      colourPanel.hidden = false;
+      colourName.value = "";
+      colourStatus.textContent = "";
+      colourStatus.className = "dd-hint";
+      colourName.focus();
+    });
+    document.getElementById("colour-close").addEventListener("click", closeColour);
+    document.getElementById("colour-cancel").addEventListener("click", closeColour);
+    colourPanel.addEventListener("click", (event) => {
+      if (event.target === colourPanel) {
+        closeColour();
+      }
+    });
+    colourPanel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeColour();
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        colourCreate.click();
+      }
+    });
+
+    colourCreate.addEventListener("click", async () => {
+      const name = colourName.value.trim();
+      if (name === "") {
+        colourName.focus();
+        return;
+      }
+      colourCreate.disabled = true;
+      colourStatus.textContent = texts.saving;
+      colourStatus.className = "dd-hint dd-status-pending";
+      const row = await createLookupRow("color", name);
+      colourCreate.disabled = false;
+      if (!row) {
+        colourStatus.textContent = lookupTexts.failed;
+        colourStatus.className = "dd-hint dd-status-error";
+        return;
+      }
+
+      /* The chip takes its tone from the palette entry, so the new colour has
+       * to exist both in the page configuration and in the list the open
+       * editor holds. */
+      config.colours.push({
+        value: row.id,
+        label: row.name,
+        tone: row.tone || "neutral",
+      });
+      const column = grid.getColumn("colors");
+      const params = column && column.getDefinition().editorParams;
+      if (params && params.values) {
+        params.values.push({ label: row.name, value: row.id });
+      }
+      closeColour();
+      setStatus(lookupTexts.created, "ok");
+    });
+
+    lookupHooks.notice = (message, kind) => setStatus(message, kind);
+
+    /** A typed name with no row behind it cannot be sent as an id. */
+    const refuseUnresolved = () => {
+      const control = unresolvedLookup();
+      if (!control) {
+        return false;
+      }
+      control.classList.add("dd-input-invalid");
+      setStatus(
+        (lookupTexts.unresolved || "%(name)s").replace(
+          "%(name)s",
+          control.value.trim()
+        ),
+        "error"
+      );
+      control.focus();
+      control.scrollIntoView({ block: "nearest" });
+      return true;
+    };
+
     const create = async () => {
       if (created) {
+        return;
+      }
+      if (refuseUnresolved()) {
         return;
       }
       const chosen = drafts.filter((row) => !isBlank(row));
@@ -1823,9 +2193,19 @@
     const applyPrefill = () => {
       Object.entries(config.prefill || {}).forEach(([field, value]) => {
         const control = document.getElementById("field-" + field);
-        if (control) {
-          control.value = String(value);
+        if (!control) {
+          return;
         }
+        if (!control.dataset.lookup) {
+          control.value = String(value);
+          return;
+        }
+        /* A lookup travels as {value, label}: the id is what the API needs and
+         * the name is what the box has to show. */
+        const id = value && typeof value === "object" ? value.value : value;
+        const label = value && typeof value === "object" ? value.label : "";
+        rememberLookup(field, id, label);
+        setLookup(control, field, id);
       });
       /* A prefilled year cannot win over a date the page already carries. */
       syncYearFromDate();

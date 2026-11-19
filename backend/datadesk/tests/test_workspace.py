@@ -198,8 +198,12 @@ class TestQueryCount:
     """One series does not cost one query per stamp."""
 
     def test_the_cost_does_not_grow_with_the_stamps(self, staff_client, issue) -> None:
+        # Same series shape, a hundred stamps instead of two: the only thing
+        # that may change is the size of the stamp query.
         long_issue = Issue.objects.create(
-            year=Year.objects.create(year=1951), name="Larga"
+            year=Year.objects.create(year=1951),
+            name="Larga",
+            country=issue.country,
         )
         for index in range(100):
             Stamp.objects.create(

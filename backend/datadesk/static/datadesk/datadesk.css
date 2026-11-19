@@ -568,6 +568,38 @@ kbd {
   resize: vertical;
 }
 
+/* A reference field is typed, so the "+ Crear" button only shows up when the
+ * name on screen is not a row yet: a permanent button would invite duplicates. */
+.dd-lookup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+.dd-lookup-create {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border: 1px dashed #cfd5dc;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--dd-navy);
+  cursor: pointer;
+}
+
+.dd-lookup-create:hover {
+  border-style: solid;
+  border-color: var(--dd-navy);
+  background: var(--dd-navy);
+  color: #fff;
+}
+
 /* Required, but as a quiet mark: the whole form is required-ish when writing a
  * series, so red asterisks everywhere would shout. */
 .dd-req {
@@ -1018,6 +1050,11 @@ kbd {
 
 .dd-dialog-body .dd-field {
   margin-bottom: 6px;
+}
+
+.dd-review-note {
+  color: var(--dd-soft);
+  font-size: 11px;
 }
 
 .dd-dialog-foot {

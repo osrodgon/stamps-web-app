@@ -14,6 +14,7 @@ from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
 
 from datadesk.images import ImageIndex, has_picture, image_index
 from datadesk.palette import tone_for
+from datadesk.registry import get_lookup
 from issues_api.models import Issue
 from stamps_api.models import Stamp
 
@@ -52,6 +53,9 @@ Each one maps to a condition on the issue, so the grid and the badge tell the
 same story. The last three are expressed with ``Exists`` instead of a join: a
 join would multiply rows and break the stamp ``Count`` annotation.
 """
+
+LOOKUP_SEARCH_LIMIT = 50
+"""How many rows a lookup search returns: a hint, not a table."""
 
 SORT_FIELDS: dict[str, str] = {
     "year": "year__year",
@@ -347,6 +351,39 @@ def missing_data_report() -> dict[str, int]:
         "stamps_without_face_value": stamps.filter(face_value="").count(),
         "stamps_without_image": stamps.count() - with_image,
     }
+
+
+def search_lookups(
+    key: str, query: str, limit: int = LOOKUP_SEARCH_LIMIT
+) -> list[dict[str, Any]]:
+    """Returns the lookup rows that match what was typed in a cell.
+
+    The search runs on the server so a page never has to ship a whole table:
+    the colours are 300 rows and the artists close to a hundred, which is too
+    much to send with every series just to fill six dropdowns.
+
+    Args:
+        key: Registry key (``artist``, ``color``, ...).
+        query: What the user typed. Empty returns the first rows, sorted, so
+            opening a field proposes something instead of nothing.
+        limit: How many rows come back; small on purpose, the list is a hint.
+
+    Returns:
+        ``{"value", "label"}`` per row, ready for a datalist.
+
+    Raises:
+        KeyError: If the key is not a registered lookup.
+    """
+    lookup = get_lookup(key)
+    rows = lookup.model.objects.order_by(lookup.name_field)
+    text = query.strip()
+    if text:
+        rows = rows.filter(**{f"{lookup.name_field}__icontains": text})
+
+    return [
+        {"value": row.pk, "label": str(getattr(row, lookup.name_field))}
+        for row in rows[:limit]
+    ]
 
 
 def _decimal(value: Decimal | None) -> str | None:

@@ -271,7 +271,10 @@ class TestPrefill:
         response = staff_client.get(NEW_URL)
 
         assert response.context["prefill"]["year"] == series.year.year
-        assert response.context["prefill"]["country"] == series.country_id
+        assert response.context["prefill"]["country"] == {
+            "value": series.country_id,
+            "label": "España",
+        }
         # The other row is from a later year, so "last" is the last id.
         assert Issue.objects.get(name="Vieja").year.year > series.year.year
 
@@ -289,10 +292,12 @@ class TestPrefill:
 
         assert prefill == {"year": 1920}
 
-    def test_the_form_marks_the_prefilled_country(self, staff_client, series) -> None:
+    def test_the_form_shows_the_prefilled_country(self, staff_client, series) -> None:
+        """The field is typed: it shows the name and carries the id beside it."""
         content = staff_client.get(NEW_URL).content.decode()
 
-        assert f'<option value="{series.country_id}" selected>' in content
+        assert f'data-value="{series.country_id}"' in content
+        assert 'value="España"' in content
 
     def test_a_fresh_database_has_nothing_to_copy(self, staff_client, db) -> None:
         response = staff_client.get(NEW_URL)
@@ -304,7 +309,10 @@ class TestPrefill:
         config = config_of(staff_client.get(NEW_URL))
 
         assert config["prefill"]["year"] == series.year.year
-        assert config["prefill"]["country"] == series.country_id
+        assert config["prefill"]["country"] == {
+            "value": series.country_id,
+            "label": "España",
+        }
 
     def test_every_field_of_the_series_is_in_the_form(
         self, staff_client, series
@@ -540,7 +548,7 @@ class TestTheLoop:
     ) -> None:
         content = staff_client.get(NEW_URL, {"from": full_series.pk}).content.decode()
 
-        assert f'<option value="{full_series.country_id}" selected>' in content
+        assert f'data-value="{full_series.country_id}"' in content
         assert 'value="13 1/4"' in content
         assert 'value="Málaga"' not in content
 

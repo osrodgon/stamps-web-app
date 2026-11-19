@@ -223,7 +223,24 @@
       `Delete`, both disabled while the change set has edits, and the delete
       dialog shows the three numbers plus the year box (Esc closes it without
       leaving). 38 tests; 328 datadesk and 1344 backend tests green; the jsdom
-      harness is at 62 edit-mode checks. Next: S18 (create a lookup from a cell)
+      harness is at 62 edit-mode checks.
+- [x] **S18 — Create a lookup from the workspace** (2026-11-19): the six
+      reference fields of the strip stopped being selects — the page shipped the
+      whole artist and colour tables with every series — and became typed fields
+      that search `/datadesk/lookups/<key>/search?q=` (50 rows, `icontains` over
+      the name column) with a `+ Crear "X"` button that appears only when the
+      text is not a known row. The form keeps speaking ids: two maps translate
+      between the name on screen and the id the API takes, seeded from the page
+      and grown by searches and creations, and they travel in the `localStorage`
+      draft so a restored change shows a name and undoes into one. A typed name
+      with no row behind it blocks the commit with a message instead of clearing
+      the field. A created row is written immediately (no temporary ids), so in
+      `mode=edit` it is not a change: the review panel lists it in its own group
+      as already saved. Colours get `New colour` in the grid toolbar (the
+      Tabulator list editor takes no free text) and the create response carries
+      the palette tone. 21 tests; 349 datadesk and 1365 backend tests green;
+      jsdom harness at 73 (new) and 74 (edit) checks. Next: S19 (lookup screen,
+      usage counts and merge)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

@@ -164,6 +164,21 @@ so the button advances whichever of the two has a first code and leaves the
 other alone. A series with only one of them is the normal case, not an error.
 """
 
+LOOKUP_FIELDS: tuple[str, ...] = (
+    "country",
+    "stamp_type",
+    "print_type",
+    "printer",
+    "artist",
+    "paper_type",
+)
+"""The reference fields of the strip, in display order.
+
+They are typed with completion rather than chosen from a select: the page would
+otherwise ship every artist and every colour with each series, and a table of
+mechanically typed reference rows only grows.
+"""
+
 DEFAULT_NEW_ROWS = 4
 MIN_NEW_ROWS = 1
 MAX_NEW_ROWS = 100
@@ -313,13 +328,22 @@ def last_issue_prefill() -> dict[str, Any] | None:
     ``None`` means there is nothing to copy — a fresh database — and the page
     hides the button instead of showing it disabled.
     """
-    last = Issue.objects.order_by("-id").values("year__year", "country_id").first()
+    last = (
+        Issue.objects.order_by("-id")
+        .values("year__year", "country_id", "country__name")
+        .first()
+    )
     if last is None:
         return None
 
     values: dict[str, Any] = {"year": last["year__year"]}
     if last["country_id"] is not None:
-        values["country"] = last["country_id"]
+        # The form holds a name and sends an id, so both travel: the button has
+        # to fill the field the way the user would have.
+        values["country"] = {
+            "value": last["country_id"],
+            "label": last["country__name"],
+        }
     return values
 
 
@@ -335,7 +359,12 @@ def series_form_fields(prefill: dict[str, Any] | None = None) -> list[dict[str, 
     fields: list[dict[str, Any]] = []
     for definition in SERIES_FIELDS:
         field = dict(definition)
-        field["value"] = values.get(field["name"], "")
+        raw = values.get(field["name"], "")
+        # A lookup may arrive as ``{value, label}`` (the prefill carries both,
+        # so the button can fill the box the way a person would) or as a bare
+        # id, which then has to be resolved into the name it shows.
+        paired = isinstance(raw, dict)
+        field["value"] = raw.get("value", "") if paired else raw
         if field["kind"] == "year":
             low, high = series_year_bounds()
             field["min"], field["max"] = low, high
@@ -344,7 +373,11 @@ def series_form_fields(prefill: dict[str, Any] | None = None) -> list[dict[str, 
             low, high = series_year_bounds()
             field["min"], field["max"] = f"{low}-01-01", f"{high}-12-31"
         elif "lookup" in field:
-            field["options"] = lookup_options(field["lookup"], field["value"])
+            field["value_label"] = (
+                raw.get("label", "")
+                if paired
+                else lookup_label(field["lookup"], field["value"])
+            )
         fields.append(field)
     return fields
 
@@ -362,18 +395,19 @@ def year_suggestions() -> list[dict[str, Any]]:
     ]
 
 
-def lookup_options(key: str, selected: Any) -> list[dict[str, Any]]:
-    """Returns the options of a lookup select, marking the prefilled one."""
-    lookup = LOOKUPS[key]
-    rows = lookup.model.objects.order_by(lookup.name_field)
-    return [
-        {
-            "value": row.pk,
-            "label": str(getattr(row, lookup.name_field)),
-            "selected": str(row.pk) == str(selected),
-        }
-        for row in rows
-    ]
+def lookup_label(key: str, value: Any) -> str:
+    """Returns the name of the selected lookup row, or ``""`` when unset.
+
+    One query per field with a value: the strip ships the selected row's name,
+    not the whole table, because the field completes as the user types and the
+    options come from the search endpoint (S18).
+    """
+    if value in ("", None):
+        return ""
+    row = LOOKUPS[key].model.objects.filter(pk=value).first()
+    if row is None:
+        return ""
+    return str(getattr(row, LOOKUPS[key].name_field))
 
 
 @dataclass(frozen=True)
@@ -449,6 +483,18 @@ def workspace_config(
     config: dict[str, Any] = {
         "mode": mode,
         "data": rows,
+        "lookups": lookup_endpoints(),
+        "lookupLabels": lookup_labels(),
+        "lookupText": {
+            "create": str(_("+ Create \"%(name)s\"")),
+            "created": str(_("Added to the list.")),
+            "failed": str(_("The value could not be created.")),
+            "unresolved": str(
+                _("%(name)s is not a saved value yet. Use the + button to add it.")
+            ),
+            "newRows": str(_("New reference rows")),
+            "savedRow": str(_("Saved now: reference rows are reused.")),
+        },
         "columns": [
             {**column, "title": str(column["title"])} for column in STAMP_COLUMNS
         ],
@@ -547,6 +593,26 @@ def workspace_config(
             },
         )
     return config
+
+
+def lookup_endpoints() -> dict[str, dict[str, str]]:
+    """Returns the search and create URLs of every lookup the page types into.
+
+    Both modes need them (the strip is the same form), and so does the colour
+    dialog, which is why ``color`` is here without being a strip field.
+    """
+    return {
+        key: {
+            "search": reverse("datadesk:lookup_search", args=[key]),
+            "create": reverse("datadesk:lookup_create", args=[key]),
+        }
+        for key in (*LOOKUP_FIELDS, "color")
+    }
+
+
+def lookup_labels() -> dict[str, str]:
+    """Returns the translated name of each lookup, for the review panel."""
+    return {key: str(LOOKUPS[key].label) for key in (*LOOKUP_FIELDS, "color")}
 
 
 def fill_columns() -> list[dict[str, Any]]:

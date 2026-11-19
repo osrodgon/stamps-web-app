@@ -137,14 +137,13 @@ class TestTheSeriesStripIsAForm:
         assert fields["market_value_mnh"]["value"] == "1.20"
         assert fields["perforation"]["value"] == "13 1/4"
 
-    def test_the_current_lookup_is_selected(self, staff_client, issue) -> None:
+    def test_the_current_lookup_carries_its_name(self, staff_client, issue) -> None:
+        """The box shows the name, the form sends the id: both travel."""
         response = staff_client.get(PAGE_URL.format(pk=issue.pk))
         fields = {field["name"]: field for field in response.context["form_fields"]}
-        selected = [
-            option for option in fields["country"]["options"] if option["selected"]
-        ]
 
-        assert [option["value"] for option in selected] == [issue.country_id]
+        assert fields["country"]["value"] == issue.country_id
+        assert fields["country"]["value_label"] == "España"
 
     def test_the_config_carries_the_series_baseline(self, staff_client, issue) -> None:
         config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))

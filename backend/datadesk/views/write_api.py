@@ -29,7 +29,8 @@ from django.views import View
 
 from datadesk.dependencies import dependency_warning, series_dependencies
 from datadesk.mixins import DataDeskAccessMixin
-from datadesk.service import issue_queryset
+from datadesk.palette import tone_for
+from datadesk.service import issue_queryset, search_lookups
 from datadesk.write import (
     ApplyResult,
     CreatedSeries,
@@ -158,6 +159,38 @@ class ApplyJsonView(JsonPostView):
         )
 
 
+class LookupSearchJsonView(DataDeskAccessMixin, View):
+    """Returns the lookup rows that match what is being typed in the strip.
+
+    Read-only, and the reason the page never ships a whole reference table: the
+    field asks as the user types and gets a short list back.
+    """
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        """Searches one lookup and answers with ``{value, label}`` rows."""
+        try:
+            results = search_lookups(kwargs["key"], request.GET.get("q", ""))
+        except KeyError:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Unknown lookup.",
+                    "errors": {},
+                    "data": None,
+                },
+                status=404,
+            )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "",
+                "errors": {},
+                "data": {"results": results},
+            }
+        )
+
+
 class LookupCreateJsonView(JsonPostView):
     """Returns a lookup row, creating it when the name is new."""
 
@@ -169,7 +202,12 @@ class LookupCreateJsonView(JsonPostView):
             kwargs["key"], payload.get("value"), request.user
         )
         message = "Created." if result.created else "Already exists."
-        return _written(message, result.commit_id, result.as_dict())
+        body = result.as_dict()
+        if kwargs["key"] == "color":
+            # The cell paints the chip from the tone, and a colour created here
+            # has no row in the page configuration to borrow one from.
+            body["data"]["tone"] = tone_for(body["data"]["name"])
+        return _written(message, result.commit_id, body)
 
 
 class BackupJsonView(DataDeskAccessMixin, View):
