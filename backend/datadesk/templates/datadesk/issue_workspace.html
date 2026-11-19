@@ -21,11 +21,7 @@
       <div class="dd-meta-head">
         <span class="dd-label">{% translate "Issue metadata" %}</span>
         <span class="dd-hint">
-          {% if mode == "new" %}
-            {% translate "series values describe the whole set, stamp values the stamp" %}
-          {% else %}
-            {% translate "as stored · series values describe the whole set, stamp values the stamp" %}
-          {% endif %}
+          {% translate "series values describe the whole set, stamp values the stamp" %}
         </span>
         {% if mode == "new" %}
           {% if prefill %}
@@ -40,65 +36,56 @@
         {% endif %}
       </div>
 
-      {% if mode == "new" %}
-        {% comment %}
-          A plain container, not a form: there is no endpoint to submit to yet,
-          and a form would reload the page on Enter and throw the draft away.
-        {% endcomment %}
-        <div class="dd-fields" id="series-form">
-          {% for field in form_fields %}
-            <label class="dd-field{% if field.wide %} dd-field-wide{% endif %}"
-                   for="field-{{ field.name }}">
-              <span class="dd-field-key">
-                {{ field.label }}{% if field.required %} <span class="dd-req">*</span>{% endif %}
+      {% comment %}
+        One form for the two modes: writing a series and correcting one are the
+        same fifteen fields, so they share the definitions and the markup. A
+        real <form> would reload the page on Enter and throw the draft away, so
+        the container is a plain div and the commit is explicit.
+      {% endcomment %}
+      <div class="dd-fields" id="series-form">
+        {% for field in form_fields %}
+          <label class="dd-field{% if field.wide %} dd-field-wide{% endif %}"
+                 for="field-{{ field.name }}">
+            <span class="dd-field-key">
+              {{ field.label }}{% if field.required %} <span class="dd-req">*</span>{% endif %}
+            </span>
+            {% if field.kind == "year" %}
+              <input class="dd-input" id="field-{{ field.name }}"
+                     name="{{ field.name }}" type="number" inputmode="numeric"
+                     list="year-options" step="1"
+                     {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                     min="{{ field.min }}" max="{{ field.max }}"
+                     {% if field.required %}required{% endif %}>
+              <datalist id="year-options">
+                {% for option in field.options %}
+                  <option value="{{ option.value }}"></option>
+                {% endfor %}
+              </datalist>
+              <span class="dd-hint dd-year-hint" id="year-new-hint" hidden>
+                {% translate "This year does not exist yet: it will be created when the series is saved." %}
               </span>
-              {% if field.kind == "year" %}
-                <input class="dd-input" id="field-{{ field.name }}"
-                       name="{{ field.name }}" type="number" inputmode="numeric"
-                       list="year-options" step="1"
-                       {% if field.value != "" %}value="{{ field.value }}"{% endif %}
-                       min="{{ field.min }}" max="{{ field.max }}"
-                       {% if field.required %}required{% endif %}>
-                <datalist id="year-options">
-                  {% for option in field.options %}
-                    <option value="{{ option.value }}"></option>
-                  {% endfor %}
-                </datalist>
-                <span class="dd-hint dd-year-hint" id="year-new-hint" hidden>
-                  {% translate "This year does not exist yet: it will be created when the series is saved." %}
-                </span>
-              {% elif field.kind == "select" %}
-                <select class="dd-input" id="field-{{ field.name }}"
-                        name="{{ field.name }}"{% if field.required %} required{% endif %}>
-                  <option value="">—</option>
-                  {% for option in field.options %}
-                    <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
-                  {% endfor %}
-                </select>
-              {% elif field.kind == "textarea" %}
-                <textarea class="dd-input" id="field-{{ field.name }}"
-                          name="{{ field.name }}" rows="2">{{ field.value }}</textarea>
-              {% else %}
-                <input class="dd-input" id="field-{{ field.name }}"
-                       name="{{ field.name }}" type="{{ field.kind }}"
-                       {% if field.value != "" %}value="{{ field.value }}"{% endif %}
-                       {% if field.step %}step="{{ field.step }}"{% endif %}
-                       {% if "min" in field %}min="{{ field.min }}"{% endif %}
-                       {% if field.required %}required{% endif %}>
-              {% endif %}
-            </label>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="dd-fields">
-          {% for field in metadata %}
-            <div class="dd-field{% if field.wide %} dd-field-wide{% endif %}">
-              <span class="dd-field-key">{{ field.label }}</span>
-              <span class="dd-field-value" title="{{ field.value }}">{{ field.value }}</span>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+            {% elif field.kind == "select" %}
+              <select class="dd-input" id="field-{{ field.name }}"
+                      name="{{ field.name }}"{% if field.required %} required{% endif %}>
+                <option value="">—</option>
+                {% for option in field.options %}
+                  <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+              </select>
+            {% elif field.kind == "textarea" %}
+              <textarea class="dd-input" id="field-{{ field.name }}"
+                        name="{{ field.name }}" rows="2">{{ field.value }}</textarea>
+            {% else %}
+              <input class="dd-input" id="field-{{ field.name }}"
+                     name="{{ field.name }}" type="{{ field.kind }}"
+                     {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                     {% if field.step %}step="{{ field.step }}"{% endif %}
+                     {% if "min" in field %}min="{{ field.min }}"{% endif %}
+                     {% if field.required %}required{% endif %}>
+            {% endif %}
+          </label>
+        {% endfor %}
+      </div>
     </div>
 
     <div class="dd-gridwrap">
@@ -125,6 +112,17 @@
         </span>
         <span class="dd-hint dd-right">
           {% translate "Shift+Enter does not save yet." %}
+        </span>
+      </div>
+    {% else %}
+      <div class="dd-commitbar">
+        <span class="dd-hint" id="commit-status">
+          {% translate "Shift+Enter saves the row you are editing." %}
+        </span>
+        <span class="dd-hint dd-right">
+          <button type="button" class="dd-btn dd-btn-dark" id="commit-button">
+            {% translate "Save" %}
+          </button>
         </span>
       </div>
     {% endif %}

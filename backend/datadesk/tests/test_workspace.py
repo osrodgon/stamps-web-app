@@ -137,7 +137,7 @@ class TestWorkspacePage:
         response = staff_client.get(PAGE_URL.format(pk=issue.pk))
 
         assert not any(
-            row.get("inheritable") for row in response.context["metadata"]
+            field.get("inheritable") for field in response.context["form_fields"]
         )
 
     def test_the_grid_carries_the_columns_translated(self, staff_client, issue) -> None:
@@ -254,27 +254,3 @@ class TestAccess:
         response = client.get(PAGE_URL.format(pk=issue.pk))
 
         assert response.status_code == 403
-
-
-@pytest.mark.django_db
-class TestFormatting:
-    """Numbers and dates follow the active language."""
-
-    def test_spanish_uses_dots_and_day_first(self, staff_client, issue) -> None:
-        staff_client.cookies["django_language"] = "es"
-
-        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
-
-        # Django's es locale groups thousands with a hard space, not a dot.
-        assert "500\u00a0000" in content
-        assert "12/05/1987" in content
-        assert "1,20 €" in content
-
-    def test_english_uses_commas_and_month_first(self, staff_client, issue) -> None:
-        staff_client.cookies["django_language"] = "en"
-
-        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
-
-        assert "500,000" in content
-        assert "05/12/1987" in content
-        assert "1.20 €" in content

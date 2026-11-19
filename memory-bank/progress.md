@@ -130,6 +130,24 @@
       so form and writer cannot drift; `IssueCreateView` renamed `IssueNewView`.
       56 tests (38 writer + 18 HTTP); 1250 backend tests green. Next: S13
       (single-row commit from the grid)
+- [x] **S13 — Single-row commit from the grid** (2026-11-19, second milestone):
+      the series strip is now a form (same 15 fields and definitions as S11) and
+      the stamp grid has editors on the columns a stamp owns (`patch` in the
+      column definition). `Shift+Enter` — or the Save button — commits **one**
+      row to `/datadesk/apply`: the open editor is blurred first so Tabulator has
+      already written the typed value into the row. `updated_at` travels as row
+      data (not a column) and `/apply` returns `data.rows [{index, id,
+      updated_at}]`, so the new baseline comes back without a reload. A refusal
+      reverts the cell and marks the row red with the server's message; the strip
+      keeps what was typed. `Esc` blurs a focused field instead of leaving.
+      Consequence: the strip no longer formats numbers/dates by locale — inputs
+      show the stored value; `issue_metadata()`, `_display()` and the formatting
+      tests are gone (S22 owns a read-only view). 14 tests; 1262 backend tests
+      green. **Fix from the first real use**: Save answered "nothing changed"
+      on the strip because the click moved the focus out of the form before the
+      target was decided; the target now falls back to "the strip is dirty" and
+      the strip reports its unsaved state while typing. Next: S14 (client
+      change set)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

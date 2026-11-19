@@ -228,6 +228,8 @@ class TestApplyChanges:
         assert result.rejected == []
         assert result.success
         assert Stamp.objects.filter(edifil_code__startswith="X").count() == 40
+        assert [row["index"] for row in result.rows] == list(range(40))
+        assert all(row["updated_at"] for row in result.rows)
         written = DataDeskChange.objects.filter(commit_id=result.commit_id)
         assert written.count() == 40
         assert DataDeskChange.objects.count() == baseline + 40
@@ -328,6 +330,7 @@ class TestApplyChanges:
         created = DataDeskChange.objects.filter(commit_id=result.commit_id)
         assert created.count() == 1
         assert created.get().operation == "create"
+        assert result.rows[0]["id"] == series.stamps.order_by("-pk").first().pk
 
     def test_creates_a_series_through_apply(self, staff_user) -> None:
         change = {
