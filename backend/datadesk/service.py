@@ -219,6 +219,20 @@ def issue_page(
     )
 
 
+def issue_positions(filters: IssueFilters | None = None) -> list[int]:
+    """Returns the pks of the workbench list, in the order the grid shows them.
+
+    The list is pks only — 2.500 integers, not the eight-table join the grid
+    uses — and it is what both "which page is this series on" and "which series
+    comes next" are built on: the neighbour of a series is the neighbour in this
+    list, with the filters and order the user was looking at.
+    """
+    queryset = sort_issues(
+        filter_issues(Issue.objects.all(), filters or IssueFilters()), *DEFAULT_SORT
+    )
+    return list(queryset.values_list("pk", flat=True))
+
+
 def page_of_issue(
     issue_id: int,
     filters: IssueFilters | None = None,
@@ -228,19 +242,61 @@ def page_of_issue(
 
     Landing back on the workbench after a commit is only useful if the series is
     in front of the user, and the grid pages server-side: the answer needs the
-    position of the row, not just its id. The list is pks only — 2.500 integers,
-    not the eight-table join the grid uses.
+    position of the row, not just its id.
     """
     size = max(1, min(size, MAX_PAGE_SIZE))
-    queryset = sort_issues(
-        filter_issues(Issue.objects.all(), filters or IssueFilters()), *DEFAULT_SORT
-    )
-    pks = list(queryset.values_list("pk", flat=True))
+    pks = issue_positions(filters)
     try:
         position = pks.index(issue_id)
     except ValueError:
         return 1
     return position // size + 1
+
+
+@dataclass(frozen=True)
+class Neighbours:
+    """The series either side of one, in the workbench order.
+
+    Attributes:
+        previous: Pk of the series before it, or ``None`` at the start.
+        next: Pk of the series after it, or ``None`` at the end.
+        position: 1-based position, or ``None`` when the series is not in the
+            filtered list at all (a stale link, or arrived from the dashboard).
+        total: How many series the list has.
+    """
+
+    previous: int | None
+    next: int | None
+    position: int | None
+    total: int
+
+    @property
+    def found(self) -> bool:
+        """Whether the series is in the list the arrows walk."""
+        return self.position is not None
+
+
+def neighbours_of_issue(
+    issue_id: int, filters: IssueFilters | None = None
+) -> Neighbours:
+    """Returns the series before and after one, in the workbench order.
+
+    Not ``id ± 1``: walking the 1987 series without a country should not jump to
+    a 1994 one because the ids happen to be consecutive. The same pk list
+    ``page_of_issue()`` walks answers both questions, in one query.
+    """
+    pks = issue_positions(filters)
+    try:
+        index = pks.index(issue_id)
+    except ValueError:
+        return Neighbours(previous=None, next=None, position=None, total=len(pks))
+
+    return Neighbours(
+        previous=pks[index - 1] if index > 0 else None,
+        next=pks[index + 1] if index + 1 < len(pks) else None,
+        position=index + 1,
+        total=len(pks),
+    )
 
 
 def serialize_issue(issue: Issue) -> dict[str, Any]:

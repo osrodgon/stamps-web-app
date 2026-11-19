@@ -1194,6 +1194,32 @@
       }
     });
 
+    /* [ and ] walk the list the user came from. The arrows are links in the
+     * page, so the keyboard and the mouse cannot disagree about the neighbour;
+     * a field keeps its brackets. */
+    document.addEventListener("keydown", (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+      if (event.key !== "[" && event.key !== "]") {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("input, select, textarea")
+      ) {
+        return;
+      }
+      const link = document.getElementById(
+        event.key === "[" ? "nav-previous" : "nav-next"
+      );
+      if (link && link.href) {
+        event.preventDefault();
+        window.location.assign(link.href);
+      }
+    });
+
     /* ---------------------------------------------------------------- *
      * Deleting one stamp: its own preview, its own dialog.
      *

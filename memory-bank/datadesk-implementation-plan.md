@@ -126,7 +126,7 @@ propósito y una puerta que existe pero no donde se busca.
 | S24 | Escala tipográfica y ritmo del interfaz | S23 | M | sí | ✅ 2026-11-19 |
 | S25 | Borrar un sello con preview de dependencias | S17, S21 | M | sí | ✅ 2026-11-19 |
 | S26 | Nueva fila en las tablas de referencia | S19 | S | sí | ✅ 2026-11-19 |
-| S27 | Moverse entre series y borrar desde la lista | S15, S17 | M | sí | — |
+| S27 | Moverse entre series y borrar desde la lista | S15, S17 | M | sí | ✅ 2026-11-19 |
 
 Orden: **S23** primero porque es el bug y toca el mismo CSS que S24; **S24**
 después para no repintar dos veces. **S27** no depende de S25 ni de S26 y es lo
@@ -2694,6 +2694,23 @@ mismo; `Supr` solo abre el diálogo (comprobado en el arnés).
 **Tamaño**: M · `service.py`, `views/workbench.py`, `views/workspace.py`,
 plantillas, `issue_workspace.js`, `workbench.js`, tests.
 
+**Hecho (2026-11-19)**: `issue_positions()` extrae la lista de pks que ya
+recorría `page_of_issue()` y `neighbours_of_issue()` devuelve anterior, siguiente,
+posición y total con esa misma consulta; `navigation_for()` construye las dos
+rutas con la query de los filtros, el contador formateado y el enlace de vuelta, y
+**cae al orden sin filtros** si la serie no está en el conjunto (enlace viejo o
+llegada desde el dashboard). El `↗`/`Enter` del workbench llevan los filtros en el
+enlace (`?attention=…`), que era la mitad del problema: sin eso la vista de serie
+no sabía de dónde venías. Teclado `[`/`]` con guarda de campo. En el workbench, una
+columna `×` con el **mismo diálogo** que el workspace —extraído a
+`partials/series_delete_dialog.html` y compartido, para que la decisión se pregunte
+igual en los dos sitios—, preview y POST que ya existían, banner al terminar y
+`Supr` que **solo abre** el diálogo. Cada fila del JSON de la rejilla lleva sus dos
+URLs, como las del sello. 13 tests (8 de vecinos y flechas, 5 de la rejilla y el
+diálogo) y **15 comprobaciones nuevas** en los arneses (9 en el del workbench:
+`Enter` con filtros, `Supr`, preview, recuentos, etiqueta del año, POST, cierre y
+banner; 6 en el de `mode=edit`: `[`/`]` y sus guardas): 488 datadesk, 1504 backend.
+
 ---
 
 ## 5. Riesgos y cómo se cortan
@@ -4161,8 +4178,18 @@ el revert de S21 devolviendo el sello con su id y sus colores (los
 S18; el año lleva los mismos límites que la franja, un duplicado selecciona la fila
 existente y la recién creada se resalta aunque haya caído en otra página.
 
-### ⏭ Siguiente: S27
+### S27 — Moverse entre series y borrar desde la lista (2026-11-19)
 
-Moverse entre series desde el workspace (con los filtros del workbench) y borrar
-una serie desde la fila de la lista.
+`issue_positions()`/`neighbours_of_issue()` reutilizan la lista de pks de
+`page_of_issue()`; los filtros viajan del workbench a la vista de serie y vuelven
+en las flechas, el contador y el enlace de vuelta; `[`/`]` hacen lo mismo desde el
+teclado. En la lista, el diálogo de S17 compartido en un partial, una columna `×`
+por fila y `Supr` que solo abre el diálogo.
+
+### ✅ Segunda tanda terminada (S23–S27)
+
+Cinco pasos, ninguno mezclado con otro: el anillo (bug), la escala (diseño), el
+borrado de un sello y la fila nueva (huecos funcionales) y la navegación con el
+borrado desde la lista. Lo que sigue fuera, decidido y escrito en `progress.md`:
+corregir los colores de un sello en `mode=edit` (necesita M2M en el change set).
 

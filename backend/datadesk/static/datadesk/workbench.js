@@ -27,6 +27,24 @@
   let total = 0;
   let debounceTimer = null;
 
+  const csrfToken = () => {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
+  };
+
+  /** The first message of a field-errors object, for the dialog's status line. */
+  const firstErrorOf = (errors) => {
+    if (!errors || typeof errors !== "object") {
+      return "";
+    }
+    const key = Object.keys(errors)[0];
+    if (!key) {
+      return "";
+    }
+    const value = errors[key];
+    return Array.isArray(value) ? String(value[0] || "") : String(value);
+  };
+
   /** Reads the filters currently in the form. */
   const readFilters = () => {
     const params = new URLSearchParams();
@@ -82,8 +100,17 @@
     return column;
   };
 
-  /** Absolute-ish URL of the workspace of a row. */
-  const issueUrl = (row) => `${config.issueUrlPrefix}${row.id}/`;
+  /** Absolute-ish URL of the workspace of a row, filters included.
+   *
+   * The workspace walks previous/next through the list it was opened from, so
+   * the filters have to travel with the link or the arrows would walk the whole
+   * table instead of the rows on screen.
+   */
+  const issueUrl = (row) => {
+    const query = readFilters().toString();
+    const suffix = query ? `?${query}` : "";
+    return `${config.issueUrlPrefix}${row.id}/${suffix}`;
+  };
 
   /** A chevron drawn inline: no icon font, no extra request. */
   const chevron = () => {
@@ -107,6 +134,31 @@
     link.setAttribute("aria-label", config.openText);
     link.append(chevron());
     return link;
+  };
+
+  /** Deleting from the list: the same dialog the workspace uses. */
+  const deleteFormatter = (cell) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "dd-row-delete-action";
+    button.textContent = "×";
+    button.title = (config.texts || {}).deleteSeries || "";
+    button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openDelete(cell.getRow().getData());
+    });
+    return button;
+  };
+
+  const deleteColumn = {
+    field: "delete",
+    title: "",
+    width: 34,
+    headerSort: false,
+    hozAlign: "center",
+    cssClass: "dd-remove-cell",
+    formatter: deleteFormatter,
   };
 
   const openColumn = {
@@ -138,7 +190,7 @@
     height: "calc(100vh - 300px)",
     placeholder: config.emptyText,
     selectableRows: 1,
-    columns: [openColumn, ...config.columns.map(buildColumn)],
+    columns: [openColumn, ...config.columns.map(buildColumn), deleteColumn],
   });
 
   /** Double click opens the row: what people try before finding the chevron. */
@@ -184,6 +236,15 @@
       moveSelection(event.key === "j" ? 1 : -1);
       return;
     }
+    if (event.key === "Delete") {
+      /* Supr opens the dialog for the selected series; it never deletes. */
+      const selected = table.getSelectedRows();
+      if (selected.length === 1) {
+        event.preventDefault();
+        openDelete(selected[0].getData());
+      }
+      return;
+    }
     if (event.key.toLowerCase() === "n") {
       event.preventDefault();
       const newIssue = document.querySelector(".dd-new-issue");
@@ -198,6 +259,126 @@
     const selected = table.getSelectedRows();
     if (selected.length === 1) {
       window.location.assign(issueUrl(selected[0].getData()));
+    }
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Deleting a series without opening it.
+   *
+   * The dialog is the workspace's, and so is the preview: the endpoint and the
+   * POST already exist. This screen only fills the numbers and sends the year,
+   * which is the server's to check.
+   * ---------------------------------------------------------------- */
+
+  const panel = document.getElementById("delete-panel");
+  const confirmInput = document.getElementById("delete-confirm");
+  const confirmButton = document.getElementById("delete-confirm-button");
+  const confirmLabel = document.getElementById("delete-confirm-label");
+  const warningText = document.getElementById("delete-warning");
+  const statusText = document.getElementById("delete-status");
+  const counts = {
+    stamps: document.getElementById("delete-stamps"),
+    items: document.getElementById("delete-items"),
+    collections: document.getElementById("delete-collections"),
+  };
+  const banner = document.getElementById("workbench-banner");
+  const texts = config.texts || {};
+  let deleting = null;
+
+  const closeDelete = () => {
+    panel.hidden = true;
+    deleting = null;
+  };
+
+  function openDelete(row) {
+    deleting = row;
+    panel.hidden = false;
+    confirmInput.value = "";
+    confirmButton.disabled = true;
+    warningText.textContent = "";
+    statusText.textContent = "";
+    Object.keys(counts).forEach((key) => {
+      counts[key].textContent = "·";
+    });
+    confirmInput.focus();
+
+    fetch(row.dependencies_url, { headers: { Accept: "application/json" } })
+      .then((response) => response.json())
+      .catch(() => null)
+      .then((body) => {
+        if (!deleting || !body || !body.success || !body.data) {
+          statusText.textContent = (body && body.message) || texts.previewFailed;
+          return;
+        }
+        const data = body.data;
+        Object.keys(counts).forEach((key) => {
+          counts[key].textContent = data[key];
+        });
+        warningText.textContent = data.warning;
+        confirmLabel.textContent = (texts.confirmYear || "%(year)s").replace(
+          "%(year)s",
+          data.year
+        );
+        confirmButton.disabled = false;
+      });
+  }
+
+  const sendDelete = async () => {
+    if (!deleting) {
+      return;
+    }
+    const row = deleting;
+    confirmButton.disabled = true;
+    statusText.textContent = texts.deleting;
+
+    let body = null;
+    try {
+      const response = await fetch(row.delete_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify({ confirm: confirmInput.value }),
+      });
+      body = await response.json();
+    } catch (error) {
+      body = null;
+    }
+
+    if (!body || !body.success) {
+      confirmButton.disabled = false;
+      statusText.textContent =
+        firstErrorOf(body && body.errors) ||
+        (body && body.message) ||
+        texts.deleteFailed;
+      return;
+    }
+
+    closeDelete();
+    banner.textContent = texts.deleted;
+    banner.hidden = false;
+    table.setData();
+  };
+
+  confirmButton.addEventListener("click", sendDelete);
+  confirmInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendDelete();
+    }
+  });
+  document.getElementById("delete-close").addEventListener("click", closeDelete);
+  document.getElementById("delete-cancel").addEventListener("click", closeDelete);
+  panel.addEventListener("click", (event) => {
+    if (event.target === panel) {
+      closeDelete();
+    }
+  });
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      closeDelete();
     }
   });
 
