@@ -262,6 +262,7 @@ class IssueNewView(DataDeskAccessMixin, TemplateView):
         context.update(
             mode="new",
             prefill=last,
+            prefill_label=prefill_summary(last),
             form_fields=series_form_fields(values),
             metadata=[],
             stamp_count=0,
@@ -300,6 +301,24 @@ def with_default_date(values: dict[str, Any]) -> dict[str, Any]:
     if year is not None and year != timezone.localdate().year:
         return values
     return {**values, "date": timezone.localdate().isoformat()}
+
+
+def prefill_summary(values: dict[str, Any] | None) -> str:
+    """Returns what the "use last issue" button would put in the form.
+
+    A button that says only "use the last issue" looks dead when the form
+    already holds those values — which it does on load. Naming them turns it
+    into a label the user can check against the fields.
+    """
+    if not values:
+        return ""
+    parts: list[str] = []
+    country = values.get("country")
+    if isinstance(country, dict) and country.get("label"):
+        parts.append(str(country["label"]))
+    if values.get("year") is not None:
+        parts.append(str(values["year"]))
+    return " · ".join(parts)
 
 
 def repeat_values(issue: Issue) -> dict[str, Any]:

@@ -772,3 +772,11 @@ msgstr[1] "%(count)s objects"
 #: datadesk/activity.py
 msgid "Stamp"
 msgstr "Stamp"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one."
+msgstr "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
+msgstr "Slash focuses the search and J and K move the selection. Two selected rows can be merged."

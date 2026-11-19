@@ -72,6 +72,31 @@ class TestStampQueryset:
 
 
 @pytest.mark.django_db
+class TestSortingByDate:
+    """The one sortable column whose nulls have to go last, both ways."""
+
+    def test_ascending_leaves_the_undated_series_at_the_end(self, dataset) -> None:
+        rows = service.sort_issues(service.issue_queryset(), "date", "asc")
+
+        assert [issue.name for issue in rows] == [
+            "Exposición de Málaga",
+            "Sin país",
+            "Sin sellos",
+            "Sin fecha",
+        ]
+
+    def test_descending_too(self, dataset) -> None:
+        rows = service.sort_issues(service.issue_queryset(), "date", "desc")
+
+        assert [issue.name for issue in rows] == [
+            "Sin sellos",
+            "Sin país",
+            "Exposición de Málaga",
+            "Sin fecha",
+        ]
+
+
+@pytest.mark.django_db
 class TestMissingDataReport:
     """The six counters behind the "needs attention" selector."""
 

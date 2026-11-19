@@ -770,3 +770,11 @@ msgstr[1] "%(count)s objetos"
 #: datadesk/activity.py
 msgid "Stamp"
 msgstr "Sello"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one."
+msgstr "La barra diagonal lleva al buscador, J y K mueven la selección, Enter abre la serie y N crea una nueva."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
+msgstr "La barra diagonal lleva al buscador y J y K mueven la selección. Dos filas seleccionadas se pueden fusionar."

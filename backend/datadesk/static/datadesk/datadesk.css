@@ -10,7 +10,7 @@
   /* Ink and surfaces */
   --dd-ink: #16191d;
   --dd-muted: #6b7480;
-  --dd-soft: #9aa2ab;
+  --dd-soft: #6b7280;
   --dd-line: #e3e6ea;
   --dd-bg: #f4f5f7;
   --dd-surface: #fff;
@@ -216,6 +216,37 @@ a {
 
 .dd-topbar .dd-btn-ghost:hover {
   background: #39485a;
+}
+
+/* Keyboard focus is visible on everything you can act on, not just inputs:
+ * DataDesk is a keyboard-first screen, and a button you cannot see is a button
+ * you do not press. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: 2px;
+}
+
+/* On the dark bar the navy ring disappears: the same ring in white. */
+.dd-topbar a:focus-visible,
+.dd-topbar button:focus-visible {
+  outline-color: #fff;
+}
+
+/* A field the prefill just wrote, for a moment: the button said what it would
+ * set and this is where it landed. */
+.dd-field .dd-input.dd-applied {
+  box-shadow: 0 0 0 2px var(--dd-green);
+}
+
+/* The line under a grid that says what the keyboard does here. */
+.dd-keys {
+  margin: 8px 0 0;
+  font-size: 11px;
 }
 
 /* --- Small text primitives -------------------------------------------- */

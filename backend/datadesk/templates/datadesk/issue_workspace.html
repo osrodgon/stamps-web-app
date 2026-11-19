@@ -27,6 +27,7 @@
           {% if prefill %}
             <button type="button" id="use-last-issue" class="dd-btn dd-btn-ghost dd-meta-back">
               ↺ {% translate "Use last issue" %}
+              {% if prefill_label %}<span class="dd-hint">{{ prefill_label }}</span>{% endif %}
             </button>
           {% endif %}
         {% else %}
@@ -235,7 +236,8 @@
         </span>
       </div>
 
-      <aside class="dd-review" id="review-panel" hidden aria-labelledby="review-title">
+      <aside class="dd-review" id="review-panel" role="dialog" hidden
+             aria-labelledby="review-title">
         <div class="dd-review-head">
           <span class="dd-label" id="review-title">
             {% translate "Pending changes" %}
