@@ -339,4 +339,43 @@
     window.clearTimeout(timer);
     timer = window.setTimeout(() => table.setData(), DEBOUNCE_MS);
   });
+
+  /** True when the keystroke belongs to a control and not to the screen. */
+  const typing = (event) => {
+    const target = event.target;
+    return (
+      target instanceof Element &&
+      Boolean(target.closest("input, select, textarea, button, a"))
+    );
+  };
+
+  /** Moves the selection one row: the two-row limit is for merging, and the
+   * keyboard moves one cursor, so the previous row lets go first. */
+  const moveSelection = (step) => {
+    const rows = table.getRows();
+    if (!rows.length) {
+      return;
+    }
+    const current = table.getSelectedRows()[0];
+    const index = current ? rows.indexOf(current) : -1;
+    const next = Math.min(Math.max(index + step, 0), rows.length - 1);
+    table.deselectRow();
+    rows[next].select();
+    rows[next].getElement().scrollIntoView({ block: "nearest" });
+  };
+
+  document.addEventListener("keydown", (event) => {
+    if (typing(event) || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    if (event.key === "/") {
+      event.preventDefault();
+      search.focus();
+      return;
+    }
+    if (event.key === "j" || event.key === "k") {
+      event.preventDefault();
+      moveSelection(event.key === "j" ? 1 : -1);
+    }
+  });
 })();

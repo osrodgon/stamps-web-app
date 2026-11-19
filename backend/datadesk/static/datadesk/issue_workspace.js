@@ -2190,34 +2190,74 @@
       dateInput.addEventListener("change", syncYearFromDate);
     }
 
+    /** A field that just took its prefilled value says so for a moment. */
+    const flash = (control) => {
+      control.classList.add("dd-applied");
+      window.setTimeout(() => control.classList.remove("dd-applied"), 900);
+    };
+
+    /** The value the prefill would put in one field. */
+    const prefillValue = (value) =>
+      value && typeof value === "object" ? String(value.value) : String(value);
+
+    /** Whether any prefilled field differs from what the button would set. */
+    const prefillDiffers = () =>
+      Object.entries(config.prefill || {}).some(([field, value]) => {
+        const control = document.getElementById("field-" + field);
+        if (!control) {
+          return false;
+        }
+        const current = control.dataset.lookup ? formValue(control) : control.value;
+        return String(current) !== prefillValue(value);
+      });
+
+    const useLastIssue = document.getElementById("use-last-issue");
+    const paintPrefill = () => {
+      if (useLastIssue) {
+        useLastIssue.disabled = !prefillDiffers();
+      }
+    };
+
     const applyPrefill = () => {
+      const applied = [];
       Object.entries(config.prefill || {}).forEach(([field, value]) => {
         const control = document.getElementById("field-" + field);
         if (!control) {
           return;
         }
+        const before = control.dataset.lookup ? formValue(control) : control.value;
+
         if (!control.dataset.lookup) {
           control.value = String(value);
-          return;
+        } else {
+          /* A lookup travels as {value, label}: the id is what the API needs
+           * and the name is what the box has to show. */
+          const id = value && typeof value === "object" ? value.value : value;
+          const label = value && typeof value === "object" ? value.label : "";
+          rememberLookup(field, id, label);
+          setLookup(control, field, id);
         }
-        /* A lookup travels as {value, label}: the id is what the API needs and
-         * the name is what the box has to show. */
-        const id = value && typeof value === "object" ? value.value : value;
-        const label = value && typeof value === "object" ? value.label : "";
-        rememberLookup(field, id, label);
-        setLookup(control, field, id);
+
+        const after = control.dataset.lookup ? formValue(control) : control.value;
+        if (String(before) !== String(after)) {
+          applied.push(control);
+        }
       });
       /* A prefilled year cannot win over a date the page already carries. */
       syncYearFromDate();
+      applied.forEach(flash);
+      paintPrefill();
     };
 
-    const useLastIssue = document.getElementById("use-last-issue");
     if (useLastIssue) {
       useLastIssue.addEventListener("click", applyPrefill);
+      form.addEventListener("input", paintPrefill);
+      form.addEventListener("change", paintPrefill);
     }
 
     resize();
     syncYearFromDate();
+    paintPrefill();
 
     /* Dirty means the series form changed or the row set did. The guard only
      * fires then: warning someone off an empty form teaches them to ignore it,

@@ -137,16 +137,53 @@
     window.location.assign(issueUrl(row.getData()));
   });
 
-  /** `Enter` opens the selected row, unless the focus is in a control. */
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") {
+  /** True when the keystroke belongs to a control and not to the screen. */
+  const typing = (event) => {
+    const target = event.target;
+    return (
+      target instanceof Element &&
+      Boolean(target.closest("input, select, textarea, button, a"))
+    );
+  };
+
+  /** Moves the selection one row, stopping at the edges instead of wrapping. */
+  const moveSelection = (step) => {
+    const rows = table.getRows();
+    if (!rows.length) {
       return;
     }
-    const target = event.target;
-    if (
-      target instanceof Element &&
-      target.closest("input, select, textarea, button, a")
-    ) {
+    const current = table.getSelectedRows()[0];
+    const index = current ? rows.indexOf(current) : -1;
+    const next = Math.min(Math.max(index + step, 0), rows.length - 1);
+    table.deselectRow();
+    rows[next].select();
+    rows[next].getElement().scrollIntoView({ block: "nearest" });
+  };
+
+  /** The shortcuts the line under the grid promises, and nothing else. */
+  document.addEventListener("keydown", (event) => {
+    if (typing(event) || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    if (event.key === "/") {
+      event.preventDefault();
+      form.elements.q.focus();
+      return;
+    }
+    if (event.key === "j" || event.key === "k") {
+      event.preventDefault();
+      moveSelection(event.key === "j" ? 1 : -1);
+      return;
+    }
+    if (event.key.toLowerCase() === "n") {
+      event.preventDefault();
+      const newIssue = document.querySelector(".dd-new-issue");
+      if (newIssue) {
+        window.location.assign(newIssue.href);
+      }
+      return;
+    }
+    if (event.key !== "Enter") {
       return;
     }
     const selected = table.getSelectedRows();

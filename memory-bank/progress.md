@@ -285,8 +285,24 @@
       reason; success redirects with a banner. The revert is itself a commit
       (`reverts_commit_id`) and the original rows get `reverted_at`. The dialog
       warns that the `CollectionItem` rows the cascade removed do not come back.
-      30 tests; 438 datadesk and 1454 backend tests green. Next: S22 (close-out:
-      keyboard, i18n, tests, cleanup)
+      30 tests; 438 datadesk and 1454 backend tests green.
+- [x] **S22 — Close-out: keyboard, i18n, accessibility, tests, README**
+      (2026-11-19): `/` focuses the search (workbench and lookup tables), `j`/`k`
+      move the selection and `N` starts a new series, next to the keys that
+      already existed; no shortcut fires while a control has the focus, and each
+      grid says underneath what it understands. `↺ Use last issue` now names the
+      values it would set (`España · 1987`), is disabled while the form already
+      holds them and flashes the fields it writes — the S11 follow-up. A test
+      walks `datadesk/static/datadesk/*.js` and fails on prose in the places
+      that paint text (glyphs are allowed by definition), and `--dd-soft` went
+      from 2.6:1 to 4.8:1 because the muted text was the one failing AA, with
+      `:focus-visible` on links, buttons and `summary`. The last coverage gap in
+      `service.py` (sorting by date, both directions, nulls last) is tested, which
+      leaves that module at 100% and `datadesk` at 98%. The
+      repo README gained the keyboard table, the pre-commit backup, how to turn
+      DataDesk off and what a revert cannot restore. 3 tests added; 441 datadesk
+      and 1457 backend tests green; jsdom harnesses at 79 (new), 74 (edit), 14
+      (workbench keys) and 6 (lookup keys) checks. **DataDesk is complete.**
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -326,7 +342,8 @@
 - [ ] DataDesk: a stamp's colours cannot be edited in `mode=edit` — the colour
       cell is read-only there because the change set carries no M2M. Colours are
       chosen when creating a series (S16) and created/merged from the lookups
-      screen (S19); correcting one on an existing stamp still needs admin.
+      screen (S19); correcting one on an existing stamp still needs admin. This
+      is the one gap left after S22 closed the plan.
 
 ---
 

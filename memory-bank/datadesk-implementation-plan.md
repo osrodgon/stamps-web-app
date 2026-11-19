@@ -106,7 +106,7 @@ el mockup ya están corregidos con esta decisión.
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | ✅ 2026-11-19 |
 | S20 | Dashboard + colas "needs attention" | S8 | S | sí | ✅ 2026-11-19 |
 | S21 | Activity log + revertir commit | S6, S12 | M | sí | ✅ 2026-11-19 |
-| S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | — |
+| S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | ✅ 2026-11-19 |
 
 Leyenda de tamaño: XS < 1h · S ≈ medio día · M ≈ 1 día · L ≈ 2–3 días.
 
@@ -934,19 +934,43 @@ un id ocupado → 409 en vez de un 500; el revert deja sus filas con
 
 **Depende de**: todas.
 
-- Contrato de teclado completo y consistente (`/`, `j/k`, `N`, `Enter`, `Tab`,
-  `Esc`, `Shift+Enter`, `Ctrl+D`, `Ctrl+Z`, `Ctrl+Enter`).
-- Barrido de i18n: ningún literal fuera de `{% trans %}`; `datadesk_make_messages --check` en verde.
-- Repaso de accesibilidad: foco visible, `label` en inputs, contraste de las
-  celdas y del texto atenuado.
-- `datadesk/tests/` con servicio, vistas y permisos; objetivo ≥ 80% en
-  `datadesk/service.py`.
-- `README` del módulo: variables de entorno (`DATADESK_ENABLED`,
-  `DATADESK_TLS`), alta de usuario staff, backup previo, cómo apagar el flag, y
-  la **receta de allowlist por IP para nginx** (documentada, no implementada).
+Lo que faltaba no era funcionalidad sino lo que hace usable una app que no
+escribió quien la va a usar:
+
+- **Contrato de teclado completo**: `/` lleva al buscador (workbench y tablas de
+  referencia), `j`/`k` mueven la selección, `N` abre una serie nueva; se suman a
+  los que ya había (`Enter`, `Shift+Enter`, `Ctrl+Enter`, `Ctrl+D`, `Ctrl+Z`, `Esc`,
+  `Tab`). Ninguna tecla dispara cuando el foco está en un control, y cada grid
+  lleva debajo una línea que dice qué entiende: un atajo que nadie encuentra no es
+  un atajo.
+- **Barrido de i18n**: un test recorre `datadesk/static/datadesk/*.js` y falla si
+  aparece prosa en un sitio donde se pinta texto (`textContent`, `title`,
+  `placeholder`, `alt`). Los glifos que el script sí puede tener (`×`, `→`, `·`)
+  quedan fuera por definición: no tienen dos palabras seguidas.
+- **Accesibilidad**: `:focus-visible` en enlaces, botones y `summary` (antes solo
+  los inputs tenían anillo), blanco sobre la barra oscura, `role="dialog"` en el
+  panel de revisión, y `--dd-soft` oscurecido de `#9aa2ab` (2,6:1) a `#6b7280`
+  (4,8:1) porque era el texto atenuado el que no pasaba AA.
+- **Tests**: la cobertura de `datadesk/service.py` era del 99% y lo único que
+  faltaba era la rama `sort == "date"` de `sort_issues` — ordenar el workbench
+  por fecha no tenía test. Ahora sí (ascendente y descendente, nulos al final) y
+  el módulo queda al **100%**; `datadesk` entero, al **98%**.
+- **README** (el del repositorio, que ya tenía la sección de DataDesk; no un
+  segundo documento): tabla de teclado, **backup antes de un commit grande**
+  (el botón del panel y el comando), **cómo apagar DataDesk**
+  (`DATADESK_ENABLED=False` desmonta la ruta, no toca datos) y **qué no devuelve
+  un revert** (los `CollectionItem` que se llevó la cascada). La receta de
+  allowlist por IP ya estaba.
 
 **Aceptación**: `pytest backend/datadesk` en verde dentro del runner de backend;
-`manage.py check --deploy` sin nuevos avisos atribuibles a DataDesk.
+`manage.py check --deploy` sin nuevos avisos atribuibles a DataDesk (los 6 que
+salen son del proyecto y del entorno: HSTS, redirección SSL, `SECRET_KEY`,
+`DEBUG` y las dos cookies seguras, que son justo lo que `DATADESK_TLS` pone en
+producción).
+
+**Fuera de este paso, y anotado, no supuesto**: los colores de un sello siguen sin
+poder corregirse en `mode=edit` (el change set no lleva M2M) — está en
+`progress.md` como hueco conocido.
 
 ---
 
@@ -2334,7 +2358,56 @@ edición (valores y `updated_at`, rename de lookup), los tres rechazos (cambiado
 después, fusión, colisión de id), commit desconocido, y la pantalla (lista,
 fusión sin botón, POST con redirección, banner, rechazo renderizado, acceso).
 
-### ⏭ Siguiente: S22
+### S22 — Cierre (2026-11-19)
 
-Cierre: teclado, i18n final, repaso de tests y limpieza.
+Cambios repartidos por lo que ya existía, más dos tests y el README:
+
+- **`workbench.js`**: `typing()` (el atajo es de la pantalla, no del campo),
+  `moveSelection(step)` (la selección como cursor, sin dar la vuelta en los
+  extremos) y las teclas `/`, `j`, `k`, `N` junto al `Enter` que ya había.
+- **`lookups.js`**: lo mismo con `/` y `j`/`k`; el cursor deja una fila
+  seleccionada y no dos, porque dos es para fusionar.
+- **Plantillas**: línea `dd-keys` bajo cada grid (traducida), `role="dialog"` en
+  el panel de revisión y el `↺ Use last issue` con los valores que escribiría.
+- **`issue_workspace.js`**: `prefillDiffers()`/`paintPrefill()` desactivan el
+  botón cuando el formulario ya tiene esos valores (que es como carga), y
+  `applyPrefill()` marca con `dd-applied` los campos que toca.
+- **CSS**: `:focus-visible` para enlaces, botones y `summary` (y blanco en la
+  barra oscura), `--dd-soft` a `#6b7280`.
+- **`test_i18n.py`**: `PROSE_SINK`/`PROSE` y el test que recorre los scripts.
+- **`test_service_read.py`**: la ordenación por fecha, ascendente y descendente.
+- **`README.md`**: teclado, backup previo, apagar el flag y qué no devuelve un
+  revert.
+
+Decisiones tomadas al implementar:
+
+- **`↺ Use last issue` se arregla aquí, no se documenta como raro**: el botón
+  ahora dice lo que escribiría (`España · 1987`), está desactivado mientras el
+  formulario ya lo tiene y parpadea los campos donde aterriza. Era el follow-up
+  de S11 y una de las dos deudas del proyecto.
+- **Los colores en `mode=edit` no entran**: necesitan que el change set lleve
+  M2M, que es un cambio de fondo; se queda como hueco conocido en `progress.md`.
+- **El contraste se arregla en el token, no en cada uso**: `--dd-soft` estaba a
+  2,6:1 y era el color de todos los textos atenuados; oscurecerlo una vez es la
+  única forma de que no vuelva a aparecer el problema al añadir una pantalla.
+- **El test de i18n prohíbe prosa, no cadenas**: los selectores, las clases y los
+  tres glifos son legítimos; lo que no puede aparecer es una frase donde se pinta
+  texto, y el regex de «dos palabras seguidas» es lo bastante simple para
+  entenderlo cuando falle.
+- **`manage.py check --deploy` no cambia**: los 6 avisos son del proyecto
+  (HSTS, redirección SSL, `SECRET_KEY`, `DEBUG` y las dos cookies seguras, que
+  `DATADESK_TLS` pone en producción). Comprobado con el flag encendido y apagado.
+
+Verificado: `pytest datadesk` → **441 en verde**; suite completa **1457 en
+verde** · catálogos recompilados · arneses de jsdom: **79** comprobaciones en
+`mode=new` (las 73 más el botón de prefill: nombre, desactivado, se activa al
+cambiar, devuelve el valor y marca el campo), **74** en `mode=edit`, **14** en el
+workbench (`j`/`k` con sus extremos, `/`, `N`, `Enter` y los guardas de foco) y
+**6** en las tablas de referencia (`/`, `j`/`k`, una sola fila seleccionada).
+
+### ✅ DataDesk terminado
+
+D0 + S1–S22. Lo que queda fuera, decidido y escrito en `progress.md`: corregir
+los colores de un sello en `mode=edit` (necesita M2M en el change set) y la
+receta de allowlist por IP, que está documentada y no implementada a propósito.
 

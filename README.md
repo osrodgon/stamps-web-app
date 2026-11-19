@@ -118,6 +118,52 @@ location /datadesk/ {
 }
 ```
 
+#### The keyboard
+
+DataDesk is meant to be driven without the mouse, and each screen says under its
+grid what it understands:
+
+| Key | Where | What it does |
+| --- | --- | --- |
+| `/` | workbench, lookup table | focuses the search box |
+| `j` / `k` | workbench, lookup table | moves the selection down / up |
+| `Enter` | workbench | opens the selected series |
+| `N` | workbench | starts a new series |
+| `Shift+Enter` | workspace | commits the pending changes / creates the series |
+| `Ctrl+Enter` | workspace | commits the change set |
+| `Ctrl+D` | new series | duplicates the row under the cursor |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | workspace | undo / redo |
+| `Esc` | everywhere | closes a dialog, blurs a field, leaves the workspace |
+
+#### Before a large commit
+
+A change set of more than twenty edits offers **Back up first** in the review
+panel; it runs the existing command with a timestamped name and never blocks the
+commit if the dump fails. From a shell, the same thing:
+
+```bash
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
+  exec stamps-backend python manage.py stamps_db_backup datadesk-2026-11-19 --mode=stamps
+```
+
+The file lands in `backend/backups/` as `<name>__stamps.json` and comes back with
+`stamps_db_restore`.
+
+#### What a revert cannot undo
+
+The activity screen undoes a whole commit in one transaction, including recreating
+a deleted series and its stamps with their original ids and colours. What it
+cannot give back is the `CollectionItem` rows that the cascade deleted with them:
+the catalogue comes back, who owned those stamps does not. The confirmation says
+so before the button is pressed.
+
+#### Turning it off
+
+`DATADESK_ENABLED=False` (the default) unmounts the URL pattern: `/datadesk/`
+answers 404 and nothing else in the app changes. The audit trail lives in the
+`datadesk_datadeskchange` table and stays where it is; keep it, it is the history
+of what the maintenance did.
+
 The interface is translated in English and Spanish. Catalogs live in
 `backend/datadesk/locale/`; after editing a `.po`, rebuild the `.mo` files without
 needing `gettext` installed. The compiled `.mo` files are versioned on purpose

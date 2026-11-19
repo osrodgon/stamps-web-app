@@ -1,4 +1,5 @@
 """S4 acceptance: English and Spanish, and the frontend locales untouched."""
+import re
 from pathlib import Path
 
 import pytest
@@ -7,9 +8,18 @@ from django.core.management import call_command
 from django.test import Client
 
 LANGUAGE_URL = "/datadesk/language/"
+SCRIPT_DIR = Path(__file__).resolve().parent.parent / "static" / "datadesk"
 DASHBOARD_URL = "/datadesk/"
 LOGIN_URL = "/datadesk/login/"
 SPANISH_HINT = "Mantenimiento interno de la base de datos."
+
+PROSE_SINK = re.compile(
+    r"""\.(?:textContent|innerHTML|title|placeholder|alt)\s*=\s*["']([^"']*)["']"""
+)
+"""Where a script could put text on the screen without the server knowing."""
+
+PROSE = re.compile(r"[A-Za-z]{2,}\s+[A-Za-z]{2,}")
+"""Two words in a row: the glyphs a script may own (×, →, ·) have none."""
 SPANISH_DASHBOARD = "Panel"
 ENGLISH_DASHBOARD = "Dashboard"
 
@@ -151,6 +161,28 @@ class TestCatalogs:
         catalog.save(str(po_path))
 
         assert Command._is_stale(po_path) is True
+
+    def test_the_scripts_hold_no_interface_text(self) -> None:
+        """A sentence written in the JS is a sentence nobody translated.
+
+        Class names, selectors and the three glyphs are fine; prose is not, and
+        the only place it could hide is the handful of sinks that put text on
+        screen. The check is a regex, so the two assertions below it say what
+        "prose" means before it is applied to the files.
+        """
+        assert PROSE.search("No rows yet.")
+        assert not PROSE.search("×")
+
+        offenders = []
+        for path in sorted(SCRIPT_DIR.glob("*.js")):
+            source = path.read_text(encoding="utf-8")
+            offenders += [
+                f"{path.name}: {match.group(1)!r}"
+                for match in PROSE_SINK.finditer(source)
+                if PROSE.search(match.group(1))
+            ]
+
+        assert offenders == []
 
     def test_the_frontend_locales_are_not_referenced(self) -> None:
         """`assets/locales/*.json` belongs to the public app and stays untouched."""
