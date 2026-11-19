@@ -1,6 +1,6 @@
 """Write layer for DataDesk.
 
-Two entry points and one transaction each:
+One entry point per decision, one transaction each:
 
 - ``create_series()`` writes one issue with its nested stamps, all or nothing.
   A half-written series would be worse than a failure, so there is no per-row
@@ -8,8 +8,15 @@ Two entry points and one transaction each:
 - ``apply_changes()`` writes a batch of existing rows with a savepoint per row:
   forty corrections of unrelated rows should not be lost because one of them
   references a deleted colour. Rejections are reported, never raised.
+- ``clone_series()`` copies a series and its stamps into a new one. A copy is a
+  copy, not a re-entry: the values are read from the origin's rows, so the gaps
+  (a stamp without a face value, one without a colour) travel to the copy for
+  the user to fix there.
+- ``delete_series()`` removes a series, its stamps and whatever the cascade
+  takes. It is the only deletion path in DataDesk, and it checks the typed year
+  itself instead of trusting the dialog that asked for it.
 
-``create_lookup()`` is the third, small one: a lookup typed into a cell while
+``create_lookup()`` is the last, small one: a lookup typed into a cell while
 editing a series must not force a round trip through the lookup screen, and a
 name that already exists is returned instead of failing.
 
@@ -29,11 +36,13 @@ from typing import Any
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 
 from datadesk.audit import new_commit_id, record, snapshot
+from datadesk.dependencies import Dependencies, series_dependencies
 from datadesk.registry import Lookup, get_lookup
 from datadesk.rules import series_year_bounds
+from datadesk.service import issue_queryset
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
 from issues_api.models import Issue
 from stamps_api.api.serializers.stamp_request_serializer import StampRequestSerializer
@@ -58,6 +67,18 @@ WRITABLE_OPS = frozenset({"create", "update"})
 
 IMAGE_ERROR = "Images are read-only in DataDesk."
 """Pictures are served from the frontend's tree, never uploaded from here."""
+
+CLONED_FROM_KEY = "cloned_from"
+"""Where a clone's audit row records the series it was copied from.
+
+The snapshot stays a snapshot: this is provenance, not a field, and it only
+appears in ``after`` of a ``create`` row. S21's revert deletes what a ``create``
+wrote and never rebuilds a model from its ``after``, so the key can never reach
+``Model(**snapshot)``.
+"""
+
+COPY_SKIP = frozenset({"updated_at"})
+"""Columns a copy leaves out: the bookkeeping timestamp is stamped by its save."""
 
 
 class WriteError(Exception):
@@ -161,6 +182,38 @@ class CreatedSeries:
 
 
 @dataclass(frozen=True)
+class DeletedSeries:
+    """A series removed by ``delete_series()``.
+
+    Attributes:
+        commit_id: Id shared by the audit rows of the deletion.
+        issue_id: Primary key of the row that no longer exists.
+        name: Its name, so the page can say what went.
+        year: Its year, the value that had to be typed to confirm.
+        dependencies: Stamps and collection items the cascade took with it.
+    """
+
+    commit_id: uuid.UUID
+    issue_id: int
+    name: str
+    year: int
+    dependencies: Dependencies
+
+    def as_dict(self) -> dict[str, Any]:
+        """Returns the identity that is gone and how much went with it."""
+        return {
+            "applied": 1 + self.dependencies.stamps,
+            "rejected": [],
+            "data": {
+                "id": self.issue_id,
+                "name": self.name,
+                "year": self.year,
+                **self.dependencies.as_dict(),
+            },
+        }
+
+
+@dataclass(frozen=True)
 class LookupResult:
     """A lookup row returned to a cell.
 
@@ -216,6 +269,139 @@ def create_series(payload: dict[str, Any], user) -> CreatedSeries:
     return CreatedSeries(commit_id=commit_id, issue=issue, stamps=stamps)
 
 
+def clone_series(pk: int, overrides: dict[str, Any] | None, user) -> CreatedSeries:
+    """Copies a series and its stamps, colours included, in one transaction.
+
+    Copying is not re-entering: the values come from the origin's rows, not from
+    a form, so a series with a gap (a stamp without a face value, one without a
+    colour) is copied as it is. Those gaps are exactly what the copy is for
+    fixing, and refusing to clone until they are filled would help nobody.
+
+    The copy keeps the name and the catalogue codes. Renaming is a decision only
+    the user can make, so the copy opens on the workspace and the name is theirs
+    to change there — inventing "… (copy)" would put a string in the catalogue
+    that nobody chose.
+
+    Args:
+        pk: Primary key of the series to copy.
+        overrides: ``{"year": ..., "date": ...}``, both optional. A new year is
+            the usual reason to clone a series; anything else is copied.
+        user: Actor, stored in the audit trail.
+
+    Returns:
+        The copy with its stamps, in the origin's order.
+
+    Raises:
+        WriteError: If the series does not exist or an override is not valid.
+    """
+    origin = issue_queryset().filter(pk=pk).first()
+    if origin is None:
+        raise WriteError("The series does not exist.", status=404)
+
+    values = _clone_overrides(overrides)
+    year = _clone_year(origin, values)
+    sources = list(
+        Stamp.objects.filter(issue=origin).prefetch_related("colors").order_by("pk")
+    )
+    commit_id = new_commit_id()
+
+    with transaction.atomic():
+        fields = _copy_fields(origin, Issue)
+        fields["year_id"] = year.pk
+        if "date" in values:
+            fields["date"] = values["date"]
+        issue = Issue.objects.create(**fields)
+        record(
+            commit_id,
+            user,
+            issue,
+            "create",
+            None,
+            {**snapshot(issue), CLONED_FROM_KEY: origin.pk},
+        )
+        stamps = [_copy_stamp(source, issue, commit_id, user) for source in sources]
+
+    return CreatedSeries(commit_id=commit_id, issue=issue, stamps=stamps)
+
+
+def _copy_stamp(source: Stamp, issue: Issue, commit_id: uuid.UUID, user) -> Stamp:
+    """Copies one stamp and its colours under the same audit commit."""
+    stamp = Stamp.objects.create(
+        issue=issue, **_copy_fields(source, Stamp, skip={"issue"})
+    )
+    stamp.colors.set([color.pk for color in source.colors.all()])
+    record(commit_id, user, stamp, "create", None, snapshot(stamp))
+    return stamp
+
+
+def _copy_fields(
+    obj: models.Model,
+    model: type[models.Model],
+    skip: frozenset[str] | set[str] = frozenset(),
+) -> dict[str, Any]:
+    """Returns a row's column values, ready to be inserted as a new row.
+
+    Keys are attnames (``year_id``, not ``year``), so the dict splats straight
+    into the model and no lookup has to be resolved a second time. The primary
+    key, the bookkeeping timestamp and the caller's ``skip`` stay out.
+    """
+    fields: dict[str, Any] = {}
+    for field in model._meta.concrete_fields:
+        if field.primary_key or field.attname in COPY_SKIP:
+            continue
+        if field.name in skip or field.attname in skip:
+            continue
+        fields[field.attname] = getattr(obj, field.attname)
+    return fields
+
+
+def _clone_overrides(overrides: Any) -> dict[str, Any]:
+    """Reads the two values a clone may change, and validates them.
+
+    Anything else in the body is ignored: the client sends the year it wants
+    and, occasionally, the date; a typo in a third key is not worth a refusal
+    when the copy is otherwise complete.
+    """
+    if overrides in (None, ""):
+        return {}
+    if not isinstance(overrides, dict):
+        raise WriteError(
+            "The overrides must be an object.",
+            errors={"overrides": ["Expected an object."]},
+        )
+
+    values: dict[str, Any] = {}
+    if overrides.get("year") not in (None, ""):
+        values["year"] = overrides["year"]
+
+    if "date" in overrides:
+        raw = overrides["date"]
+        if raw in (None, ""):
+            values["date"] = None
+        else:
+            moment = parse_date(str(raw))
+            if moment is None:
+                raise WriteError(
+                    "The date is not valid.",
+                    errors={"date": ["Use a date like 1987-05-12."]},
+                )
+            values["date"] = moment
+
+    return values
+
+
+def _clone_year(origin: Issue, values: dict[str, Any]) -> Year:
+    """Returns the year row of the copy: the origin's, or the one asked for."""
+    if "year" not in values:
+        return origin.year
+    try:
+        return resolve_year(values["year"])
+    except InvalidYear as error:
+        raise WriteError(
+            "The year is not valid.", errors={"year": [str(error)]}
+        ) from error
+
+
 def apply_changes(changes: Any, user) -> ApplyResult:
     """Applies a batch of ``create``/``update`` rows, one savepoint each.
 
@@ -249,6 +435,64 @@ def apply_changes(changes: Any, user) -> ApplyResult:
 
     return ApplyResult(
         commit_id=commit_id, applied=applied, rejected=rejected, rows=written
+    )
+
+
+def delete_series(pk: int, confirmation: Any, user) -> DeletedSeries:
+    """Deletes a series, its stamps and everything the cascade takes.
+
+    The typed year is compared here, not in the browser: the dialog is a
+    courtesy, this check is the one that decides. The dependency counts are also
+    recomputed inside the transaction, because the preview on screen may be
+    minutes old and a number that grew is worse than no number.
+
+    Every stamp and the series get their own audit row, so S21 can rebuild them
+    with their original ids — the ``CollectionItem`` rows the cascade removes are
+    gone for good, and the dialog says so.
+
+    Args:
+        pk: Primary key of the series.
+        confirmation: What the user typed; it must be the series' year.
+        user: Actor, stored in the audit trail.
+
+    Returns:
+        What was deleted and what went with it.
+
+    Raises:
+        WriteError: 404 when the series does not exist, 400 when the typed year
+            does not match.
+    """
+    commit_id = new_commit_id()
+
+    with transaction.atomic():
+        issue = Issue.objects.select_for_update().filter(pk=pk).first()
+        if issue is None:
+            raise WriteError("The series does not exist.", status=404)
+
+        year = issue.year.year
+        typed = "" if confirmation is None else str(confirmation).strip()
+        if typed != str(year):
+            message = f"Type the year of the series to confirm ({year})."
+            raise WriteError(
+                "The series was not deleted.", errors={"confirm": [message]}
+            )
+
+        dependencies = series_dependencies(issue)
+        stamps = list(Stamp.objects.filter(issue=issue).prefetch_related("colors"))
+        issue_id = issue.pk
+        name = issue.name
+
+        for stamp in stamps:
+            record(commit_id, user, stamp, "delete", snapshot(stamp), None)
+        record(commit_id, user, issue, "delete", snapshot(issue), None)
+        issue.delete()
+
+    return DeletedSeries(
+        commit_id=commit_id,
+        issue_id=issue_id,
+        name=name,
+        year=year,
+        dependencies=dependencies,
     )
 
 

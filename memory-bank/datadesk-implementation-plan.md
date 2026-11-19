@@ -101,7 +101,7 @@ el mockup ya están corregidos con esta decisión.
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | ✅ 2026-11-19 |
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | ✅ 2026-11-19 |
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | ✅ 2026-11-19 |
-| S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | — |
+| S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | ✅ 2026-11-19 |
 | S18 | Crear lookup desde la celda | S12, S14 | M | sí | — |
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | — |
 | S20 | Dashboard + colas "needs attention" | S8 | S | sí | — |
@@ -714,15 +714,36 @@ recargar y ver 8 sellos con colores; el bucle deja la segunda serie a un clic;
 
 - `POST /datadesk/issues/clone`: copia la serie y sus sellos (con colores), con
   `year`/`date` sobreescribibles, y abre el workspace en `mode=edit` sobre la
-  copia.
-- Borrado con preview server-side: nº de sellos, nº de `CollectionItem`
-  afectados y nº de colecciones de usuario; confirmación escribiendo el año.
-- Ambas acciones auditadas (`operation="create"` enlazando el origen en `after`).
+  copia. **La copia es una copia**: los valores se leen de las filas, no de un
+  formulario, así que un hueco del origen (un sello sin valor facial, un sello
+  sin color) viaja tal cual — arreglarlo es justo para lo que se clona. El
+  nombre y los códigos también se copian: renombrar es una decisión del usuario
+  y la copia se abre para que la tome; inventar «(copia)» metería en el catálogo
+  una cadena que nadie eligió.
+- `GET /datadesk/issues/<pk>/dependencies`: preview server-side con el número de
+  sellos, de `CollectionItem` afectados y de colecciones de usuario, más la
+  frase que el diálogo muestra (una sola frase, sin plurales: los números van
+  aparte, en su propia lista).
+- `POST /datadesk/issues/<pk>/delete`: confirmación escribiendo el año,
+  comparada en el servidor, no en el navegador. **Cuenta otra vez dentro de la
+  transacción**: el preview de la pantalla puede tener minutos, y un número que
+  creció es peor que ningún número.
+- Ambas acciones auditadas: el clon escribe `operation="create"` con
+  `cloned_from` en el `after` de la serie (procedencia, no campo: solo aparece
+  en filas `create`, y el revert de S21 borra lo que creó un `create` en vez de
+  reconstruirlo, así que la clave nunca llega a `Model(**snapshot)`); el borrado
+  escribe una fila por sello y otra por la serie con el `before` completo, que es
+  de donde S21 reconstruye con los ids originales.
+- Interfaz en la franja de la serie de `mode=edit`: `Clone` y `Delete`, las dos
+  **desactivadas mientras el buffer tenga cambios** (una copia se hace de la
+  base y un borrado ignora la pantalla: ninguna de las dos puede convivir con
+  ediciones sin confirmar). El borrado abre un diálogo con los tres números y
+  la caja del año; `Esc` lo cierra sin salir de la página.
 
 **Aceptación**: clonar 8 sellos mantiene colores y `edifil`; borrar una serie
 con `CollectionItem` avisa del número exacto y no borra si el texto no coincide;
 sin `CollectionItem` el preview lo dice explícitamente. Probado también con la
-serie de 24 sellos: el preview cuenta los 24 y la confirmación por año no cambia.
+serie de 57 sellos: el preview cuenta los 57 y la confirmación por año no cambia.
 
 ---
 
@@ -1962,8 +1983,82 @@ creado, rechazo por sello y por campo con su anillo, columna oculta revelada,
 fecha por defecto, año derivado y liberado al vaciar la fecha, y `Shift+Enter`)
 y las **42** de `mode=edit` siguen pasando.
 
-### ⏭ Siguiente: S17
+### S17 — Clonar y borrar (2026-11-19)
 
-Clonar una serie (con sellos y colores) y borrar con preview de dependencias,
-las dos auditadas.
+`datadesk/dependencies.py` (nuevo) y tres endpoints nuevos, más los dos botones
+en la franja de la serie:
+
+- **`dependencies.py`**: `Dependencies` (sellos, ítems, colecciones),
+  `series_dependencies()` — dos consultas: los sellos de la serie y un agregado
+  sobre la tabla intermedia con `Count("collection_id", distinct=True)`, porque
+  la misma colección suele tener varios sellos de la serie — y
+  `dependency_warning()`.
+- **`clone_series()`** en `write.py`: copia con `_copy_fields()`, que lee
+  `attname` de `_meta.concrete_fields` (así `year_id`, `country_id`… viajan sin
+  resolver lookups otra vez) y se salta la PK y `updated_at`. Los sellos se
+  copian igual, con un `colors.set()` desde el origen. Una transacción, una fila
+  de auditoría por objeto escrito.
+- **`delete_series()`** en `write.py`: `select_for_update()` sobre la serie
+  (sin `select_related`: un `FOR UPDATE` sobre los LEFT JOIN de país/artista es
+  un error en PostgreSQL), comprobación del año, recuento **dentro** de la
+  transacción, una fila `delete` por sello y otra por la serie con el `before`
+  completo, y `issue.delete()` (la cascada se lleva sellos e `CollectionItem`).
+- **`write_api.py`**: `IssueCloneJsonView` (devuelve `data.url`), 
+  `IssueDependenciesJsonView` (GET, staff, 404 si no existe) e
+  `IssueDeleteJsonView` (400 con `errors.confirm` si el año no coincide).
+
+Decisiones tomadas al implementar:
+
+- **Clonar no revalida**: el clon copia filas reales, no un formulario, así que
+  `create_series()` no se reutiliza aquí. Pasar la copia por los serializers
+  habría convertido «clonar» en «volver a teclear» y habría rechazado series
+  con huecos (un `face_value` vacío es NOT NULL y el serializer lo rechaza), que
+  son precisamente las que se clonan para arreglarlas.
+- **El nombre y los códigos se copian tal cual**: renombrar es del usuario y la
+  copia se abre en el workspace para que lo haga. Nada de «(copia)»: sería una
+  cadena que nadie eligió, dentro del catálogo.
+- **`year`/`date` se pueden sobreescribir por la API** aunque la interfaz no lo
+  pida todavía: clonar al año siguiente es el motivo normal, y hacerlo en la
+  franja después es una edición más del change set. `date: null` limpia la fecha
+  y la ausencia de la clave la copia; de ahí que la vista filtre claves en vez
+  de leer con `get()`.
+- **La procedencia va en el `after` del clon**: `cloned_from` es procedencia, no
+  un campo. Solo aparece en filas `create` y el revert de S21 borra lo que creó
+  un `create` en vez de reconstruirlo desde el `after`, así que el snapshot
+  sigue siendo «splatteable». Los sellos no llevan la marca: vinieron de la
+  serie, no de otra serie.
+- **El preview es un GET aparte y el borrado recuenta**: el diálogo se abre con
+  números frescos y el endpoint de borrado vuelve a contar dentro de su
+  transacción. Un `CollectionItem` añadido entre abrir y pulsar no puede quedar
+  fuera del recuento.
+- **La frase no lleva números**: `dependency_warning()` devuelve una de tres
+  frases (sin sellos / nadie los tiene / están en colecciones) y los tres
+  números van en su propia lista del diálogo. Así no hay plurales anidados que
+  resolver en dos idiomas.
+- **Confirmar es teclear el año, y lo comprueba el servidor**: el diálogo no
+  desactiva el botón cuando el texto no coincide — un botón muerto sin
+  explicación es peor que un mensaje. El 400 nombra el año que hay que teclear.
+- **`Clone`/`Delete` se desactivan con cambios pendientes** (y el `title` dice
+  por qué): la copia se hace de la base y el borrado ignora la pantalla, así que
+  ninguna de las dos puede convivir con un buffer sin confirmar.
+- **El borrado no entra en el change set ni en `Ctrl+Z`**: es un diálogo con su
+  propia confirmación, como decidió S14. Después de borrar, la página vuelve al
+  workbench; después de clonar, salta a la copia (el workspace que había era el
+  origen).
+
+Verificado: `pytest datadesk` → **328 en verde**; suite completa **1344 en
+verde** · catálogos recompilados (`Clone`, `Delete`, `Collection items`,
+`User collections`, la caja del año y los textos del script) · arnés de jsdom de
+`mode=edit` con **62 comprobaciones** (las 42 anteriores más: botones
+desactivados con buffer, preview con sus tres números y su frase, etiqueta con
+el año, año equivocado que no navega, año correcto que vuelve al workbench,
+`Esc` que cierra el diálogo sin salir, y el clon que salta a la copia) y las 57
+de `mode=new` siguen pasando. El arnés tuvo que sustituir
+`window.location.assign` al evaluar el script (`location` no se puede redefinir
+en jsdom) y `HTMLElement.prototype.scrollIntoView`, que jsdom no implementa.
+
+### ⏭ Siguiente: S18
+
+Crear un lookup desde una celda (autocomplete + `+ Crear "X"`), incluidos los
+colores como multi-selección.
 

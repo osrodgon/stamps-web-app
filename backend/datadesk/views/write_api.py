@@ -7,7 +7,12 @@ view layer or ``/api/v1/``. The DRF serializers are used for validation only.
 Every view answers with the same envelope — ``success``, ``message``, ``errors``,
 ``commit_id`` and the operation's own keys. Status codes are reserved for what
 the client cannot decide from the body: 400 for an unusable request, 401/403 for
-the staff gate, 409 for a delete, which needs S17's dependency preview first.
+the staff gate, 404 for a row that no longer exists.
+
+Deleting a series is the one operation with a preview in front of it, so the
+read that feeds that preview lives here too: the two are one decision and
+splitting them across modules would hide that the delete endpoint recounts what
+the preview reported.
 """
 
 import json
@@ -19,17 +24,23 @@ from typing import Any
 from django.conf import settings
 from django.core.management import call_command
 from django.http import HttpRequest, JsonResponse
+from django.urls import reverse
 from django.views import View
 
+from datadesk.dependencies import dependency_warning, series_dependencies
 from datadesk.mixins import DataDeskAccessMixin
+from datadesk.service import issue_queryset
 from datadesk.write import (
     ApplyResult,
     CreatedSeries,
+    DeletedSeries,
     LookupResult,
     WriteError,
     apply_changes,
+    clone_series,
     create_lookup,
     create_series,
+    delete_series,
 )
 
 
@@ -60,6 +71,75 @@ class IssueCreateJsonView(JsonPostView):
         """Writes the series and answers with the ids the client needs."""
         series: CreatedSeries = create_series(payload, request.user)
         return _written("The series was created.", series.commit_id, series.as_dict())
+
+
+class IssueCloneJsonView(JsonPostView):
+    """Copies a series with its stamps and answers where the copy lives."""
+
+    def handle(
+        self, payload: dict[str, Any], request: HttpRequest, *args, **kwargs
+    ) -> JsonResponse:
+        """Clones the series and returns the URL that opens the copy."""
+        series: CreatedSeries = clone_series(
+            int(kwargs["pk"]), _overrides(payload), request.user
+        )
+        body = series.as_dict()
+        body["data"]["url"] = reverse(
+            "datadesk:issue_workspace", args=[series.issue.pk]
+        )
+        return _written("The series was cloned.", series.commit_id, body)
+
+
+class IssueDependenciesJsonView(DataDeskAccessMixin, View):
+    """Reports what deleting a series would take with it.
+
+    A GET because it reads, and separate from the delete endpoint because it
+    runs before the user has decided. Both live in this module: the delete
+    recounts inside its transaction instead of trusting these numbers.
+    """
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        """Returns the counts, the identity of the series and the warning."""
+        issue = issue_queryset().filter(pk=kwargs["pk"]).first()
+        if issue is None:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "The series does not exist.",
+                    "errors": {},
+                    "data": None,
+                },
+                status=404,
+            )
+
+        dependencies = series_dependencies(issue)
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Preview.",
+                "errors": {},
+                "data": {
+                    "id": issue.pk,
+                    "year": issue.year.year,
+                    "name": issue.name,
+                    "warning": dependency_warning(dependencies),
+                    **dependencies.as_dict(),
+                },
+            }
+        )
+
+
+class IssueDeleteJsonView(JsonPostView):
+    """Deletes a series once the typed year matches."""
+
+    def handle(
+        self, payload: dict[str, Any], request: HttpRequest, *args, **kwargs
+    ) -> JsonResponse:
+        """Deletes the series and reports what the cascade took with it."""
+        result: DeletedSeries = delete_series(
+            int(kwargs["pk"]), payload.get("confirm"), request.user
+        )
+        return _written("The series was deleted.", result.commit_id, result.as_dict())
 
 
 class ApplyJsonView(JsonPostView):
@@ -137,6 +217,16 @@ class BackupJsonView(DataDeskAccessMixin, View):
                 "data": {"file": str(dump.relative_to(settings.BASE_DIR))},
             }
         )
+
+
+def _overrides(payload: dict[str, Any]) -> dict[str, Any]:
+    """Takes the values a clone may override, leaving out anything else.
+
+    Absent and empty mean different things — no ``date`` key copies the origin's
+    date, ``date: null`` clears it — so the keys are filtered, not read with
+    ``get()``.
+    """
+    return {key: payload[key] for key in ("year", "date") if key in payload}
 
 
 def _batch_message(result: ApplyResult) -> str:

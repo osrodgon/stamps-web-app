@@ -165,6 +165,13 @@ class TestTheSeriesStripIsAForm:
             "saving",
             "backupSaved",
             "backupFailed",
+            "cloning",
+            "cloneFailed",
+            "deleting",
+            "deleteFailed",
+            "previewFailed",
+            "commitFirst",
+            "confirmYear",
         }
 
     def test_the_plurals_are_resolved_by_the_server(self, staff_client, issue) -> None:

@@ -926,6 +926,109 @@ kbd {
   color: var(--dd-red);
 }
 
+/* --- Cloning and deleting a series ------------------------------------- */
+
+.dd-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.dd-meta-actions a {
+  text-decoration: none;
+}
+
+/* A ghost button that says what it does: the colour is the warning, the box
+ * keeps it from competing with the primary action of the page. */
+.dd-btn-danger-text {
+  color: var(--dd-red);
+  border-color: var(--dd-red-soft);
+}
+
+.dd-btn-danger-text:hover {
+  background: var(--dd-red-soft);
+}
+
+.dd-btn-danger {
+  background: var(--dd-red);
+  color: #fff;
+}
+
+.dd-btn-danger:hover {
+  background: #a91b18;
+}
+
+.dd-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(20, 28, 38, 0.45);
+}
+
+.dd-dialog-backdrop[hidden] {
+  display: none;
+}
+
+.dd-dialog {
+  width: 430px;
+  max-width: 100%;
+  background: var(--dd-surface);
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgba(16, 24, 34, 0.28);
+  overflow: hidden;
+}
+
+.dd-dialog-body {
+  padding: 14px;
+}
+
+.dd-dialog-warning {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--dd-ink);
+}
+
+/* Three numbers, not a sentence: the counts are the decision. */
+.dd-dialog-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.dd-dialog-counts dt {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  color: var(--dd-soft);
+}
+
+.dd-dialog-counts dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+.dd-dialog-body .dd-field {
+  margin-bottom: 6px;
+}
+
+.dd-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
 /* --- New series: the typing aids and the created state ------------------ */
 
 .dd-grid-tools {

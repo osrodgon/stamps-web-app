@@ -420,3 +420,71 @@ msgstr "Quitar esta fila"
 #: datadesk/views/workspace.py
 msgid "The year comes from the date."
 msgstr "El año viene de la fecha."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Clone"
+msgstr "Clonar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete"
+msgstr "Eliminar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this series"
+msgstr "Eliminar esta serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Collection items"
+msgstr "Ítems de colección"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "User collections"
+msgstr "Colecciones de usuario"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Type the year to confirm"
+msgstr "Teclea el año para confirmar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the series"
+msgstr "Eliminar la serie"
+
+#: datadesk/dependencies.py
+msgid "This series has no stamps."
+msgstr "Esta serie no tiene sellos."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds these stamps."
+msgstr "Ninguna colección de usuario tiene estos sellos."
+
+#: datadesk/dependencies.py
+msgid "These stamps are in user collections, which lose them too."
+msgstr "Estos sellos están en colecciones de usuario, que también los pierden."
+
+#: datadesk/views/workspace.py
+msgid "Cloning…"
+msgstr "Clonando…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not cloned."
+msgstr "La serie no se ha clonado."
+
+#: datadesk/views/workspace.py
+msgid "Deleting…"
+msgstr "Eliminando…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not deleted."
+msgstr "La serie no se ha eliminado."
+
+#: datadesk/views/workspace.py
+msgid "The preview could not be loaded."
+msgstr "No se ha podido cargar la previsualización."
+
+#: datadesk/views/workspace.py
+msgid "Commit or discard the pending changes first."
+msgstr "Confirma o descarta antes los cambios pendientes."
+
+#: datadesk/views/workspace.py
+msgid "Type %(year)s to confirm"
+msgstr "Teclea %(year)s para confirmar"
