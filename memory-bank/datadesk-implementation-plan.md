@@ -105,7 +105,7 @@ el mockup ya están corregidos con esta decisión.
 | S18 | Crear un lookup desde el workspace | S12, S14 | M | sí | ✅ 2026-11-19 |
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | ✅ 2026-11-19 |
 | S20 | Dashboard + colas "needs attention" | S8 | S | sí | ✅ 2026-11-19 |
-| S21 | Activity log + revertir commit | S6, S12 | M | sí | — |
+| S21 | Activity log + revertir commit | S6, S12 | M | sí | ✅ 2026-11-19 |
 | S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | — |
 
 Leyenda de tamaño: XS < 1h · S ≈ medio día · M ≈ 1 día · L ≈ 2–3 días.
@@ -890,43 +890,43 @@ una base completa lo dice en vez de enseñar ceros como trabajo.
 
 **Depende de**: S6, S12 (y del formato de auditoría de S19).
 
-- `/datadesk/activity/`: lista inversa por fecha, agrupada por `commit_id`, con
-  actor, tabla, objeto, operación y campos cambiados; paginada. Cada grupo
-  muestra el estado `reversible` / `no reversible (merge)` / `ya revertido el …`.
-- `POST /datadesk/activity/<commit_id>/revert`: **el commit entero o nada**. Un
-  revert parcial de un lote heterogéneo deja la BD en un estado que nadie pidió,
-  así que el botón aplica todo el grupo en una transacción (con preview de lo que
-  va a hacer).
-- Reglas de aplicación, por operación:
-  - `create` → borrar el objeto creado (la cascada se lleva sus dependientes, que
-    también se revierten por sus propias filas).
-  - `update` → escribir el `before` completo del snapshot, no un diff.
-  - `delete` → recrear **con el id original** (`Model(id=…, **before)`), porque
-    los `CollectionItem` y cualquier referencia externa apuntaban a ese id.
-  - `merge` → **rechazado**: el commit entero se marca no reversible.
-- Orden dentro del revert: por modelo (lookups → `Issue` → `Stamp`), no por el
-  orden en que se registraron. Si no, revertir un alta de serie intenta crear los
-  sellos antes que su serie y falla por FK.
-- Se rechaza (409 con motivo) si:
-  - el commit ya fue revertido (`reverted_at` no nulo);
-  - contiene un `merge`;
-  - algún objeto cambió después del commit (`updated_at` > `created_at` del
-    cambio) — el mensaje dice qué objeto;
-  - choca al recrear (PK ocupada, nombre `unique` ya usado, FK destino
-    desaparecida).
-- El revert se audita como un commit nuevo (`reverts_commit_id` apuntando al
-  original) y marca `reverted_at` en las filas originales.
+- `/datadesk/activity/`: commits en orden inverso, **paginados por commit, no por
+  fila** (un lote de 40 filas es una decisión), cada uno con cuándo, quién,
+  cuántos objetos y cuáles, la operación y **los campos que cambiaron**. Cada
+  grupo lleva su estado: `reversible`, `no reversible: contiene una fusión`, o
+  `revertido el …`.
+- `POST /datadesk/activity/<commit_id>/revert`: **el commit entero o nada**, en
+  una transacción, con vista previa en el diálogo (qué se hará con cada fila) y
+  rechazo con motivo (409) si no se puede.
+- Reglas por operación, y **el orden es parte de la regla**:
+  - `create` → se borra lo creado, **hijos antes que padres** (una serie y sus
+    sellos son filas del mismo commit: primero los sellos), porque al revés la
+    cascada se lleva filas cuyo revert aún no ha corrido.
+  - `update` → se escribe el **`before` completo**, no un diff, y `updated_at` a
+    mano: `auto_now` no se dispara con `update()` y el chequeo de conflicto de
+    S12 se quedaría leyendo un timestamp que no se movió.
+  - `delete` → se recrea con el **id original** (`Model(id=…, **before)`), padres
+    antes que hijos, con sus FKs, fechas, decimales y colores (la lista de ids
+    de la M2M).
+  - `merge` → rechazado: el commit entero es no reversible y el botón ni se
+    pinta.
+- Se rechaza (409, sin aplicar nada) si: el commit ya se revirtió, contiene una
+  fusión, un objeto cambió después del commit (`updated_at` posterior), o al
+  recrear choca (id ocupado, nombre `unique` en uso).
+- **Lo que el revert no puede devolver**, y el diálogo lo dice: los
+  `CollectionItem` que la cascada borró con una serie o un sello. Vuelve el
+  catálogo, no quién tenía esos sellos.
+- El revert **se audita como un commit nuevo**: sus filas llevan
+  `reverts_commit_id` y las originales quedan con `reverted_at`, que es lo que la
+  pantalla lee para decir «revertido el …» y no volver a ofrecer el botón.
 
-**Lo que el revert no puede devolver**, y la UI lo dice explícitamente al
-confirmar: los `CollectionItem` que la cascada borró al eliminar un sello o una
-serie **no se recrean** (el snapshot de auditoría es del catálogo, no de las
-colecciones de usuario). Se recupera la serie y sus sellos, no quién los tenía.
-
-**Aceptación**: commit de 5 cambios → revert → estado idéntico al previo; revert
-de un alta de serie recrea serie y sellos con los mismos ids y colores; segundo
-revert del mismo commit → 409 "ya revertido"; objeto modificado después → 409 con
-el objeto señalado; commit con `merge` → 409 no reversible; el revert deja sus
-propias filas de auditoría con `reverts_commit_id`.
+**Aceptación**: revertir un commit de 5 cambios deja la base como estaba;
+revertir un alta de serie la borra con sus sellos; revertir un borrado recrea
+serie y sellos con sus ids y colores originales; un segundo revert del mismo
+commit → 409 «ya revertido»; un objeto modificado después → 409 con el objeto;
+un commit con `merge` → 409 y sigue siendo no reversible; recrear chocando con
+un id ocupado → 409 en vez de un 500; el revert deja sus filas con
+`reverts_commit_id` y las originales con `reverted_at`.
 
 ---
 
@@ -2282,7 +2282,59 @@ enlaces con su filtro, la base completa, los totales, el español y el acceso) �
 medido en los datos reales: **1.177 sellos sin imagen en 1.044 series**, 28 ms el
 recorrido; el filtro viejo devolvía 2.542 de 2.543 series.
 
-### ⏭ Siguiente: S21
+### S21 — Activity y revertir (2026-11-19)
 
-Activity log por commit y revertir un commit entero (o rechazarlo con motivo).
+`datadesk/activity.py` (lectura y revert), `views/activity.py`, la plantilla y su
+JS:
+
+- **`activity.py`**: `activity_page()` (commits paginados, dos consultas para la
+  página), `changed_fields()`, `revert_order()` y `revert_commit()`.
+  `revert_order()` es la pieza que hace que funcione: recreaciones con los padres
+  primero, actualizaciones en medio, borrados con los hijos primero.
+- **`views/activity.py`**: la lista y el POST del revert. Si el revert se
+  rechaza, la respuesta es **la misma página con el motivo arriba** (409), no un
+  JSON: el usuario estaba leyendo esa lista y el mensaje pertenece a ella. Si
+  sale bien, redirección con `?reverted=<commit>` para no reenviar el POST.
+- **`audit.record()`** gana `reverts_commit_id` (palabra clave), que es lo que
+  enlaza el commit de vuelta con el revertido.
+- **Plantilla**: un `<form>` por commit con su diálogo **generado en el
+  servidor** (lista qué será de cada fila y avisa de los `CollectionItem`). El
+  botón de confirmar es el `submit` y está dentro del diálogo: sin JavaScript no
+  se revierte nada.
+- El dashboard enlaza la pantalla, como con las tablas de referencia.
+
+Decisiones tomadas al implementar:
+
+- **Paginación por commit**: cortar por filas partiría un lote en dos y ofrecería
+  medio revert. La consulta agrupa por `commit_id` y pide las filas de la página
+  en una segunda consulta.
+- **`cloned_from` no es una columna**: `changed_fields()` la salta. S17 la escribe
+  en el `after` del clon como procedencia, y el log no puede presentarla como un
+  campo de la serie (ni el revert pasarla a `Model(**snapshot)`: solo aparece en
+  filas `create`, que se borran en vez de reconstruirse).
+- **El revert de un `update` escribe el snapshot entero y toca `updated_at`**, no
+  solo el valor que cambió: `auto_now` no se dispara con `update()` y el chequeo
+  de conflicto de S12 compara esa columna. Hay test.
+- **Recrear valida el id**: `save(force_insert=True)` con el id original, y un
+  `IntegrityError` se convierte en 409 con el objeto nombrado en vez de un 500.
+- **Un revert es un commit como cualquier otro**: se audita, se lista y por tanto
+  se puede revertir (que rehace el cambio original). No se bloquea, porque
+  bloquearlo obligaría a una excepción en el modelo; se documenta.
+- **La etiqueta del sello va en singular** («Sello #12», «Serie #12»): el log
+  habla de una fila, no de una tabla.
+
+Verificado: `pytest datadesk` → **438 en verde**; suite completa **1454 en
+verde** · catálogos recompilados (los verbos, los estados, el aviso de
+colecciones y `Stamp`) · **30 tests nuevos**: lectura (un commit = una tarjeta,
+orden, paginación por commit, campos cambiados, `cloned_from` fuera, estado de
+fusión, orden de dependencia), revertir alta (serie y sellos, commit nuevo con
+`reverts_commit_id`, filas originales marcadas, segundo revert 409, clon), revertir
+borrado (ids y colores de vuelta, `CollectionItem` que **no** vuelven), revertir
+edición (valores y `updated_at`, rename de lookup), los tres rechazos (cambiado
+después, fusión, colisión de id), commit desconocido, y la pantalla (lista,
+fusión sin botón, POST con redirección, banner, rechazo renderizado, acceso).
+
+### ⏭ Siguiente: S22
+
+Cierre: teclado, i18n final, repaso de tests y limpieza.
 

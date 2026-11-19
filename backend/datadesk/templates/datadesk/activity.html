@@ -1,0 +1,120 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {% translate "Activity" %}{% endblock %}
+
+{% block breadcrumbs %}<b>{% translate "Activity" %}</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page">
+    {% if error %}
+      <p class="dd-banner dd-banner-error">{{ error }}</p>
+    {% elif reverted %}
+      <p class="dd-banner dd-banner-ok">{% translate "The commit was reverted." %}</p>
+    {% endif %}
+
+    <p class="dd-hint dd-page-hint">
+      {% translate "Every change made from DataDesk, newest first. A commit is undone whole or not at all." %}
+    </p>
+
+    {% for commit in activity.commits %}
+      <article class="dd-commit">
+        <header class="dd-commit-head">
+          <span class="dd-commit-when">{{ commit.when }}</span>
+          <span class="dd-commit-user">{{ commit.user }}</span>
+          <span class="dd-commit-summary">{{ commit.summary }}</span>
+          <span class="dd-state dd-state-{{ commit.state }}">{{ commit.state_label }}</span>
+
+          {% if commit.state == "reversible" %}
+            <form class="dd-revert-form" method="post"
+                  action="{% url 'datadesk:activity_revert' commit.commit_id %}">
+              {% csrf_token %}
+              <button type="button" class="dd-btn dd-btn-ghost dd-revert-open"
+                      data-revert="{{ commit.commit_id }}">
+                {% translate "Revert this commit" %}
+              </button>
+
+              {% comment %}
+                The dialog is built by the server: it lists what each row will
+                become and says what a revert cannot give back. The submit lives
+                inside it, so without JavaScript nothing is undone.
+              {% endcomment %}
+              <div class="dd-dialog-backdrop" id="revert-{{ commit.commit_id }}" hidden>
+                <div class="dd-dialog" role="dialog" aria-modal="true"
+                     aria-labelledby="revert-title-{{ commit.commit_id }}">
+                  <div class="dd-review-head">
+                    <span class="dd-label" id="revert-title-{{ commit.commit_id }}">
+                      {% translate "Undo this commit" %}
+                    </span>
+                    <button type="button" class="dd-review-close"
+                            data-revert-close="{{ commit.commit_id }}"
+                            aria-label="{% translate 'Close' %}">×</button>
+                  </div>
+                  <div class="dd-dialog-body">
+                    <p class="dd-dialog-warning">{{ commit.summary }}</p>
+                    <ul class="dd-undo-list">
+                      {% for row in commit.rows %}
+                        <li>
+                          <span class="dd-undo-object">{{ row.object_label }}</span>
+                          {{ row.operation_label }} → {{ row.undo_label }}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                    {% if commit.touches_collections %}
+                      <p class="dd-hint">
+                        {% translate "Collection items removed with a series or a stamp are not restored: the catalogue comes back, who owned those stamps does not." %}
+                      </p>
+                    {% endif %}
+                  </div>
+                  <div class="dd-dialog-foot">
+                    <button type="button" class="dd-btn dd-btn-ghost"
+                            data-revert-close="{{ commit.commit_id }}">
+                      {% translate "Cancel" %}
+                    </button>
+                    <button type="submit" class="dd-btn dd-btn-danger">
+                      {% translate "Revert" %}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          {% endif %}
+        </header>
+
+        <table class="dd-commit-rows">
+          <tbody>
+            {% for row in commit.rows %}
+              <tr>
+                <td class="dd-commit-object">{{ row.object_label }}</td>
+                <td class="dd-commit-op">{{ row.operation_label }}</td>
+                <td class="dd-commit-fields">{{ row.fields|join:", " }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </article>
+    {% empty %}
+      <p class="dd-hint">{% translate "Nothing has been changed from here yet." %}</p>
+    {% endfor %}
+
+    {% if activity.last_page > 1 %}
+      <nav class="dd-pager">
+        {% if activity.page > 1 %}
+          <a class="dd-btn dd-btn-ghost" href="?page={{ activity.page|add:'-1' }}">
+            {% translate "Previous" %}
+          </a>
+        {% endif %}
+        <span class="dd-hint">{{ activity.page }} / {{ activity.last_page }}</span>
+        {% if activity.page < activity.last_page %}
+          <a class="dd-btn dd-btn-ghost" href="?page={{ activity.page|add:'1' }}">
+            {% translate "Next" %}
+          </a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/activity.js' %}"></script>
+{% endblock %}

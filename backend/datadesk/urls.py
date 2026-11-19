@@ -6,6 +6,7 @@ fetched by the page scripts, never typed by a human.
 
 from django.urls import path
 
+from datadesk.views.activity import ActivityView, CommitRevertView
 from datadesk.views.auth import DataDeskLoginView, DataDeskLogoutView
 from datadesk.views.dashboard import DashboardView
 from datadesk.views.images import StampImageView
@@ -41,6 +42,12 @@ urlpatterns = [
     path("issues/new/", IssueNewView.as_view(), name="issue_new"),
     path("issues/<int:pk>/", IssueWorkspaceView.as_view(), name="issue_workspace"),
     path("stamps/<int:pk>/image", StampImageView.as_view(), name="stamp_image"),
+    path("activity/", ActivityView.as_view(), name="activity"),
+    path(
+        "activity/<uuid:commit_id>/revert",
+        CommitRevertView.as_view(),
+        name="activity_revert",
+    ),
     path("lookups/", LookupIndexView.as_view(), name="lookups"),
     path("lookups/merge", LookupMergeJsonView.as_view(), name="lookup_merge"),
     path(

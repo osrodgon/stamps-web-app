@@ -1175,6 +1175,144 @@ kbd {
   margin: 16px 0 0;
 }
 
+/* --- Activity -----------------------------------------------------------
+ *
+ * One commit per card: when, who, how many objects, and whether it can be
+ * undone. The rows underneath are what will change if it is.
+ */
+
+.dd-banner {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: var(--dd-radius);
+  font-size: 12.5px;
+}
+
+.dd-banner-error {
+  background: var(--dd-red-soft);
+  border-left: 3px solid var(--dd-red);
+  color: #8c1f34;
+}
+
+.dd-banner-ok {
+  background: #eaf6ee;
+  border-left: 3px solid var(--dd-green);
+  color: #1f6b3a;
+}
+
+.dd-commit {
+  margin-bottom: 12px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+  overflow: hidden;
+}
+
+.dd-commit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--dd-line);
+  font-size: 12px;
+}
+
+.dd-commit-when {
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+.dd-commit-user {
+  color: var(--dd-soft);
+}
+
+.dd-commit-summary {
+  color: var(--dd-soft);
+}
+
+.dd-state {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.dd-state-reversible {
+  background: #eef4fb;
+  color: var(--dd-navy);
+}
+
+.dd-state-merged {
+  background: var(--dd-amber-soft);
+  color: #6b4f00;
+}
+
+.dd-state-reverted {
+  background: #f0f2f5;
+  color: var(--dd-soft);
+}
+
+.dd-revert-form {
+  margin-left: auto;
+}
+
+.dd-commit-rows {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.dd-commit-rows td {
+  padding: 5px 12px;
+  border-top: 1px solid #f0f2f5;
+  vertical-align: top;
+}
+
+.dd-commit-rows tr:first-child td {
+  border-top: none;
+}
+
+.dd-commit-object {
+  width: 30%;
+  color: var(--dd-ink);
+}
+
+.dd-commit-op {
+  width: 12%;
+  color: var(--dd-soft);
+}
+
+.dd-commit-fields {
+  color: var(--dd-soft);
+  font-family: var(--dd-font-mono);
+  font-size: 11px;
+}
+
+.dd-undo-list {
+  margin: 0 0 10px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.dd-undo-list li {
+  margin-bottom: 4px;
+}
+
+.dd-undo-object {
+  font-weight: 600;
+}
+
+.dd-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
 /* --- Reference tables --------------------------------------------------
  *
  * One screen for eight tables: the tabs are the registry, the cards are how

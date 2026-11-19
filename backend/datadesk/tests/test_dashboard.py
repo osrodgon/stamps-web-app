@@ -192,6 +192,7 @@ class TestThePage:
         assert f'href="{WORKBENCH_URL}"' in content
         assert 'href="/datadesk/issues/new/"' in content
         assert 'href="/datadesk/lookups/"' in content
+        assert 'href="/datadesk/activity/"' in content
 
     def test_spanish_translates_the_cards(
         self, staff_client, dataset, settings
