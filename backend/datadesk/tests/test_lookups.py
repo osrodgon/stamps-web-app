@@ -14,6 +14,7 @@ import re
 import pytest
 from django.conf import settings
 from django.db import connection
+from django.utils import timezone
 from django.test import Client
 from django.test.utils import CaptureQueriesContext
 
@@ -35,6 +36,7 @@ from years_api.models import Year
 
 TABLE_URL = "/datadesk/lookups/{key}/"
 ROWS_URL = "/datadesk/lookups/{key}/rows"
+CREATE_URL = "/datadesk/lookups/{key}/create"
 RENAME_URL = "/datadesk/lookups/{key}/rename"
 DELETE_URL = "/datadesk/lookups/{key}/delete"
 MERGE_URL = "/datadesk/lookups/merge"
@@ -409,6 +411,44 @@ class TestTheEndpoints:
         ]
 
         assert missing == []
+
+    def test_the_page_offers_a_new_row(self, staff_client, artists) -> None:
+        content = staff_client.get(TABLE_URL.format(key="artist")).content.decode()
+
+        assert 'id="new-row-button"' in content
+        assert 'id="new-row-panel"' in content
+        assert 'id="new-row-confirm"' in content
+        assert 'type="text"' in content.split('id="new-row-name"')[1][:200]
+
+    def test_the_year_input_is_a_number_with_the_bounds(self, staff_client, db) -> None:
+        content = staff_client.get(TABLE_URL.format(key="year")).content.decode()
+
+        assert 'id="new-row-name"' in content
+        assert 'type="number"' in content.split('id="new-row-name"')[1][:200]
+        assert 'min="1800"' in content
+        assert f'max="{timezone.localdate().year + 2}"' in content
+
+    def test_the_create_url_travels_in_the_config(self, staff_client, artists) -> None:
+        content = staff_client.get(TABLE_URL.format(key="artist")).content.decode()
+        blob = content.split('id="lookup-config" type="application/json">')[1]
+        config = json.loads(blob.split("</script>")[0])
+
+        assert config["createUrl"] == CREATE_URL.format(key="artist")
+        assert config["texts"]["newRow"] == "New row"
+        assert config["texts"]["createRow"] == "Create the row"
+        assert config["texts"]["rowCreated"] == "The row was created."
+        assert config["texts"]["rowExists"] == "That row already existed."
+        assert config["bounds"] == {}
+
+    def test_the_years_carry_their_bounds_in_the_config(self, staff_client, db) -> None:
+        content = staff_client.get(TABLE_URL.format(key="year")).content.decode()
+        blob = content.split('id="lookup-config" type="application/json">')[1]
+        config = json.loads(blob.split("</script>")[0])
+
+        assert config["bounds"] == {
+            "min": 1800,
+            "max": timezone.localdate().year + 2,
+        }
 
     def test_an_unknown_table_is_a_404(self, staff_client, db) -> None:
         assert staff_client.get(TABLE_URL.format(key="planet")).status_code == 404

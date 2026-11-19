@@ -26,6 +26,9 @@
       <span class="dd-hint" id="lookup-count"></span>
       <span class="dd-hint dd-status-error" id="lookup-status"></span>
       <span class="dd-lookup-actions">
+        <button type="button" class="dd-btn dd-btn-ghost" id="new-row-button">
+          {% translate "New row" %}
+        </button>
         <button type="button" class="dd-btn dd-btn-ghost" id="merge-button" disabled>
           {% translate "Merge two rows" %}
         </button>
@@ -40,7 +43,7 @@
     <div id="lookup-grid"></div>
 
     <p class="dd-hint dd-keys">
-      {% translate "Slash focuses the search and J and K move the selection. Two selected rows can be merged." %}
+      {% translate "Slash focuses the search, J and K move the selection and N adds a row. Two selected rows can be merged." %}
     </p>
 
     {% comment %}
@@ -49,6 +52,41 @@
       to revert it. The dialog therefore asks which name survives, because
       "the good one is the row I am deleting" is the common case.
     {% endcomment %}
+    {% comment %}
+      One field, because a reference row is a name. The years carry the same
+      bounds as the workspace's form: a year is a number and 20.216 is a typo,
+      not a year.
+    {% endcomment %}
+    <div class="dd-dialog-backdrop" id="new-row-panel" hidden>
+      <div class="dd-dialog" role="dialog" aria-modal="true"
+           aria-labelledby="new-row-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="new-row-title">{% translate "New row" %}</span>
+          <button type="button" class="dd-review-close" id="new-row-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-dialog-body">
+          <label class="dd-field" for="new-row-name">
+            <span class="dd-field-key">{{ config.texts.name }}</span>
+            <input class="dd-input" id="new-row-name"
+                   type="{% if config.numeric %}number{% else %}text{% endif %}"
+                   {% if config.numeric %}inputmode="numeric" step="1"
+                   min="{{ config.bounds.min }}" max="{{ config.bounds.max }}"{% endif %}
+                   autocomplete="off" maxlength="255">
+          </label>
+          <p class="dd-hint dd-status-error" id="new-row-status"></p>
+        </div>
+        <div class="dd-dialog-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="new-row-cancel">
+            {% translate "Cancel" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-dark" id="new-row-confirm">
+            {% translate "Create the row" %}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="dd-dialog-backdrop" id="merge-panel" hidden>
       <div class="dd-dialog dd-dialog-wide" role="dialog" aria-modal="true"
            aria-labelledby="merge-title">

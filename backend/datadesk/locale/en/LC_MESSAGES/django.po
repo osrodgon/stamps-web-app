@@ -778,8 +778,8 @@ msgid "Slash focuses the search, J and K move the selection, Enter opens the ser
 msgstr "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one."
 
 #: datadesk/templates/datadesk/lookups.html
-msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
-msgstr "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
+msgid "Slash focuses the search, J and K move the selection and N adds a row. Two selected rows can be merged."
+msgstr "Slash focuses the search, J and K move the selection and N adds a row. Two selected rows can be merged."
 
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "Delete this stamp"
@@ -812,3 +812,19 @@ msgstr "This stamp is in user collections, which lose it too."
 #: datadesk/dependencies.py
 msgid "No user collection holds this stamp."
 msgstr "No user collection holds this stamp."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "New row"
+msgstr "New row"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Create the row"
+msgstr "Create the row"
+
+#: datadesk/views/lookups.py
+msgid "The row was created."
+msgstr "The row was created."
+
+#: datadesk/views/lookups.py
+msgid "That row already existed."
+msgstr "That row already existed."

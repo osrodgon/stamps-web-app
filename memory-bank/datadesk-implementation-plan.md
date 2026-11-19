@@ -125,7 +125,7 @@ propósito y una puerta que existe pero no donde se busca.
 | S23 | El anillo del campo rechazado no se pierde | — | XS | sí (bug) | ✅ 2026-11-19 |
 | S24 | Escala tipográfica y ritmo del interfaz | S23 | M | sí | ✅ 2026-11-19 |
 | S25 | Borrar un sello con preview de dependencias | S17, S21 | M | sí | ✅ 2026-11-19 |
-| S26 | Nueva fila en las tablas de referencia | S19 | S | sí | — |
+| S26 | Nueva fila en las tablas de referencia | S19 | S | sí | ✅ 2026-11-19 |
 | S27 | Moverse entre series y borrar desde la lista | S15, S17 | M | sí | — |
 
 Orden: **S23** primero porque es el bug y toca el mismo CSS que S24; **S24**
@@ -2626,6 +2626,18 @@ número; la fila nueva se puede renombrar y borrar en el acto.
 
 **Tamaño**: S · `views/lookups.py`, plantilla, `lookups.js`, tests.
 
+**Hecho (2026-11-19)**: botón `New row` en la barra y `N` en el teclado, con un
+diálogo de un solo campo —`type="number"` con los límites de `rules.series_year_bounds()`
+cuando el lookup es numérico, y los mismos límites en la configuración— que usa el
+endpoint de creación que ya existía (`get_or_create`, auditado, y por tanto
+revertible por S21). Un duplicado devuelve `created: false` y la pantalla
+**selecciona la fila que ya estaba** en vez de dar error. Como la rejilla ordena
+por nombre, una fila nueva puede caer en otra página: tras crear se recarga y, si
+no está en la página, se busca por su nombre y se resalta (`dd-row-flash`), que es
+más honesto que teletransportar a la primera página con la fila fuera de la vista.
+4 tests y 6 comprobaciones nuevas en el arnés de lookups (diálogo, POST, estado,
+fila seleccionada, `N` y `Esc`): 475 datadesk, 1491 backend y el arnés en 12.
+
 ---
 
 ### S27 — Moverse entre series y borrar desde la lista
@@ -4143,8 +4155,14 @@ colección y de sellos hermanos, una fila de auditoría con el snapshot completo
 el revert de S21 devolviendo el sello con su id y sus colores (los
 `CollectionItem` no vuelven). Detalle y decisiones en el paso.
 
-### ⏭ Siguiente: S26
+### S26 — Nueva fila en las tablas de referencia (2026-11-19)
 
-La fila nueva en las tablas de referencia: renombrar, fusionar y borrar ya están,
-crear no.
+`New row` y `N` abren un diálogo de un campo que usa el endpoint de creación de
+S18; el año lleva los mismos límites que la franja, un duplicado selecciona la fila
+existente y la recién creada se resalta aunque haya caído en otra página.
+
+### ⏭ Siguiente: S27
+
+Moverse entre series desde el workspace (con los filtros del workbench) y borrar
+una serie desde la fila de la lista.
 
