@@ -630,3 +630,50 @@ msgid "Created %(count)s year"
 msgid_plural "Created %(count)s years"
 msgstr[0] "Created %(count)s year"
 msgstr[1] "Created %(count)s years"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Nothing missing here:"
+msgstr "Nothing missing here:"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Nothing needs attention: every series has its country, date and stamps, and every stamp has its colour, face value and picture."
+msgstr "Nothing needs attention: every series has its country, date and stamps, and every stamp has its colour, face value and picture."
+
+#: datadesk/service.py
+msgid "Series with no country"
+msgstr "Series with no country"
+
+#: datadesk/service.py
+msgid "Series with no date"
+msgstr "Series with no date"
+
+#: datadesk/service.py
+msgid "Series with no stamps"
+msgstr "Series with no stamps"
+
+#: datadesk/service.py
+msgid "Stamps with no colour"
+msgstr "Stamps with no colour"
+
+#: datadesk/service.py
+msgid "Stamps with no value"
+msgstr "Stamps with no value"
+
+#: datadesk/service.py
+msgid "Stamps with no picture"
+msgstr "Stamps with no picture"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Internal database maintenance. What is missing comes first, everything else is one click away."
+msgstr "Internal database maintenance. What is missing comes first, everything else is one click away."
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "%(issues)s series · %(stamps)s stamps"
+msgstr "%(issues)s series · %(stamps)s stamps"
+
+#: datadesk/service.py
+#, python-format
+msgid "in %(count)s series"
+msgid_plural "in %(count)s series"
+msgstr[0] "in %(count)s series"
+msgstr[1] "in %(count)s series"

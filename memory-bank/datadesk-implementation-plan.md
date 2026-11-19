@@ -104,7 +104,7 @@ el mockup ya están corregidos con esta decisión.
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | ✅ 2026-11-19 |
 | S18 | Crear un lookup desde el workspace | S12, S14 | M | sí | ✅ 2026-11-19 |
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | ✅ 2026-11-19 |
-| S20 | Dashboard + colas "needs attention" | S8 | S | sí | — |
+| S20 | Dashboard + colas "needs attention" | S8 | S | sí | ✅ 2026-11-19 |
 | S21 | Activity log + revertir commit | S6, S12 | M | sí | — |
 | S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | — |
 
@@ -847,12 +847,42 @@ en auditoría y un commit con `merge` queda marcado como no reversible.
 
 **Depende de**: S8.
 
-- `/datadesk/` con los 6 contadores de `missing_data_report()` y enlaces a
-  `/datadesk/issues/?attention=...`.
-- Añadir "sin imagen" al selector del workbench si S8 no lo incluyó.
+`/datadesk/` deja de ser la página provisional de S1 y enseña las seis colas de
+`missing_data_report()`, cada una como una puerta al workbench con su filtro ya
+puesto.
 
-**Aceptación**: los números del dashboard coinciden con el recuento del
-workbench filtrado; cada tarjeta es un enlace directo.
+- **Una tabla de nombres, no tres**: `service.QUEUES` empareja el contador del
+  informe (`issues_without_country`) con el filtro del workbench (`no_country`),
+  su etiqueta traducida y la **unidad** de lo que cuenta. Un test comprueba que
+  hay exactamente una cola por contador y que todos los filtros existen, así que
+  un contador nuevo no puede quedarse sin tarjeta.
+- **Tres colas cuentan sellos y el workbench filtra series**: la tarjeta de un
+  contador de sellos lleva **los dos números** («1.177 · en 1.044 series»),
+  porque la rejilla que abre cuenta series y una tarjeta que dijera 1.177 delante
+  de una rejilla de 1.044 parecería un fallo. El número de series sale de
+  `filter_issues()`, la misma función que usa el workbench: no pueden discrepar.
+- **Contadores a cero**: no desaparecen ni se pintan como trabajo. Se listan
+  aparte («Aquí no falta nada: …») y, si los seis están a cero, la página lo dice
+  en lugar de enseñar seis tarjetas vacías.
+- **Números formateados por idioma** (`number_format`): 1.177 en español, 1,177
+  en inglés, sin que la plantilla lo sepa.
+- Totales de series y sellos, y enlaces al workbench, a una serie nueva y a las
+  tablas de referencia.
+
+**Bug encontrado y cerrado aquí**: el filtro `stamps_without_image` del workbench
+seguía mirando `Stamp.image` —columna **vacía en las 9.560 filas reales—**
+mientras el contador ya contaba archivos desde S10b. En los datos reales ese
+filtro devolvía **2.542 de 2.543 series**: «todo», y nadie lo había notado porque
+los tests de S8 usaban la columna. Ahora las dos preguntas se responden con la
+misma función, `picture_gaps()`, que devuelve el número de sellos sin imagen y
+**el conjunto de series que los contienen** en un solo recorrido del índice
+(1.177 sellos en 1.044 series, **28 ms** con el índice cacheado).
+
+**Aceptación**: los números del dashboard coinciden con un recuento directo y con
+el total del workbench filtrado (las tres colas de series de forma exacta, las de
+sellos con su par series/sellos); cada tarjeta abre el workbench con su filtro
+aplicado en la URL; un hueco arreglado baja el contador en la siguiente carga; y
+una base completa lo dice en vez de enseñar ceros como trabajo.
 
 ---
 
@@ -2199,7 +2229,60 @@ búsqueda, dos consultas por página—, 6 de renombrar, 2 de borrar, 11 de fusi
 `keep_name_from="b"` y la fila única de auditoría—, 2 de los años y 13 de
 contrato HTTP).
 
-### ⏭ Siguiente: S20
+### S20 — Dashboard y colas «needs attention» (2026-11-19)
 
-Dashboard con las colas «needs attention» sobre `missing_data_report()`.
+`service.QUEUES` + `dashboard_queues()`, `views/dashboard.py` y la plantilla del
+dashboard:
+
+- **`service.QUEUES`**: el emparejamiento contador ↔ filtro ↔ etiqueta ↔ unidad,
+  una vez. `ATTENTION_CONDITIONS` pierde `stamps_without_image` y gana un
+  comentario que explica por qué esa cola no es una condición de queryset.
+- **`picture_gaps()`**: un recorrido del índice que devuelve el número de sellos
+  sin imagen **y** las series que los tienen, para que el contador y el filtro no
+  puedan contar cosas distintas. `missing_data_report()` y `filter_issues()` lo
+  comparten.
+- **`dashboard_queues()`** usa `filter_issues()` para el segundo número de las
+  tarjetas de sellos, así que la tarjeta y el total de la rejilla son la misma
+  consulta.
+- **`views/dashboard.py`**: formatea los números con `number_format` (idioma),
+  separa «necesita atención» de «aquí no falta nada» y enlaza workbench, serie
+  nueva y tablas de referencia.
+
+Decisiones tomadas al implementar:
+
+- **Los dos números de una tarjeta de sellos**: el plan pedía que «los números
+  coincidan con el recuento del workbench filtrado», cosa que no puede pasar con
+  las tres colas de sellos porque la rejilla cuenta series. La tarjeta enseña el
+  número que cuenta y las series en las que están, y la comprobación es el par:
+  sellos del informe = sellos de la tarjeta, series del filtro = total de la
+  rejilla.
+- **Las colas a cero se enseñan, pero no como trabajo**: una lista corta
+  («Aquí no falta nada: Series sin país · …») para que se vea que un contador
+  está a cero sin pintar seis tarjetas vacías. Si están todas a cero, un panel lo
+  dice y desaparecen los enlaces filtrados.
+- **El bug del filtro de imágenes se cierra aquí, no se documenta y se deja**:
+  era el mismo contador respondiendo dos preguntas distintas, y el paso que las
+  junta es este. Coste medido en los datos reales: 28 ms por recorrido con el
+  índice cacheado.
+- **El dashboard recorre el índice dos veces** (informe y filtro): 56 ms con la
+  caché caliente, y por debajo del objetivo de 300 ms. Si algún día molesta, el
+  arreglo es que `missing_data_report()` devuelva también el conjunto, no cachear
+  la página entera a espaldas del usuario.
+- **La fixture `dataset` de los tests se movió a `conftest.py`** para que el
+  dashboard y el servicio comprueben los mismos números con los mismos datos, y
+  la del workbench pasó a llamarse `grid_dataset` para no taparla (tenían formas
+  distintas y el mismo nombre).
+
+Verificado: `pytest datadesk` → **408 en verde**; suite completa **1424 en
+verde** · catálogos recompilados (las seis etiquetas de tarjeta, el aviso de base
+completa, los totales y el plural «en %(count)s serie/series») · **19 tests
+nuevos** (la tabla de colas en las dos direcciones, los seis contadores contra un
+recuento directo, los pares series/sellos contra el total de la rejilla, los
+enlaces con su filtro, la base completa, los totales, el español y el acceso) ·
+medido en los datos reales: **1.177 sellos sin imagen en 1.044 series**, 28 ms el
+recorrido; el filtro viejo devolvía 2.542 de 2.543 series.
+
+### ⏭ Siguiente: S21
+
+Activity log por commit y revertir un commit entero (o rechazarlo con motivo).
 

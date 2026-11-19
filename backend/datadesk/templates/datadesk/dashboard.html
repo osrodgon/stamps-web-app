@@ -7,12 +7,51 @@
 
 {% block content %}
   <section class="dd-page">
-    <h1 class="dd-label">DataDesk</h1>
-    <p class="dd-hint">
-      {% blocktranslate %}Internal database maintenance. The workbench, the issue workspace and the lookup admin arrive in the next steps.{% endblocktranslate %}
+    <p class="dd-hint dd-page-hint">
+      {% blocktranslate %}Internal database maintenance. What is missing comes first, everything else is one click away.{% endblocktranslate %}
     </p>
+
+    <p class="dd-dash-totals">
+      {% blocktranslate with issues=totals.issues stamps=totals.stamps %}{{ issues }} series · {{ stamps }} stamps{% endblocktranslate %}
+    </p>
+
+    {% comment %}
+      One card per queue. The stamp queues say how many series hold those stamps
+      too: the grid behind the link is a grid of series, and a card saying 1.177
+      in front of a grid saying 412 would look like a bug.
+    {% endcomment %}
+    {% if cards %}
+      <h2 class="dd-label dd-section-title">{% translate "Needs attention" %}</h2>
+      <div class="dd-cards">
+        {% for card in cards %}
+          <a class="dd-card" href="{% url 'datadesk:issues' %}?attention={{ card.attention }}">
+            <span class="dd-card-label">{{ card.label }}</span>
+            <span class="dd-card-value">{{ card.count_text }}</span>
+            {% if card.issues_text %}
+              <span class="dd-card-note">{{ card.issues_text }}</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="dd-panel dd-dash-done">
+        <span class="dd-label">{% translate "Needs attention" %}</span>
+        <p class="dd-hint">
+          {% blocktranslate %}Nothing needs attention: every series has its country, date and stamps, and every stamp has its colour, face value and picture.{% endblocktranslate %}
+        </p>
+      </div>
+    {% endif %}
+
+    {% if clear %}
+      <p class="dd-hint dd-dash-clear">
+        {% translate "Nothing missing here:" %}
+        {% for card in clear %}{{ card.label }}{% if not forloop.last %} · {% endif %}{% endfor %}
+      </p>
+    {% endif %}
+
     <p class="dd-actions">
       <a class="dd-btn dd-btn-dark" href="{% url 'datadesk:issues' %}">{% translate "Open the issues workbench" %}</a>
+      <a class="dd-btn dd-btn-ghost" href="{% url 'datadesk:issue_new' %}">{% translate "New series" %}</a>
       <a class="dd-btn dd-btn-ghost" href="{% url 'datadesk:lookups' %}">{% translate "Reference tables" %}</a>
     </p>
   </section>
