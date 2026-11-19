@@ -771,12 +771,22 @@ kbd {
   box-shadow: inset 0 0 0 1px var(--dd-red-soft);
 }
 
-/* Same idea inside the grid: the row is the context, the cell is the field. */
+/* Same idea inside the grid: the row is the context, the cell is the field.
+ *
+ * The ring is drawn inside the cell, and Tabulator paints the rows in order: the
+ * one below has an opaque background and covered the bottom pixel of the ring, so
+ * the mark looked cut in half on every row that had another one under it.
+ * `position: relative` is Tabulator's own, and the z-index is what lifts the
+ * cell above the row that comes after. Do not tidy it away as redundant.
+ */
 .dd-cell-invalid {
+  position: relative;
+  z-index: 2;
   box-shadow: inset 0 0 0 1px var(--dd-red);
 }
 
 .dd-row-error .dd-cell-invalid {
+  z-index: 3;
   box-shadow: inset 0 0 0 2px var(--dd-red);
 }
 

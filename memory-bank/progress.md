@@ -303,6 +303,36 @@
       DataDesk off and what a revert cannot restore. 3 tests added; 441 datadesk
       and 1457 backend tests green; jsdom harnesses at 79 (new), 74 (edit), 14
       (workbench keys) and 6 (lookup keys) checks. **DataDesk is complete.**
+- [x] **S23 — The refused cell's ring is hidden by the next row** (2026-11-19):
+      the mark is painted with `box-shadow: inset` and Tabulator paints the rows
+      in order, so the one below covered the bottom pixel of the ring. The cell
+      now carries `position: relative` + `z-index: 2` (3 inside a refused row):
+      rows are positioned without a z-index, so they create no stacking context
+      and the cell lifts above the next one. An `outline` was rejected — it is
+      painted with the cell and gets covered the same way. Two tests pin the
+      declaration so a tidy-up cannot remove it. 443 datadesk and 1459 backend
+      tests green.
+- [ ] **S24 — Type scale and rhythm** (M): nothing in the app goes above 12,5 px
+      (16 rules at 12, seven at 10,5, two at 9,5), which is most of why it reads
+      as dated. Base 14, cells and fields 13, hints 12, uppercased micro-labels
+      10,5 and nothing below; spacing on a 4/8 scale, row height 34 → 38, softer
+      borders, a real title on each screen and a Tabulator header of its own.
+      Contrast re-measured (`--dd-soft` is at 4,8:1 and must not drop).
+- [ ] **S25 — Delete a stamp with a dependency preview** (M): the change set
+      refuses `delete` on purpose (S12) and S17 only solved it for a series.
+      `GET stamps/<pk>/dependencies` + `POST stamps/<pk>/delete`, audited, the
+      cascade takes the `CollectionItem` rows (the dialog says so), the revert of
+      S21 brings the stamp back with its colours but not who owned it. Per-row
+      action in `mode=edit`, disabled while the buffer has edits.
+- [ ] **S26 — New row in the reference tables** (S): rename, merge and delete
+      exist, creation lives only in the workspace's `+` button. A `New row`
+      dialog on `/datadesk/lookups/<key>/` reusing the existing create endpoint,
+      numeric for years, a duplicate selects the row that already existed.
+- [ ] **S27 — Delete a series from the workbench row** (S): the S17 dialog
+      exists but only inside the workspace, where nobody looks for it. Add a
+      per-row action that opens the same preview and POST, reload the grid and
+      say what went; `Supr` on the selected row opens the dialog, never deletes.
+
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
