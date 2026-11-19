@@ -102,7 +102,7 @@ el mockup ya están corregidos con esta decisión.
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | ✅ 2026-11-19 |
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | ✅ 2026-11-19 |
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | ✅ 2026-11-19 |
-| S18 | Crear lookup desde la celda | S12, S14 | M | sí | — |
+| S18 | Crear un lookup desde el workspace | S12, S14 | M | sí | ✅ 2026-11-19 |
 | S19 | Pantalla de lookups + merge | S7, S12 | M | sí | — |
 | S20 | Dashboard + colas "needs attention" | S8 | S | sí | — |
 | S21 | Activity log + revertir commit | S6, S12 | M | sí | — |
@@ -747,19 +747,45 @@ serie de 57 sellos: el preview cuenta los 57 y la confirmación por año no camb
 
 ---
 
-### S18 — Crear lookup desde la celda
+### S18 — Crear un lookup desde el workspace
 
 **Depende de**: S12, S14.
 
-- Autocomplete en las celdas de lookup (`country`, `artist`, `printer`, …) que
-  busca en `/datadesk/lookups/<table>/search?q=`.
-- Si no existe, opción `+ Crear "X"` que hace `POST` y devuelve `{id, name}`;
-  el cambio entra en el change set como `create` de la lookup.
-- En `colors` (M2M) lo mismo, multi-selección con chips.
+**Corrección de partida**: el plan decía «celdas de lookup del grid», pero tras
+la revisión del esquema un sello no guarda ningún atributo de la serie: los
+lookups viven en la franja (`country`, `stamp_type`, `print_type`, `printer`,
+`artist`, `paper_type`) y el único lookup del grid son los colores. Así que el
+paso convierte **los seis campos de la franja** en campos tecleados con
+sugerencias, y da al editor de colores la misma capacidad de crear.
 
-**Aceptación**: crear un artista nuevo desde una celda y verlo en el
-autocomplete de otra serie sin recargar; nombre duplicado → error claro, no 500;
-el `create` de la lookup aparece en el panel de revisión.
+- `GET /datadesk/lookups/<key>/search?q=` — búsqueda en el servidor sobre el
+  registro (`icontains` sobre la columna que identifica la fila, ordenada por
+  ella, 50 filas como máximo). Es lo que evita mandar la tabla entera con cada
+  serie: los colores son 300 filas y los artistas 92 en los datos reales.
+- El campo es un `<input list>` con `<datalist>`: el navegador filtra solo y el
+  `accept` de siempre sigue funcionando, sin menú propio que mantener. El valor
+  del formulario es el **id** y lo que se ve es el **nombre**; dos mapas
+  (`id→nombre`, `nombre→id`) hacen de diccionario, sembrados con lo que la
+  página pinta y ampliados con cada búsqueda y cada fila creada.
+- `+ Crear "X"` aparece solo cuando el texto no es ninguna fila conocida: un
+  botón permanente invita a duplicar lo que ya está elegido. El `POST` usa el
+  endpoint de S12 (`get_or_create`), así que un nombre repetido devuelve la fila
+  existente con `created: false` en vez de un 500.
+- Un nombre tecleado que no existe **no se puede enviar** (el formulario habla
+  ids): confirmar lo rechaza, marca el campo y dice qué hacer. Sin eso, `""` en
+  una FK nullable habría borrado el valor en silencio.
+- En `mode=new` el editor de colores es la lista de Tabulator, que no acepta
+  texto libre: el color se crea desde el botón `New colour` de la barra del grid
+  y entra en la lista que la celda ofrecerá la próxima vez que se abra. Crear un
+  color no es ponerlo en un sello: elegirlo sigue siendo editar la celda.
+- En `mode=edit` la fila creada **no es un cambio** (ya está escrita y auditada
+  por el endpoint), así que el panel de revisión la muestra en su propio grupo,
+  «New reference rows», con la frase que explica que se conserva. El botón
+  `Review changes` se abre también cuando solo hay filas de esas.
+
+**Aceptación**: crear un artista nuevo desde un campo y verlo en las sugerencias
+de otra serie sin recargar; nombre duplicado → mensaje claro, no 500; la fila
+creada aparece en el panel de revisión con su etiqueta.
 
 ---
 
@@ -2057,8 +2083,80 @@ de `mode=new` siguen pasando. El arnés tuvo que sustituir
 `window.location.assign` al evaluar el script (`location` no se puede redefinir
 en jsdom) y `HTMLElement.prototype.scrollIntoView`, que jsdom no implementa.
 
-### ⏭ Siguiente: S18
+### S18 — Crear un lookup desde el workspace (2026-11-19)
 
-Crear un lookup desde una celda (autocomplete + `+ Crear "X"`), incluidos los
-colores como multi-selección.
+`search_lookups()` en `service.py`, `LookupSearchJsonView` y los campos de
+referencia convertidos en campos tecleados:
+
+- **`service.search_lookups(key, query, limit=50)`**: `icontains` sobre la
+  columna que identifica la fila, ordenada por ella, cortada en 50. Una consulta,
+  y la misma para los ocho lookups del registro.
+- **`LookupSearchJsonView`**: GET, staff, 404 para una clave desconocida.
+  `LookupCreateJsonView` (S12) añade `tone` cuando la clave es `color`, porque
+  el chip de la celda se pinta con el tono y un color recién creado no tiene
+  fila en la configuración de la página de la que copiarlo.
+- **`workspace.py`**: `lookup_label()` sustituye a `lookup_options()` (la franja
+  manda el nombre de la fila elegida, no la tabla entera) y la configuración
+  gana `lookups` (search + create por clave), `lookupLabels` y `lookupText`. El
+  prefill viaja como `{"value", "label"}` para que el botón pueda rellenar la
+  caja igual que lo haría una persona.
+- **Plantilla**: `<input list="lookup-<field>">` + `<datalist>` + el botón
+  `+ Crear "X"`, oculto hasta que el texto no es una fila conocida.
+- **`issue_workspace.js`**: dos mapas (`id→nombre`, `nombre→id`) como diccionario
+  entre lo que la API habla y lo que se teclea, sembrados desde el DOM y
+  ampliados por cada búsqueda y cada fila creada; búsqueda con 250 ms de
+  retardo; `formValue()` traduce en un solo sitio y lo usan los dos modos.
+
+Decisiones tomadas al implementar:
+
+- **El campo es un `<input list>`, no un combobox propio**: el navegador filtra,
+  navega con el teclado y anuncia el campo a un lector de pantalla sin una línea
+  de código, y el `datalist` se rellena desde la búsqueda. Un menú propio habría
+  costado más código que el que ahorra.
+- **El formulario sigue hablando ids**: la franja envía ids como la API, la caja
+  muestra nombres, y la traducción ocurre en `formValue()`/`setLookup()`. Por eso
+  `seriesPayload()`, `formValues()`, `readValue()`, `writeValue()` y el log de
+  deshacer pasan por ahí: el historial guarda **ids** (como el patch) y al
+  deshacer se escribe el nombre que el mapa recuerde, de modo que `Ctrl+Z` no
+  deja la caja con un número dentro.
+- **Un nombre sin fila no se envía**: `unresolvedLookup()` lo detecta antes de
+  crear o confirmar, marca el campo con `dd-input-invalid` y explica que hay que
+  usar el botón `+`. Sin ese control, `""` en una FK nullable habría borrado el
+  valor en silencio: el `_prepare_patch` de S12 convierte `""` en `NULL` a
+  propósito.
+- **La fila se crea al pulsar, no al confirmar**: sin ids temporales (decisión de
+  S12), la fila existe en cuanto se crea y el endpoint la audita. Por eso en
+  `mode=edit` **no entra en el buffer**: el panel de revisión la enseña en un
+  grupo aparte («New reference rows · ya guardada»), y el botón `Review changes`
+  se habilita también cuando solo hay filas de esas. `Discard` no la borra: es
+  una fila de referencia reutilizable, igual que el `Year` implícito de S12.
+- **Los colores se crean desde la barra del grid**, no desde la celda: el editor
+  es la lista multiselección de Tabulator, que no acepta texto libre. El botón
+  `New colour` abre un diálogo, crea la fila y la añade a la lista que la celda
+  ofrecerá la próxima vez; elegirla sigue siendo editar la celda.
+- **El borrador guarda también el diccionario**: un cambio de artista restaurado
+  desde `localStorage` en una página que nunca lo buscó habría enseñado un id y
+  habría deshecho a una caja vacía, así que el draft lleva `lookups: [[campo:id,
+  nombre]]` y se siembra al recuperar.
+- **En `mode=edit` los colores siguen de solo lectura**: el change set no lleva
+  M2M. No entraba en la aceptación de este paso y la pantalla de lookups de S19
+  es su sitio natural.
+
+Verificado: `pytest datadesk` → **349 en verde**; suite completa **1365 en
+verde** · catálogos recompilados (`+ Create`, `New colour`, `Added to the list.`,
+`New reference rows` y el aviso de nombre sin fila) · arnés de jsdom de
+`mode=new` con **73** comprobaciones (las 57 anteriores más: el país prefillado
+enseña el nombre y guarda el id, botón `+` que aparece con un nombre nuevo y
+lleva el nombre, búsqueda al servidor tras 250 ms, `datalist` relleno, nombre
+buscado que ya no se ofrece para crear, creación que deja el nombre en la caja y
+envía el **id** al crear la serie, y diálogo de color que añade el color a la
+lista que la celda ofrecerá) y `mode=edit` con **74** (nombre y id sembrados,
+mismo nombre no es cambio, nombre desconocido que **para** el commit con su
+aviso y su anillo, `+` que crea y envía el id en el change set, y el panel de
+revisión con `Artist · Pepito` y su «ya guardada»).
+
+### ⏭ Siguiente: S19
+
+Pantalla de lookups (una plantilla para los ocho), recuentos de uso y fusión de
+duplicados.
 

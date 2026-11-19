@@ -490,3 +490,39 @@ msgstr "Commit or discard the pending changes first."
 #: datadesk/views/workspace.py
 msgid "Type %(year)s to confirm"
 msgstr "Type %(year)s to confirm"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "New colour"
+msgstr "New colour"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create the colour"
+msgstr "Create the colour"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Cancel"
+msgstr "Cancel"
+
+#: datadesk/views/workspace.py
+msgid "+ Create \"%(name)s\""
+msgstr "+ Create \"%(name)s\""
+
+#: datadesk/views/workspace.py
+msgid "Added to the list."
+msgstr "Added to the list."
+
+#: datadesk/views/workspace.py
+msgid "The value could not be created."
+msgstr "The value could not be created."
+
+#: datadesk/views/workspace.py
+msgid "%(name)s is not a saved value yet. Use the + button to add it."
+msgstr "%(name)s is not a saved value yet. Use the + button to add it."
+
+#: datadesk/views/workspace.py
+msgid "New reference rows"
+msgstr "New reference rows"
+
+#: datadesk/views/workspace.py
+msgid "Saved now: reference rows are reused."
+msgstr "Saved now: reference rows are reused."

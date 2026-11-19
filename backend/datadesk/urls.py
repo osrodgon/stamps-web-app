@@ -21,6 +21,7 @@ from datadesk.views.write_api import (
     IssueDeleteJsonView,
     IssueDependenciesJsonView,
     LookupCreateJsonView,
+    LookupSearchJsonView,
 )
 
 app_name = "datadesk"
@@ -46,6 +47,11 @@ urlpatterns = [
         "lookups/<str:key>/create",
         LookupCreateJsonView.as_view(),
         name="lookup_create",
+    ),
+    path(
+        "lookups/<str:key>/search",
+        LookupSearchJsonView.as_view(),
+        name="lookup_search",
     ),
     path("login/", DataDeskLoginView.as_view(), name="login"),
     path("logout/", DataDeskLogoutView.as_view(), name="logout"),

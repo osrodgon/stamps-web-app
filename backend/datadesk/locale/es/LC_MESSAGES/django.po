@@ -488,3 +488,39 @@ msgstr "Confirma o descarta antes los cambios pendientes."
 #: datadesk/views/workspace.py
 msgid "Type %(year)s to confirm"
 msgstr "Teclea %(year)s para confirmar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "New colour"
+msgstr "Nuevo color"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create the colour"
+msgstr "Crear el color"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: datadesk/views/workspace.py
+msgid "+ Create \"%(name)s\""
+msgstr "+ Crear «%(name)s»"
+
+#: datadesk/views/workspace.py
+msgid "Added to the list."
+msgstr "Añadido a la lista."
+
+#: datadesk/views/workspace.py
+msgid "The value could not be created."
+msgstr "No se ha podido crear el valor."
+
+#: datadesk/views/workspace.py
+msgid "%(name)s is not a saved value yet. Use the + button to add it."
+msgstr "«%(name)s» todavía no existe. Usa el botón + para añadirlo."
+
+#: datadesk/views/workspace.py
+msgid "New reference rows"
+msgstr "Nuevas filas de referencia"
+
+#: datadesk/views/workspace.py
+msgid "Saved now: reference rows are reused."
+msgstr "Guardada ahora: las filas de referencia se reutilizan."

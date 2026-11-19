@@ -73,13 +73,22 @@
                 {% translate "This year does not exist yet: it will be created when the series is saved." %}
               </span>
             {% elif field.kind == "select" %}
-              <select class="dd-input" id="field-{{ field.name }}"
-                      name="{{ field.name }}"{% if field.required %} required{% endif %}>
-                <option value="">—</option>
-                {% for option in field.options %}
-                  <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
-                {% endfor %}
-              </select>
+              {% comment %}
+                Typed, not chosen: the datalist asks the server as the user
+                types, so the page ships no reference table. The form sends the
+                id, the box shows the name, and the script keeps the two apart.
+              {% endcomment %}
+              <span class="dd-lookup">
+                <input class="dd-input" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="text" autocomplete="off"
+                       spellcheck="false" list="lookup-{{ field.name }}"
+                       data-lookup="{{ field.name }}"
+                       data-value="{{ field.value }}"
+                       value="{{ field.value_label }}">
+                <datalist id="lookup-{{ field.name }}"></datalist>
+                <button type="button" class="dd-lookup-create"
+                        data-create-for="{{ field.name }}" hidden></button>
+              </span>
             {% elif field.kind == "textarea" %}
               <textarea class="dd-input" id="field-{{ field.name }}"
                         name="{{ field.name }}" rows="2">{{ field.value }}</textarea>
@@ -111,6 +120,9 @@
           <span class="dd-grid-tools">
             <button type="button" class="dd-btn dd-btn-ghost" id="fill-series">
               {% translate "Fill series" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-ghost" id="new-colour">
+              {% translate "New colour" %}
             </button>
             <label class="dd-rows dd-fast" for="fast-row">
               <input type="checkbox" id="fast-row" checked>
@@ -157,6 +169,40 @@
             {% translate "Create another" %}
           </a>
         </span>
+      </div>
+
+      {% comment %}
+        A colour typed for the first time. The cell editor is Tabulator's list,
+        which takes no free text, so the row is created here and appears in the
+        list the cell offers — reopening the editor shows it.
+      {% endcomment %}
+      <div class="dd-dialog-backdrop" id="colour-panel" hidden>
+        <div class="dd-dialog" role="dialog" aria-modal="true"
+             aria-labelledby="colour-title">
+          <div class="dd-review-head">
+            <span class="dd-label" id="colour-title">
+              {% translate "New colour" %}
+            </span>
+            <button type="button" class="dd-review-close" id="colour-close"
+                    aria-label="{% translate 'Close' %}">×</button>
+          </div>
+          <div class="dd-dialog-body">
+            <label class="dd-field" for="colour-name">
+              <span class="dd-field-key">{% translate "Name" %}</span>
+              <input class="dd-input" id="colour-name" type="text"
+                     autocomplete="off" maxlength="255">
+            </label>
+            <p class="dd-hint dd-status-error" id="colour-status"></p>
+          </div>
+          <div class="dd-dialog-foot">
+            <button type="button" class="dd-btn dd-btn-ghost" id="colour-cancel">
+              {% translate "Cancel" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-dark" id="colour-create">
+              {% translate "Create the colour" %}
+            </button>
+          </div>
+        </div>
       </div>
     {% else %}
       <div class="dd-recover" id="recovery-bar" hidden>
