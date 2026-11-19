@@ -15,8 +15,6 @@ splitting them across modules would hide that the delete endpoint recounts what
 the preview reported.
 """
 
-import json
-import uuid
 from datetime import datetime
 from io import StringIO
 from typing import Any
@@ -31,6 +29,7 @@ from datadesk.dependencies import dependency_warning, series_dependencies
 from datadesk.mixins import DataDeskAccessMixin
 from datadesk.palette import tone_for
 from datadesk.service import issue_queryset, search_lookups
+from datadesk.views.envelope import JsonPostView, failure, written
 from datadesk.write import (
     ApplyResult,
     CreatedSeries,
@@ -45,24 +44,6 @@ from datadesk.write import (
 )
 
 
-class JsonPostView(DataDeskAccessMixin, View):
-    """Base for the write endpoints: parses the body, then hands it over."""
-
-    def post(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
-        """Parses the JSON body and turns a ``WriteError`` into its response."""
-        try:
-            payload = _read_json(request)
-            return self.handle(payload, request, *args, **kwargs)
-        except WriteError as error:
-            return _failure(error)
-
-    def handle(
-        self, payload: dict[str, Any], request: HttpRequest, *args, **kwargs
-    ) -> JsonResponse:
-        """Writes what the payload asks for. Implemented by every endpoint."""
-        raise NotImplementedError
-
-
 class IssueCreateJsonView(JsonPostView):
     """Creates one series with its stamps, all or nothing."""
 
@@ -71,7 +52,9 @@ class IssueCreateJsonView(JsonPostView):
     ) -> JsonResponse:
         """Writes the series and answers with the ids the client needs."""
         series: CreatedSeries = create_series(payload, request.user)
-        return _written("The series was created.", series.commit_id, series.as_dict())
+        return written(
+            "The series was created.", series.as_dict(), commit_id=series.commit_id
+        )
 
 
 class IssueCloneJsonView(JsonPostView):
@@ -88,7 +71,7 @@ class IssueCloneJsonView(JsonPostView):
         body["data"]["url"] = reverse(
             "datadesk:issue_workspace", args=[series.issue.pk]
         )
-        return _written("The series was cloned.", series.commit_id, body)
+        return written("The series was cloned.", body, commit_id=series.commit_id)
 
 
 class IssueDependenciesJsonView(DataDeskAccessMixin, View):
@@ -140,7 +123,9 @@ class IssueDeleteJsonView(JsonPostView):
         result: DeletedSeries = delete_series(
             int(kwargs["pk"]), payload.get("confirm"), request.user
         )
-        return _written("The series was deleted.", result.commit_id, result.as_dict())
+        return written(
+            "The series was deleted.", result.as_dict(), commit_id=result.commit_id
+        )
 
 
 class ApplyJsonView(JsonPostView):
@@ -151,10 +136,10 @@ class ApplyJsonView(JsonPostView):
     ) -> JsonResponse:
         """Applies the change set and reports what was refused."""
         result: ApplyResult = apply_changes(payload.get("changes"), request.user)
-        return _written(
+        return written(
             _batch_message(result),
-            result.commit_id,
             result.as_dict(),
+            commit_id=result.commit_id,
             success=result.success,
         )
 
@@ -207,7 +192,7 @@ class LookupCreateJsonView(JsonPostView):
             # The cell paints the chip from the tone, and a colour created here
             # has no row in the page configuration to borrow one from.
             body["data"]["tone"] = tone_for(body["data"]["name"])
-        return _written(message, result.commit_id, body)
+        return written(message, body, commit_id=result.commit_id)
 
 
 class BackupJsonView(DataDeskAccessMixin, View):
@@ -273,46 +258,3 @@ def _batch_message(result: ApplyResult) -> str:
     if result.success:
         return f"Applied {result.applied} changes."
     return f"Applied {result.applied} of {total} changes."
-
-
-def _read_json(request: HttpRequest) -> dict[str, Any]:
-    """Parses the request body, refusing anything that is not a JSON object."""
-    try:
-        payload = json.loads(request.body or b"{}")
-    except (json.JSONDecodeError, UnicodeDecodeError) as error:
-        raise WriteError("The body is not valid JSON.") from error
-
-    if not isinstance(payload, dict):
-        raise WriteError("The request body must be a JSON object.")
-    return payload
-
-
-def _written(
-    message: str,
-    commit_id: uuid.UUID,
-    body: dict[str, Any],
-    *,
-    success: bool = True,
-) -> JsonResponse:
-    """Builds the envelope of a processed request."""
-    return JsonResponse(
-        {
-            "success": success,
-            "message": message,
-            "errors": {},
-            "commit_id": str(commit_id),
-            **body,
-        }
-    )
-
-
-def _failure(error: WriteError) -> JsonResponse:
-    """Builds the envelope of a refused request."""
-    body = {
-        "success": False,
-        "message": error.message,
-        "errors": error.errors,
-        "data": None,
-    }
-    body.update(error.extra)
-    return JsonResponse(body, status=error.status)

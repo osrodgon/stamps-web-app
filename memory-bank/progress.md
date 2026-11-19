@@ -239,8 +239,25 @@
       as already saved. Colours get `New colour` in the grid toolbar (the
       Tabulator list editor takes no free text) and the create response carries
       the palette tone. 21 tests; 349 datadesk and 1365 backend tests green;
-      jsdom harness at 73 (new) and 74 (edit) checks. Next: S19 (lookup screen,
-      usage counts and merge)
+      jsdom harness at 73 (new) and 74 (edit) checks.
+- [x] **S19 — Lookups screen, usage counts and merge** (2026-11-19):
+      `/datadesk/lookups/` lists the eight reference tables with their size and
+      `/datadesk/lookups/<key>/` is one grid for all of them: usage annotated with
+      a `Count` per relation (accessor derived from the model field, `distinct`,
+      two queries per page — never one per row), inline rename that answers 409
+      `duplicate_name` with the id of the row that already has it and opens the
+      merge, merge that moves references in one transaction (FK `update()` with an
+      explicit `updated_at` because `auto_now` does not fire on `update()`; M2M
+      through `bulk_create(ignore_conflicts=True)` + delete of the source rows so
+      a stamp holding both colours ends with one; years move their series instead
+      of cascading) with `keep_name_from` choosing which name survives, and a
+      delete only when usage is 0 (otherwise 409 `in_use` with the count). One
+      `operation="merge"` audit row with both counts; the dialog says the merge
+      cannot be undone (S21 will refuse it). `Create the next 10 years` for the
+      years. The JSON envelope moved to `datadesk/views/envelope.py` and the
+      plurals to `datadesk/texts.py`, now shared with the workspace. 40 tests;
+      389 datadesk and 1405 backend tests green. Next: S20 (dashboard and the
+      "needs attention" queues)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -277,6 +294,10 @@
 ### Known gaps
 
 - [ ] JWT validation runs on first page load only; API-level checks TBD
+- [ ] DataDesk: a stamp's colours cannot be edited in `mode=edit` — the colour
+      cell is read-only there because the change set carries no M2M. Colours are
+      chosen when creating a series (S16) and created/merged from the lookups
+      screen (S19); correcting one on an existing stamp still needs admin.
 
 ---
 

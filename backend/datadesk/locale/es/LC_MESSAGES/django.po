@@ -524,3 +524,107 @@ msgstr "Nuevas filas de referencia"
 #: datadesk/views/workspace.py
 msgid "Saved now: reference rows are reused."
 msgstr "Guardada ahora: las filas de referencia se reutilizan."
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "Reference tables"
+msgstr "Tablas de referencia"
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "The lists every series points at. Rename a row here, or merge two that say the same thing."
+msgstr "Las listas a las que apunta cada serie. Renombra una fila aquí o fusiona dos que digan lo mismo."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Search"
+msgstr "Buscar"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge two rows"
+msgstr "Fusionar dos filas"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Create the next 10 years"
+msgstr "Crear los 10 años siguientes"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge and delete the other row"
+msgstr "Fusionar y borrar la otra fila"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Delete the row"
+msgstr "Borrar la fila"
+
+#: datadesk/views/lookups.py
+msgid "Used by"
+msgstr "Usada por"
+
+#: datadesk/views/lookups.py
+msgid "No rows yet."
+msgstr "Todavía no hay filas."
+
+#: datadesk/views/lookups.py
+msgid "In use: merge it into another row"
+msgstr "En uso: fusiónala con otra fila"
+
+#: datadesk/views/lookups.py
+msgid "Keep this name"
+msgstr "Conservar este nombre"
+
+#: datadesk/views/lookups.py
+msgid "The references move for good: this cannot be undone. Back up first."
+msgstr "Las referencias se mueven para siempre: esto no se puede deshacer. Haz antes una copia de seguridad."
+
+#: datadesk/views/lookups.py
+msgid "That name already exists. Merge the two rows instead?"
+msgstr "Ese nombre ya existe. ¿Fusionamos las dos filas?"
+
+#: datadesk/views/lookups.py
+msgid "Saved."
+msgstr "Guardado."
+
+#: datadesk/views/lookups.py
+msgid "The row was deleted."
+msgstr "La fila se ha borrado."
+
+#: datadesk/views/lookups.py
+msgid "Select exactly two rows to merge."
+msgstr "Selecciona exactamente dos filas."
+
+#: datadesk/views/lookups.py
+msgid "Source row: it disappears after the merge."
+msgstr "Fila de origen: desaparece tras fusionar."
+
+#: datadesk/views/lookups.py
+msgid "Surviving row: it keeps every reference."
+msgstr "Fila que se queda: conserva todas las referencias."
+
+#: datadesk/views/lookups.py
+msgid "Create the next %(count)s years"
+msgstr "Crear los %(count)s años siguientes"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "%(count)s row"
+msgid_plural "%(count)s rows"
+msgstr[0] "%(count)s fila"
+msgstr[1] "%(count)s filas"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Used by %(count)s row"
+msgid_plural "Used by %(count)s rows"
+msgstr[0] "Usada por %(count)s fila"
+msgstr[1] "Usada por %(count)s filas"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Moved %(count)s reference"
+msgid_plural "Moved %(count)s references"
+msgstr[0] "Movida %(count)s referencia"
+msgstr[1] "Movidas %(count)s referencias"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Created %(count)s year"
+msgid_plural "Created %(count)s years"
+msgstr[0] "Creado %(count)s año"
+msgstr[1] "Creados %(count)s años"

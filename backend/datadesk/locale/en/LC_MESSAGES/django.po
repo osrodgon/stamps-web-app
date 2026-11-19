@@ -526,3 +526,107 @@ msgstr "New reference rows"
 #: datadesk/views/workspace.py
 msgid "Saved now: reference rows are reused."
 msgstr "Saved now: reference rows are reused."
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "Reference tables"
+msgstr "Reference tables"
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "The lists every series points at. Rename a row here, or merge two that say the same thing."
+msgstr "The lists every series points at. Rename a row here, or merge two that say the same thing."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Search"
+msgstr "Search"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge two rows"
+msgstr "Merge two rows"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Create the next 10 years"
+msgstr "Create the next 10 years"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge and delete the other row"
+msgstr "Merge and delete the other row"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Delete the row"
+msgstr "Delete the row"
+
+#: datadesk/views/lookups.py
+msgid "Used by"
+msgstr "Used by"
+
+#: datadesk/views/lookups.py
+msgid "No rows yet."
+msgstr "No rows yet."
+
+#: datadesk/views/lookups.py
+msgid "In use: merge it into another row"
+msgstr "In use: merge it into another row"
+
+#: datadesk/views/lookups.py
+msgid "Keep this name"
+msgstr "Keep this name"
+
+#: datadesk/views/lookups.py
+msgid "The references move for good: this cannot be undone. Back up first."
+msgstr "The references move for good: this cannot be undone. Back up first."
+
+#: datadesk/views/lookups.py
+msgid "That name already exists. Merge the two rows instead?"
+msgstr "That name already exists. Merge the two rows instead?"
+
+#: datadesk/views/lookups.py
+msgid "Saved."
+msgstr "Saved."
+
+#: datadesk/views/lookups.py
+msgid "The row was deleted."
+msgstr "The row was deleted."
+
+#: datadesk/views/lookups.py
+msgid "Select exactly two rows to merge."
+msgstr "Select exactly two rows to merge."
+
+#: datadesk/views/lookups.py
+msgid "Source row: it disappears after the merge."
+msgstr "Source row: it disappears after the merge."
+
+#: datadesk/views/lookups.py
+msgid "Surviving row: it keeps every reference."
+msgstr "Surviving row: it keeps every reference."
+
+#: datadesk/views/lookups.py
+msgid "Create the next %(count)s years"
+msgstr "Create the next %(count)s years"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "%(count)s row"
+msgid_plural "%(count)s rows"
+msgstr[0] "%(count)s row"
+msgstr[1] "%(count)s rows"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Used by %(count)s row"
+msgid_plural "Used by %(count)s rows"
+msgstr[0] "Used by %(count)s row"
+msgstr[1] "Used by %(count)s rows"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Moved %(count)s reference"
+msgid_plural "Moved %(count)s references"
+msgstr[0] "Moved %(count)s reference"
+msgstr[1] "Moved %(count)s references"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Created %(count)s year"
+msgid_plural "Created %(count)s years"
+msgstr[0] "Created %(count)s year"
+msgstr[1] "Created %(count)s years"
