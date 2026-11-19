@@ -2,6 +2,7 @@
 import re
 
 import pytest
+from django.conf import settings
 from django.test import Client, RequestFactory, override_settings
 from django.template.loader import render_to_string
 
@@ -70,3 +71,29 @@ class TestDashboardOnTheBaseLayout:
         assert 'class="dd-topbar"' in content
         assert "dd-main" in content
         assert "<b>Dashboard</b>" in content
+
+
+class TestTheRefusedCellMark:
+    """The ring is painted inside the cell, so the next row covered its bottom.
+
+    A paint-order bug cannot be proven by a test — it is verified by eye on a
+    series with more than one stamp. What this pins is the reason the rule
+    carries a stacking hint, so a tidy-up pass does not delete the line that
+    makes the mark visible.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def test_the_refused_cell_is_lifted_above_the_next_row(self) -> None:
+        rule = self.stylesheet().split(".dd-cell-invalid {", 1)[1].split("}", 1)[0]
+
+        assert "position: relative" in rule
+        assert "z-index" in rule
+
+    def test_the_ring_inside_a_refused_row_is_lifted_too(self) -> None:
+        rule = self.stylesheet().split(".dd-row-error .dd-cell-invalid {", 1)[1]
+        rule = rule.split("}", 1)[0]
+
+        assert "z-index" in rule
