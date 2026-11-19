@@ -32,6 +32,8 @@ from datadesk.views.write_api import (
     IssueDependenciesJsonView,
     LookupCreateJsonView,
     LookupSearchJsonView,
+    StampDeleteJsonView,
+    StampDependenciesJsonView,
 )
 
 app_name = "datadesk"
@@ -42,6 +44,16 @@ urlpatterns = [
     path("issues/new/", IssueNewView.as_view(), name="issue_new"),
     path("issues/<int:pk>/", IssueWorkspaceView.as_view(), name="issue_workspace"),
     path("stamps/<int:pk>/image", StampImageView.as_view(), name="stamp_image"),
+    path(
+        "stamps/<int:pk>/dependencies",
+        StampDependenciesJsonView.as_view(),
+        name="stamp_dependencies",
+    ),
+    path(
+        "stamps/<int:pk>/delete",
+        StampDeleteJsonView.as_view(),
+        name="stamp_delete",
+    ),
     path("activity/", ActivityView.as_view(), name="activity"),
     path(
         "activity/<uuid:commit_id>/revert",

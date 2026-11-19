@@ -498,6 +498,13 @@ def workspace_config(
             if row.get("has_image")
             else None
         )
+        if mode == "edit":
+            # One URL per row instead of a template the script has to fill: the
+            # grid already carries the picture's, so this is the same trick.
+            row["dependencies_url"] = reverse(
+                "datadesk:stamp_dependencies", args=[row["id"]]
+            )
+            row["delete_url"] = reverse("datadesk:stamp_delete", args=[row["id"]])
 
     config: dict[str, Any] = {
         "mode": mode,
@@ -544,6 +551,9 @@ def workspace_config(
             "previewFailed": str(_("The preview could not be loaded.")),
             "commitFirst": str(_("Commit or discard the pending changes first.")),
             "confirmYear": str(_("Type %(year)s to confirm")),
+            "deleteStamp": str(_("Delete this stamp")),
+            "stampDeleted": str(_("The stamp was deleted.")),
+            "stampDeleteFailed": str(_("The stamp was not deleted.")),
         }
         # The plural rules stay on the server: the browser only substitutes the
         # number into the form it was given, so Spanish and English keep their
@@ -569,6 +579,7 @@ def workspace_config(
             "datadesk:issue_dependencies", args=[series.pk]
         )
         config["deleteUrl"] = reverse("datadesk:issue_delete", args=[series.pk])
+        config["countBadge"] = "stamp-count"
         config["storageKey"] = f"datadesk:buffer:edit:{series.pk}"
         config["schemaVersion"] = BUFFER_SCHEMA
         config["undoLimit"] = UNDO_LIMIT

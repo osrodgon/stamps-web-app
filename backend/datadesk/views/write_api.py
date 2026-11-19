@@ -25,7 +25,12 @@ from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 from django.views import View
 
-from datadesk.dependencies import dependency_warning, series_dependencies
+from datadesk.dependencies import (
+    dependency_warning,
+    series_dependencies,
+    stamp_dependencies,
+    stamp_warning,
+)
 from datadesk.mixins import DataDeskAccessMixin
 from datadesk.palette import tone_for
 from datadesk.service import issue_queryset, search_lookups
@@ -34,6 +39,7 @@ from datadesk.write import (
     ApplyResult,
     CreatedSeries,
     DeletedSeries,
+    DeletedStamp,
     LookupResult,
     WriteError,
     apply_changes,
@@ -41,7 +47,9 @@ from datadesk.write import (
     create_lookup,
     create_series,
     delete_series,
+    delete_stamp,
 )
+from stamps_api.models import Stamp
 
 
 class IssueCreateJsonView(JsonPostView):
@@ -125,6 +133,53 @@ class IssueDeleteJsonView(JsonPostView):
         )
         return written(
             "The series was deleted.", result.as_dict(), commit_id=result.commit_id
+        )
+
+
+class StampDependenciesJsonView(DataDeskAccessMixin, View):
+    """Reports what deleting one stamp would take with it."""
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        """Returns the counts, the identity of the stamp and the warning."""
+        stamp = Stamp.objects.filter(pk=kwargs["pk"]).first()
+        if stamp is None:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "The stamp does not exist.",
+                    "errors": {},
+                    "data": None,
+                },
+                status=404,
+            )
+
+        dependencies = stamp_dependencies(stamp)
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Preview.",
+                "errors": {},
+                "data": {
+                    "id": stamp.pk,
+                    "name": stamp.name,
+                    "code": stamp.edifil_code or stamp.fesofi_code or "",
+                    "warning": stamp_warning(dependencies),
+                    **dependencies.as_dict(),
+                },
+            }
+        )
+
+
+class StampDeleteJsonView(JsonPostView):
+    """Deletes one stamp and reports what the cascade took with it."""
+
+    def handle(
+        self, payload: dict[str, Any], request: HttpRequest, *args, **kwargs
+    ) -> JsonResponse:
+        """Deletes the stamp and returns its identity and the counts."""
+        result: DeletedStamp = delete_stamp(kwargs["pk"], request.user)
+        return written(
+            "The stamp was deleted.", result.as_dict(), commit_id=result.commit_id
         )
 
 

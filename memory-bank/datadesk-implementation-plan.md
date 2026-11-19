@@ -124,14 +124,15 @@ propósito y una puerta que existe pero no donde se busca.
 |---|---|---|---|---|---|
 | S23 | El anillo del campo rechazado no se pierde | — | XS | sí (bug) | ✅ 2026-11-19 |
 | S24 | Escala tipográfica y ritmo del interfaz | S23 | M | sí | ✅ 2026-11-19 |
-| S25 | Borrar un sello con preview de dependencias | S17, S21 | M | sí | — |
+| S25 | Borrar un sello con preview de dependencias | S17, S21 | M | sí | ✅ 2026-11-19 |
 | S26 | Nueva fila en las tablas de referencia | S19 | S | sí | — |
-| S27 | Borrar la serie desde la fila del workbench | S17 | S | sí | — |
+| S27 | Moverse entre series y borrar desde la lista | S15, S17 | M | sí | — |
 
 Orden: **S23** primero porque es el bug y toca el mismo CSS que S24; **S24**
-después para no repintar dos veces; **S25** y **S26** son huecos funcionales
-independientes entre sí; **S27** reutiliza el diálogo de S17 y va el último porque
-solo mueve una puerta de sitio.
+después para no repintar dos veces. **S27** no depende de S25 ni de S26 y es lo
+que se usa a diario —moverse entre series y quitar una fila sin abrirla—, así que
+puede ir antes que ellos; **S25** y **S26** son huecos funcionales independientes
+entre sí.
 
 Lo que **no** entra en esta tanda, y sigue anotado en `progress.md`: corregir los
 colores de un sello en `mode=edit` (necesita M2M en el change set).
@@ -2583,6 +2584,23 @@ ni con cambios pendientes.
 **Tamaño**: M · `datadesk/write.py`, `views/write_api.py`, `views/workspace.py`,
 plantilla, JS, tests.
 
+**Hecho (2026-11-19)**: `dependencies.stamp_dependencies()` (dos consultas: los
+ítems de colección y los sellos hermanos) y `stamp_warning()` con sus cuatro
+combinaciones —está o no en colecciones, es o no el último de la serie—;
+`write.delete_stamp()` con una fila `delete` y el snapshot completo, que es lo
+que S21 usa para devolverlo con su id y sus colores; `GET stamps/<pk>/dependencies`
+y `POST stamps/<pk>/delete`. En el grid, una columna `×` en `mode=edit` con su
+diálogo, **sin confirmación tecleada** (decisión confirmada: una fila no es un
+conjunto) y atenuada mientras el change set tenga cambios, donde además el clic
+se niega con el motivo. Cada fila lleva sus dos URLs en los datos, como la de la
+imagen, para que el script no componga rutas. **20 tests** (los cuatro casos del
+aviso, la cascada, la auditoría, el revert con id y colores pero sin
+`CollectionItem`, los dos endpoints con su gate, que `/apply` sigue devolviendo
+409 y que la rejilla de `mode=new` no tiene la acción) y **15 comprobaciones
+nuevas** en el arnés de `mode=edit` (diálogo, preview, recuentos, frase,
+identidad, POST, fila fuera, contador y bloqueo con cambios pendientes): 471
+datadesk, 1487 backend y el arnés en 89.
+
 ---
 
 ### S26 — Nueva fila en las tablas de referencia
@@ -2610,28 +2628,59 @@ número; la fila nueva se puede renombrar y borrar en el acto.
 
 ---
 
-### S27 — Borrar la serie desde la fila del workbench
+### S27 — Moverse entre series y borrar desde la lista
 
-**Depende de**: S17.
+**Depende de**: S15, S17.
 
-**Lo que se vio**: el borrado de una serie existe, pero solo dentro del
-workspace, y nadie lo busca ahí para quitar una fila de la lista.
+Dos cosas que se vieron usando la app, y las dos son «no me hagas volver a la
+lista»: para pasar a la serie siguiente hay que salir, y para quitar una fila hay
+que abrirla.
 
-- Una acción de borrado por fila en el workbench (o sobre la selección) que abre
-  **el mismo diálogo de S17**: el preview ya existe
-  (`GET issues/<pk>/dependencies`) y el POST también; lo que falta es la puerta.
+#### A. Anterior y siguiente dentro del workspace
+
+El vecino **no es `id ± 1`**: es el siguiente de la lista del workbench, con los
+filtros y el orden que tuvieras puestos. Pasar de una serie de 1987 sin país a
+una de 1994 porque el id es consecutivo sería peor que no tener flechas.
+
+- La maquinaria ya existe: `page_of_issue()` (S15) recorre la lista de **pks**
+  con filtros y orden por defecto. Se extrae esa lista a una función compartida
+  (`issue_positions(filters)`) y `neighbours_of_issue(pk, filters)` devuelve
+  anterior, siguiente, posición y total, sin una consulta de más (`len(pks)` es el
+  total). 2.540 enteros, unos 5 ms.
+- **La vista de serie tiene que saber con qué filtros llegaste**: el `↗` y el
+  `Enter` del workbench pasan la query en el enlace, y la vista la devuelve en las
+  flechas, en el contador y en «Back to the issues workbench», que hoy va a
+  `/datadesk/issues/` a secas y pierde el filtro (`Esc` sí lo conserva porque usa
+  `history.back()`).
+- Franja: `‹` `›` a la izquierda de Clone/Delete, contador discreto
+  (`1.234 / 2.540`) y **desactivadas en los extremos**, sin dar la vuelta.
+- Teclado: `[` y `]`. `j`/`k` no valen aquí —dentro del workspace son de las
+  celdas— y `Alt+←` lo secuestra el navegador en algunos sistemas.
+- Si la serie no está en el conjunto filtrado (enlace viejo, o se llegó desde el
+  dashboard), se cae al orden sin filtros antes que dejar las flechas muertas.
+- `mode=new` no pinta flechas: no hay vecinos.
+
+#### B. Borrar la serie desde la fila del workbench
+
+- Una acción de borrado por fila (o sobre la selección) que abre **el mismo
+  diálogo de S17**: el preview (`GET issues/<pk>/dependencies`) y el POST ya
+  existen; lo que falta es la puerta.
 - Al confirmar: se recarga el grid y la fila desaparece; un banner dice qué se
   borró y cuántos sellos se fueron con ella.
 - Teclado: `Supr` sobre la fila seleccionada **abre el diálogo**, nunca borra
   directamente.
 - El botón del workspace se queda: esta es la segunda puerta, no una mudanza.
 
-**Aceptación**: borrar desde la lista pide el año igual que desde el workspace y
-borra lo mismo; la fila desaparece sin recargar la página entera; `Supr` solo
-abre el diálogo (comprobado en el arnés); con una serie abierta y cambios
-pendientes, la lista sigue siendo la lista (no hay buffer que perder).
+**Aceptación**: los filtros sobreviven a la ida y a la vuelta (la flecha lleva la
+misma query y el botón de volver también); el contador coincide con el total del
+workbench filtrado y las flechas están desactivadas en el primer y último
+elemento; `[`/`]` no disparan con el foco en un campo; cambiar de serie con
+cambios pendientes avisa (`beforeunload`) y el borrador por serie sigue ahí al
+volver; borrar desde la lista pide el año igual que desde el workspace y borra lo
+mismo; `Supr` solo abre el diálogo (comprobado en el arnés).
 
-**Tamaño**: S · `workbench.js`, `views/workspace.py` (config), plantilla, tests.
+**Tamaño**: M · `service.py`, `views/workbench.py`, `views/workspace.py`,
+plantillas, `issue_workspace.js`, `workbench.js`, tests.
 
 ---
 
@@ -4087,7 +4136,15 @@ ellos, grid de 13 en filas de 36 con el cromo de Tabulator sustituido por los
 tokens de la app, tarjeta de página más plana y el último migajón como título.
 Detalle y decisiones en el paso; cuatro tests sujetan la escala.
 
-### ⏭ Siguiente: S25
+### S25 — Borrar un sello, con su preview (2026-11-19)
 
-Borrar un sello suelto, con el preview de dependencias que ya tiene la serie.
+Mismo patrón que el borrado de S17 aplicado a una fila: preview de ítems de
+colección y de sellos hermanos, una fila de auditoría con el snapshot completo y
+el revert de S21 devolviendo el sello con su id y sus colores (los
+`CollectionItem` no vuelven). Detalle y decisiones en el paso.
+
+### ⏭ Siguiente: S26
+
+La fila nueva en las tablas de referencia: renombrar, fusionar y borrar ya están,
+crear no.
 
