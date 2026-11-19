@@ -677,3 +677,98 @@ msgid "in %(count)s series"
 msgid_plural "in %(count)s series"
 msgstr[0] "in %(count)s series"
 msgstr[1] "in %(count)s series"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Activity"
+msgstr "Activity"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "The commit was reverted."
+msgstr "The commit was reverted."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Every change made from DataDesk, newest first. A commit is undone whole or not at all."
+msgstr "Every change made from DataDesk, newest first. A commit is undone whole or not at all."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Revert this commit"
+msgstr "Revert this commit"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Undo this commit"
+msgstr "Undo this commit"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Collection items removed with a series or a stamp are not restored: the catalogue comes back, who owned those stamps does not."
+msgstr "Collection items removed with a series or a stamp are not restored: the catalogue comes back, who owned those stamps does not."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Revert"
+msgstr "Revert"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Nothing has been changed from here yet."
+msgstr "Nothing has been changed from here yet."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Previous"
+msgstr "Previous"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Next"
+msgstr "Next"
+
+#: datadesk/activity.py
+msgid "created"
+msgstr "created"
+
+#: datadesk/activity.py
+msgid "updated"
+msgstr "updated"
+
+#: datadesk/activity.py
+msgid "deleted"
+msgstr "deleted"
+
+#: datadesk/activity.py
+msgid "merged"
+msgstr "merged"
+
+#: datadesk/activity.py
+msgid "will be deleted"
+msgstr "will be deleted"
+
+#: datadesk/activity.py
+msgid "will be restored"
+msgstr "will be restored"
+
+#: datadesk/activity.py
+msgid "will be created again"
+msgstr "will be created again"
+
+#: datadesk/activity.py
+msgid "Not revertible: it contains a merge"
+msgstr "Not revertible: it contains a merge"
+
+#: datadesk/activity.py
+msgid "Reverted on %(when)s"
+msgstr "Reverted on %(when)s"
+
+#: datadesk/activity.py
+msgid "Revertible"
+msgstr "Revertible"
+
+#: datadesk/views/activity.py
+msgid "Anonymous"
+msgstr "Anonymous"
+
+#: datadesk/activity.py
+#, python-format
+msgid "%(count)s object"
+msgid_plural "%(count)s objects"
+msgstr[0] "%(count)s object"
+msgstr[1] "%(count)s objects"
+
+#: datadesk/activity.py
+msgid "Stamp"
+msgstr "Stamp"

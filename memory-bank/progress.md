@@ -270,7 +270,23 @@
       real rows) and matched 2.542 of 2.543 series while the counter said 1.177;
       both now come from `picture_gaps()`, one walk of the image index (1.177
       stamps in 1.044 series, 28 ms with the cache warm). 19 tests; 408 datadesk
-      and 1424 backend tests green. Next: S21 (activity log and revert)
+      and 1424 backend tests green.
+- [x] **S21 — Activity log and reverting a commit** (2026-11-19):
+      `/datadesk/activity/` lists the commits newest first, paginated **by
+      commit** (a batch of forty rows is one decision), with who, how many
+      objects, each row's operation and the columns that changed, and a state
+      badge (reversible / not revertible: it contains a merge / reverted on …).
+      `POST /datadesk/activity/<id>/revert` undoes the whole commit in one
+      transaction: creations are deleted children-first, updates get their full
+      `before` written back with an explicit `updated_at`, deletions are
+      recreated with their original ids, foreign keys and colours, and a merge is
+      refused. Refusals (already reverted, merge, object changed after the
+      commit, id or name collision) answer 409 and re-render the page with the
+      reason; success redirects with a banner. The revert is itself a commit
+      (`reverts_commit_id`) and the original rows get `reverted_at`. The dialog
+      warns that the `CollectionItem` rows the cascade removed do not come back.
+      30 tests; 438 datadesk and 1454 backend tests green. Next: S22 (close-out:
+      keyboard, i18n, tests, cleanup)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

@@ -68,6 +68,8 @@ def record(
     op: str,
     before: dict[str, Any] | None,
     after: dict[str, Any] | None,
+    *,
+    reverts_commit_id: uuid.UUID | None = None,
 ) -> DataDeskChange:
     """Appends one row to the audit trail.
 
@@ -78,6 +80,9 @@ def record(
         op: One of ``create``, ``update``, ``delete`` or ``merge``.
         before: Snapshot before the change, or ``None`` on create.
         after: Snapshot after the change, or ``None`` on delete.
+        reverts_commit_id: On a revert, the commit these rows undo. It is what
+            S21's screen reads to say "reverted on …" and what keeps a revert
+            from being reverted by mistake.
 
     Returns:
         The written ``DataDeskChange``.
@@ -97,6 +102,7 @@ def record(
         operation=op,
         before=before,
         after=after,
+        reverts_commit_id=reverts_commit_id,
     )
 
 
