@@ -87,33 +87,168 @@
   });
 
   /* --------------------------------------------------------------------- *
-   * mode=edit: one row at a time.
+   * mode=edit: a change set in the browser.
+   *
+   * Nothing is sent while typing: edits accumulate here and one request
+   * commits them (S15 reviews them first). Ctrl+Z replays values, and the
+   * draft survives a reload through localStorage — offered, never restored
+   * behind the user's back.
    * ------------------------------------------------------------------- */
 
   const editMode = () => {
     const form = document.getElementById("series-form");
-    const button = document.getElementById("commit-button");
+    const saveButton = document.getElementById("commit-button");
+    const discardButton = document.getElementById("discard-button");
+    const undoButton = document.getElementById("undo-button");
+    const redoButton = document.getElementById("redo-button");
     const status = document.getElementById("commit-status");
-    const meta = document.querySelector(".dd-meta");
+    const counter = document.getElementById("change-count");
+    const recovery = document.getElementById("recovery-bar");
+    const recoveryText = document.getElementById("recovery-text");
+    const recoverButton = document.getElementById("recover-button");
+    const recoveryDiscard = document.getElementById("recovery-discard");
+    const tabNotice = document.getElementById("tab-notice");
     const texts = config.texts || {};
 
-    /** Model field behind each editable column, by row key. */
+    /** Row key -> model field, and back: the grid names differ from the column. */
     const patchOf = {};
+    const fieldOf = {};
     config.columns.forEach((column) => {
       if (column.patch) {
         patchOf[column.field] = column.patch;
+        fieldOf[column.patch] = column.field;
       }
     });
 
     /** The timestamp each row was read at, moved forward after every commit. */
-    const baselines = new Map(config.data.map((row) => [row.id, row.updated_at]));
+    const baselines = new Map();
+    config.data.forEach((row) => {
+      baselines.set("stamp:" + row.id, row.updated_at);
+    });
+    baselines.set("issue:" + config.series.id, config.series.updated_at);
 
-    /** Edited and still unsaved, per row: the cells to put back on a refusal. */
-    const pending = new Map();
-    let lastEdited = null;
+    /** The value each touched field had when the page loaded (`base`). */
+    const bases = new Map();
+    /** What has to be sent: one entry per object, only the fields that differ. */
+    const buffer = new Map();
+    /** Undo/redo as a log of values, so nothing has to be snapshotted. */
+    const history = [];
+    let pointer = 0;
+
+    const keyOf = (model, id) => model + ":" + id;
+
+    const controlOf = (field) =>
+      form.querySelector('[name="' + field + '"]');
+
+    const readValue = (model, id, field) => {
+      if (model === "issue") {
+        const control = controlOf(field);
+        return control ? control.value : undefined;
+      }
+      const row = grid.getRow(id);
+      const cell = row && fieldOf[field] ? row.getCell(fieldOf[field]) : null;
+      return cell ? cell.getValue() : undefined;
+    };
+
+    const writeValue = (model, id, field, value) => {
+      if (model === "issue") {
+        const control = controlOf(field);
+        if (control) {
+          control.value = value === null || value === undefined ? "" : value;
+        }
+        return;
+      }
+      const row = grid.getRow(id);
+      const cell = row && fieldOf[field] ? row.getCell(fieldOf[field]) : null;
+      if (cell) {
+        cell.setValue(value, true);
+      }
+    };
+
+    /** Empty and null compare equal: a cleared number and an empty one are one. */
+    const same = (left, right) => {
+      const normalize = (value) =>
+        value === null || value === undefined ? "" : String(value);
+      return normalize(left) === normalize(right);
+    };
+
+    const formValues = () => {
+      const values = {};
+      Array.from(form.querySelectorAll("[name]")).forEach((control) => {
+        values[control.name] = control.value;
+      });
+      return values;
+    };
+    let loaded = formValues();
+
+    const entryFor = (model, id) => {
+      const key = keyOf(model, id);
+      let entry = buffer.get(key);
+      if (!entry) {
+        entry = {
+          model,
+          object_id: id,
+          op: "update",
+          patch: {},
+          expected_updated_at: baselines.get(key) ?? null,
+        };
+        buffer.set(key, entry);
+      }
+      return entry;
+    };
+
+    /** Recomputes one object's patch against its base, and drops it when empty. */
+    const sync = (model, id) => {
+      const key = keyOf(model, id);
+      const base = bases.get(key);
+      if (!base) {
+        return;
+      }
+
+      const entry = entryFor(model, id);
+      entry.patch = {};
+      entry.base = base;
+      Object.keys(base).forEach((field) => {
+        const current = readValue(model, id, field);
+        if (!same(current, base[field])) {
+          entry.patch[field] = current;
+        }
+      });
+
+      if (!Object.keys(entry.patch).length) {
+        buffer.delete(key);
+      }
+    };
+
+    /** Remembers where a field started the first time it is touched. */
+    const remember = (model, id, field, original) => {
+      const key = keyOf(model, id);
+      if (!bases.has(key)) {
+        bases.set(key, {});
+      }
+      const base = bases.get(key);
+      if (!(field in base)) {
+        base[field] = original;
+      }
+    };
+
+    const plural = (kind, count) => {
+      const forms = (config.plurals || {})[kind];
+      if (!forms) {
+        return String(count);
+      }
+      const template = count === 1 ? forms.one : forms.other;
+      return template.replace("%(count)s", String(count));
+    };
+
+    const changeCount = () =>
+      Array.from(buffer.values()).reduce(
+        (total, entry) => total + Object.keys(entry.patch).length,
+        0
+      );
 
     const setStatus = (message, kind) => {
-      status.textContent = message;
+      status.textContent = message || "";
       status.className = kind ? "dd-hint dd-status-" + kind : "dd-hint";
     };
 
@@ -139,202 +274,377 @@
       return meta ? meta.content : "";
     };
 
-    /** Posts one change; the answer is JSON whatever the status code is. */
-    const apply = async (change) => {
+    /** Posts a whole change set; the answer is JSON whatever the status is. */
+    const apply = async (changes) => {
       const response = await fetch(config.applyUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken(),
         },
-        body: JSON.stringify({ changes: [change] }),
+        body: JSON.stringify({ changes }),
       });
       return response.json().catch(() => ({ success: false }));
     };
 
-    const formValues = () => {
-      const values = {};
-      Array.from(form.querySelectorAll("[name]")).forEach((control) => {
-        values[control.name] = control.value;
+    /* ---------------------------------------------------------------- *
+     * Persistence: the draft outlives the tab, never the user's decision.
+     * -------------------------------------------------------------- */
+
+    let persistTimer = null;
+    const persist = () => {
+      window.clearTimeout(persistTimer);
+      persistTimer = window.setTimeout(() => {
+        try {
+          if (!buffer.size) {
+            /* A draft the user has not answered yet is not stale: removing it
+             * here would delete yesterday's work 400 ms after opening the page. */
+            if (recovery.hidden) {
+              window.localStorage.removeItem(config.storageKey);
+            }
+            return;
+          }
+          window.localStorage.setItem(
+            config.storageKey,
+            JSON.stringify({
+              schemaVersion: config.schemaVersion,
+              savedAt: new Date().toISOString(),
+              bases: Array.from(bases.entries()),
+              entries: Array.from(buffer.values()).filter(
+                (entry) => Object.keys(entry.patch).length
+              ),
+            })
+          );
+        } catch (error) {
+          /* A full or blocked storage must not break the editor. */
+        }
+      }, 400);
+    };
+
+    const forget = (key) => {
+      buffer.delete(key);
+      bases.delete(key);
+    };
+
+    /* ---------------------------------------------------------------- *
+     * Painting.
+     * -------------------------------------------------------------- */
+
+    const paintRows = () => {
+      grid.getRows().forEach((row) => {
+        const element = row.getElement();
+        const key = keyOf("stamp", row.getData().id);
+        element.classList.toggle(
+          "dd-row-dirty",
+          buffer.has(key) && Boolean(Object.keys(buffer.get(key).patch).length)
+        );
       });
-      return values;
-    };
-    let seriesBase = formValues();
-
-    /** Whether the strip holds something the database does not have yet. */
-    const seriesDirty = () => {
-      const values = formValues();
-      return Object.keys(values).some((field) => values[field] !== seriesBase[field]);
     };
 
-    /** The grid row waiting to be saved: the one just edited, or the selection. */
-    const pendingRow = () =>
-      (lastEdited !== null && grid.getRow(lastEdited)) ||
-      grid.getSelectedRows()[0] ||
-      grid.getRows().find((item) => pending.has(item.getData().id));
+    const paint = () => {
+      const count = changeCount();
+      counter.textContent = count ? plural("changes", count) : "";
+      undoButton.disabled = pointer === 0;
+      redoButton.disabled = pointer >= history.length;
+      saveButton.disabled = count === 0;
+      discardButton.disabled = count === 0;
+      paintRows();
+      persist();
+    };
 
-    const commitRow = async (row) => {
-      const data = row.getData();
-      const edits = pending.get(data.id);
-      if (!edits) {
+    /* ---------------------------------------------------------------- *
+     * Undo and redo: replay values, not snapshots.
+     * -------------------------------------------------------------- */
+
+    const push = (operation) => {
+      history.length = pointer;
+      history.push(operation);
+      while (history.length > (config.undoLimit || 200)) {
+        history.shift();
+      }
+      pointer = history.length;
+      paint();
+    };
+
+    const step = (direction) => {
+      const operation =
+        direction < 0 ? history[pointer - 1] : history[pointer];
+      if (!operation) {
+        return;
+      }
+      writeValue(
+        operation.model,
+        operation.id,
+        operation.field,
+        direction < 0 ? operation.from : operation.to
+      );
+      sync(operation.model, operation.id);
+      pointer += direction;
+      paint();
+    };
+
+    /* ---------------------------------------------------------------- *
+     * Editing: the grid.
+     * -------------------------------------------------------------- */
+
+    grid.on("cellEdited", (cell) => {
+      const row = cell.getRow();
+      const id = row.getData().id;
+      const field = patchOf[cell.getField()];
+      const from = cell.getOldValue();
+      const to = cell.getValue();
+
+      remember("stamp", id, field, from);
+      sync("stamp", id);
+      push({ model: "stamp", id, field, from, to });
+    });
+
+    /* ---------------------------------------------------------------- *
+     * Editing: the series strip.
+     * -------------------------------------------------------------- */
+
+    const previous = {};
+
+    form.addEventListener("focusin", (event) => {
+      const control = event.target;
+      if (control.name) {
+        previous[control.name] = control.value;
+      }
+    });
+
+    form.addEventListener("input", (event) => {
+      const control = event.target;
+      if (!control.name) {
+        return;
+      }
+      remember("issue", config.series.id, control.name, loaded[control.name]);
+      sync("issue", config.series.id);
+      paint();
+    });
+
+    /* `change` fires when the field is left, which is the right granularity for
+     * one undo step: per keystroke would make Ctrl+Z spell out the typing. */
+    form.addEventListener("change", (event) => {
+      const control = event.target;
+      if (!control.name) {
+        return;
+      }
+      push({
+        model: "issue",
+        id: config.series.id,
+        field: control.name,
+        from: control.name in previous ? previous[control.name] : loaded[control.name],
+        to: control.value,
+      });
+      previous[control.name] = control.value;
+    });
+
+    /* ---------------------------------------------------------------- *
+     * Committing and discarding.
+     * -------------------------------------------------------------- */
+
+    const commit = async () => {
+      const changes = Array.from(buffer.values()).filter(
+        (entry) => Object.keys(entry.patch).length
+      );
+      if (!changes.length) {
         setStatus(texts.noChanges, "");
         return;
       }
 
-      const patch = {};
-      edits.forEach((edit) => {
-        patch[patchOf[edit.cell.getField()]] = edit.cell.getValue();
-      });
+      setStatus(texts.saving, "pending");
+      const body = await apply(changes);
+      const rows = (body.data || {}).rows || [];
+      const rejected = body.rejected || [];
 
-      const body = await apply({
-        model: "stamp",
-        object_id: data.id,
-        op: "update",
-        patch,
-        expected_updated_at: baselines.get(data.id),
-      });
-      const written = ((body.data || {}).rows || [])[0];
-      const element = row.getElement();
+      rows.forEach((written) => {
+        const change = changes[written.index];
+        const key = keyOf(change.model, change.object_id);
+        baselines.set(key, written.updated_at);
+        if (change.model === "issue") {
+          config.series.updated_at = written.updated_at;
+        }
+        forget(key);
 
-      if (written) {
-        baselines.set(data.id, written.updated_at);
-        pending.delete(data.id);
-        lastEdited = null;
-        element.classList.remove("dd-row-dirty", "dd-row-error");
-        element.classList.add("dd-row-saved");
-        window.setTimeout(() => element.classList.remove("dd-row-saved"), 1200);
-        setStatus(texts.saved, "ok");
-        return;
-      }
-
-      /* Refused: every edited cell goes back to what the database still holds,
-       * so nothing typed looks saved, and the row stays marked. */
-      edits.forEach((edit) => edit.cell.setValue(edit.old, true));
-      pending.delete(data.id);
-      lastEdited = null;
-      element.classList.remove("dd-row-dirty");
-      element.classList.add("dd-row-error");
-      setStatus(refusal(body, texts.rejected), "error");
-    };
-
-    const commitSeries = async () => {
-      const values = formValues();
-      const patch = {};
-      Object.entries(values).forEach(([field, value]) => {
-        if (value !== seriesBase[field]) {
-          patch[field] = value;
+        if (change.model === "stamp") {
+          const row = grid.getRow(change.object_id);
+          if (row) {
+            const element = row.getElement();
+            element.classList.remove("dd-row-dirty", "dd-row-error");
+            element.classList.add("dd-row-saved");
+            window.setTimeout(
+              () => element.classList.remove("dd-row-saved"),
+              1200
+            );
+          }
         }
       });
-      if (!Object.keys(patch).length) {
-        setStatus(texts.noChanges, "");
-        return;
-      }
 
-      const body = await apply({
-        model: "issue",
-        object_id: config.series.id,
-        op: "update",
-        patch,
-        expected_updated_at: config.series.updated_at,
+      rejected.forEach((problem) => {
+        const change = changes[problem.index];
+        if (change.model !== "stamp") {
+          return;
+        }
+        const row = grid.getRow(change.object_id);
+        if (row) {
+          row.getElement().classList.add("dd-row-error");
+        }
       });
-      const written = ((body.data || {}).rows || [])[0];
 
-      if (written) {
-        config.series.updated_at = written.updated_at;
-        seriesBase = values;
-        meta.classList.remove("dd-meta-error");
-        setStatus(texts.seriesSaved, "ok");
-        return;
+      if (rows.length) {
+        loaded = formValues();
       }
 
-      /* The strip keeps what was typed — a rejection is fixed here, not retyped
-       * — while a single cell is reverted instead: one value is cheap to type
-       * again, a half-filled form is not. */
-      meta.classList.add("dd-meta-error");
-      setStatus(refusal(body, texts.rejected), "error");
+      if (rejected.length) {
+        const problem = rejected[0];
+        setStatus(
+          refusal(problem.errors, texts.rejected) ||
+            refusal(body, texts.rejected),
+          "error"
+        );
+      } else {
+        setStatus(texts.saved, "ok");
+      }
+
+      paint();
     };
 
-    /** Shift+Enter and the button commit what the user is working on.
-     *
-     * The open editor is closed first: Tabulator writes the typed value into
-     * the row when its input loses the focus, and committing before that would
-     * send the value the cell had. The blur is what an Enter would do anyway.
-     */
+    const discard = () => {
+      Array.from(buffer.keys()).forEach((key) => {
+        const base = bases.get(key) || {};
+        Object.keys(base).forEach((field) => {
+          const [model, id] = key.split(":");
+          writeValue(model, Number(id), field, base[field]);
+        });
+      });
+      buffer.clear();
+      bases.clear();
+      history.length = 0;
+      pointer = 0;
+      loaded = formValues();
+      recovery.hidden = true;
+      window.localStorage.removeItem(config.storageKey);
+      setStatus("", "");
+      paint();
+    };
+
+    /* Shift+Enter and the button commit the whole change set. */
     const commitTarget = async () => {
       const active = document.activeElement;
-      /* The button is not inside the form, and clicking it moves the focus out
-       * of the field, so "what has the focus" alone cannot decide the target:
-       * the dirty strip is checked too, or Save on the series would answer
-       * "nothing changed" while the strip holds an edit. */
-      const inStrip = Boolean(active && form.contains(active));
       if (active && active !== document.body) {
         active.blur();
       }
       await Promise.resolve();
-
-      if (inStrip && seriesDirty()) {
-        commitSeries();
-        return;
-      }
-
-      const row = pendingRow();
-      if (row) {
-        commitRow(row);
-        return;
-      }
-
-      if (seriesDirty()) {
-        commitSeries();
-        return;
-      }
-
-      setStatus(texts.noChanges, "");
+      commit();
     };
 
-    grid.on("cellEdited", (cell) => {
-      const row = cell.getRow();
-      const rowId = row.getData().id;
-      if (!pending.has(rowId)) {
-        pending.set(rowId, new Map());
-      }
-      const edits = pending.get(rowId);
-      const field = cell.getField();
-      if (!edits.has(field)) {
-        edits.set(field, { cell, old: cell.getOldValue() });
-      }
-      lastEdited = rowId;
-
-      const element = row.getElement();
-      element.classList.add("dd-row-dirty");
-      element.classList.remove("dd-row-error", "dd-row-saved");
-      setStatus(texts.unsaved, "pending");
-    });
-
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" || !event.shiftKey) {
+      if (event.key === "Enter" && event.shiftKey) {
+        event.preventDefault();
+        commitTarget();
+        return;
+      }
+
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      /* Inside a text field the browser's own undo is the one the user means. */
+      if (event.target && form.contains(event.target)) {
         return;
       }
       event.preventDefault();
-      commitTarget();
+      step(event.shiftKey ? 1 : -1);
     });
 
-    /* Typing in the strip says so straight away: otherwise the only clue that
-     * the series has unsaved work is a status line that still reads "saved". */
-    const showStripState = () => {
-      if (seriesDirty()) {
-        setStatus(texts.unsaved, "pending");
-      } else {
-        setStatus("", "");
+    saveButton.addEventListener("click", commitTarget);
+    discardButton.addEventListener("click", discard);
+    undoButton.addEventListener("click", () => step(-1));
+    redoButton.addEventListener("click", () => step(1));
+
+    /* ---------------------------------------------------------------- *
+     * Draft recovery and the other tab.
+     * -------------------------------------------------------------- */
+
+    const stored = () => {
+      try {
+        const raw = window.localStorage.getItem(config.storageKey);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
       }
     };
-    form.addEventListener("input", showStripState);
-    form.addEventListener("change", showStripState);
 
-    if (button) {
-      button.addEventListener("click", commitTarget);
-    }
+    const offerRecovery = () => {
+      const draft = stored();
+      if (!draft) {
+        return;
+      }
+
+      if (
+        draft.schemaVersion !== config.schemaVersion ||
+        !Array.isArray(draft.entries) ||
+        !draft.entries.length
+      ) {
+        window.localStorage.removeItem(config.storageKey);
+        return;
+      }
+
+      const count = draft.entries.reduce(
+        (total, entry) => total + Object.keys(entry.patch || {}).length,
+        0
+      );
+      if (!count) {
+        window.localStorage.removeItem(config.storageKey);
+        return;
+      }
+
+      recoveryText.textContent = plural("recover", count);
+      recovery.hidden = false;
+
+      recoverButton.addEventListener("click", () => {
+        (draft.bases || []).forEach(([key, fields]) => bases.set(key, fields));
+        draft.entries.forEach((entry) => {
+          Object.entries(entry.patch || {}).forEach(([field, value]) => {
+            writeValue(entry.model, entry.object_id, field, value);
+            push({
+              model: entry.model,
+              id: entry.object_id,
+              field,
+              from: (bases.get(keyOf(entry.model, entry.object_id)) || {})[field],
+              to: value,
+            });
+          });
+          sync(entry.model, entry.object_id);
+        });
+        recovery.hidden = true;
+        setStatus("", "");
+        paint();
+      });
+
+      recoveryDiscard.addEventListener("click", () => {
+        window.localStorage.removeItem(config.storageKey);
+        recovery.hidden = true;
+      });
+    };
+
+    window.addEventListener("storage", (event) => {
+      if (event.key !== config.storageKey) {
+        return;
+      }
+      tabNotice.hidden = false;
+    });
+
+    window.addEventListener("beforeunload", (event) => {
+      if (!buffer.size) {
+        return;
+      }
+      event.preventDefault();
+      event.returnValue = "";
+    });
+
+    offerRecovery();
+    paint();
   };
-
   /* --------------------------------------------------------------------- *
    * mode=new: the rows live here.
    * ------------------------------------------------------------------- */
@@ -411,12 +721,59 @@
       render();
     });
 
+    /* Undo inside the session: the draft is never stored, but Ctrl+Z has to
+     * work while the tab is open. Row id and field are kept instead of the cell
+     * component: `render()` replaces the rows, so a held cell goes stale. */
+    const history = [];
+    let pointer = 0;
+
     grid.on("cellEdited", (cell) => {
       const edited = cell.getRow().getData();
       const row = drafts.find((draft) => draft.id === edited.id);
       if (row) {
         row.touched = true;
       }
+      history.length = pointer;
+      history.push({
+        id: edited.id,
+        field: cell.getField(),
+        from: cell.getOldValue(),
+        to: cell.getValue(),
+      });
+      while (history.length > (config.undoLimit || 200)) {
+        history.shift();
+      }
+      pointer = history.length;
+    });
+
+    const step = (direction) => {
+      const operation =
+        direction < 0 ? history[pointer - 1] : history[pointer];
+      if (!operation) {
+        return;
+      }
+      const draft = drafts.find((row) => row.id === operation.id);
+      const value = direction < 0 ? operation.from : operation.to;
+      if (draft) {
+        draft[operation.field] = value;
+      }
+      const gridRow = grid.getRow(operation.id);
+      const cell = gridRow && gridRow.getCell(operation.field);
+      if (cell) {
+        cell.setValue(value, true);
+      }
+      pointer += direction;
+    };
+
+    document.addEventListener("keydown", (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      if (event.target && event.target.tagName === "TEXTAREA") {
+        return;
+      }
+      event.preventDefault();
+      step(event.shiftKey ? 1 : -1);
     });
 
     /* A year no row holds is legitimate: it is created when the series is

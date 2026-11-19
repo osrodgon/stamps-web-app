@@ -22,6 +22,24 @@ if [ -z "${STAMPS_DOCKER_REEXEC:-}" ] && [ -e "$DOCKER_SOCK" ] && [ ! -w "$DOCKE
     fi
 fi
 
+# --- Host paths for bind mounts ---
+# The dev container shares the host daemon, so a relative bind source is resolved
+# against the *host* filesystem, where the workspace usually lives at another
+# path (/home/me/projects/app vs /workspaces/app). A source that does not exist
+# is silently created as an empty directory, which is how the stamp pictures
+# disappeared. Ask docker for the host path of this very workspace and point the
+# mount at the same files; an explicit STAMP_IMAGES_DIR always wins.
+if [ -z "${STAMP_IMAGES_DIR:-}" ]; then
+    host_root=$(docker inspect --format \
+        '{{range .Mounts}}{{if eq .Destination "'"$PROJECT_ROOT"'"}}{{.Source}}{{end}}{{end}}' \
+        "$(cat /etc/hostname 2>/dev/null)" 2>/dev/null)
+    # The path only exists on the host, so it cannot be probed from here: docker
+    # just told us where it mounts this workspace, which is by definition real.
+    if [ -n "$host_root" ] && [ "$host_root" != "$PROJECT_ROOT" ]; then
+        export STAMP_IMAGES_DIR="$host_root/frontend/assets/stamps"
+    fi
+fi
+
 # Backend
 BACKEND_COMPOSE="-f backend/docker-compose.yml -f backend/docker-compose.dev.yml"
 BACKEND_SVC="stamps-backend"

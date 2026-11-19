@@ -696,6 +696,53 @@ kbd {
   color: #2b3440;
 }
 
+/* A draft kept by the browser: offered, never restored by itself. */
+.dd-recover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  background: var(--dd-amber-soft);
+  border-top: 1px solid var(--dd-line);
+  font-size: 12px;
+}
+
+.dd-recover[hidden] {
+  display: none;
+}
+
+.dd-recover .dd-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Two tabs editing the same series: a warning, never a lock. */
+.dd-tabnotice {
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: var(--dd-amber-soft);
+  border-left: 3px solid var(--dd-amber);
+  font-size: 12px;
+  color: #6b4f00;
+}
+
+.dd-tabnotice[hidden] {
+  display: none;
+}
+
+.dd-commitbar .dd-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+.dd-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .dd-commitbar .dd-right {
   display: flex;
   align-items: center;
