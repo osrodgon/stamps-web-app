@@ -96,7 +96,7 @@ el mockup ya están corregidos con esta decisión.
 | S9 | Prueba de rendimiento + índices | S8 | S | no | ✅ 2026-11-18 |
 | S10 | Workspace `mode=edit` de solo lectura | S8 | M | sí | ✅ 2026-11-18 |
 | S11 | Workspace `mode=new` en seco (sin guardar) | S10 | M | sí | ✅ 2026-11-19 |
-| S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | — |
+| S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | ✅ 2026-11-19 |
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | — |
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | — |
 | S15 | Panel de revisión + commit por lotes | S14 | M | sí | — |
@@ -1577,4 +1577,77 @@ fila), con auditoría y validación por serializers de DRF.
 
 
 
+
+### ✅ S12 — Núcleo de escritura (2026-11-19)
+
+Ficheros nuevos:
+
+```
+backend/datadesk/rules.py                 MIN_SERIES_YEAR, YEARS_AHEAD, series_year_bounds()
+backend/datadesk/write.py                 create_series(), apply_changes(), create_lookup(),
+                                          WriteError, RowRejected, ApplyResult, CreatedSeries, LookupResult
+backend/datadesk/views/write_api.py       JsonPostView + IssueCreateJsonView, ApplyJsonView, LookupCreateJsonView
+backend/datadesk/tests/test_write.py      38 tests (transacciones, auditoría, conflictos, lookups)
+backend/datadesk/tests/test_write_api.py  18 tests (gate, CSRF, códigos de estado, envelope)
+```
+
+Ficheros modificados:
+
+```
+backend/datadesk/urls.py                  issues/create, apply, lookups/<key>/create (sin barra final)
+backend/datadesk/views/workspace.py       IssueCreateView → IssueNewView; las reglas del año se van a rules.py
+```
+
+Decisiones tomadas al implementar (no estaban en el plan):
+
+- **`rules.py`**: el rango del año estaba en `views/workspace.py`, pero el
+  escritor también lo necesita y una vista no debe importarse desde la capa de
+  escritura. Las dos leen la misma función, así que el formulario no puede
+  aceptar un año que el servidor rechace.
+- **`IssueCreateView` → `IssueNewView`**: `IssueCreateJsonView` es el endpoint y
+  tener dos "Create" a un import de distancia era una trampa. La ruta no cambia.
+- **El año implícito no se audita**: `get_or_create` de `Year` ocurre dentro de
+  la transacción, así que solo sobrevive si la serie se crea, y revertir la serie
+  deja una fila `Year` vacía que es inofensiva y reutilizable. Auditarla habría
+  roto el recuento de S12 (una serie de 8 sellos = 9 filas, no 10) y S21 no
+  tendría que decidir entre borrar un año referenciado o no.
+- **Los colores no pasan por el serializer**: DRF rechaza `colors: []` («this
+  list may not be empty») porque el M2M no lleva `blank=True`, pero un sello sin
+  colores es un hueco que las colas de «needs attention» cuentan, no un error que
+  el usuario no pueda arreglar desde el grid. El campo se quita del serializer
+  (`_serializer()`), los ids se resuelven a filas y se aplican con un `set()`
+  dentro de la transacción, como pedía el plan.
+- **`""` en columna nullable → `None`**: el formulario manda cadena vacía al
+  limpiar una fecha y el `DateField` la rechazaría. Se normaliza en
+  `_prepare_patch()`, no en cada serializer.
+- **`/apply` responde 200 aunque rechace filas**: los rechazos son de fila, no de
+  petición, y un 400 obligaría al cliente a mirar el cuerpo igualmente. 400
+  queda para el sobre (no es lista, modelo u operación desconocidos, más de 500)
+  y 409 para `delete`. `success` es `false` si algo se rechazó, `applied` y
+  `rejected` dicen el resto.
+- **Bloqueo de fila en las actualizaciones**: `select_for_update()` antes de
+  comparar `expected_updated_at`, para que la comprobación no pueda perder una
+  carrera con otra pestaña. `updated_at` nulo (backups de julio) no es conflicto.
+- **Mensajes en inglés sin traducir**: los errores de DRF que devuelve el mismo
+  endpoint (``This field is required.``) tampoco están en el catálogo, así que
+  traducir solo los propios daría una respuesta a medias. La traducción se hará
+  en la pantalla (S16), que decide qué texto enseñar por código de error.
+- **`datadesk/tests/test_write_api.py` separado**: el plan pedía un solo
+  `test_service_write.py`, pero CSRF, gate y códigos de estado no son propiedad
+  del escritor. Los dos ficheros suman 56 tests.
+- **No se reformateó código ajeno**: `black` no está aplicado al repo (87
+  ficheros cambiarían), así que solo se formatearon los ficheros nuevos; el
+  reformateo cosmético que `black` hizo en `workspace.py` se revirtió para que el
+  diff de S11+S12 no arrastre líneas que nadie tocó.
+
+Verificado: `pytest datadesk` → **234 en verde** (178 previos + 56 nuevos); suite
+completa **1250 en verde** · `manage.py check` limpio · `spectacular` con **0**
+referencias a `datadesk` · `datadesk_make_messages --check` sin cambios (S12 no
+añade cadenas al catálogo).
+
+### ⏭ Siguiente: S13
+
+Commit de una fila desde el grid: edición inline con Tabulator, `Shift+Enter`
+construye un change set de una fila y llama a `/datadesk/apply`; error del
+servidor → se revierte el valor y se marca la fila.
 
