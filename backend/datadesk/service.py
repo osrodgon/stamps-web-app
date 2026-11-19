@@ -210,6 +210,30 @@ def issue_page(
     )
 
 
+def page_of_issue(
+    issue_id: int,
+    filters: IssueFilters | None = None,
+    size: int = DEFAULT_PAGE_SIZE,
+) -> int:
+    """Returns the page the workbench shows an issue on, in its default order.
+
+    Landing back on the workbench after a commit is only useful if the series is
+    in front of the user, and the grid pages server-side: the answer needs the
+    position of the row, not just its id. The list is pks only — 2.500 integers,
+    not the eight-table join the grid uses.
+    """
+    size = max(1, min(size, MAX_PAGE_SIZE))
+    queryset = sort_issues(
+        filter_issues(Issue.objects.all(), filters or IssueFilters()), *DEFAULT_SORT
+    )
+    pks = list(queryset.values_list("pk", flat=True))
+    try:
+        position = pks.index(issue_id)
+    except ValueError:
+        return 1
+    return position // size + 1
+
+
 def serialize_issue(issue: Issue) -> dict[str, Any]:
     """Turns an issue into the flat row the grid renders.
 

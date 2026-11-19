@@ -315,14 +315,6 @@ msgid "Redo"
 msgstr "Redo"
 
 #: datadesk/templates/datadesk/issue_workspace.html
-msgid "Save changes"
-msgstr "Save changes"
-
-#: datadesk/templates/datadesk/issue_workspace.html
-msgid "Shift+Enter saves the pending changes."
-msgstr "Shift+Enter saves the pending changes."
-
-#: datadesk/templates/datadesk/issue_workspace.html
 msgid "Another tab has changes on this series."
 msgstr "Another tab has changes on this series."
 
@@ -339,3 +331,46 @@ msgid "%(count)s saved change"
 msgid_plural "%(count)s saved changes"
 msgstr[0] "%(count)s saved change"
 msgstr[1] "%(count)s saved changes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter commits the pending changes."
+msgstr "Shift+Enter commits the pending changes."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Review changes"
+msgstr "Review changes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Pending changes"
+msgstr "Pending changes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Close"
+msgstr "Close"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Back up first"
+msgstr "Back up first"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Commit"
+msgstr "Commit"
+
+#: datadesk/views/workspace.py
+msgid "Series"
+msgstr "Series"
+
+#: datadesk/views/workspace.py
+msgid "Backup saved: %(file)s"
+msgstr "Backup saved: %(file)s"
+
+#: datadesk/views/workspace.py
+msgid "The backup failed, so nothing was committed."
+msgstr "The backup failed, so nothing was committed."
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "Commit %(count)s change"
+msgid_plural "Commit %(count)s changes"
+msgstr[0] "Commit %(count)s change"
+msgstr[1] "Commit %(count)s changes"

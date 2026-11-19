@@ -163,7 +163,22 @@
       usable: S15 puts the review panel in front of it. Supersedes S13's
       single-row commit. 9 tests added; 254 datadesk and 1270 backend tests
       green, plus a throwaway jsdom harness (33 checks) for the browser logic.
-      Next: S15 (review panel + batch commit)
+- [x] **S15 — Review panel + batch commit + pre-commit backup** (2026-11-19):
+      a side drawer (hidden by default, `Review changes` in the footer) lists the
+      change set grouped by model with `before → after` per field and the field
+      names translated by the server (`fieldLabels` built from the same
+      definitions the editor uses). `Commit N changes` (`Ctrl+Enter`, and
+      `Shift+Enter` stays) posts the whole set: applied rows leave the buffer,
+      rejected ones **stay** with their message on the entry and open the panel.
+      A clean commit redirects to the workbench with `?focus=<id>`; the page is
+      resolved server-side by `page_of_issue()` (over pks, not the grid join) and
+      the grid selects and scrolls to the row once. `POST /datadesk/backup` runs
+      the existing `stamps_db_backup` command (mode `stamps`) and names the dump;
+      the button appears past 20 changes and a failing backup never blocks the
+      commit. 14 tests added; 269 datadesk and 1285 backend tests green; the jsdom
+      harness is at 42 checks and caught a real bug (`refusal()` was given the
+      errors object instead of the response body, so every refusal showed the
+      generic text). Next: S16 (`mode=new` completo)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

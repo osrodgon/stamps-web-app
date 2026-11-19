@@ -15,6 +15,7 @@ from datadesk.views.workbench_api import IssueGridJsonView
 from datadesk.views.workspace import IssueNewView, IssueWorkspaceView
 from datadesk.views.write_api import (
     ApplyJsonView,
+    BackupJsonView,
     IssueCreateJsonView,
     LookupCreateJsonView,
 )
@@ -30,6 +31,7 @@ urlpatterns = [
     path("grid/issues", IssueGridJsonView.as_view(), name="issue_grid"),
     path("issues/create", IssueCreateJsonView.as_view(), name="issue_create"),
     path("apply", ApplyJsonView.as_view(), name="apply"),
+    path("backup", BackupJsonView.as_view(), name="backup"),
     path(
         "lookups/<str:key>/create",
         LookupCreateJsonView.as_view(),

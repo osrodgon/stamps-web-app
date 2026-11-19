@@ -15,6 +15,7 @@ from datadesk.write import MAX_CHANGES
 from issues_api.models import Issue
 
 APPLY_URL = "/datadesk/apply"
+BACKUP_URL = "/datadesk/backup"
 CREATE_URL = "/datadesk/issues/create"
 LOOKUP_URL = "/datadesk/lookups/{key}/create"
 JSON = "application/json"
@@ -266,3 +267,77 @@ class TestLookupEndpoint:
         )
 
         assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestBackupEndpoint:
+    """S15: a dump before a large commit, on demand."""
+
+    @pytest.fixture
+    def backups(self, tmp_path, settings):
+        """Points BASE_DIR at a scratch folder so the dump lands there."""
+        settings.BASE_DIR = tmp_path
+        (tmp_path / "backups").mkdir()
+        return tmp_path / "backups"
+
+    def test_writes_the_dump_and_names_it(
+        self, staff_client, backups, monkeypatch
+    ) -> None:
+        def fake_call(command, name, mode, stdout) -> None:
+            assert command == "stamps_db_backup"
+            assert mode == "stamps"
+            (backups / f"{name}__stamps.json").write_text("[]")
+
+        monkeypatch.setattr("datadesk.views.write_api.call_command", fake_call)
+
+        response = post(staff_client, BACKUP_URL, {})
+        body = response.json()
+
+        assert response.status_code == 200
+        assert body["success"] is True
+        assert body["data"]["file"].startswith("backups/datadesk-")
+        assert body["data"]["file"].endswith("__stamps.json")
+        assert (backups / body["data"]["file"].split("/")[-1]).exists()
+
+    def test_a_failing_command_is_reported(
+        self, staff_client, backups, monkeypatch
+    ) -> None:
+        def explode(*args, **kwargs) -> None:
+            raise RuntimeError("disco lleno")
+
+        monkeypatch.setattr("datadesk.views.write_api.call_command", explode)
+
+        response = post(staff_client, BACKUP_URL, {})
+        body = response.json()
+
+        assert response.status_code == 500
+        assert body["success"] is False
+        assert "disco lleno" in body["message"]
+
+    def test_a_command_that_writes_nothing_is_reported(
+        self, staff_client, backups, monkeypatch
+    ) -> None:
+        monkeypatch.setattr(
+            "datadesk.views.write_api.call_command", lambda *a, **k: None
+        )
+
+        response = post(staff_client, BACKUP_URL, {})
+        body = response.json()
+
+        assert response.status_code == 500
+        assert "did not write a file" in body["message"]
+
+    def test_anonymous_callers_get_401(self, mounted) -> None:
+        client = Client(HTTP_ACCEPT=JSON)
+
+        assert client.post(BACKUP_URL).status_code == 401
+
+    def test_a_non_staff_user_is_refused(self, mounted, django_user_model) -> None:
+        django_user_model.objects.create_user(username="pepe", password="s3cret-pass")
+        client = Client()
+        client.login(username="pepe", password="s3cret-pass")
+
+        assert client.post(BACKUP_URL).status_code == 403
+
+    def test_get_is_not_allowed(self, staff_client) -> None:
+        assert staff_client.get(BACKUP_URL).status_code == 405

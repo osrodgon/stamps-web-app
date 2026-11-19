@@ -136,7 +136,7 @@
       <div class="dd-commitbar">
         <span class="dd-count" id="change-count"></span>
         <span class="dd-hint" id="commit-status">
-          {% translate "Shift+Enter saves the pending changes." %}
+          {% translate "Shift+Enter commits the pending changes." %}
         </span>
         <span class="dd-hint dd-right">
           <button type="button" class="dd-btn dd-btn-ghost" id="undo-button" disabled>
@@ -145,14 +145,36 @@
           <button type="button" class="dd-btn dd-btn-ghost" id="redo-button" disabled>
             {% translate "Redo" %}
           </button>
-          <button type="button" class="dd-btn dd-btn-ghost" id="discard-button" disabled>
-            {% translate "Discard" %}
-          </button>
-          <button type="button" class="dd-btn dd-btn-dark" id="commit-button" disabled>
-            {% translate "Save changes" %}
+          <button type="button" class="dd-btn dd-btn-dark" id="review-button" disabled>
+            {% translate "Review changes" %}
           </button>
         </span>
       </div>
+
+      <aside class="dd-review" id="review-panel" hidden aria-labelledby="review-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="review-title">
+            {% translate "Pending changes" %}
+          </span>
+          <button type="button" class="dd-review-close" id="review-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-review-body" id="review-body"></div>
+        <div class="dd-review-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="backup-button" hidden>
+            {% translate "Back up first" %}
+          </button>
+          <span class="dd-hint" id="backup-status"></span>
+          <span class="dd-review-actions">
+            <button type="button" class="dd-btn dd-btn-ghost" id="discard-button" disabled>
+              {% translate "Discard" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-dark" id="commit-button" disabled>
+              {% translate "Commit" %}
+            </button>
+          </span>
+        </div>
+      </aside>
     {% endif %}
   </section>
 

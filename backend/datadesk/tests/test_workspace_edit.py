@@ -158,7 +158,14 @@ class TestTheSeriesStripIsAForm:
     def test_the_commit_texts_come_from_the_server(self, staff_client, issue) -> None:
         texts = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["texts"]
 
-        assert set(texts) == {"saved", "rejected", "noChanges", "saving"}
+        assert set(texts) == {
+            "saved",
+            "rejected",
+            "noChanges",
+            "saving",
+            "backupSaved",
+            "backupFailed",
+        }
 
     def test_the_plurals_are_resolved_by_the_server(self, staff_client, issue) -> None:
         plurals = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["plurals"]
@@ -167,7 +174,11 @@ class TestTheSeriesStripIsAForm:
             "one": "%(count)s change",
             "other": "%(count)s changes",
         }
-        assert set(plurals) == {"changes", "recover"}
+        assert set(plurals) == {"changes", "recover", "commit"}
+        assert plurals["commit"] == {
+            "one": "Commit %(count)s change",
+            "other": "Commit %(count)s changes",
+        }
 
     def test_the_plurals_follow_the_language(self, staff_client, issue) -> None:
         staff_client.cookies["django_language"] = "es"
@@ -178,6 +189,35 @@ class TestTheSeriesStripIsAForm:
             "one": "%(count)s cambio",
             "other": "%(count)s cambios",
         }
+
+    def test_the_field_labels_come_from_the_editor(self, staff_client, issue) -> None:
+        labels = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))[
+            "fieldLabels"
+        ]
+
+        assert len(labels["issue"]) == 15
+        assert labels["issue"]["name"] == "Name"
+        assert labels["issue"]["market_value_mnh"] == "Market value MNH"
+        assert labels["stamp"] == {
+            "edifil_code": "Edifil",
+            "fesofi_code": "Fesofi",
+            "name": "Name",
+            "face_value": "Face value",
+            "total_printed": "Total printed",
+            "market_value_mnh": "MNH",
+            "market_value_used": "Used",
+        }
+
+    def test_the_model_labels_are_translated(self, staff_client, issue) -> None:
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["modelLabels"] == {"issue": "Series", "stamp": "Stamps"}
+
+    def test_the_config_carries_the_backup_settings(self, staff_client, issue) -> None:
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["backupUrl"] == "/datadesk/backup"
+        assert config["backupThreshold"] == 20
 
     def test_the_config_carries_the_draft_settings(self, staff_client, issue) -> None:
         config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
@@ -211,6 +251,24 @@ class TestTheSeriesStripIsAForm:
             "tab-notice",
         ):
             assert f'id="{element}"' in content
+
+    def test_the_review_panel_is_rendered(self, staff_client, issue) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        for element in (
+            "review-panel",
+            "review-button",
+            "review-body",
+            "review-close",
+            "backup-button",
+            "backup-status",
+        ):
+            assert f'id="{element}"' in content
+
+        # The commit lives in the panel now, not in the footer.
+        assert content.index('id="review-panel"') < content.index('id="commit-button"')
+        assert "Save changes" not in content
+        assert "Review changes" in content
 
     def test_the_controls_start_disabled(self, staff_client, issue) -> None:
         content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()

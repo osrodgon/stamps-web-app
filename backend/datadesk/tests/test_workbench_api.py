@@ -9,6 +9,7 @@ from countries_api.models import Country
 from issues_api.models import Issue
 from stamp_types_api.models import StampType
 from stamps_api.models import Stamp
+from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters, page_of_issue
 from years_api.models import Year
 
 GRID_URL = "/datadesk/grid/issues"
@@ -131,7 +132,8 @@ class TestOrdering:
         self, staff_client, dataset
     ) -> None:
         response = staff_client.get(
-            GRID_URL, {"sort[0][field]": "description; drop table", "sort[0][dir]": "asc"}
+            GRID_URL,
+            {"sort[0][field]": "description; drop table", "sort[0][dir]": "asc"},
         )
 
         assert names(response) == ["Alfa", "Delta", "Beta", "Gamma"]
@@ -238,7 +240,9 @@ class TestWorkbenchPage:
         assert "/datadesk/grid/issues" in content
 
     def test_filter_values_come_from_the_url(self, staff_client) -> None:
-        response = staff_client.get(PAGE_URL, {"attention": "no_stamps", "year_min": 1990})
+        response = staff_client.get(
+            PAGE_URL, {"attention": "no_stamps", "year_min": 1990}
+        )
 
         content = response.content.decode()
         assert 'value="1990"' in content
@@ -257,3 +261,49 @@ class TestWorkbenchPage:
 
         assert "Year" in titles
         assert "Name" in titles
+
+
+@pytest.mark.django_db
+class TestFocus:
+    """S15: landing back on the workbench with the saved series in view."""
+
+    def test_without_focus_the_grid_starts_on_page_one(self, staff_client) -> None:
+        response = staff_client.get(PAGE_URL)
+        config = json.loads(
+            response.content.decode()
+            .split('id="workbench-config" type="application/json">')[1]
+            .split("</script>")[0]
+        )
+
+        assert config["initialPage"] == 1
+        assert config["focus"] is None
+
+    def test_focus_resolves_the_page_the_issue_lives_on(self, staff_client, db) -> None:
+        year = Year.objects.create(year=1980)
+        for index in range(DEFAULT_PAGE_SIZE + 3):
+            Issue.objects.create(year=year, name=f"Serie {index:04d}")
+
+        target = Issue.objects.create(year=year, name="Serie zzz última")
+
+        response = staff_client.get(PAGE_URL, {"focus": target.pk})
+        config = json.loads(
+            response.content.decode()
+            .split('id="workbench-config" type="application/json">')[1]
+            .split("</script>")[0]
+        )
+
+        assert config["focus"] == target.pk
+        assert config["initialPage"] == 2
+
+    def test_focus_with_an_unknown_id_stays_on_page_one(self, staff_client) -> None:
+        assert page_of_issue(999_999) == 1
+
+    def test_focus_follows_the_filters(self, staff_client, db) -> None:
+        year = Year.objects.create(year=1980)
+        for index in range(DEFAULT_PAGE_SIZE + 3):
+            Issue.objects.create(year=year, name=f"Serie {index:04d}")
+
+        target = Issue.objects.create(year=year, name="Serie zzz última")
+
+        assert page_of_issue(target.pk) == 2
+        assert page_of_issue(target.pk, IssueFilters(q="zzz")) == 1

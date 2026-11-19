@@ -99,7 +99,7 @@ el mockup ya están corregidos con esta decisión.
 | S12 | Núcleo de escritura: `issues/create` + `apply` | S6, S7 | L | no (solo tests) | ✅ 2026-11-19 |
 | S13 | Commit de una fila desde el grid | S10, S12 | M | **sí, segundo hito** | ✅ 2026-11-19 |
 | S14 | Change set en cliente + footer + undo | S13 | L | sí | ✅ 2026-11-19 |
-| S15 | Panel de revisión + commit por lotes | S14 | M | sí | — |
+| S15 | Panel de revisión + commit por lotes | S14 | M | sí | ✅ 2026-11-19 |
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | — |
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | — |
 | S18 | Crear lookup desde la celda | S12, S14 | M | sí | — |
@@ -1784,9 +1784,68 @@ Verificado: `pytest datadesk` → **254 en verde**; suite completa **1270 en
 verde** · catálogos recompilados y `--check` en verde · el test de i18n ahora
 valida las formas plurales · 27 comprobaciones del arnés de JS en verde.
 
-### ⏭ Siguiente: S15
+### ✅ S15 — Panel de revisión y commit por lotes (2026-11-19)
 
-Panel de revisión y commit por lotes: lista de cambios agrupada por serie y
-sello con `antes → después`, confirmación explícita, y el post-commit (recarga o
-poda) sobre el buffer de S14.
+Ficheros modificados:
+
+```
+backend/datadesk/views/workspace.py            field_labels(), BACKUP_THRESHOLD, backupUrl/backupThreshold,
+                                               fieldLabels/modelLabels, texts de copia, plural "commit"
+backend/datadesk/views/workbench.py            focus → page_of_issue(); grid_config(initial_page, focus)
+backend/datadesk/service.py                    page_of_issue(): posición de la fila con la orden por defecto
+backend/datadesk/views/write_api.py            BackupJsonView (POST /datadesk/backup)
+backend/datadesk/urls.py                       backup
+backend/datadesk/templates/datadesk/issue_workspace.html  panel lateral; el pie deja Review changes
+backend/datadesk/static/datadesk/issue_workspace.js       renderReview(), commit con redirect y errores por
+                                               entrada, backup, Ctrl+Enter, Esc cierra el panel
+backend/datadesk/static/datadesk/workbench.js  página inicial y fila enfocada
+backend/datadesk/static/datadesk/datadesk.css  dd-review-*, dd-row-focus
+backend/datadesk/locale/{en,es}/…              textos del panel y plural "commit"
+backend/datadesk/tests/test_workspace_edit.py  +4 (labels, modelos, backup, panel)
+backend/datadesk/tests/test_workbench_api.py   +4 (focus y página)
+backend/datadesk/tests/test_write_api.py       +6 (endpoint de copia)
+```
+
+Decisiones tomadas al implementar:
+
+- **El panel es un cajón lateral oculto por defecto** (`Review changes` en el
+  pie), no una vista siempre visible: la franja y el grid tienen que seguir
+  legibles mientras se compara el cambio con la fila que lo originó. Commit y
+  Discard viven dentro; el pie conserva Undo/Redo y el contador.
+- **`Ctrl+Enter` confirma** y `Shift+Enter` sigue haciéndolo: el atajo viejo no
+  se quita porque ya estaba en los dedos, y el nuevo es el que el plan pide. El
+  handler de `Shift+Enter` ignora `Ctrl` para que `Ctrl+Shift+Enter` no confirme
+  dos veces.
+- **Commit limpio → workbench con la serie enfocada**: el grid pagina en
+  servidor, así que el número de página se resuelve en `page_of_issue()` —sobre
+  una lista de pks, no sobre el join de ocho tablas— y el JS selecciona y
+  desplaza la fila una sola vez. Llega sin filtros: el foco es una ayuda de
+  aterrizaje, no un filtro que se herede del workspace.
+- **Rechazo parcial**: las filas aplicadas salen del buffer, las rechazadas se
+  quedan **con su mensaje** en el panel (`entry.error`, que se borra en la
+  siguiente edición de esa fila) y el panel se abre solo. No se pierde nada
+  tecleado.
+- **`refusal()` recibía el objeto de errores en vez del cuerpo** y devolvía
+  siempre el texto genérico: lo cazó el arnés de jsdom, no los tests de Python.
+  Corregido usando `firstError(errors)` donde hay errores y `refusal(body, …)`
+  donde hay cuerpo.
+- **Copia de seguridad a mano, nunca automática**: `POST /datadesk/backup`
+  ejecuta el comando que ya existía (`stamps_db_backup`, modo `stamps`) con un
+  nombre generado, y devuelve la ruta relativa. El botón aparece a partir de 20
+  cambios (`BACKUP_THRESHOLD`); por debajo, escribir un fichero es ruido. Un
+  fallo de la copia se cuenta en el panel y **no** impide confirmar: bloquear el
+  commit por un disco lleno no arregla nada.
+- **El volcado es síncrono**: son 12.700 objetos y un único usuario; un trabajo
+  en segundo plano con su estado era más máquina que problema.
+
+Verificado: `pytest datadesk` → **269 en verde**; suite completa **1285 en
+verde** · catálogos recompilados · arnés de jsdom ampliado a **42
+comprobaciones** (panel, etiquetas, antes→después, Esc, `Ctrl+Enter`, rechazo con
+mensaje, umbral de copia) · `page_of_issue()` testeado con más de una página y
+con filtros.
+
+### ⏭ Siguiente: S16
+
+`mode=new` completo: el formulario de serie ya escribe, auto-numeración de
+edifil, modo fila rápida y bucle «Create another».
 

@@ -122,6 +122,7 @@
     pagination: true,
     paginationMode: "remote",
     paginationSize: config.pageSize,
+    paginationInitialPage: config.initialPage || 1,
     paginationCounter: "rows",
     sortMode: "remote",
     layout: "fitDataStretch",
@@ -160,6 +161,25 @@
   };
 
   table.on("dataLoaded", updateCount);
+
+  /* Coming back from a commit: the series that was just saved is selected and
+   * scrolled into view, so the user does not have to hunt for it. */
+  if (config.focus) {
+    let focused = false;
+    table.on("dataLoaded", () => {
+      if (focused) {
+        return;
+      }
+      const row = table.getRow(config.focus);
+      if (!row) {
+        return;
+      }
+      row.select();
+      row.getElement().classList.add("dd-row-focus");
+      row.getElement().scrollIntoView({ block: "center" });
+      focused = true;
+    });
+  }
 
   /** Reloads the grid with the filters currently in the form. */
   const reload = () => {

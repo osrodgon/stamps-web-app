@@ -738,6 +738,130 @@ kbd {
   color: var(--dd-ink);
 }
 
+/* --- Review panel ------------------------------------------------------
+ * A side drawer, not a modal: the grid behind it has to stay readable while
+ * the user compares what the panel says with the row it talks about.
+ */
+.dd-review {
+  position: fixed;
+  top: var(--dd-topbar-height);
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  background: var(--dd-surface);
+  border-left: 1px solid var(--dd-line);
+  box-shadow: -8px 0 24px rgba(20, 25, 35, 0.08);
+}
+
+.dd-review[hidden] {
+  display: none;
+}
+
+.dd-review-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-review-close {
+  margin-left: auto;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--dd-muted);
+  cursor: pointer;
+}
+
+.dd-review-close:hover {
+  color: var(--dd-ink);
+}
+
+.dd-review-body {
+  flex: 1;
+  padding: 10px 14px;
+  overflow: auto;
+}
+
+.dd-review-group {
+  margin-bottom: 14px;
+}
+
+.dd-review-model {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--dd-soft);
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.dd-review-item {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-review-name {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.dd-review-diff {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.dd-review-field {
+  min-width: 84px;
+  color: var(--dd-muted);
+}
+
+.dd-review-from {
+  color: var(--dd-soft);
+  text-decoration: line-through;
+}
+
+.dd-review-arrow {
+  color: var(--dd-soft);
+}
+
+.dd-review-error {
+  margin-top: 4px;
+  color: var(--dd-red);
+  font-size: 11.5px;
+}
+
+.dd-review-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
+.dd-review-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* The row the workbench lands on after a commit. */
+.dd-row-focus,
+.dd-row-focus .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
 .dd-btn:disabled {
   opacity: 0.45;
   cursor: default;
