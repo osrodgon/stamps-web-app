@@ -1135,6 +1135,141 @@ kbd {
   margin-left: auto;
 }
 
+/* --- Reference tables --------------------------------------------------
+ *
+ * One screen for eight tables: the tabs are the registry, the cards are how
+ * many rows each holds, and the grid is the same one everywhere.
+ */
+
+.dd-page-hint {
+  margin: 0 0 14px;
+}
+
+.dd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.dd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+  color: var(--dd-ink);
+  text-decoration: none;
+}
+
+.dd-card:hover {
+  border-color: var(--dd-navy);
+}
+
+.dd-card-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--dd-soft);
+}
+
+.dd-card-value {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-lookup-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.dd-lookup-tab {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--dd-line);
+  border-radius: 999px;
+  background: var(--dd-surface);
+  color: var(--dd-ink);
+  text-decoration: none;
+}
+
+.dd-lookup-tab:hover {
+  border-color: var(--dd-navy);
+}
+
+.dd-lookup-tab-active {
+  background: var(--dd-navy);
+  border-color: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-lookup-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Delete is the last resort of a row nobody points at: the styling keeps it
+ * quieter than the merge, which is what the screen is for. */
+.dd-row-delete {
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--dd-red-soft);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-red);
+  cursor: pointer;
+}
+
+.dd-row-delete:hover {
+  background: var(--dd-red-soft);
+}
+
+.dd-dialog-wide {
+  width: 520px;
+}
+
+.dd-merge-rows {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dd-merge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+}
+
+.dd-merge-row:has(input:checked) {
+  border-color: var(--dd-navy);
+  background: #f7f9fc;
+}
+
+.dd-merge-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dd-merge-row .dd-hint {
+  margin-left: auto;
+  text-align: right;
+}
+
 /* --- Login ------------------------------------------------------------- */
 
 .dd-login-body {

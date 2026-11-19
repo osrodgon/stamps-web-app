@@ -1,0 +1,23 @@
+{% extends "datadesk/base.html" %}
+{% load i18n %}
+
+{% block title %}DataDesk — {% translate "Reference tables" %}{% endblock %}
+
+{% block breadcrumbs %}<b>{% translate "Reference tables" %}</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page">
+    <p class="dd-hint dd-page-hint">
+      {% translate "The lists every series points at. Rename a row here, or merge two that say the same thing." %}
+    </p>
+
+    <div class="dd-cards">
+      {% for card in cards %}
+        <a class="dd-card" href="{{ card.url }}">
+          <span class="dd-card-label">{{ card.label }}</span>
+          <span class="dd-card-value">{{ card.rows }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

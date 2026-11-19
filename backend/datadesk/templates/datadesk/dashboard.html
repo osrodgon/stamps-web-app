@@ -11,6 +11,9 @@
     <p class="dd-hint">
       {% blocktranslate %}Internal database maintenance. The workbench, the issue workspace and the lookup admin arrive in the next steps.{% endblocktranslate %}
     </p>
-    <p><a class="dd-btn dd-btn-dark" href="{% url 'datadesk:issues' %}">{% translate "Open the issues workbench" %}</a></p>
+    <p class="dd-actions">
+      <a class="dd-btn dd-btn-dark" href="{% url 'datadesk:issues' %}">{% translate "Open the issues workbench" %}</a>
+      <a class="dd-btn dd-btn-ghost" href="{% url 'datadesk:lookups' %}">{% translate "Reference tables" %}</a>
+    </p>
   </section>
 {% endblock %}

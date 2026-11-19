@@ -15,7 +15,6 @@ from django.templatetags.static import static
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import ngettext
 from django.views.generic import DetailView, TemplateView
 
 from colors_api.models import Color
@@ -24,6 +23,7 @@ from datadesk.palette import tone_for
 from datadesk.registry import LOOKUPS
 from datadesk.rules import series_year_bounds
 from datadesk.service import Issue, issue_queryset, stamp_rows
+from datadesk.texts import plural_forms
 from years_api.models import Year
 
 STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
@@ -530,11 +530,11 @@ def workspace_config(
         # number into the form it was given, so Spanish and English keep their
         # own agreement.
         config["plurals"] = {
-            "changes": _plural_forms("%(count)s change", "%(count)s changes"),
-            "recover": _plural_forms(
+            "changes": plural_forms("%(count)s change", "%(count)s changes"),
+            "recover": plural_forms(
                 "%(count)s saved change", "%(count)s saved changes"
             ),
-            "commit": _plural_forms(
+            "commit": plural_forms(
                 "Commit %(count)s change", "Commit %(count)s changes"
             ),
         }
@@ -653,15 +653,6 @@ def field_labels() -> dict[str, dict[str, str]]:
             if "patch" in column
         },
     }
-
-
-def _plural_forms(one: str, other: str) -> dict[str, str]:
-    """Returns the two translated templates the script fills with the number.
-
-    ``ngettext`` resolves which form belongs to each count, so the browser does
-    not need a plural rule; it only replaces ``%(count)s``.
-    """
-    return {"one": str(ngettext(one, other, 1)), "other": str(ngettext(one, other, 2))}
 
 
 def _amount(value: Any) -> str:

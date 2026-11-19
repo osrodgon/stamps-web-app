@@ -103,7 +103,7 @@ el mockup ya están corregidos con esta decisión.
 | S16 | `mode=new` completo (auto-numeración, fast row, bucle) | S11, S14 | L | **sí, tercer hito** | ✅ 2026-11-19 |
 | S17 | Clonar serie + borrar con preview de dependencias | S12 | M | sí | ✅ 2026-11-19 |
 | S18 | Crear un lookup desde el workspace | S12, S14 | M | sí | ✅ 2026-11-19 |
-| S19 | Pantalla de lookups + merge | S7, S12 | M | sí | — |
+| S19 | Pantalla de lookups + merge | S7, S12 | M | sí | ✅ 2026-11-19 |
 | S20 | Dashboard + colas "needs attention" | S8 | S | sí | — |
 | S21 | Activity log + revertir commit | S6, S12 | M | sí | — |
 | S22 | Teclado, i18n final, tests, limpieza | todas | M | sí | — |
@@ -793,70 +793,53 @@ creada aparece en el panel de revisión con su etiqueta.
 
 **Depende de**: S7, S12.
 
-Existen 9 tablas de lookup; **8 entran en DataDesk** (`ConditionType` se queda en
-el admin porque solo la usan las colecciones de usuario). Una sola plantilla
-para las 8, sin una vista por tabla.
+Las ocho tablas de lookup entran en DataDesk (`ConditionType` se queda en el
+admin porque solo la usan las colecciones de usuario) y comparten **una**
+plantilla, un grid y cuatro operaciones, porque `registry.py` ya describe cada
+una: modelo, columna que la nombra y relaciones que apuntan a ella.
 
-- `datadesk/registry.py` describe cada lookup sin código repetido:
-
-```python
-LOOKUPS = {
-  "year":    {"model": Year,    "name_field": "year", "kind": int,
-              "reverse": "issues",  "fk_on": ("issues_api.Issue", "year")},
-  "color":   {"model": Color,   "name_field": "name", "kind": str, "m2m": ("stamps_api.Stamp", "colors")},
-  "artist":  {"model": Artist,  "name_field": "name", "kind": str,
-              "reverse": "issues",  "fk_on": ("issues_api.Issue", "artist")},
-  ...
-}
-```
-
-- **Contadores de uso en una sola query**: cada entrada lleva el
-  `related_name` inverso (`issues`, `stamps`), así que el grid es
-  `Model.objects.annotate(usage=Count(reverse))` paginado. Nunca un `count()`
-  por fila.
-- **Renombrar** inline con el contador como preview ("usado por 143 sellos").
-  Si el nombre nuevo ya existe, `IntegrityError` → **409 con {"error":
-  "duplicate_name", "existing_id": id}** y la UI ofrece fusionar, que es lo que
-  el usuario quería el 90% de las veces.
+- `/datadesk/lookups/` indexa las ocho con su número de filas; `/datadesk/
+  lookups/<key>/` es el grid, con pestañas para las demás.
+- **Contadores de uso anotados**: un `Count` por relación, con el accesor inverso
+  sacado del campo del modelo (`Issue.artist` ya dice `issues`), `distinct=True`
+  y sumados en Python. Una página de 50 filas cuesta **dos** consultas (el
+  `count` de la paginación y la página), nunca una por fila.
+- **Renombrar** inline; un nombre que ya existe devuelve **409
+  `{error: "duplicate_name", existing_id, existing_name}`** y la pantalla abre el
+  diálogo de fusión: la fila editada es el origen y la que ya tenía el nombre es
+  la que se queda. Es lo que el usuario quería el 90% de las veces.
 - **Fusionar** (`POST /datadesk/lookups/merge`,
-  `{table, from_id, to_id, keep_name_from: "a"|"b"}`), en una transacción. El
-  diálogo muestra los dos nombres con un selector de **qué nombre se queda**, así
-  que el caso "el bueno es el de B" no obliga a renombrar antes:
-  - **FKs** (`country`, `artist`, `printer`, `paper_type`, `print_type`,
-    `stamp_type`): un `update(fk=to)` — sin instanciar 2.540 objetos — y además
-    `.update(updated_at=timezone.now())`, porque `auto_now` **no** se dispara con
-    `update()` y sin eso el chequeo de conflicto de S12 se queda ciego.
-  - **`colors` (M2M)**: como un sello puede tener los dos colores, se resuelve
-    por la tabla intermedia y no con `.set()`: se insertan los pares que faltan
-    (`bulk_create(..., ignore_conflicts=True)`) y después se borran las filas del
-    color origen. Sin duplicados y sin depender de que `.add()` ignore
-    conflictos, que cambió entre versiones de Django.
-  - **`year`**: igual que un FK, pero es `CASCADE`; fusionar dos años mueve sus
-    series y no borra ninguna.
-  - Se borra el origen, y la auditoría es **una fila** `operation="merge"` con
-    `before={lookup: B, refs: n}` y `after={lookup: A, refs: m}`, no 143 filas
-    de ruido.
-  - Si `keep_name_from="b"`, el orden importa y es justo este: mover
-    referencias → borrar B (eso libera su nombre, que es `unique`) → renombrar A
-    con el nombre de B. Al revés choca contra la constraint. Un `IntegrityError`
-    en este último paso revierte la transacción entera y devuelve 409.
-  - **Un merge no es reversible** (decisión del usuario): la auditoría guarda el
-    recuento, no los ids movidos, así que S21 rechaza revertir cualquier commit
-    que contenga un `merge`. La pantalla lo advierte antes de confirmar y el
-    backup es la red de seguridad.
-- **Borrar** un lookup solo si `usage == 0` (se resalta en el grid); con uso,
-  la única vía es fusionar.
-- `Year`: acción "crear los próximos 10 años" (`get_or_create` en bucle).
+  `{table, from_id, to_id, keep_name_from: "a"|"b"}`) en una transacción, con un
+  diálogo que enseña las dos filas y **deja elegir qué nombre se queda** (`a` =
+  el de la que sobrevive, `b` = el de la que desaparece), así el caso «el bueno
+  es el de la otra» no obliga a renombrar antes:
+  - **FKs**: un `update(fk=to)` y `updated_at` explícito, porque `auto_now` no se
+    dispara con `update()` y el chequeo de conflicto de S12 se quedaría ciego.
+  - **`colors` (M2M)**: un sello puede tener los dos colores, así que se rellena
+    la tabla intermedia par a par (`bulk_create(..., ignore_conflicts=True)`) y
+    después se borran las filas del color origen. Sin duplicados y sin depender
+    de que `.add()` ignore conflictos, que cambió entre versiones de Django. Los
+    sellos afectados reciben también su `updated_at`.
+  - **`year`**: como un FK — la cascada no se dispara porque se mueven las series
+    con un `update()`, no se borran.
+  - Orden con `keep_name_from="b"`: mover referencias → borrar el origen (eso
+    libera su nombre `unique`) → renombrar el superviviente. Al revés choca.
+  - Auditoría: **una** fila `operation="merge"` con `before={lookup, refs}` y
+    `after={lookup, refs}`, no 143 filas de ruido. No es reversible (S21 lo
+    rechazará) y el diálogo lo dice antes de confirmar.
+- **Borrar** solo si `usage == 0`; con uso responde 409 `{error: "in_use",
+  usage}` y el grid ni siquiera pinta el botón, pinta el motivo.
+- **`Year`**: acción «crear los 10 años siguientes» con `get_or_create` en bucle,
+  sin auditar (el `Year` implícito de S12 tampoco se audita).
 
 **Aceptación**: fusionar dos artistas mueve exactamente N referencias, deja 0
 filas apuntando al origen y borra el origen; fusionar dos colores donde un sello
 tiene ambos deja **una** fila en la tabla intermedia y ninguna duplicada;
-fusionar años mueve las series; `keep_name_from="b"` deja el nombre de B en el
-registro superviviente y no choca con `unique`; renombrar a un nombre existente
-devuelve 409 con el id del existente; borrar un lookup con uso devuelve 409; el
-contador del grid coincide con el número real de referencias (una query,
-comprobado con `assertNumQueries`); todo queda en auditoría, y un commit con
-`merge` queda marcado como no reversible y S21 lo rechaza con el motivo.
+fusionar años mueve las series; `keep_name_from="b"` deja el nombre del origen en
+el registro superviviente y no choca con `unique`; renombrar a un nombre
+existente devuelve 409 con el id del existente; borrar un lookup con uso devuelve
+409; el contador del grid coincide con el número real de referencias; todo queda
+en auditoría y un commit con `merge` queda marcado como no reversible.
 
 ---
 
@@ -2155,8 +2138,68 @@ mismo nombre no es cambio, nombre desconocido que **para** el commit con su
 aviso y su anillo, `+` que crea y envía el id en el change set, y el panel de
 revisión con `Artist · Pepito` y su «ya guardada»).
 
-### ⏭ Siguiente: S19
+### S19 — Pantalla de lookups y fusión (2026-11-19)
 
-Pantalla de lookups (una plantilla para los ocho), recuentos de uso y fusión de
-duplicados.
+`datadesk/lookups.py` (servicio), `datadesk/views/lookups.py` (pantalla y
+endpoints), dos plantillas y el JS de la pantalla:
+
+- **`datadesk/lookups.py`**: `usage_counts()` (un `Count` por relación, accesor
+  sacado del campo, `distinct=True`), `lookup_page()` (dos consultas, página
+  clavada), `rename_lookup()`, `delete_lookup()`, `merge_lookups()` y
+  `create_next_years()`.
+- **`views/lookups.py`**: índice con las ocho tablas y su tamaño, la tabla con
+  pestañas, `rows` (paginado al estilo Tabulator), `rename`, `delete`, `merge` y
+  `years/next`. `lookup_config()` manda URLs, columnas y **todos** los textos.
+- **`lookups.js`**: grid remoto, edición inline del nombre, fusión de las dos
+  filas seleccionadas, borrado con su motivo cuando está en uso.
+
+Decisiones tomadas al implementar:
+
+- **Dos consultas por página, no una**: el plan decía «una query», y son dos —el
+  `count` que necesita la paginación y la página en sí—. Lo que el plan quería
+  evitar era el `count()` por fila, y eso está garantizado: el test lo fija en
+  dos con `CaptureQueriesContext`.
+- **El accesor inverso se deduce del campo**, no de una segunda tabla de nombres:
+  `Issue.artist` ya sabe que es `issues`. Añadir un lookup nuevo al registro no
+  obliga a tocar nada más.
+- **Un nombre repetido es una oferta, no un error**: el 409 lleva
+  `existing_id`/`existing_name` y la pantalla abre el diálogo de fusión con la
+  fila editada como origen y la que ya tenía el nombre como superviviente — que
+  es literalmente lo que el usuario estaba pidiendo al escribir ese nombre.
+- **`keep_name_from` conserva las letras del plan**: `a` es el nombre de la fila
+  que sobrevive y `b` el de la que desaparece. La interfaz lo traduce a dos radios
+  sobre los nombres, no a letras.
+- **El orden del `keep_name_from="b"` es el del plan y no es negociable**: mover →
+  borrar el origen → renombrar. El renombrado va en su propio savepoint para que
+  un `IntegrityError` se convierta en 409 y la transacción entera se caiga.
+- **`updated_at` a mano también en los sellos** cuyos colores cambian: el plan lo
+  pedía para las FKs y la misma razón vale para la M2M — el chequeo de conflicto
+  de S12 compara esa columna.
+- **El botón de borrar no se pinta cuando hay uso**: se pinta el motivo («En uso:
+  fusiónala con otra fila»). Un botón desactivado sin explicación es lo que hizo
+  que el `↺ Use last issue` pareciera muerto en S11.
+- **La pantalla no crea filas**: crear vive donde se necesita (el workspace de
+  S18) y los años tienen su acción propia. Añadir un «nueva fila» aquí sería un
+  segundo sitio que hace lo mismo con otro nombre.
+- **El sobre JSON y los plurales se compartieron**: `views/envelope.py`
+  (`JsonPostView`, `written()`, `failure()`, `read_json()`) lo usan ahora el
+  workspace y las lookups, y `texts.plural_forms()` sustituye al helper privado
+  de `workspace.py`. Dos copias del mismo sobre acababan divergiendo.
+- **El dashboard enlaza la pantalla**: sin enlace, las lookups solo se alcanzaban
+  escribiendo la URL. S20 hará el dashboard de verdad y la pondrá en su sitio.
+
+Verificado: `pytest datadesk` → **389 en verde**; suite completa **1405 en
+verde** · catálogos recompilados (las etiquetas de la pantalla, los avisos de uso
+y los cuatro plurales) · `lookups.js` no contiene una sola cadena visible: los
+textos y los plurales llegan en la configuración · un test comprueba que **todos
+los `getElementById` del script existen en la página**, porque un id renombrado
+deja la pantalla rota en silencio · **40 tests nuevos** (6 del grid —recuentos,
+búsqueda, dos consultas por página—, 6 de renombrar, 2 de borrar, 11 de fusión
+—FK, M2M con un sello que tiene los dos colores, años con `CASCADE`, el orden de
+`keep_name_from="b"` y la fila única de auditoría—, 2 de los años y 13 de
+contrato HTTP).
+
+### ⏭ Siguiente: S20
+
+Dashboard con las colas «needs attention» sobre `missing_data_report()`.
 
