@@ -271,14 +271,6 @@ msgid "series values describe the whole set, stamp values the stamp"
 msgstr "series values describe the whole set, stamp values the stamp"
 
 #: datadesk/templates/datadesk/issue_workspace.html
-msgid "Nothing is saved yet: this screen does not write to the database."
-msgstr "Nothing is saved yet: this screen does not write to the database."
-
-#: datadesk/templates/datadesk/issue_workspace.html
-msgid "Shift+Enter does not save yet."
-msgstr "Shift+Enter does not save yet."
-
-#: datadesk/templates/datadesk/issue_workspace.html
 msgid "This year does not exist yet: it will be created when the series is saved."
 msgstr "This year does not exist yet: it will be created when the series is saved."
 
@@ -374,3 +366,59 @@ msgid "Commit %(count)s change"
 msgid_plural "Commit %(count)s changes"
 msgstr[0] "Commit %(count)s change"
 msgstr[1] "Commit %(count)s changes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter creates the series."
+msgstr "Shift+Enter creates the series."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create series"
+msgstr "Create series"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Open the series"
+msgstr "Open the series"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create another"
+msgstr "Create another"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fill series"
+msgstr "Fill series"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fast row"
+msgstr "Fast row"
+
+#: datadesk/views/workspace.py
+msgid "The series was created."
+msgstr "The series was created."
+
+#: datadesk/views/workspace.py
+msgid "The series was not created."
+msgstr "The series was not created."
+
+#: datadesk/views/workspace.py
+msgid "Create another in %(year)s"
+msgstr "Create another in %(year)s"
+
+#: datadesk/views/workspace.py
+msgid "Stamp %(row)s: %(message)s"
+msgstr "Stamp %(row)s: %(message)s"
+
+#: datadesk/views/workspace.py
+msgid "Type the first code to number the rest."
+msgstr "Type the first code to number the rest."
+
+#: datadesk/views/workspace.py
+msgid "The first %(column)s code has no number to continue from."
+msgstr "The first %(column)s code has no number to continue from."
+
+#: datadesk/views/workspace.py
+msgid "Remove this row"
+msgstr "Remove this row"
+
+#: datadesk/views/workspace.py
+msgid "The year comes from the date."
+msgstr "The year comes from the date."

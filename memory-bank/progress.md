@@ -178,7 +178,36 @@
       commit. 14 tests added; 269 datadesk and 1285 backend tests green; the jsdom
       harness is at 42 checks and caught a real bug (`refusal()` was given the
       errors object instead of the response body, so every refusal showed the
-      generic text). Next: S16 (`mode=new` completo)
+      generic text).
+- [x] **S16 — `mode=new` completo** (2026-11-19, third milestone): the form
+      writes. Create posts the series and its rows to `/datadesk/issues/create`
+      in one transaction; empty rows are dropped so `rows=4` does not force four
+      stamps; `Shift+Enter` creates too. After a clean create the workspace stops
+      editing (fields and grid hidden) and offers `Open the series` plus
+      `Create another in <year>`, which is `/datadesk/issues/new/?from=<pk>` —
+      the server pre-fills the form, so `mode=new` still stores nothing in
+      `localStorage`. The loop repeats the classification and perforation of the
+      series just written but clears name, date, print run, market values and
+      free text. `Fill series` moves the letter (`2744a → 2744b`) or the number
+      (`0069 → 0070`) and refuses a first code with no digits; `Ctrl+D`
+      duplicates the row under the cursor; a TSV paste fills the visible
+      columns from the caret. Fast row (on by default) keeps edifil, fesofi,
+      face value and colours. The colours get their `list` multi-select editor
+      in new mode only (`autocomplete` disables `multiselect` in Tabulator 6).
+      15 tests added; 285 datadesk and 1301 backend tests green; new-mode jsdom
+      harness at 37 checks. First real use added three fixes: a `×` column to
+      remove a row (undoable with `Ctrl+Z`, since the row and its position go
+      into the history), colour cells that paint one chip plus `+N` and keep the
+      full list in the title instead of being cut, and `Fill series` numbering
+      Edifil and Fesofi together — each column planned before any is written, an
+      empty one skipped and a stuck one named. A refusal now also rings the
+      field or the cell the server named (and turns the fast row off if that
+      column was hidden), not just the whole form or row; the mark clears on the
+      next edit. A new series of the current year now starts dated today and the
+      year follows the date (read-only while a date is set, freed when it is
+      cleared); an older series still starts undated rather than inventing a
+      day. 5 tests added; 290 datadesk and 1306 backend tests green. Next: S17
+      (clone and delete with a dependency preview)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

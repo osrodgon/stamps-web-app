@@ -3,19 +3,24 @@
 S10 renders what the database holds. S11 adds the dry ``mode=new`` on the same
 template: the series form, the row generator that lives entirely in the browser
 and the guards that stop the user from losing work that cannot be recovered.
-Nothing here writes: the write core arrives in S12.
+S16 makes that form write: the page posts the series and its rows to
+``/datadesk/issues/create`` and offers the "Create another" loop, which is a
+fresh ``mode=new`` page prefilled by the server from the series just saved.
 """
 from dataclasses import dataclass
 from typing import Any
 
 from django.db.models import QuerySet
 from django.templatetags.static import static
+from django.utils import timezone
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 from django.views.generic import DetailView, TemplateView
 
+from colors_api.models import Color
 from datadesk.mixins import DataDeskAccessMixin
+from datadesk.palette import tone_for
 from datadesk.registry import LOOKUPS
 from datadesk.rules import series_year_bounds
 from datadesk.service import Issue, issue_queryset, stamp_rows
@@ -124,6 +129,41 @@ run and market values belong to a set: copying any of those would write one
 series' numbers into another.
 """
 
+REPEAT_FIELDS: tuple[str, ...] = (
+    "country",
+    "year",
+    "stamp_type",
+    "print_type",
+    "printer",
+    "artist",
+    "paper_type",
+    "perforation",
+)
+"""What the "Create another" loop keeps from the series just written.
+
+It goes further than ``PREFILL_FIELDS`` on purpose, and the difference is the
+source: the last issue may be from months ago, while this one was saved seconds
+ago, so the next series almost certainly belongs to the same emission and shares
+its classification and perforation. What identifies a series (name, date) and
+what belongs to its set (print run, market values, free text) is cleared, because
+carrying those over writes one series' numbers into another.
+"""
+
+FAST_FIELDS: tuple[str, ...] = ("edifil", "fesofi", "face_value", "colors")
+"""The columns the fast row keeps: what a new stamp really needs.
+
+Everything else is editable in ``mode=edit`` once the series exists, so typing
+eight stamps does not mean tabbing through five columns of nulls.
+"""
+
+FILL_FIELDS: tuple[str, ...] = ("edifil", "fesofi")
+"""The catalogue codes ``Fill series`` numbers.
+
+Both are sequences over the same set — Edifil and Fesofi number it differently —
+so the button advances whichever of the two has a first code and leaves the
+other alone. A series with only one of them is the normal case, not an error.
+"""
+
 DEFAULT_NEW_ROWS = 4
 MIN_NEW_ROWS = 1
 MAX_NEW_ROWS = 100
@@ -180,11 +220,13 @@ class IssueWorkspaceView(DataDeskAccessMixin, DetailView):
 
 
 class IssueNewView(DataDeskAccessMixin, TemplateView):
-    """Renders the dry ``mode=new`` workspace.
+    """Renders ``mode=new``, which now creates the series it shows.
 
-    Nothing is sent to the server: the form is not submitted and the rows live
-    in the browser, so reloading discards the draft. The ``beforeunload`` guard
-    is the only net, by decision: a new series is finished now or started again.
+    Two ways in, and they only differ in what the form starts with: ``?from=<id>``
+    is the "Create another" loop and repeats the series just saved, while the
+    plain URL copies the country and year of the last row. Nothing is kept in the
+    browser: reloading discards the draft, and the loop works because the server
+    renders the next page, not because the client remembered anything.
     """
 
     template_name = "datadesk/issue_workspace.html"
@@ -192,17 +234,75 @@ class IssueNewView(DataDeskAccessMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Adds the form, the prefill and a grid with no rows."""
         context = super().get_context_data(**kwargs)
-        prefill = last_issue_prefill()
+        last = last_issue_prefill()
+        source = self._source_issue()
+        # The form starts from the series just saved when the loop asks for it,
+        # and from the last issue otherwise. The button always means "use the
+        # last issue", so it carries its own values and does not follow the
+        # loop: the two are the same only because the loop usually continues
+        # the row just written.
+        values = repeat_values(source) if source is not None else last
+        values = with_default_date(values or {})
 
         context.update(
             mode="new",
-            prefill=prefill,
-            form_fields=series_form_fields(prefill),
+            prefill=last,
+            form_fields=series_form_fields(values),
             metadata=[],
             stamp_count=0,
-            config=workspace_config([], mode="new", prefill=prefill),
+            config=workspace_config([], mode="new", prefill=last),
         )
         return context
+
+    def _source_issue(self) -> Issue | None:
+        """Returns the series the loop continues, if the URL points at one.
+
+        An unknown or unreadable id is not an error: it is a stale link, and the
+        page falls back to the last issue instead of refusing to open.
+        """
+        raw = self.request.GET.get("from", "").strip()
+        if raw == "":
+            return None
+        try:
+            pk = int(raw)
+        except ValueError:
+            return None
+        return issue_queryset().filter(pk=pk).first()
+
+
+def with_default_date(values: dict[str, Any]) -> dict[str, Any]:
+    """Starts a current-year series with today's date.
+
+    The date is what decides the year in the form, so an empty one would make the
+    user type the year twice; a series that comes out now is dated now. A series
+    from another year keeps the date empty on purpose: inventing a day is worse
+    than leaving it blank, and that is exactly the inheritance the plan warned
+    about. The year stays the only required field of the two.
+    """
+    if values.get("date"):
+        return values
+    year = values.get("year")
+    if year is not None and year != timezone.localdate().year:
+        return values
+    return {**values, "date": timezone.localdate().isoformat()}
+
+
+def repeat_values(issue: Issue) -> dict[str, Any]:
+    """Returns the values the loop carries from the series just created.
+
+    ``REPEAT_FIELDS`` explains which ones and why; the rest comes out empty
+    because the form's default already is empty, and an empty field is what the
+    writer turns into ``NULL``.
+    """
+    values: dict[str, Any] = {}
+    for name in REPEAT_FIELDS:
+        if name == "year":
+            values["year"] = issue.year.year
+        elif name == "perforation":
+            values["perforation"] = issue.perforation or ""
+        else:
+            values[name] = getattr(issue, f"{name}_id") or ""
+    return values
 
 
 def last_issue_prefill() -> dict[str, Any] | None:
@@ -237,8 +337,12 @@ def series_form_fields(prefill: dict[str, Any] | None = None) -> list[dict[str, 
         field = dict(definition)
         field["value"] = values.get(field["name"], "")
         if field["kind"] == "year":
-            field["min"], field["max"] = series_year_bounds()
+            low, high = series_year_bounds()
+            field["min"], field["max"] = low, high
             field["options"] = year_suggestions()
+        elif field["kind"] == "date":
+            low, high = series_year_bounds()
+            field["min"], field["max"] = f"{low}-01-01", f"{high}-12-31"
         elif "lookup" in field:
             field["options"] = lookup_options(field["lookup"], field["value"])
         fields.append(field)
@@ -329,10 +433,11 @@ def workspace_config(
     the script holds no interface text, and each row gets the URL of its picture
     so the grid never builds one.
 
-    ``mode=new`` adds the three element ids and the row bounds the script needs:
-    it reads them instead of hardcoding names the template owns. ``mode=edit``
-    adds the baseline of the series row and the texts the commit bar shows, so
-    the script still holds no interface text.
+    ``mode=new`` adds the element ids the script reads instead of hardcoding
+    names the template owns, the row bounds, the fast-row columns and the colour
+    options; the create URL and its texts travel too, so the script still holds
+    no interface text. ``mode=edit`` adds the baseline of the series row and the
+    texts the commit bar shows, with the same rule.
     """
     for row in rows:
         row["image_url"] = (
@@ -396,11 +501,63 @@ def workspace_config(
             nameInput="field-name",
             rowsInput="row-count",
             countBadge="stamp-count",
+            fillButton="fill-series",
+            fastToggle="fast-row",
+            createButton="create-button",
+            createStatus="create-status",
+            createdBar="created-bar",
+            createdText="created-text",
+            createdOpen="created-open",
+            createdAgain="created-again",
             rowIdPrefix=NEW_ROW_PREFIX,
             rows=NewRowSettings().as_dict(),
             prefill=prefill,
+            fastRow={"fields": list(FAST_FIELDS), "on": True},
+            fillColumns=fill_columns(),
+            colours=colour_options(),
+            fieldLabels=field_labels(),
+            createUrl=reverse("datadesk:issue_create"),
+            newUrl=reverse("datadesk:issue_new"),
+            texts={
+                "saved": str(_("The series was created.")),
+                "rejected": str(_("The series was not created.")),
+                "saving": str(_("Saving…")),
+                "fillNeedsFirst": str(
+                    _("Type the first code to number the rest.")
+                ),
+                "fillImpossible": str(
+                    _("The first %(column)s code has no number to continue from.")
+                ),
+                "createAnother": str(_("Create another in %(year)s")),
+                "rowRefused": str(_("Stamp %(row)s: %(message)s")),
+                "removeRow": str(_("Remove this row")),
+                "yearFromDate": str(_("The year comes from the date.")),
+            },
         )
     return config
+
+
+def fill_columns() -> list[dict[str, Any]]:
+    """Returns the columns ``Fill series`` numbers, with the labels they show.
+
+    The names and titles come from the grid definitions, so the script never
+    hardcodes a column and a message can name the column it refused.
+    """
+    titles = {str(column["field"]): str(column["title"]) for column in STAMP_COLUMNS}
+    return [{"field": field, "label": titles[field]} for field in FILL_FIELDS]
+
+
+def colour_options() -> list[dict[str, Any]]:
+    """Returns the colours a stamp may have, for the cell's multiple choice.
+
+    The tone travels with each option so the chip the grid paints is the same
+    pastel it paints in ``mode=edit``, where the row already carries the tone
+    and the script knows no colour names.
+    """
+    return [
+        {"value": color.pk, "label": color.name, "tone": tone_for(color.name)}
+        for color in Color.objects.order_by("name")
+    ]
 
 
 def field_labels() -> dict[str, dict[str, str]]:

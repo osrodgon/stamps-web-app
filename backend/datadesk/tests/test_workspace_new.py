@@ -12,8 +12,15 @@ import pytest
 from django.test import Client
 from django.utils import timezone
 
+from artists_api.models import Artist
+from colors_api.models import Color
 from countries_api.models import Country
 from issues_api.models import Issue
+from paper_types_api.models import PaperType
+from print_types_api.models import PrintType
+from printers_api.models import Printer
+from stamp_types_api.models import StampType
+from stamps_api.models import Stamp
 from years_api.models import Year
 
 NEW_URL = "/datadesk/issues/new/"
@@ -42,6 +49,15 @@ def staff_client(mounted, django_user_model) -> Client:
     client = Client()
     client.login(username="curator", password="s3cret-pass")
     return client
+
+
+def form_values(response) -> dict:
+    """Returns the values the series form was rendered with."""
+    return {
+        field["name"]: field["value"]
+        for field in response.context["form_fields"]
+        if field["value"] != ""
+    }
 
 
 def config_of(response) -> dict:
@@ -87,11 +103,150 @@ class TestNewSeriesPage:
         assert "Delete" not in content
         assert "Use last issue" in content
 
-    def test_it_says_nothing_is_saved(self, staff_client, series) -> None:
+    def test_it_says_what_the_shortcut_does(self, staff_client, series) -> None:
         content = staff_client.get(NEW_URL).content.decode()
 
-        assert "Nothing is saved yet" in content
-        assert "Shift+Enter does not save yet" in content
+        assert "Shift+Enter creates the series." in content
+        assert 'id="create-button"' in content
+
+
+@pytest.mark.django_db
+class TestTheFormWrites:
+    """S16: the screen posts what it shows, and offers the loop afterwards."""
+
+    def test_the_create_endpoint_and_the_loop_url_are_sent(
+        self, staff_client, series
+    ) -> None:
+        config = config_of(staff_client.get(NEW_URL))
+
+        assert config["createUrl"] == "/datadesk/issues/create"
+        assert config["newUrl"] == "/datadesk/issues/new/"
+
+    def test_the_new_controls_are_in_the_page(self, staff_client, series) -> None:
+        content = staff_client.get(NEW_URL).content.decode()
+
+        for element in (
+            "fill-series",
+            "fast-row",
+            "create-button",
+            "create-status",
+            "created-bar",
+            "created-text",
+            "created-open",
+            "created-again",
+        ):
+            assert f'id="{element}"' in content, element
+
+        assert 'id="fast-row" checked' in content
+        assert 'id="created-bar" hidden' in content
+
+    def test_the_element_ids_are_sent(self, staff_client, series) -> None:
+        config = config_of(staff_client.get(NEW_URL))
+
+        assert config["fillButton"] == "fill-series"
+        assert config["fastToggle"] == "fast-row"
+        assert config["createButton"] == "create-button"
+        assert config["createdBar"] == "created-bar"
+
+    def test_the_fast_row_columns_come_from_the_server(
+        self, staff_client, series
+    ) -> None:
+        config = config_of(staff_client.get(NEW_URL))
+
+        assert config["fastRow"] == {
+            "fields": ["edifil", "fesofi", "face_value", "colors"],
+            "on": True,
+        }
+
+    def test_the_colours_travel_with_their_tone(self, staff_client, series) -> None:
+        Color.objects.create(name="Rojo Carmín")
+
+        colours = config_of(staff_client.get(NEW_URL))["colours"]
+
+        assert colours == [
+            {"value": Color.objects.get().pk, "label": "Rojo Carmín", "tone": "red"}
+        ]
+
+    def test_the_texts_come_from_the_server(self, staff_client, series) -> None:
+        texts = config_of(staff_client.get(NEW_URL))["texts"]
+
+        assert set(texts) == {
+            "saved",
+            "rejected",
+            "saving",
+            "fillNeedsFirst",
+            "fillImpossible",
+            "createAnother",
+            "rowRefused",
+            "removeRow",
+            "yearFromDate",
+        }
+        assert texts["createAnother"] == "Create another in %(year)s"
+        assert "%(column)s" in texts["fillImpossible"]
+        assert texts["removeRow"] == "Remove this row"
+
+    def test_fill_series_numbers_both_catalogues(
+        self, staff_client, series
+    ) -> None:
+        columns = config_of(staff_client.get(NEW_URL))["fillColumns"]
+
+        assert columns == [
+            {"field": "edifil", "label": "Edifil"},
+            {"field": "fesofi", "label": "Fesofi"},
+        ]
+
+    def test_a_refused_field_can_be_named_in_the_users_language(
+        self, staff_client, series
+    ) -> None:
+        labels = config_of(staff_client.get(NEW_URL))["fieldLabels"]
+
+        assert labels["issue"]["name"] == "Name"
+        assert labels["issue"]["year"] == "Year"
+
+    def test_a_payload_shaped_like_the_form_is_created(
+        self, staff_client, series
+    ) -> None:
+        """The browser sends the form's strings; the writer has to take them."""
+        spain = series.country
+        response = staff_client.post(
+            "/datadesk/issues/create",
+            data=json.dumps(
+                {
+                    "issue": {
+                        "year": str(series.year.year),
+                        "name": "Serie nueva",
+                        "country": str(spain.pk),
+                        "stamp_type": str(
+                            StampType.objects.create(name="Conmemorativo").pk
+                        ),
+                        "perforation": "13 1/4",
+                        "total_printed": "500000",
+                        "market_value_mnh": "12.50",
+                    },
+                    "stamps": [
+                        {
+                            "name": "Serie nueva",
+                            "face_value": "6 Pta",
+                            "edifil_code": f"27{index}",
+                            "colors": [
+                                Color.objects.get_or_create(name="Rojo")[0].pk
+                            ],
+                        }
+                        for index in range(3)
+                    ],
+                }
+            ),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+
+        created = Issue.objects.get(name="Serie nueva")
+        assert created.year.year == series.year.year
+        assert created.stamps.count() == 3
+        assert created.stamps.first().colors.count() == 1
 
     def test_the_row_control_uses_the_server_bounds(self, staff_client, series) -> None:
         content = staff_client.get(NEW_URL).content.decode()
@@ -283,8 +438,19 @@ class TestEditModeIsUnchanged:
     ) -> None:
         content = staff_client.get(f"/datadesk/issues/{series.pk}/").content.decode()
 
-        assert "Use last issue" not in content
-        assert 'id="row-count"' not in content
+        for element in (
+            "use-last-issue",
+            "row-count",
+            "fill-series",
+            "fast-row",
+            "create-button",
+            "created-bar",
+        ):
+            assert f'id="{element}"' not in content, element
+
+        assert "colours" not in config_of(
+            staff_client.get(f"/datadesk/issues/{series.pk}/")
+        )
 
 
 @pytest.mark.django_db
@@ -305,3 +471,158 @@ class TestAccess:
         client.login(username="pepe", password="s3cret-pass")
 
         assert client.get(NEW_URL).status_code == 403
+
+
+@pytest.mark.django_db
+class TestTheLoop:
+    """`?from=<id>` is how "Create another" keeps the metadata.
+
+    The loop is a server-rendered page, not a draft: nothing is restored from
+    the browser, which is what lets S11 keep its "no drafts" rule.
+    """
+
+    @pytest.fixture
+    def full_series(self, db) -> Issue:
+        """A series with every field a loop could carry filled in."""
+        return Issue.objects.create(
+            year=Year.objects.create(year=1987),
+            date="1987-05-12",
+            name="Málaga",
+            country=Country.objects.create(name="España"),
+            stamp_type=StampType.objects.create(name="Conmemorativo"),
+            print_type=PrintType.objects.create(name="Offset"),
+            printer=Printer.objects.create(name="FNMT"),
+            artist=Artist.objects.create(name="Anónimo"),
+            paper_type=PaperType.objects.create(name="Estucado"),
+            perforation="13 1/4",
+            total_printed=500_000,
+            market_value_mnh="12.50",
+            market_value_used="3.00",
+            description="Una serie",
+            note="Una nota",
+        )
+
+    def test_the_classification_and_the_year_are_kept(
+        self, staff_client, full_series
+    ) -> None:
+        prefill = form_values(staff_client.get(NEW_URL, {"from": full_series.pk}))
+
+        assert prefill == {
+            "country": full_series.country_id,
+            "year": 1987,
+            "stamp_type": full_series.stamp_type_id,
+            "print_type": full_series.print_type_id,
+            "printer": full_series.printer_id,
+            "artist": full_series.artist_id,
+            "paper_type": full_series.paper_type_id,
+            "perforation": "13 1/4",
+        }
+
+    def test_what_identifies_the_series_is_cleared(
+        self, staff_client, full_series
+    ) -> None:
+        """The name and date identify a series; the figures belong to its set."""
+        prefill = form_values(staff_client.get(NEW_URL, {"from": full_series.pk}))
+
+        for field in (
+            "name",
+            "date",
+            "total_printed",
+            "market_value_mnh",
+            "market_value_used",
+            "description",
+            "note",
+        ):
+            assert field not in prefill, field
+
+    def test_the_form_shows_the_repeated_values(
+        self, staff_client, full_series
+    ) -> None:
+        content = staff_client.get(NEW_URL, {"from": full_series.pk}).content.decode()
+
+        assert f'<option value="{full_series.country_id}" selected>' in content
+        assert 'value="13 1/4"' in content
+        assert 'value="Málaga"' not in content
+
+    def test_an_unknown_source_falls_back_to_the_last_issue(
+        self, staff_client, full_series
+    ) -> None:
+        prefill = form_values(staff_client.get(NEW_URL, {"from": 999_999}))
+
+        assert set(prefill) == {"year", "country"}
+
+    def test_a_source_that_is_not_a_number_is_ignored(
+        self, staff_client, full_series
+    ) -> None:
+        prefill = form_values(staff_client.get(NEW_URL, {"from": "abc"}))
+
+        assert set(prefill) == {"year", "country"}
+
+    def test_the_button_still_means_the_last_issue(
+        self, staff_client, full_series
+    ) -> None:
+        """`?from=` fills the form; it does not redefine the prefill button."""
+        config = config_of(staff_client.get(NEW_URL, {"from": full_series.pk}))
+
+        assert set(config["prefill"]) == {"year", "country"}
+
+    def test_the_loop_page_starts_with_empty_rows(
+        self, staff_client, full_series
+    ) -> None:
+        config = config_of(staff_client.get(NEW_URL, {"from": full_series.pk}))
+
+        assert config["data"] == []
+        assert config["rows"]["default"] == 4
+
+
+@pytest.mark.django_db
+class TestTheDate:
+    """The date is what decides the year, so it starts filled when it can."""
+
+    def test_a_current_year_series_starts_dated(self, staff_client, db) -> None:
+        today = timezone.localdate()
+        Issue.objects.create(
+            year=Year.objects.create(year=today.year), name="De este año"
+        )
+
+        values = form_values(staff_client.get(NEW_URL))
+
+        assert values["date"] == today.isoformat()
+        assert values["year"] == today.year
+
+    def test_an_older_series_keeps_the_date_empty(self, staff_client, db) -> None:
+        """Inventing a day in 1987 is worse than leaving it blank."""
+        Issue.objects.create(year=Year.objects.create(year=1987), name="Antigua")
+
+        values = form_values(staff_client.get(NEW_URL))
+
+        assert "date" not in values
+        assert values["year"] == 1987
+
+    def test_the_loop_dates_a_current_year_series_and_not_an_older_one(
+        self, staff_client, db
+    ) -> None:
+        today = timezone.localdate()
+        current = Issue.objects.create(
+            year=Year.objects.create(year=today.year), name="Reciente"
+        )
+        old = Issue.objects.create(year=Year.objects.create(year=1987), name="Vieja")
+
+        assert (
+            form_values(staff_client.get(NEW_URL, {"from": current.pk}))["date"]
+            == today.isoformat()
+        )
+        assert "date" not in form_values(staff_client.get(NEW_URL, {"from": old.pk}))
+
+    def test_the_date_field_carries_the_bounds(self, staff_client, series) -> None:
+        """Typing 1700 into the date must be refused by the browser too."""
+        content = staff_client.get(NEW_URL).content.decode()
+
+        assert 'id="field-date"' in content
+        assert 'min="1800-01-01"' in content
+        assert f'max="{timezone.localdate().year + 2}-12-31"' in content
+
+    def test_a_fresh_database_starts_dated(self, staff_client, db) -> None:
+        values = form_values(staff_client.get(NEW_URL))
+
+        assert values["date"] == timezone.localdate().isoformat()
