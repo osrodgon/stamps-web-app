@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 
 from countries_api.models import Country
 from datadesk.mixins import DataDeskAccessMixin
-from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters
+from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters, page_of_issue
 from stamp_types_api.models import StampType
 
 COLUMNS: tuple[dict[str, Any], ...] = (
@@ -51,13 +51,19 @@ class WorkbenchView(DataDeskAccessMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         filters = filters_from(self.request)
 
+        # ``focus`` is how the workspace says "the series you just saved is this
+        # one": the page it lives on has to be resolved here, because the grid
+        # pages on the server.
+        focus = _int(self.request, "focus")
+        initial_page = page_of_issue(focus, filters) if focus is not None else 1
+
         context.update(
             filters=filters,
             filter_query=filters.to_query(),
             countries=Country.objects.order_by("name"),
             stamp_types=StampType.objects.order_by("name"),
             page_size=DEFAULT_PAGE_SIZE,
-            config=grid_config(),
+            config=grid_config(focus=focus, initial_page=initial_page),
         )
         return context
 
@@ -88,7 +94,18 @@ def filters_from(request: HttpRequest) -> IssueFilters:
     )
 
 
-def grid_config() -> dict[str, Any]:
+def _int(request: HttpRequest, name: str) -> int | None:
+    """Returns an integer query parameter, or ``None`` when absent or invalid."""
+    raw = request.GET.get(name, "").strip()
+    if raw == "":
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def grid_config(focus: int | None = None, initial_page: int = 1) -> dict[str, Any]:
     """Returns what the JavaScript needs to build the grid.
 
     Titles are resolved here, per request, so they follow the active language.
@@ -101,4 +118,6 @@ def grid_config() -> dict[str, Any]:
         "counterText": str(_("issues")),
         "openText": str(_("Open")),
         "issueUrlPrefix": reverse("datadesk:issues"),
+        "initialPage": initial_page,
+        "focus": focus,
     }

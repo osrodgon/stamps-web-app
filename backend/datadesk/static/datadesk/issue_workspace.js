@@ -108,7 +108,14 @@
     const recoverButton = document.getElementById("recover-button");
     const recoveryDiscard = document.getElementById("recovery-discard");
     const tabNotice = document.getElementById("tab-notice");
+    const reviewButton = document.getElementById("review-button");
+    const reviewPanel = document.getElementById("review-panel");
+    const reviewBody = document.getElementById("review-body");
+    const reviewClose = document.getElementById("review-close");
+    const backupButton = document.getElementById("backup-button");
+    const backupStatus = document.getElementById("backup-status");
     const texts = config.texts || {};
+    const commitLabel = saveButton.textContent;
 
     /** Row key -> model field, and back: the grid names differ from the column. */
     const patchOf = {};
@@ -136,6 +143,10 @@
     let pointer = 0;
 
     const keyOf = (model, id) => model + ":" + id;
+
+    /** The label the editor uses for a field: the server sends the map. */
+    const fieldLabel = (model, field) =>
+      ((config.fieldLabels || {})[model] || {})[field] || field;
 
     const controlOf = (field) =>
       form.querySelector('[name="' + field + '"]');
@@ -197,6 +208,26 @@
       return entry;
     };
 
+    /** What the panel shows for a value: a lookup reads better by its name. */
+    const displayValue = (model, field, value) => {
+      if (value === null || value === undefined || value === "") {
+        return "—";
+      }
+      if (model !== "issue") {
+        return String(value);
+      }
+      const control = controlOf(field);
+      if (control && control.tagName === "SELECT") {
+        const option = Array.from(control.options).find(
+          (item) => item.value === String(value)
+        );
+        if (option) {
+          return option.textContent.trim();
+        }
+      }
+      return String(value);
+    };
+
     /** Recomputes one object's patch against its base, and drops it when empty. */
     const sync = (model, id) => {
       const key = keyOf(model, id);
@@ -208,6 +239,7 @@
       const entry = entryFor(model, id);
       entry.patch = {};
       entry.base = base;
+      entry.error = "";
       Object.keys(base).forEach((field) => {
         const current = readValue(model, id, field);
         if (!same(current, base[field])) {
@@ -341,14 +373,108 @@
       });
     };
 
+    /** One entry per object, grouped by model, with every field that differs. */
+    const renderReview = () => {
+      const groups = { issue: [], stamp: [] };
+      buffer.forEach((entry, key) => {
+        const fields = Object.keys(entry.patch);
+        if (!fields.length) {
+          return;
+        }
+        groups[entry.model].push({ key, entry, fields });
+      });
+
+      reviewBody.textContent = "";
+      ["issue", "stamp"].forEach((model) => {
+        if (!groups[model].length) {
+          return;
+        }
+        const group = document.createElement("div");
+        group.className = "dd-review-group";
+        const title = document.createElement("span");
+        title.className = "dd-review-model";
+        title.textContent = (config.modelLabels || {})[model] || model;
+        group.append(title);
+
+        groups[model].forEach(({ entry, fields }) => {
+          const item = document.createElement("div");
+          item.className = "dd-review-item";
+
+          const name = document.createElement("span");
+          name.className = "dd-review-name";
+          name.textContent = rowName(entry);
+          item.append(name);
+
+          fields.forEach((field) => {
+            const line = document.createElement("div");
+            line.className = "dd-review-diff";
+
+            const label = document.createElement("span");
+            label.className = "dd-review-field";
+            label.textContent = fieldLabel(model, field);
+
+            const from = document.createElement("span");
+            from.className = "dd-review-from";
+            from.textContent = displayValue(
+              model,
+              field,
+              (bases.get(keyOf(model, entry.object_id)) || {})[field]
+            );
+
+            const arrow = document.createElement("span");
+            arrow.className = "dd-review-arrow";
+            arrow.textContent = "→";
+
+            const to = document.createElement("span");
+            to.className = "dd-review-to";
+            to.textContent = displayValue(model, field, entry.patch[field]);
+
+            line.append(label, from, arrow, to);
+            item.append(line);
+          });
+
+          if (entry.error) {
+            const problem = document.createElement("div");
+            problem.className = "dd-review-error";
+            problem.textContent = entry.error;
+            item.append(problem);
+          }
+
+          group.append(item);
+        });
+
+        reviewBody.append(group);
+      });
+    };
+
+    /** How a row is named in the panel: what the user recognises it by. */
+    const rowName = (entry) => {
+      if (entry.model === "issue") {
+        const control = controlOf("name");
+        return control && control.value ? control.value : String(entry.object_id);
+      }
+      const row = grid.getRow(entry.object_id);
+      if (!row) {
+        return String(entry.object_id);
+      }
+      const data = row.getData();
+      return [data.edifil, data.name].filter(Boolean).join(" · ") || String(entry.object_id);
+    };
+
     const paint = () => {
       const count = changeCount();
       counter.textContent = count ? plural("changes", count) : "";
       undoButton.disabled = pointer === 0;
       redoButton.disabled = pointer >= history.length;
+      reviewButton.disabled = count === 0;
       saveButton.disabled = count === 0;
+      saveButton.textContent = count ? plural("commit", count) : commitLabel;
       discardButton.disabled = count === 0;
+      backupButton.hidden = count < (config.backupThreshold || 0);
       paintRows();
+      if (!reviewPanel.hidden) {
+        renderReview();
+      }
       persist();
     };
 
@@ -495,18 +621,24 @@
         loaded = formValues();
       }
 
+      rejected.forEach((problem) => {
+        const change = changes[problem.index];
+        const entry = buffer.get(keyOf(change.model, change.object_id));
+        if (entry) {
+          entry.error = firstError(problem.errors) || texts.rejected;
+        }
+      });
+
       if (rejected.length) {
-        const problem = rejected[0];
-        setStatus(
-          refusal(problem.errors, texts.rejected) ||
-            refusal(body, texts.rejected),
-          "error"
-        );
-      } else {
-        setStatus(texts.saved, "ok");
+        setStatus(firstError(rejected[0].errors) || texts.rejected, "error");
+        openReview();
+        paint();
+        return;
       }
 
-      paint();
+      /* Everything landed: the workbench is where the next series is, with the
+       * one just saved in front of the user. */
+      window.location.assign(config.issuesUrl + "?focus=" + config.series.id);
     };
 
     const discard = () => {
@@ -523,6 +655,7 @@
       pointer = 0;
       loaded = formValues();
       recovery.hidden = true;
+      reviewPanel.hidden = true;
       window.localStorage.removeItem(config.storageKey);
       setStatus("", "");
       paint();
@@ -540,6 +673,9 @@
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && event.shiftKey) {
+        if (event.ctrlKey || event.metaKey) {
+          return;
+        }
         event.preventDefault();
         commitTarget();
         return;
@@ -554,6 +690,51 @@
       }
       event.preventDefault();
       step(event.shiftKey ? 1 : -1);
+    });
+
+    const openReview = () => {
+      reviewPanel.hidden = false;
+      renderReview();
+    };
+
+    reviewButton.addEventListener("click", openReview);
+    reviewClose.addEventListener("click", () => {
+      reviewPanel.hidden = true;
+    });
+
+    backupButton.addEventListener("click", async () => {
+      backupButton.disabled = true;
+      backupStatus.textContent = texts.saving;
+      try {
+        const response = await fetch(config.backupUrl, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrfToken() },
+        });
+        const body = await response.json();
+        if (!body.success) {
+          throw new Error(body.message || texts.backupFailed);
+        }
+        backupStatus.textContent = texts.backupSaved.replace(
+          "%(file)s",
+          body.data.file
+        );
+      } catch (error) {
+        backupStatus.textContent = texts.backupFailed;
+      } finally {
+        backupButton.disabled = false;
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !reviewPanel.hidden) {
+        reviewPanel.hidden = true;
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        commitTarget();
+      }
     });
 
     saveButton.addEventListener("click", commitTarget);

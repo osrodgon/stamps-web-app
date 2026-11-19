@@ -135,6 +135,13 @@ draft is discarded with a notice instead of being restored into code that no
 longer understands it.
 """
 
+BACKUP_THRESHOLD = 20
+"""Changes from which the panel offers a dump before committing.
+
+Below it the risk of a bad batch is one edit, and writing a file for that is
+noise; above it, a dump costs seconds and the rollback costs an afternoon.
+"""
+
 UNDO_LIMIT = 200
 """How many edits the browser keeps for Ctrl+Z. Beyond this the oldest goes."""
 
@@ -358,6 +365,8 @@ def workspace_config(
             "rejected": str(_("The change was refused.")),
             "noChanges": str(_("Nothing changed.")),
             "saving": str(_("Saving…")),
+            "backupSaved": str(_("Backup saved: %(file)s")),
+            "backupFailed": str(_("The backup failed, so nothing was committed.")),
         }
         # The plural rules stay on the server: the browser only substitutes the
         # number into the form it was given, so Spanish and English keep their
@@ -367,7 +376,17 @@ def workspace_config(
             "recover": _plural_forms(
                 "%(count)s saved change", "%(count)s saved changes"
             ),
+            "commit": _plural_forms(
+                "Commit %(count)s change", "Commit %(count)s changes"
+            ),
         }
+        config["fieldLabels"] = field_labels()
+        config["modelLabels"] = {
+            "issue": str(_("Series")),
+            "stamp": str(_("Stamps")),
+        }
+        config["backupThreshold"] = BACKUP_THRESHOLD
+        config["backupUrl"] = reverse("datadesk:backup")
         config["storageKey"] = f"datadesk:buffer:edit:{series.pk}"
         config["schemaVersion"] = BUFFER_SCHEMA
         config["undoLimit"] = UNDO_LIMIT
@@ -382,6 +401,23 @@ def workspace_config(
             prefill=prefill,
         )
     return config
+
+
+def field_labels() -> dict[str, dict[str, str]]:
+    """Returns the human label of every field a change set can touch.
+
+    Built from the same definitions the form and the grid use, so the review
+    panel cannot call a field something the editor does not. The script never
+    hardcodes a column name.
+    """
+    return {
+        "issue": {field["name"]: str(field["label"]) for field in SERIES_FIELDS},
+        "stamp": {
+            str(column["patch"]): str(column["title"])
+            for column in STAMP_COLUMNS
+            if "patch" in column
+        },
+    }
 
 
 def _plural_forms(one: str, other: str) -> dict[str, str]:

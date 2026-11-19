@@ -12,8 +12,12 @@ the staff gate, 409 for a delete, which needs S17's dependency preview first.
 
 import json
 import uuid
+from datetime import datetime
+from io import StringIO
 from typing import Any
 
+from django.conf import settings
+from django.core.management import call_command
 from django.http import HttpRequest, JsonResponse
 from django.views import View
 
@@ -86,6 +90,53 @@ class LookupCreateJsonView(JsonPostView):
         )
         message = "Created." if result.created else "Already exists."
         return _written(message, result.commit_id, result.as_dict())
+
+
+class BackupJsonView(DataDeskAccessMixin, View):
+    """Writes a dump of the stamps database before a large commit.
+
+    The command already exists (``stamps_db_backup``) and is interactive, so it
+    is called non-interactively with a generated name and the ``stamps`` mode.
+    The panel offers this once the change set passes the threshold; it is never
+    automatic, because writing a file is a side effect the user did not ask for.
+    """
+
+    def post(self, request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        """Runs the dump and answers with the file it wrote."""
+        name = f"datadesk-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        try:
+            call_command("stamps_db_backup", name, mode="stamps", stdout=StringIO())
+        except Exception as error:  # noqa: BLE001 - the reason goes to the panel
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": f"The backup failed: {error}",
+                    "errors": {},
+                    "data": None,
+                },
+                status=500,
+            )
+
+        dump = settings.BASE_DIR / "backups" / f"{name}__stamps.json"
+        if not dump.exists():
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "The backup command did not write a file.",
+                    "errors": {},
+                    "data": None,
+                },
+                status=500,
+            )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Backup written.",
+                "errors": {},
+                "data": {"file": str(dump.relative_to(settings.BASE_DIR))},
+            }
+        )
 
 
 def _batch_message(result: ApplyResult) -> str:
