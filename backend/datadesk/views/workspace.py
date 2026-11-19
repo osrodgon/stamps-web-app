@@ -11,13 +11,13 @@ from typing import Any
 from django.db.models import QuerySet
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.formats import date_format, number_format
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
 
 from datadesk.mixins import DataDeskAccessMixin
 from datadesk.registry import LOOKUPS
+from datadesk.rules import series_year_bounds
 from datadesk.service import Issue, issue_queryset, stamp_rows
 from years_api.models import Year
 
@@ -85,17 +85,6 @@ that does not exist yet.
 """
 
 PREFILL_FIELDS: tuple[str, ...] = ("year", "country")
-
-MIN_SERIES_YEAR = 1800
-"""Anything below this is a typo, not a year of the collection."""
-
-YEARS_AHEAD = 2
-"""How far past the current year a series may be dated (catalogues announce)."""
-
-
-def series_year_bounds() -> tuple[int, int]:
-    """Returns the range a series year may take, both ends included."""
-    return MIN_SERIES_YEAR, timezone.now().year + YEARS_AHEAD
 """The only series fields a new issue copies from the last one.
 
 Country is almost constant and the year is the context of the whole screen, so
@@ -143,7 +132,7 @@ class IssueWorkspaceView(DataDeskAccessMixin, DetailView):
         return context
 
 
-class IssueCreateView(DataDeskAccessMixin, TemplateView):
+class IssueNewView(DataDeskAccessMixin, TemplateView):
     """Renders the dry ``mode=new`` workspace.
 
     Nothing is sent to the server: the form is not submitted and the rows live

@@ -115,9 +115,21 @@
       clicking does nothing visible until one of them is changed. Label it with
       what it will set (`España · 1987`), disable it while nothing differs and
       flash the two controls on apply
-- [ ] **S12 — Write core**: `POST /datadesk/issues/create` (issue + nested stamps,
-      one transaction, all or nothing) and `POST /datadesk/apply` (existing rows,
-      savepoint per row), audit writer, DRF serializers for validation only
+- [x] **S12 — Write core** (2026-11-19): `datadesk/write.py` with
+      `create_series()` (series + nested stamps, one transaction, all or nothing),
+      `apply_changes()` (`create`/`update`, savepoint per row, `select_for_update()`
+      before the `expected_updated_at` check) and `create_lookup()`
+      (`get_or_create`, duplicate → `created: false`), plus
+      `datadesk/views/write_api.py` for `POST issues/create`, `apply` and
+      `lookups/<key>/create`. `year` arrives as a number and is resolved with
+      `get_or_create` (the implicit `Year` is not audited); colours leave the
+      serializer because DRF refuses an empty list and a colourless stamp is a
+      gap, not an error; `""` on a nullable column becomes `None`; `image` is
+      read-only; `delete` answers 409 `{needs_confirmation: true}`; 500 changes
+      cap; one `commit_id` per request. Year bounds moved to `datadesk/rules.py`
+      so form and writer cannot drift; `IssueCreateView` renamed `IssueNewView`.
+      56 tests (38 writer + 18 HTTP); 1250 backend tests green. Next: S13
+      (single-row commit from the grid)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
