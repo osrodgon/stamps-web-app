@@ -206,8 +206,24 @@
       next edit. A new series of the current year now starts dated today and the
       year follows the date (read-only while a date is set, freed when it is
       cleared); an older series still starts undated rather than inventing a
-      day. 5 tests added; 290 datadesk and 1306 backend tests green. Next: S17
-      (clone and delete with a dependency preview)
+      day. 5 tests added; 290 datadesk and 1306 backend tests green.
+- [x] **S17 — Clone a series and delete one with a dependency preview**
+      (2026-11-19): `datadesk/dependencies.py` counts what a deletion takes with
+      it (stamps, `CollectionItem` rows, distinct user collections) and words the
+      warning in three cases, no numbers and therefore no plurals;
+      `clone_series()` copies rows instead of re-entering them, so a series with
+      gaps clones as it is, keeps its colours and codes, accepts `year`/`date`
+      overrides and records `cloned_from` on the series' audit row;
+      `delete_series()` locks the series, checks the typed year itself, recounts
+      inside the transaction and writes one `delete` row per stamp plus the
+      series with the full `before` S21 needs. Endpoints: `POST
+      /datadesk/issues/<pk>/clone` (answers the copy's URL), `GET
+      /datadesk/issues/<pk>/dependencies` and `POST
+      /datadesk/issues/<pk>/delete`. The workspace strip gains `Clone` and
+      `Delete`, both disabled while the change set has edits, and the delete
+      dialog shows the three numbers plus the year box (Esc closes it without
+      leaving). 38 tests; 328 datadesk and 1344 backend tests green; the jsdom
+      harness is at 62 edit-mode checks. Next: S18 (create a lookup from a cell)
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

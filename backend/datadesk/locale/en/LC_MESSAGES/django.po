@@ -422,3 +422,71 @@ msgstr "Remove this row"
 #: datadesk/views/workspace.py
 msgid "The year comes from the date."
 msgstr "The year comes from the date."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Clone"
+msgstr "Clone"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete"
+msgstr "Delete"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this series"
+msgstr "Delete this series"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Collection items"
+msgstr "Collection items"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "User collections"
+msgstr "User collections"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Type the year to confirm"
+msgstr "Type the year to confirm"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the series"
+msgstr "Delete the series"
+
+#: datadesk/dependencies.py
+msgid "This series has no stamps."
+msgstr "This series has no stamps."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds these stamps."
+msgstr "No user collection holds these stamps."
+
+#: datadesk/dependencies.py
+msgid "These stamps are in user collections, which lose them too."
+msgstr "These stamps are in user collections, which lose them too."
+
+#: datadesk/views/workspace.py
+msgid "Cloning…"
+msgstr "Cloning…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not cloned."
+msgstr "The series was not cloned."
+
+#: datadesk/views/workspace.py
+msgid "Deleting…"
+msgstr "Deleting…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not deleted."
+msgstr "The series was not deleted."
+
+#: datadesk/views/workspace.py
+msgid "The preview could not be loaded."
+msgstr "The preview could not be loaded."
+
+#: datadesk/views/workspace.py
+msgid "Commit or discard the pending changes first."
+msgstr "Commit or discard the pending changes first."
+
+#: datadesk/views/workspace.py
+msgid "Type %(year)s to confirm"
+msgstr "Type %(year)s to confirm"

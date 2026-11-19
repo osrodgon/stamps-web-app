@@ -472,6 +472,13 @@ def workspace_config(
             "saving": str(_("Saving…")),
             "backupSaved": str(_("Backup saved: %(file)s")),
             "backupFailed": str(_("The backup failed, so nothing was committed.")),
+            "cloning": str(_("Cloning…")),
+            "cloneFailed": str(_("The series was not cloned.")),
+            "deleting": str(_("Deleting…")),
+            "deleteFailed": str(_("The series was not deleted.")),
+            "previewFailed": str(_("The preview could not be loaded.")),
+            "commitFirst": str(_("Commit or discard the pending changes first.")),
+            "confirmYear": str(_("Type %(year)s to confirm")),
         }
         # The plural rules stay on the server: the browser only substitutes the
         # number into the form it was given, so Spanish and English keep their
@@ -492,6 +499,11 @@ def workspace_config(
         }
         config["backupThreshold"] = BACKUP_THRESHOLD
         config["backupUrl"] = reverse("datadesk:backup")
+        config["cloneUrl"] = reverse("datadesk:issue_clone", args=[series.pk])
+        config["dependenciesUrl"] = reverse(
+            "datadesk:issue_dependencies", args=[series.pk]
+        )
+        config["deleteUrl"] = reverse("datadesk:issue_delete", args=[series.pk])
         config["storageKey"] = f"datadesk:buffer:edit:{series.pk}"
         config["schemaVersion"] = BUFFER_SCHEMA
         config["undoLimit"] = UNDO_LIMIT

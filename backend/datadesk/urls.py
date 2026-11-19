@@ -16,7 +16,10 @@ from datadesk.views.workspace import IssueNewView, IssueWorkspaceView
 from datadesk.views.write_api import (
     ApplyJsonView,
     BackupJsonView,
+    IssueCloneJsonView,
     IssueCreateJsonView,
+    IssueDeleteJsonView,
+    IssueDependenciesJsonView,
     LookupCreateJsonView,
 )
 
@@ -30,6 +33,13 @@ urlpatterns = [
     path("stamps/<int:pk>/image", StampImageView.as_view(), name="stamp_image"),
     path("grid/issues", IssueGridJsonView.as_view(), name="issue_grid"),
     path("issues/create", IssueCreateJsonView.as_view(), name="issue_create"),
+    path("issues/<int:pk>/clone", IssueCloneJsonView.as_view(), name="issue_clone"),
+    path(
+        "issues/<int:pk>/dependencies",
+        IssueDependenciesJsonView.as_view(),
+        name="issue_dependencies",
+    ),
+    path("issues/<int:pk>/delete", IssueDeleteJsonView.as_view(), name="issue_delete"),
     path("apply", ApplyJsonView.as_view(), name="apply"),
     path("backup", BackupJsonView.as_view(), name="backup"),
     path(

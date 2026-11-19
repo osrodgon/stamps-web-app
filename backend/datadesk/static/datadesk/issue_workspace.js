@@ -226,6 +226,21 @@
     const reviewClose = document.getElementById("review-close");
     const backupButton = document.getElementById("backup-button");
     const backupStatus = document.getElementById("backup-status");
+    const cloneButton = document.getElementById("clone-button");
+    const deleteButton = document.getElementById("delete-button");
+    const deletePanel = document.getElementById("delete-panel");
+    const deleteClose = document.getElementById("delete-close");
+    const deleteCancel = document.getElementById("delete-cancel");
+    const deleteConfirm = document.getElementById("delete-confirm");
+    const deleteConfirmLabel = document.getElementById("delete-confirm-label");
+    const deleteConfirmButton = document.getElementById("delete-confirm-button");
+    const deleteWarning = document.getElementById("delete-warning");
+    const deleteStatus = document.getElementById("delete-status");
+    const deleteCounts = {
+      stamps: document.getElementById("delete-stamps"),
+      items: document.getElementById("delete-items"),
+      collections: document.getElementById("delete-collections"),
+    };
     const texts = config.texts || {};
     const commitLabel = saveButton.textContent;
 
@@ -585,6 +600,13 @@
       saveButton.textContent = count ? plural("commit", count) : commitLabel;
       discardButton.disabled = count === 0;
       backupButton.hidden = count < (config.backupThreshold || 0);
+      /* Copying and deleting are decisions about the row, not edits to it: a
+       * copy is made from the database and a deletion ignores the screen, so
+       * neither can run while there is something waiting to be committed. */
+      cloneButton.disabled = count > 0;
+      deleteButton.disabled = count > 0;
+      cloneButton.title = count > 0 ? texts.commitFirst || "" : "";
+      deleteButton.title = count > 0 ? texts.commitFirst || "" : "";
       paintRows();
       if (!reviewPanel.hidden) {
         renderReview();
@@ -861,6 +883,136 @@
       if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         commitTarget();
+      }
+    });
+
+    /* ---------------------------------------------------------------- *
+     * Cloning and deleting: the two things that end this series.
+     * -------------------------------------------------------------- */
+
+    /** Posts a JSON body and reads the answer whatever the status is. */
+    const post = async (url, body) => {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify(body || {}),
+      });
+      return response.json().catch(() => ({ success: false }));
+    };
+
+    /* A copy is a new series: whatever the user does next happens to it, so the
+     * workspace moves there instead of leaving them on the origin wondering
+     * which of the two they are editing. */
+    cloneButton.addEventListener("click", async () => {
+      cloneButton.disabled = true;
+      setStatus(texts.cloning, "pending");
+      let body = null;
+      try {
+        body = await post(config.cloneUrl, {});
+      } catch (error) {
+        body = null;
+      }
+      if (!body || !body.success || !body.data || !body.data.url) {
+        cloneButton.disabled = false;
+        setStatus((body && body.message) || texts.cloneFailed, "error");
+        return;
+      }
+      window.location.assign(body.data.url);
+    });
+
+    const closeDelete = () => {
+      deletePanel.hidden = true;
+      deleteStatus.textContent = "";
+    };
+
+    /* The numbers come from the server when the dialog opens, not from the page
+     * the user loaded minutes ago: a collection item added since would make the
+     * preview a lie, and this is the one dialog where that matters. */
+    const openDelete = async () => {
+      deletePanel.hidden = false;
+      deleteStatus.textContent = "";
+      deleteConfirm.value = "";
+      deleteWarning.textContent = "";
+      Object.keys(deleteCounts).forEach((key) => {
+        deleteCounts[key].textContent = "·";
+      });
+      deleteConfirmButton.disabled = true;
+      deleteConfirm.focus();
+
+      let body = null;
+      try {
+        const response = await fetch(config.dependenciesUrl, {
+          headers: { Accept: "application/json" },
+        });
+        body = await response.json();
+      } catch (error) {
+        body = null;
+      }
+      if (!body || !body.success || !body.data) {
+        deleteStatus.textContent =
+          (body && body.message) || texts.previewFailed;
+        return;
+      }
+
+      const data = body.data;
+      Object.keys(deleteCounts).forEach((key) => {
+        deleteCounts[key].textContent = data[key];
+      });
+      deleteWarning.textContent = data.warning;
+      if (texts.confirmYear) {
+        deleteConfirmLabel.textContent = texts.confirmYear.replace(
+          "%(year)s",
+          data.year
+        );
+      }
+      deleteConfirmButton.disabled = false;
+    };
+
+    const confirmDelete = async () => {
+      deleteConfirmButton.disabled = true;
+      deleteStatus.textContent = texts.deleting;
+      let body = null;
+      try {
+        body = await post(config.deleteUrl, { confirm: deleteConfirm.value });
+      } catch (error) {
+        body = null;
+      }
+      if (!body || !body.success) {
+        deleteConfirmButton.disabled = false;
+        deleteStatus.textContent =
+          firstError(body && body.errors) ||
+          (body && body.message) ||
+          texts.deleteFailed;
+        return;
+      }
+      /* The row this page was showing does not exist anymore. */
+      window.location.assign(config.issuesUrl);
+    };
+
+    deleteButton.addEventListener("click", openDelete);
+    deleteClose.addEventListener("click", closeDelete);
+    deleteCancel.addEventListener("click", closeDelete);
+    deleteConfirmButton.addEventListener("click", confirmDelete);
+    deletePanel.addEventListener("click", (event) => {
+      if (event.target === deletePanel) {
+        closeDelete();
+      }
+    });
+    deleteConfirm.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        confirmDelete();
+      }
+    });
+    /* Esc closes the dialog and goes no further: leaving the page with the
+     * dialog open would be the wrong escape. */
+    deletePanel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeDelete();
       }
     });
 
