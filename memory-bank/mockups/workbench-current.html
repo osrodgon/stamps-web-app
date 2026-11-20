@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DataDesk workbench — current</title>
+<style>
+/* ==========================================================================
+   VARIANT 1 — "Current": the real datadesk.css, trimmed to this screen.
+   Every value below is copied from backend/datadesk/static/datadesk/datadesk.css
+   (post-S24), so what you see is what the app serves today.
+   ========================================================================== */
+
+:root {
+  --dd-ink: #16191d;
+  --dd-muted: #6b7480;
+  --dd-soft: #6b7280;
+  --dd-line: #e3e6ea;
+  --dd-bg: #f4f5f7;
+  --dd-surface: #fff;
+  --dd-navy: #232f3e;
+  --dd-navy-hover: #1a2531;
+  --dd-green: #1e8e3e;
+  --dd-red: #c5221f;
+
+  --dd-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+
+  --dd-text-xl: 22px;
+  --dd-text-lg: 16px;
+  --dd-text: 14px;
+  --dd-text-sm: 13px;
+  --dd-text-xs: 12px;
+  --dd-label: 11px;
+
+  --dd-row-height: 36px;
+  --dd-cell-padding-y: 7px;
+  --dd-cell-padding-x: 10px;
+  --dd-topbar-height: 48px;
+  --dd-radius: 6px;
+  --dd-btn-height: 32px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--dd-bg);
+  color: var(--dd-ink);
+  font-family: var(--dd-font);
+  font-size: var(--dd-text);
+  line-height: 1.5;
+}
+
+/* --- Topbar ------------------------------------------------------------ */
+
+.dd-topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: var(--dd-topbar-height);
+  padding: 0 16px;
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-brand {
+  font-size: var(--dd-text);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.dd-brand span { color: #8fd18f; }
+
+.dd-crumbs {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--dd-text-xs);
+  color: #aab4c0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd-crumbs a { color: inherit; text-decoration: none; }
+.dd-crumbs a:hover { color: #fff; }
+.dd-crumbs b { color: #fff; font-size: var(--dd-text-lg); font-weight: 600; }
+
+.dd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  font-size: var(--dd-text-xs);
+  color: #c3ccd6;
+}
+
+.dd-lang { display: flex; align-items: center; gap: 5px; }
+.dd-lang button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.dd-lang-active { color: #fff; font-weight: 700; }
+
+/* --- Buttons ----------------------------------------------------------- */
+
+.dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--dd-btn-height);
+  padding: 0 14px;
+  white-space: nowrap;
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  border: 0;
+  border-radius: var(--dd-radius);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.dd-btn-dark { background: var(--dd-navy); color: #fff; }
+.dd-btn-dark:hover { background: var(--dd-navy-hover); }
+
+.dd-btn-ghost {
+  padding: 0 10px;
+  font-size: var(--dd-text-xs);
+  font-weight: 400;
+  border: 1px solid #cfd5dc;
+  background: #fff;
+  color: #2b3440;
+}
+.dd-btn-ghost:hover { background: #f5f7f9; }
+
+.dd-topbar .dd-btn-ghost {
+  color: #e6ebf1;
+  background: transparent;
+  border-color: #4a5a6d;
+}
+.dd-topbar .dd-btn-ghost:hover { background: #39485a; }
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: 2px;
+}
+
+/* --- Page card --------------------------------------------------------- */
+
+.dd-main { padding: 20px; }
+
+.dd-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-line);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+
+/* --- Filters ----------------------------------------------------------- */
+
+.dd-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  padding: 12px 16px;
+  margin: -20px -20px 0;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-filter { display: flex; flex-direction: column; gap: 3px; }
+.dd-filter-wide { flex: 1 1 220px; }
+
+.dd-label {
+  color: var(--dd-soft);
+  font-size: var(--dd-label);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.dd-filter input,
+.dd-filter select {
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  padding: 5px 7px;
+  border: 1px solid #cfd5dc;
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+}
+
+.dd-filter input[type="number"] { width: 82px; }
+.dd-filter input[type="search"] { width: 100%; }
+
+.dd-filter input:focus,
+.dd-filter select:focus {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: -1px;
+}
+
+/* --- Toolbar ----------------------------------------------------------- */
+
+.dd-workbench-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 16px;
+  margin: 0 -20px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-hint { font-size: var(--dd-text-xs); color: var(--dd-soft); }
+
+.dd-columns { margin-left: auto; }
+.dd-columns summary {
+  cursor: pointer;
+  font-size: var(--dd-text-xs);
+  color: var(--dd-soft);
+}
+
+/* --- Grid (Tabulator's chrome as themed in S24) ------------------------ */
+
+.dd-grid { margin: 0 -20px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--dd-text-sm);
+}
+
+thead th {
+  background: var(--dd-navy);
+  color: #fff;
+  padding: 8px var(--dd-cell-padding-x);
+  font-size: var(--dd-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  text-align: left;
+  border-bottom: 1px solid var(--dd-line);
+  white-space: nowrap;
+}
+
+tbody td {
+  height: var(--dd-row-height);
+  padding: var(--dd-cell-padding-y) var(--dd-cell-padding-x);
+  border-bottom: 1px solid var(--dd-line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+tbody tr { background: #fff; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+tbody tr:hover { background: #f3f6fa; cursor: pointer; }
+tbody tr.is-selected { background: #e9eef5; }
+tbody tr.is-selected:hover { background: #dfe6ef; }
+
+.c-num { text-align: right; }
+.c-open { padding: 0; text-align: center; }
+.c-del { padding: 0; text-align: center; }
+
+.dd-open { display: block; color: var(--dd-muted); line-height: 1; text-decoration: none; }
+.dd-open:hover { color: var(--dd-navy); }
+.dd-chevron {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dd-row-delete-action {
+  border: 0;
+  background: none;
+  color: #b6bfc9;
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+.dd-row-delete-action:hover { color: var(--dd-red); }
+
+/* --- Pager and keys ---------------------------------------------------- */
+
+.dd-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dd-keys { margin: 8px 0 0; }
+
+.dd-variant {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(22, 25, 29, 0.82);
+  color: #fff;
+  font-family: var(--dd-font);
+  font-size: var(--dd-text-xs);
+  letter-spacing: 0.4px;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<header class="dd-topbar">
+  <a class="dd-brand" href="#">DataDesk<span>.</span></a>
+  <div class="dd-crumbs"><a href="#">Dashboard</a> / <b>Issues</b></div>
+  <div class="dd-topbar-right">
+    <form class="dd-lang">
+      <button type="button" class="dd-lang-active">EN</button>
+      <span>|</span>
+      <button type="button">ES</button>
+    </form>
+    <span>osrodgon</span>
+    <button type="button" class="dd-btn dd-btn-ghost">Sign out</button>
+  </div>
+</header>
+
+<main class="dd-main">
+  <section class="dd-page">
+
+    <form class="dd-filters">
+      <label class="dd-filter">
+        <span class="dd-label">From year</span>
+        <input type="number" value="1987">
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">To year</span>
+        <input type="number" value="1990">
+      </label>
+      <label class="dd-filter dd-filter-wide">
+        <span class="dd-label">Name</span>
+        <input type="search" value="">
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">Country</span>
+        <select>
+          <option>Any</option>
+          <option selected>España</option>
+        </select>
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">Stamp type</span>
+        <select>
+          <option>Any</option>
+          <option>Correo ordinario</option>
+        </select>
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">Needs attention</span>
+        <select>
+          <option>Nothing</option>
+          <option>No country</option>
+        </select>
+      </label>
+      <button type="reset" class="dd-btn dd-btn-ghost">Reset</button>
+    </form>
+
+    <div class="dd-workbench-toolbar">
+      <span class="dd-hint">2,540 issues</span>
+      <a class="dd-btn dd-btn-dark" href="#">+ New series</a>
+      <details class="dd-columns">
+        <summary>Columns</summary>
+      </details>
+    </div>
+
+    <div class="dd-grid">
+      <table>
+        <colgroup>
+          <col style="width: 2.2%">
+          <col style="width: 8%">
+          <col style="width: 10.5%">
+          <col style="width: 24%">
+          <col style="width: 12.5%">
+          <col style="width: 12.5%">
+          <col style="width: 12.5%">
+          <col style="width: 4.8%">
+          <col style="width: 5.4%">
+          <col style="width: 5.2%">
+          <col style="width: 2.4%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="c-num">Year</th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Stamp type</th>
+            <th>Printer</th>
+            <th class="c-num">Stamps</th>
+            <th class="c-num">MNH</th>
+            <th class="c-num">Used</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1987</td>
+            <td>1987-01-15</td>
+            <td>Juan de la Cierva. Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">8</td>
+            <td class="c-num">24.00</td>
+            <td class="c-num">12.50</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1987</td>
+            <td>1987-02-12</td>
+            <td>Exposición Filatélica Nacional</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">2</td>
+            <td class="c-num">9.80</td>
+            <td class="c-num">4.10</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1987</td>
+            <td></td>
+            <td>Sellos de servicio</td>
+            <td>España</td>
+            <td>Servicio oficial</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">5</td>
+            <td class="c-num">18.00</td>
+            <td class="c-num"></td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1987</td>
+            <td>1987-06-03</td>
+            <td>Reyes de España. Casa de Borbón</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">12</td>
+            <td class="c-num">41.50</td>
+            <td class="c-num">22.00</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr class="is-selected">
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1988</td>
+            <td>1988-01-22</td>
+            <td>Deporte para todos</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">6</td>
+            <td class="c-num">15.20</td>
+            <td class="c-num">7.80</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1988</td>
+            <td>1988-04-14</td>
+            <td>Europa. Transportes y comunicaciones</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">2</td>
+            <td class="c-num">11.40</td>
+            <td class="c-num">5.60</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1988</td>
+            <td></td>
+            <td>Personajes. Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td></td>
+            <td class="c-num">10</td>
+            <td class="c-num">28.00</td>
+            <td class="c-num">14.00</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1989</td>
+            <td>1989-05-12</td>
+            <td>XXV Aniversario del Sello</td>
+            <td></td>
+            <td></td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">1</td>
+            <td class="c-num">6.50</td>
+            <td class="c-num">3.20</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1989</td>
+            <td>1989-09-30</td>
+            <td>Flora y fauna. Serie completa</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">16</td>
+            <td class="c-num">52.00</td>
+            <td class="c-num">27.50</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1990</td>
+            <td>1990-01-08</td>
+            <td>Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">9</td>
+            <td class="c-num">0.00</td>
+            <td class="c-num"></td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1990</td>
+            <td></td>
+            <td>Navidad</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="c-num">4</td>
+            <td class="c-num">13.60</td>
+            <td class="c-num">6.90</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+          <tr>
+            <td class="c-open"><a class="dd-open" href="#" aria-label="Open"><svg viewBox="0 0 24 24" class="dd-chevron"><path d="M9 6l6 6-6 6"/></svg></a></td>
+            <td class="c-num">1990</td>
+            <td>1990-11-05</td>
+            <td>Homenaje a la Marina</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td></td>
+            <td class="c-num">7</td>
+            <td class="c-num">21.00</td>
+            <td class="c-num">10.40</td>
+            <td class="c-del"><button class="dd-row-delete-action" title="Delete this series">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="dd-pager">
+      <button type="button" class="dd-btn dd-btn-ghost">‹</button>
+      <span class="dd-hint">1 / 26</span>
+      <button type="button" class="dd-btn dd-btn-ghost">›</button>
+    </div>
+
+    <p class="dd-hint dd-keys">
+      Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one.
+    </p>
+  </section>
+</main>
+
+<div class="dd-variant">1 · CURRENT</div>
+
+<script>
+  /* One click selects, as the real grid does (the chevron is the way in). */
+  document.querySelectorAll("tbody tr").forEach((row) => {
+    row.addEventListener("click", () => {
+      document.querySelectorAll("tbody tr.is-selected").forEach((other) => {
+        other.classList.remove("is-selected");
+      });
+      row.classList.add("is-selected");
+    });
+  });
+</script>
+</body>
+</html>

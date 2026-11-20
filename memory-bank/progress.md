@@ -369,6 +369,53 @@
       says what went and `Supr` only opens the dialog. Rows carry their two URLs
       in the grid JSON. 13 tests; 488 datadesk and 1504 backend tests green;
       harnesses at 23 (workbench), 89 (edit), 79 (new) and 12 (lookups) checks.
+- [ ] **S28 — Visual polish: typeface, controls, elevation** (planned 2026-11-20,
+      explicitly not urgent): after deploying, the interface "feels dated", so the
+      question was whether to bring in Bootstrap or Materialize. Three mockups of
+      the same workbench were built (`memory-bank/mockups/workbench-compare.html`:
+      current, Bootstrap 5.3.3, polished on the S24 tokens) and they settled it —
+      Bootstrap trades "dated" for "generic" and does not lay out the data (its
+      table auto-sizes, so Year and Date collide and read as one cell), Materialize
+      is Material 1 from 2014 with jQuery, and Tailwind needs a build step there is
+      no Node for. The polish is five CSS-only changes: self-hosted Inter, 34px
+      controls with a soft focus ring and an own select chevron, 120ms transitions,
+      two shadow levels with a light grid header instead of the navy one, and a 4px
+      rhythm with tabular numbers and a muted `—` for empty cells. Same markup, no
+      new dependency but the font. Detail and acceptance in the plan, §4 S28.
+- [ ] **S29 — See a stamp's picture and its description** (planned 2026-11-20):
+      the thumbnail is capped at 26px tall inside 38px rows, so it is a colour
+      swatch rather than a photo, and `Stamp.description` is never serialized
+      anywhere (the strip's "Description" is `Issue.description`, a different
+      field). Without hover and without clicking the picture, the honest answer is
+      a preview pane tied to the **selected row** — selection already exists and
+      `j`/`k` drive it — showing the picture at a real size and the description
+      underneath, editable and part of the change set. A S/M/L thumbnail size in
+      the toolbar is the follow-up preference, not the fix: at 72px a 57-stamp
+      series is 4.000px of scroll.
+- [ ] **S30 — "See affected series" from a reference table** (planned 2026-11-20):
+      the usage number becomes a link when it is above zero. Free for year, country
+      and stamp type because those filters already exist; four new `IssueFilters`
+      (printer, artist, paper type, print type) plus a visible active-filter chip
+      with its clear button — that chip is the real work, not the query. Colour is a
+      stamp-level M2M, so it needs `stamps__colors` + `distinct` and the link must
+      say "series" while the usage column counts stamps (1.177 stamps in 1.044
+      series).
+- [ ] **S31 — Backups screen** (planned 2026-11-20): `POST /datadesk/backup`
+      already runs `stamps_db_backup` in `stamps` mode (S15). What is missing is the
+      place: list what is in `backups/`, run one with a mode, and download it. The
+      dumps live inside the container (`BACKUP_DIR = BASE_DIR/backups`), so without
+      download — or a volume in the production compose — they die on the next
+      deploy. Real size: 11.6 MB / 12.763 objects for stamps, 24 KB / 126 for
+      system.
+- [ ] **S32 — Restore with maintenance, a prior dump and sequences** (planned
+      2026-11-20): `stamps_db_restore` is `loaddata` and nothing else. It overwrites
+      by PK but does **not** delete what the dump lacks, so newer rows survive;
+      `stamps_clear_data` resets sequences to 1 and `loaddata` does not advance
+      them, so chaining the two breaks the next insert (`duplicate key`) until
+      `sqlsequencereset` runs. Any real restore is pre-restore dump → maintenance
+      mode (503 for the rest of `/datadesk/`) → clear + loaddata + sequencereset,
+      with a typed confirmation, and only `stamps`/`full` in the panel: `system`
+      resurrects closed sessions and a revoked API key.
 
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,

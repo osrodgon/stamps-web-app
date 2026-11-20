@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<title>DataDesk workbench — Bootstrap 5.3</title>
+<!--
+  VARIANT 2 — Bootstrap 5.3.3, vendored next to this file (no CDN, works offline).
+  Deliberately honest: stock components, stock spacing, stock colours. The only
+  addition is a max-width so the width does not confound the comparison with the
+  other two files.
+-->
+<link rel="stylesheet" href="vendor/bootstrap.min.css">
+<style>
+  /* The only three rules that are not Bootstrap: the width cap the real page
+   * has, the monospace numbers and nothing else. */
+  .dd-wrap { max-width: 1600px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .dd-variant {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(22, 25, 29, 0.82);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body class="bg-body-tertiary">
+
+<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
+  <a class="navbar-brand fw-bold" href="#">DataDesk</a>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0 small">
+      <li class="breadcrumb-item"><a href="#" class="link-light text-decoration-none">Dashboard</a></li>
+      <li class="breadcrumb-item active text-white" aria-current="page">Issues</li>
+    </ol>
+  </nav>
+  <div class="ms-auto d-flex align-items-center gap-3 small text-white-50">
+    <span><a href="#" class="link-light text-decoration-none fw-semibold">EN</a> | <a href="#" class="link-light text-decoration-none">ES</a></span>
+    <span>osrodgon</span>
+    <button type="button" class="btn btn-outline-light btn-sm">Sign out</button>
+  </div>
+</nav>
+
+<main class="container-fluid dd-wrap py-3">
+  <div class="card shadow-sm">
+
+    <div class="card-body border-bottom pb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-auto">
+          <label class="form-label small text-uppercase text-secondary mb-1">From year</label>
+          <input type="number" class="form-control form-control-sm" value="1987" style="width: 90px">
+        </div>
+        <div class="col-auto">
+          <label class="form-label small text-uppercase text-secondary mb-1">To year</label>
+          <input type="number" class="form-control form-control-sm" value="1990" style="width: 90px">
+        </div>
+        <div class="col">
+          <label class="form-label small text-uppercase text-secondary mb-1">Name</label>
+          <input type="search" class="form-control form-control-sm">
+        </div>
+        <div class="col-auto">
+          <label class="form-label small text-uppercase text-secondary mb-1">Country</label>
+          <select class="form-select form-select-sm">
+            <option>Any</option>
+            <option selected>España</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <label class="form-label small text-uppercase text-secondary mb-1">Stamp type</label>
+          <select class="form-select form-select-sm">
+            <option>Any</option>
+            <option>Correo ordinario</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <label class="form-label small text-uppercase text-secondary mb-1">Needs attention</label>
+          <select class="form-select form-select-sm">
+            <option>Nothing</option>
+            <option>No country</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="reset" class="btn btn-outline-secondary btn-sm">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body py-2 d-flex align-items-center gap-3">
+      <span class="text-secondary small">2,540 issues</span>
+      <a class="btn btn-primary btn-sm" href="#">+ New series</a>
+      <details class="dropdown ms-auto">
+        <summary class="btn btn-outline-secondary btn-sm">Columns</summary>
+        <div class="dropdown-menu position-static mt-1 p-2">
+          <div class="form-check"><input class="form-check-input" type="checkbox" checked id="c1"><label class="form-check-label small" for="c1">Year</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" checked id="c2"><label class="form-check-label small" for="c2">Date</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" checked id="c3"><label class="form-check-label small" for="c3">Name</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" checked id="c4"><label class="form-check-label small" for="c4">Country</label></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width: 32px"></th>
+            <th class="text-end">Year</th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Stamp type</th>
+            <th>Printer</th>
+            <th class="text-end">Stamps</th>
+            <th class="text-end">MNH</th>
+            <th class="text-end">Used</th>
+            <th style="width: 32px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1987</td>
+            <td>1987-01-15</td>
+            <td>Juan de la Cierva. Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">8</td>
+            <td class="text-end num">24.00</td>
+            <td class="text-end num">12.50</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1987</td>
+            <td>1987-02-12</td>
+            <td>Exposición Filatélica Nacional</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">2</td>
+            <td class="text-end num">9.80</td>
+            <td class="text-end num">4.10</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1987</td>
+            <td></td>
+            <td>Sellos de servicio</td>
+            <td>España</td>
+            <td>Servicio oficial</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">5</td>
+            <td class="text-end num">18.00</td>
+            <td class="text-end num"></td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1987</td>
+            <td>1987-06-03</td>
+            <td>Reyes de España. Casa de Borbón</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">12</td>
+            <td class="text-end num">41.50</td>
+            <td class="text-end num">22.00</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr class="table-active">
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1988</td>
+            <td>1988-01-22</td>
+            <td>Deporte para todos</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">6</td>
+            <td class="text-end num">15.20</td>
+            <td class="text-end num">7.80</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1988</td>
+            <td>1988-04-14</td>
+            <td>Europa. Transportes y comunicaciones</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">2</td>
+            <td class="text-end num">11.40</td>
+            <td class="text-end num">5.60</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1988</td>
+            <td></td>
+            <td>Personajes. Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td></td>
+            <td class="text-end num">10</td>
+            <td class="text-end num">28.00</td>
+            <td class="text-end num">14.00</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1989</td>
+            <td>1989-05-12</td>
+            <td>XXV Aniversario del Sello</td>
+            <td></td>
+            <td></td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">1</td>
+            <td class="text-end num">6.50</td>
+            <td class="text-end num">3.20</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1989</td>
+            <td>1989-09-30</td>
+            <td>Flora y fauna. Serie completa</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">16</td>
+            <td class="text-end num">52.00</td>
+            <td class="text-end num">27.50</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1990</td>
+            <td>1990-01-08</td>
+            <td>Serie básica</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">9</td>
+            <td class="text-end num">0.00</td>
+            <td class="text-end num"></td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1990</td>
+            <td></td>
+            <td>Navidad</td>
+            <td>España</td>
+            <td>Correo aéreo</td>
+            <td>F.N.M.T.</td>
+            <td class="text-end num">4</td>
+            <td class="text-end num">13.60</td>
+            <td class="text-end num">6.90</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+          <tr>
+            <td><a href="#" class="text-decoration-none text-secondary">›</a></td>
+            <td class="text-end num">1990</td>
+            <td>1990-11-05</td>
+            <td>Homenaje a la Marina</td>
+            <td>España</td>
+            <td>Correo ordinario</td>
+            <td></td>
+            <td class="text-end num">7</td>
+            <td class="text-end num">21.00</td>
+            <td class="text-end num">10.40</td>
+            <td><button class="btn-close" aria-label="Delete this series"></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer d-flex justify-content-center align-items-center gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm">‹</button>
+      <span class="small text-secondary">1 / 26</span>
+      <button type="button" class="btn btn-outline-secondary btn-sm">›</button>
+    </div>
+  </div>
+
+  <p class="small text-secondary mt-2 mb-0">
+    Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one.
+  </p>
+</main>
+
+<div class="dd-variant">2 · BOOTSTRAP 5.3</div>
+</body>
+</html>
