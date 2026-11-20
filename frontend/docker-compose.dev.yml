@@ -8,7 +8,7 @@ services:
     # Mount the code for live reloading and the stamps images for development
     volumes:
       - type: bind
-        source: ./assets/stamps
+        source: ${STAMP_IMAGES_DIR:-./assets/stamps}
         target: /usr/src/app/assets/stamps
       # - ./frontend:/usr/src/app
     ports:
