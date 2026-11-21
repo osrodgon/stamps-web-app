@@ -149,6 +149,27 @@ class TestWorkspacePage:
         assert "Total printed" in titles
         assert config["issuesUrl"] == "/datadesk/issues/"
 
+    def test_the_description_is_a_hidden_column(self, staff_client, issue) -> None:
+        """Prose in a 13px cell is an ellipsis: the pane owns the widget and the
+        column exists only so the value travels with the row."""
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+        column = next(
+            item for item in config["columns"] if item["field"] == "description"
+        )
+
+        assert column["hidden"] is True
+        assert column["patch"] == "description"
+        assert column["title"] == "Stamp description"
+        assert config["fieldLabels"]["stamp"]["description"] == "Stamp description"
+
+    def test_the_preview_pane_ships_with_the_page(self, staff_client, issue) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        assert 'id="stamp-preview"' in content
+        assert 'id="preview-image"' in content
+        assert 'id="preview-description"' in content
+        assert "Select a stamp to see its picture and description." in content
+
     def test_the_placeholder_picture_is_shipped(self, staff_client, issue) -> None:
         config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
 
@@ -183,6 +204,12 @@ class TestStampRows:
         rows = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["data"]
 
         assert all("inherited" not in row for row in rows)
+
+    def test_the_description_travels_with_the_row(self, staff_client, issue) -> None:
+        rows = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["data"]
+
+        assert rows[0]["description"] == "Serie conmemorativa"
+        assert rows[1]["description"] == ""
 
     def test_the_series_attributes_are_not_repeated_per_row(
         self, staff_client, issue

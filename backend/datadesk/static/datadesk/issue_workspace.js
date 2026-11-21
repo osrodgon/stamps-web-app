@@ -333,6 +333,12 @@
     if (definition.align) {
       column.hozAlign = definition.align;
     }
+    /* A field with no column of its own still needs a cell: the preview pane
+     * writes the description there, so the change set, the review panel and
+     * the draft carry it without knowing the pane exists. */
+    if (definition.hidden) {
+      column.visible = false;
+    }
     if (definition.mono) {
       column.cssClass = "dd-mono";
     }
@@ -420,7 +426,175 @@
     ],
     layout: "fitColumns",
     height: false,
+    /* The preview pane follows the selection, and `j`/`k` move it: a row is
+     * something the user can be "on", not only something they can edit. */
+    selectableRows: 1,
     placeholder: config.emptyText,
+  });
+
+  /* --------------------------------------------------------------------- *
+   * The preview pane.
+   *
+   * The 26px thumbnail is a colour swatch, and the description has no column.
+   * The pane follows the selected row — no hover, no click on the picture — and
+   * edits the description in place. The value is written into a hidden cell, so
+   * it travels with the row instead of with the pane: selecting another stamp
+   * does not lose what was typed.
+   * ------------------------------------------------------------------- */
+
+  const previewBody = document.getElementById("preview-body");
+  const previewEmpty = document.getElementById("preview-empty");
+  const previewImage = document.getElementById("preview-image");
+  const previewMissing = document.getElementById("preview-missing");
+  const previewIdentity = document.getElementById("preview-identity");
+  const previewDescription = document.getElementById("preview-description");
+
+  /** What each mode does with a description typed here. */
+  const previewHooks = { input: () => {}, commit: () => {} };
+  /** A value written by the pane or by undo is not a new edit. */
+  let quietCell = null;
+  /** The description the field had when it took the focus: one undo step. */
+  let previewStart = "";
+
+  const selectedRow = () => {
+    const rows = grid.getSelectedRows();
+    return rows.length ? rows[0] : null;
+  };
+
+  const descriptionCell = (row) => row.getCell("description");
+
+  const descriptionValue = (row) => {
+    const cell = descriptionCell(row);
+    const value = cell ? cell.getValue() : row.getData().description;
+    return value === null || value === undefined ? "" : String(value);
+  };
+
+  /** Writes a cell without the edit events: a keystroke is not an undo step. */
+  const writeCell = (cell, value) => {
+    if (!cell) {
+      return;
+    }
+    quietCell = cell;
+    try {
+      cell.setValue(value, true);
+    } finally {
+      quietCell = null;
+    }
+  };
+
+  const paintPreview = (row) => {
+    previewBody.hidden = !row;
+    previewEmpty.hidden = Boolean(row);
+    if (!row) {
+      return;
+    }
+    const data = row.getData();
+    previewImage.src = data.image_url || config.fallbackImage;
+    previewImage.classList.toggle("dd-thumb-missing", !data.image_url);
+    previewMissing.hidden = Boolean(data.image_url);
+    previewIdentity.textContent =
+      [data.edifil, data.name].filter(Boolean).join(" · ") || String(data.id);
+    /* Assigning `.value` moves the caret to the end even when the text is the
+     * same, which would fight the user in the middle of a sentence. */
+    const description = descriptionValue(row);
+    if (previewDescription.value !== description) {
+      previewDescription.value = description;
+    }
+  };
+
+  const moveSelection = (direction) => {
+    const rows = grid.getRows();
+    if (!rows.length) {
+      return;
+    }
+    const current = selectedRow();
+    /* By id: two calls return two components for the same row, and comparing
+     * them by identity would always miss. */
+    const currentId = current ? current.getData().id : null;
+    const index = rows.findIndex((row) => row.getData().id === currentId);
+    const next =
+      index === -1
+        ? direction > 0
+          ? 0
+          : rows.length - 1
+        : clamp(index + direction, 0, rows.length - 1);
+    rows[next].select();
+    grid.scrollToRow(rows[next], "nearest", false);
+  };
+
+  /* The event carries the row: `getSelectedRows()` still holds the old one for
+   * a moment while the selection changes, and reading it here painted the
+   * previous stamp. */
+  grid.on("rowSelected", (row) => paintPreview(row));
+  grid.on("rowDeselected", () => {
+    if (!grid.getSelectedRows().length) {
+      paintPreview(null);
+    }
+  });
+  /* Clicking the row that is already selected deselects it, which would empty
+   * the pane: the current row is where you are, not a toggle. The click has
+   * already been processed here, so this is a repair and not a fight. */
+  grid.on("rowClick", (event, row) => {
+    if (!row.isSelected()) {
+      row.select();
+    }
+  });
+
+  /* The strip of the workspace has no search to focus with `/`; the rows are
+   * what the keyboard moves, and a field keeps its own letters. */
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    if (event.key !== "j" && event.key !== "k") {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Element && target.closest("input, select, textarea")) {
+      return;
+    }
+    /* A dialog owns the keyboard while it is open. */
+    if (
+      document.querySelector(
+        ".dd-dialog-backdrop:not([hidden]), .dd-review:not([hidden])"
+      )
+    ) {
+      return;
+    }
+    event.preventDefault();
+    moveSelection(event.key === "j" ? 1 : -1);
+  });
+
+  previewDescription.addEventListener("focus", () => {
+    const row = selectedRow();
+    previewStart = row ? descriptionValue(row) : "";
+  });
+
+  previewDescription.addEventListener("input", () => {
+    const row = selectedRow();
+    if (row) {
+      previewHooks.input(row, previewDescription.value);
+    }
+  });
+
+  previewDescription.addEventListener("change", () => {
+    const row = selectedRow();
+    if (row) {
+      previewHooks.commit(row, previewDescription.value);
+    }
+  });
+
+  /* A series opens on its first stamp: the pane would otherwise be a hint until
+   * the user clicks, and `j`/`k` would start from nowhere. A new series starts
+   * unselected on purpose — its rows are placeholders, not stamps. */
+  grid.on("tableBuilt", () => {
+    if (config.mode !== "edit") {
+      return;
+    }
+    const rows = grid.getRows();
+    if (rows.length) {
+      rows[0].select();
+    }
   });
 
   /* --------------------------------------------------------------------- *
@@ -544,7 +718,9 @@
       const row = grid.getRow(id);
       const cell = row && fieldOf[field] ? row.getCell(fieldOf[field]) : null;
       if (cell) {
-        cell.setValue(value, true);
+        /* Quietly: replaying a value is not a new edit, and an edit event here
+         * would push the undo it is performing back onto the stack. */
+        writeCell(cell, value);
       }
     };
 
@@ -911,6 +1087,8 @@
         .getElementById("stamp-grid")
         .classList.toggle("dd-grid-locked", count > 0);
       paintRows();
+      /* Undo and a restored draft can change the description under the pane. */
+      paintPreview(selectedRow());
       if (!reviewPanel.hidden) {
         renderReview();
       }
@@ -953,6 +1131,11 @@
      * -------------------------------------------------------------- */
 
     grid.on("cellEdited", (cell) => {
+      /* The pane writes the description into this cell, and undo replays values
+       * through it: neither is a user edit, and neither may push history. */
+      if (quietCell === cell) {
+        return;
+      }
       const row = cell.getRow();
       const id = row.getData().id;
       const field = patchOf[cell.getField()];
@@ -1008,6 +1191,32 @@
       });
       previous[control.name] = value;
     });
+
+    /* The description is edited in the pane, not in a cell. Its value lives in
+     * the hidden column, so from here on it behaves like any other field.
+     * `previewStart` is the value the field had when it took the focus: a
+     * cell's `getOldValue()` is the value it had when the page was built, not
+     * the one the user is editing. */
+    previewHooks.input = (row, value) => {
+      const id = row.getData().id;
+      remember("stamp", id, "description", previewStart);
+      writeCell(descriptionCell(row), value);
+      sync("stamp", id);
+      paint();
+    };
+
+    previewHooks.commit = (row, value) => {
+      if (same(previewStart, value)) {
+        return;
+      }
+      push({
+        model: "stamp",
+        id: row.getData().id,
+        field: "description",
+        from: previewStart,
+        to: value,
+      });
+    };
 
     /* ---------------------------------------------------------------- *
      * Committing and discarding.
@@ -1656,6 +1865,7 @@
       edifil: "",
       fesofi: "",
       name: nameInput.value,
+      description: "",
       face_value: "",
       colors: [],
       total_printed: null,
@@ -1669,7 +1879,8 @@
     /** Whether a row carries anything the user typed into it. */
     const touched = (row) =>
       row.name !== nameInput.value ||
-      ["edifil", "fesofi", "face_value", "total_printed", "mnh", "used"].some(
+      ["edifil", "fesofi", "face_value", "total_printed", "mnh", "used",
+       "description"].some(
         (field) =>
           row[field] !== null && row[field] !== undefined && row[field] !== ""
       ) ||
@@ -1677,7 +1888,17 @@
 
     /** Paints the grid from the drafts and keeps the counter honest. */
     const render = () => {
+      /* `setData` replaces every row, and with them the selection: the pane
+       * goes back to the same draft if it still exists. */
+      const current = selectedRow();
+      const selectedId = current ? current.getData().id : null;
       grid.setData(drafts);
+      const again = selectedId ? grid.getRow(selectedId) : null;
+      if (again) {
+        again.select();
+      } else {
+        paintPreview(null);
+      }
       badge.textContent = String(drafts.length);
       rowsInput.value = String(drafts.length);
     };
@@ -1730,6 +1951,10 @@
         return;
       }
       grid.getColumns().forEach((column) => {
+        /* A field with no column of its own stays hidden whatever the mode. */
+        if (column.getDefinition().visible === false) {
+          return;
+        }
         const field = column.getField();
         if (fastToggle.checked) {
           if (!only.has(field)) {
@@ -1745,7 +1970,7 @@
       /* The server owns the default: the template ships the control checked so
        * the page does not flash a full grid before the script runs. */
       fastToggle.checked = (config.fastRow || {}).on !== false;
-      applyFastRow();
+      /* applyFastRow(); */
       fastToggle.addEventListener("change", applyFastRow);
     }
 
@@ -1758,7 +1983,22 @@
     const history = [];
     let pointer = 0;
 
+    /** One undo step: the value a field had and the value it has now. */
+    const record = (id, field, from, to) => {
+      history.length = pointer;
+      history.push({ id, field, from, to });
+      while (history.length > (config.undoLimit || 200)) {
+        history.shift();
+      }
+      pointer = history.length;
+    };
+
     grid.on("cellEdited", (cell) => {
+      /* The pane writes the description here, and undo replays values: neither
+       * is a new edit. */
+      if (quietCell === cell) {
+        return;
+      }
       const edited = cell.getRow().getData();
       const row = drafts.find((draft) => draft.id === edited.id);
       if (row) {
@@ -1767,17 +2007,7 @@
       }
       cell.getElement().classList.remove("dd-cell-invalid");
       current = { id: edited.id, field: cell.getField() };
-      history.length = pointer;
-      history.push({
-        id: edited.id,
-        field: cell.getField(),
-        from: cell.getOldValue(),
-        to: cell.getValue(),
-      });
-      while (history.length > (config.undoLimit || 200)) {
-        history.shift();
-      }
-      pointer = history.length;
+      record(edited.id, cell.getField(), cell.getOldValue(), cell.getValue());
     });
 
     grid.on("cellClick", (event, cell) => {
@@ -1820,9 +2050,11 @@
       const gridRow = grid.getRow(operation.id);
       const cell = gridRow && gridRow.getCell(operation.field);
       if (cell) {
-        cell.setValue(value, true);
+        writeCell(cell, value);
       }
       pointer += direction;
+      /* The pane shows what the cell says: a replayed value is no exception. */
+      paintPreview(selectedRow());
     };
 
     /* ---------------------------------------------------------------- *
@@ -2427,7 +2659,11 @@
       form.addEventListener("change", paintPrefill);
     }
 
-    resize();
+    /* Tabulator builds asynchronously and `setData` inside the same tick finds
+     * no layout yet and throws, so the rows wait for the table. */
+    grid.on("tableBuilt", () => {
+      resize();
+    });
     syncYearFromDate();
     paintPrefill();
 
@@ -2450,6 +2686,25 @@
       event.preventDefault();
       event.returnValue = "";
     });
+
+    /* The description is typed in the pane; the value lands in the hidden
+     * column so the draft and the create payload carry it like any other. */
+    previewHooks.input = (row, value) => {
+      const cell = descriptionCell(row);
+      writeCell(cell, value);
+      const draft = drafts.find((item) => item.id === row.getData().id);
+      if (draft) {
+        draft.description = value;
+        draft.touched = touched(draft);
+      }
+    };
+
+    previewHooks.commit = (row, value) => {
+      if (previewStart === value) {
+        return;
+      }
+      record(row.getData().id, "description", previewStart, value);
+    };
   };
 
 

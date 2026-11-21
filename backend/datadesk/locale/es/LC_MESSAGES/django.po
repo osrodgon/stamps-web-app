@@ -223,6 +223,10 @@ msgid "Description"
 msgstr "Descripción"
 
 #: datadesk/views/workspace.py
+msgid "Stamp description"
+msgstr "Descripción del sello"
+
+#: datadesk/views/workspace.py
 msgid "Note"
 msgstr "Nota"
 
@@ -826,3 +830,15 @@ msgstr "La fila se ha creado."
 #: datadesk/views/lookups.py
 msgid "That row already existed."
 msgstr "Esa fila ya existía."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Select a stamp to see its picture and description."
+msgstr "Selecciona un sello para ver su imagen y su descripción."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This stamp has no picture."
+msgstr "Este sello no tiene imagen."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No description yet."
+msgstr "Sin descripción todavía."

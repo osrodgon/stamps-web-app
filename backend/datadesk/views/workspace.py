@@ -51,6 +51,16 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "mono": True,
     },
     {"field": "name", "patch": "name", "title": _("Name")},
+    {
+        "field": "description",
+        "patch": "description",
+        "title": _("Stamp description"),
+        # Prose has no column: it would be an ellipsis in a 13px cell. The
+        # field exists here so the change set, the review panel and the draft
+        # treat it like every other value, and the preview pane owns the
+        # widget the user actually types in.
+        "hidden": True,
+    },
     {"field": "face_value", "patch": "face_value", "title": _("Face value"),
      "width": 110},
     {"field": "colors", "title": _("Colors"), "width": 220},
