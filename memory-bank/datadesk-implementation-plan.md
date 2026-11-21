@@ -148,7 +148,7 @@ faltan tipografía, estados y elevación.
 
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
-| S28 | Pulido visual: tipografía, controles y elevación | S24 | M | sí | ⏳ pendiente, sin prisa |
+| S28 | Pulido visual: tipografía, controles y elevación | S24 | M | sí | ✅ 2026-11-21 |
 
 ---
 
@@ -1312,7 +1312,7 @@ banner; 6 en el de `mode=edit`: `[`/`]` y sus guardas): 488 datadesk, 1504 backe
 
 ### S28 — Pulido visual: tipografía, controles y elevación
 
-**Depende de**: S24. **Pedido el 2026-11-20, explícitamente sin prisa.**
+**Depende de**: S24. **Pedido el 2026-11-20. Estado**: ✅ 2026-11-21.
 
 Origen: la pregunta de si conviene Bootstrap o Materialize. La respuesta corta es
 que no, y las tres maquetas del workbench lo argumentan solas.
@@ -3281,3 +3281,99 @@ Verificado: **517 datadesk y 1533 backend en verde**; en Chromium, 1366×768 con
 desplegable abierto deja el pie visible (y=700 en 768), `?printer=11` abre el
 desplegable con el filtro puesto y su chip, quitarlo vuelve a 2.542 series, y elegir
 artista dentro del desplegable filtra sin recargar.
+
+### ✅ S28 — Pulido visual: tipografía, controles y elevación (2026-11-21)
+
+Los cinco cambios, todos en `datadesk.css`, con la maqueta `workbench-polished.html`
+como referencia:
+
+- **Inter self-hosted**: la variable latin (48 KB, `wght` 100–900, 518 glifos) que
+  sirve Google Fonts para `family=Inter:wght@100..900`; el fichero bajado es
+  **byte a byte** el de la maqueta, así que la procedencia es verificable. Fila en
+  `VERSIONS.md` con la versión real (4.001, leída de la tabla `name` con fontTools,
+  no inventada) y su sha256; el fichero entra en la tupla de `test_assets.py`. El
+  test de versiones baja a `\d+\.\d+` porque la fuente numera en dos componentes y
+  las librerías en tres.
+- **Controles**: 34 px, `--dd-line-strong`, hover y anillo suave
+  (`--dd-ring`, 3 px al 12 %) en lugar del `outline` sólido con `-1px`. Se aplica a
+  la barra de filtros, a la franja de la serie, al control de filas **y al login**,
+  que tiene su propio `.dd-field input` al final del fichero. El `:focus-visible`
+  sólido se queda para botones y enlaces: ahí el outline es la herramienta correcta
+  y no lo tapa nada.
+- **Movimiento**: `--dd-ease: 120ms ease` en botones, enlaces, filas e inputs, y un
+  `prefers-reduced-motion` que lo apaga entero.
+- **Elevación**: la tarjeta pierde el borde y usa `--dd-shadow-rest`, radio 12;
+  los flotantes (diálogos, panel de revisión, columnas) comparten
+  `--dd-shadow-float`. La **cabecera de la rejilla pasa a clara** (`#f8f9fb`, texto
+  `--dd-muted`) y la fila seleccionada gana una barra de 2 px a la izquierda; las
+  flechas de ordenación, que eran `#bbb`, se tiñen de `--dd-soft`.
+- **Ritmo**: tokens `--dd-s1..s6`, fila de 38, `tabular-nums` en las celdas.
+
+Dos cosas que no salieron como estaban escritas:
+
+- **El `—` de las celdas vacías no puede ser solo CSS.** Tabulator escribe
+  `&nbsp;` para un valor vacío, así que `:empty` no engancha nunca. Va un
+  `emptyFormatter` en los dos scripts (workbench y sello) que devuelve un nodo de
+  texto o el guion; el `:empty::after` se queda como red para las celdas cuyo
+  formatter no pinta nada. Es la única línea de JS del paso y está explicada en el
+  propio fichero.
+- **Las cabeceras se cortaban** ("YE…", "DA…", "EDIF…", "FACE V…") porque las
+  columnas se reparten con `grow` y no hay suelo. Se añaden mínimos reales
+  (`year` 92, `date` 108, `stamps` 102 en el workbench; `edifil`/`fesofi` 94,
+  `face_value` 122 en la rejilla del sello) y **"Total printed" pasa a "Printed"
+  en la cabecera** ("Total printed" se queda como etiqueta del campo, con una clave
+  `label` nueva en la columna, para no degradar el panel de revisión). Medido: a
+  1440 no se corta ninguna cabecera y no hay scroll horizontal; a 1366 con el panel
+  de S29 abierto solo se acorta la cabecera de la tirada, que es el precio de que
+  el panel ocupe 280 px.
+
+Ficheros: `datadesk.css` (tokens, fuente, controles, sombras, cabecera, ritmo),
+`vendor/inter-latin-var.woff2`, `vendor/VERSIONS.md`, `views/workbench.py` y
+`views/workspace.py` (mínimos y la etiqueta), `workbench.js` e
+`issue_workspace.js` (`emptyFormatter`), `tests/test_assets.py`,
+`tests/test_layout.py` (seis pines del nuevo look) y `tests/test_workspace*.py`.
+
+Verificado: **524 datadesk y 1540 backend en verde**; en Chromium a 1440×900 y
+1366×768: Inter cargada (`document.fonts.check`), cabecera clara, fila de 38,
+tarjeta sin borde, pie de paginación dentro (S30b intacto), anillo de foco en un
+campo, guion en 78 celdas vacías del workbench y 57 de la serie, y capturas de
+workbench, panel de filtros, workspace, lookups, dashboard, actividad y login.
+
+### ✅ S28b — La revisión de S28 en la app (2026-11-21)
+
+Cinco cosas que solo se ven usando la pantalla:
+
+- **La fecha del workbench se cortaba.** El `buildColumn` del workbench nunca copió
+  `width` (solo `align`/`grow`/`min`), así que la columna no tenía más defensa que
+  su `min` y `fitColumns` la repartía a su gusto. Ahora `date` lleva **ancho fijo**
+  de 112 px (una fecha tiene una longitud y no debe encogerse por lo que el usuario
+  encienda en el menú de columnas) y el `buildColumn` del workbench entiende
+  `width`. Medido a 1024, 1366, 1600 y 1920: 112 px y sin recorte.
+- **La línea de atajos del workbench tocaba el borde.** Es hija directa de una
+  tarjeta con `padding: 0`, así que estrena `padding: 0 var(--dd-s4)` y margen
+  inferior.
+- **La tarjeta del workbench no terminaba en esquinas redondeadas**: el grid raíz de
+  Tabulator es `#888` por defecto y solo las filas lo tapaban, dejando una banda
+  gris cuando la serie tiene un sello. `#workbench` y `#stamp-grid` llevan
+  `background: var(--dd-surface)`.
+- **La tarjeta de la serie tenía las esquinas cuadradas**: su franja tiene fondo y
+  pintaba su esquina sobre el radio. Se redondean la franja (arriba) y la barra de
+  commit (abajo) en vez de poner `overflow: hidden` en la tarjeta, que recortaba 12
+  px del desplegable del editor de colores de la rejilla.
+- **La × de borrar serie no estaba centrada.** El botón del workbench usaba
+  `.dd-row-delete-action`, que no tenía caja: un glifo de 16px sobre la línea de
+  texto se queda arriba en una fila de 38, aunque la columna esté centrada. Ahora
+  usa la misma `.dd-remove` que la × del sello (caja de celda completa), y el
+  chevron de abrir se centra igual con flex, que tenía el mismo problema.
+- **La moneda no aparecía en ningún sitio.** Las columnas `mnh`/`used` de los dos
+  grids llevan `money: true` y un formatter que escribe `1.20 €` (con `min: 104` en
+  el workbench, que `37500.00 €` son diez caracteres); los campos de la franja y las
+  etiquetas del panel de revisión dicen `(€)` con una clave `unit` en
+  `SERIES_FIELDS`. El símbolo va en el valor y no solo en la cabecera porque el
+  mockup lo mostraba así.
+
+Ficheros: `datadesk.css`, `workbench.js` (`width` y `moneyFormatter`),
+`issue_workspace.js` (`moneyFormatter`), `views/workbench.py` y
+`views/workspace.py` (`width`, `money`, `unit`), la plantilla de la serie y tests.
+
+Verificado: **526 datadesk y 1542 backend en verde**; capturas a 1024-1920.

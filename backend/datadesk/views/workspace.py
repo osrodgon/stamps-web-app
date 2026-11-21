@@ -40,14 +40,14 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "field": "edifil",
         "patch": "edifil_code",
         "title": _("Edifil"),
-        "width": 90,
+        "width": 94,
         "mono": True,
     },
     {
         "field": "fesofi",
         "patch": "fesofi_code",
         "title": _("Fesofi"),
-        "width": 90,
+        "width": 94,
         "mono": True,
     },
     {"field": "name", "patch": "name", "title": _("Name")},
@@ -62,13 +62,17 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "hidden": True,
     },
     {"field": "face_value", "patch": "face_value", "title": _("Face value"),
-     "width": 110},
+     "width": 122},
     {"field": "colors", "title": _("Colors"), "width": 220},
     {
         "field": "total_printed",
         "patch": "total_printed",
         "editor": "number",
-        "title": _("Total printed"),
+        # "Printed" on the header, "Total printed" everywhere a field is named:
+        # the grid header is 11px and uppercase, and the long label was the one
+        # that could not fit whatever the widths were.
+        "title": _("Printed"),
+        "label": _("Total printed"),
         "align": "right",
     },
     {
@@ -77,6 +81,7 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "title": _("MNH"),
         "align": "right",
         "width": 90,
+        "money": True,
     },
     {
         "field": "used",
@@ -84,6 +89,7 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "title": _("Used"),
         "align": "right",
         "width": 90,
+        "money": True,
     },
     {"field": "has_image", "title": _("Image"), "align": "center", "width": 64},
 )
@@ -118,9 +124,9 @@ SERIES_FIELDS: tuple[dict[str, Any], ...] = (
     {"name": "total_printed", "label": _("Total printed"), "kind": "number",
      "step": "1", "min": 0},
     {"name": "market_value_mnh", "label": _("Market value MNH"),
-     "kind": "number", "step": "0.01", "min": 0},
+     "kind": "number", "step": "0.01", "min": 0, "unit": "€"},
     {"name": "market_value_used", "label": _("Market value used"),
-     "kind": "number", "step": "0.01", "min": 0},
+     "kind": "number", "step": "0.01", "min": 0, "unit": "€"},
     {"name": "description", "label": _("Description"), "kind": "textarea",
      "wide": True},
     {"name": "note", "label": _("Note"), "kind": "textarea", "wide": True},
@@ -733,9 +739,15 @@ def field_labels() -> dict[str, dict[str, str]]:
     hardcodes a column name.
     """
     return {
-        "issue": {field["name"]: str(field["label"]) for field in SERIES_FIELDS},
+        "issue": {
+            # The unit travels with the name: "1.20 → 1.30" says nothing about
+            # what the number is worth.
+            field["name"]: str(field["label"])
+            + (f" ({field['unit']})" if field.get("unit") else "")
+            for field in SERIES_FIELDS
+        },
         "stamp": {
-            str(column["patch"]): str(column["title"])
+            str(column["patch"]): str(column.get("label", column["title"]))
             for column in STAMP_COLUMNS
             if "patch" in column
         },

@@ -320,6 +320,29 @@
   };
 
   /** Builds one Tabulator column from the server-provided definition. */
+  /** An empty cell gets a muted dash instead of a blank: Tabulator writes a
+   * non-breaking space, so CSS `:empty` never matches. Columns with their own
+   * formatter already paint something. */
+  const emptyFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      const dash = document.createElement("span");
+      dash.className = "dd-empty";
+      dash.textContent = "\u2014";
+      return dash;
+    }
+    return document.createTextNode(String(value));
+  };
+
+  /** Money is euros: see the workbench's formatter. */
+  const moneyFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      return emptyFormatter(cell);
+    }
+    return document.createTextNode(`${value} \u20ac`);
+  };
+
   const buildColumn = (definition) => {
     const column = {
       field: definition.field,
@@ -329,6 +352,9 @@
     };
     if (definition.width) {
       column.width = definition.width;
+    }
+    if (definition.min) {
+      column.minWidth = definition.min;
     }
     if (definition.align) {
       column.hozAlign = definition.align;
@@ -366,6 +392,12 @@
       column.formatter = imageFormatter;
       column.headerSort = false;
       column.cssClass = "dd-image-cell";
+    }
+    if (definition.money) {
+      column.formatter = moneyFormatter;
+    }
+    if (!column.formatter) {
+      column.formatter = emptyFormatter;
     }
     return column;
   };

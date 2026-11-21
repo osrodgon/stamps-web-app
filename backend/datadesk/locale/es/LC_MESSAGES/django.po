@@ -868,3 +868,7 @@ msgstr[1] "%(count)s series"
 #: datadesk/templates/datadesk/workbench.html
 msgid "More filters"
 msgstr "Más filtros"
+
+#: datadesk/views/workspace.py
+msgid "Printed"
+msgstr "Tirada"

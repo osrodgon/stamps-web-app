@@ -7,6 +7,7 @@ import pytest
 from django.contrib.staticfiles import finders
 
 VENDOR_FILES = (
+    "datadesk/vendor/inter-latin-var.woff2",
     "datadesk/vendor/htmx.min.js",
     "datadesk/vendor/alpine.min.js",
     "datadesk/vendor/tabulator.min.js",
@@ -49,8 +50,10 @@ class TestVendoredAssets:
             assert digest in versions_doc, f"{asset} does not match VERSIONS.md"
 
     def test_versions_doc_pins_a_version_per_asset(self, versions_doc: str) -> None:
+        """Every row names a version. Two components are enough: the font's own
+        version is 4.001, and the libraries use three."""
         for asset in VENDOR_FILES:
             row = next(
                 line for line in versions_doc.splitlines() if Path(asset).name in line
             )
-            assert re.search(r"\d+\.\d+\.\d+", row), row
+            assert re.search(r"\d+\.\d+", row), row

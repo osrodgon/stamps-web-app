@@ -146,7 +146,7 @@ class TestWorkspacePage:
 
         assert "Edifil" in titles
         assert "Colors" in titles
-        assert "Total printed" in titles
+        assert "Printed" in titles
         assert config["issuesUrl"] == "/datadesk/issues/"
 
     def test_the_description_is_a_hidden_column(self, staff_client, issue) -> None:
@@ -161,6 +161,24 @@ class TestWorkspacePage:
         assert column["patch"] == "description"
         assert column["title"] == "Stamp description"
         assert config["fieldLabels"]["stamp"]["description"] == "Stamp description"
+
+    def test_the_market_values_say_what_currency_they_are(
+        self, staff_client, issue
+    ) -> None:
+        """A number with no unit is a number nobody can price."""
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        money = {
+            column["field"]: column.get("money")
+            for column in config["columns"]
+            if column["field"] in ("mnh", "used")
+        }
+        assert money == {"mnh": True, "used": True}
+        assert "Market value MNH (€)" in content
+        assert config["fieldLabels"]["issue"]["market_value_mnh"] == (
+            "Market value MNH (€)"
+        )
 
     def test_the_preview_pane_ships_with_the_page(self, staff_client, issue) -> None:
         content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()

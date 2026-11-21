@@ -78,7 +78,7 @@
           <label class="dd-field{% if field.wide %} dd-field-wide{% endif %}"
                  for="field-{{ field.name }}">
             <span class="dd-field-key">
-              {{ field.label }}{% if field.required %} <span class="dd-req">*</span>{% endif %}
+              {{ field.label }}{% if field.unit %} ({{ field.unit }}){% endif %}{% if field.required %} <span class="dd-req">*</span>{% endif %}
             </span>
             {% if field.kind == "year" %}
               <input class="dd-input" id="field-{{ field.name }}"
