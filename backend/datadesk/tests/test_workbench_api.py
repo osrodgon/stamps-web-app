@@ -5,9 +5,13 @@ import pytest
 from django.core.cache import cache
 from django.test import Client
 
+from artists_api.models import Artist
 from colors_api.models import Color
 from countries_api.models import Country
 from issues_api.models import Issue
+from paper_types_api.models import PaperType
+from print_types_api.models import PrintType
+from printers_api.models import Printer
 from stamp_types_api.models import StampType
 from stamps_api.models import Stamp
 from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters, page_of_issue
@@ -36,6 +40,11 @@ def grid_dataset(db, tmp_path, settings) -> dict:
     spain = Country.objects.create(name="España")
     stamp_type = StampType.objects.create(name="Conmemorativo")
     color = Color.objects.create(name="Carmín")
+    blue = Color.objects.create(name="Azul")
+    printer = Printer.objects.create(name="Imprenta Nacional")
+    artist = Artist.objects.create(name="Murillo")
+    paper = PaperType.objects.create(name="Satinado")
+    print_type = PrintType.objects.create(name="Offset")
 
     alfa = Issue.objects.create(
         year=year_1980,
@@ -43,6 +52,10 @@ def grid_dataset(db, tmp_path, settings) -> dict:
         name="Alfa",
         country=spain,
         stamp_type=stamp_type,
+        printer=printer,
+        artist=artist,
+        paper_type=paper,
+        print_type=print_type,
         market_value_mnh="5.75",
         market_value_used="3.50",
     )
@@ -59,7 +72,9 @@ def grid_dataset(db, tmp_path, settings) -> dict:
         image="stamps/a.jpg",
         fesofi_code="1234",
     )
-    with_color.colors.set([color])
+    # Two colours on one stamp: a join on colours would count the stamp twice,
+    # which is exactly what the colour filter must not do.
+    with_color.colors.set([color, blue])
     Stamp.objects.create(issue=beta, face_value="5 Ptas", name="Sin color")
     Stamp.objects.create(issue=delta, face_value="", name="Sin facial")
 
@@ -374,3 +389,171 @@ class TestFocus:
 
         assert page_of_issue(target.pk) == 2
         assert page_of_issue(target.pk, IssueFilters(q="zzz")) == 1
+
+
+@pytest.mark.django_db
+class TestLookupFilters:
+    """The filters that open the series behind a reference row.
+
+    S30: a usage number with no way to see the rows it counts is a number that
+    only invites the question.
+    """
+
+    def test_the_printer_filter_narrows_the_list(
+        self, staff_client, grid_dataset
+    ) -> None:
+        printer = grid_dataset["alfa"].printer
+
+        assert names(staff_client.get(GRID_URL, {"printer": printer.pk})) == ["Alfa"]
+
+    def test_the_artist_filter_narrows_the_list(
+        self, staff_client, grid_dataset
+    ) -> None:
+        artist = grid_dataset["alfa"].artist
+
+        assert names(staff_client.get(GRID_URL, {"artist": artist.pk})) == ["Alfa"]
+
+    def test_the_paper_filter_narrows_the_list(
+        self, staff_client, grid_dataset
+    ) -> None:
+        paper = grid_dataset["alfa"].paper_type
+
+        assert names(staff_client.get(GRID_URL, {"paper_type": paper.pk})) == ["Alfa"]
+
+    def test_the_print_type_filter_narrows_the_list(
+        self, staff_client, grid_dataset
+    ) -> None:
+        print_type = grid_dataset["alfa"].print_type
+
+        assert (
+            names(staff_client.get(GRID_URL, {"print_type": print_type.pk}))
+            == ["Alfa"]
+        )
+
+    def test_the_colour_filter_is_a_semi_join_and_not_a_join(
+        self, staff_client, grid_dataset
+    ) -> None:
+        """A stamp with two colours must not count as two stamps."""
+        carmine = Color.objects.get(name="Carmín")
+
+        payload = staff_client.get(GRID_URL, {"color": carmine.pk}).json()
+
+        assert [row["name"] for row in payload["data"]] == ["Alfa"]
+        assert payload["data"][0]["stamps"] == 1
+
+    def test_every_filter_travels_in_the_query(self) -> None:
+        filters = IssueFilters(
+            printer=1,
+            artist=2,
+            paper_type=3,
+            print_type=4,
+            color=5,
+        )
+
+        assert filters.to_query() == {
+            "printer": 1,
+            "artist": 2,
+            "paper_type": 3,
+            "print_type": 4,
+            "color": 5,
+        }
+
+
+@pytest.mark.django_db
+class TestFilterChips:
+    """Every filter that is on is visible, and removable on its own.
+
+    The chips are painted by the script from the form, so what the server owes
+    them is the labels and the container: the rest is one source of truth.
+    """
+
+    def test_the_page_ships_the_chip_container(self, staff_client, grid_dataset) -> None:
+        content = staff_client.get(PAGE_URL).content.decode()
+
+        assert 'id="workbench-chips"' in content
+
+    def test_every_filter_has_a_label(self, staff_client, grid_dataset) -> None:
+        labels = staff_client.get(PAGE_URL).context["config"]["filterLabels"]
+
+        assert labels["country"] == "Country"
+        assert labels["color"] == "Color"
+        assert labels["attention"] == "Needs attention"
+        assert labels["year_min"] == "From year"
+        assert labels["q"] == "Name"
+
+    def test_the_chip_texts_are_translated(self, staff_client, grid_dataset) -> None:
+        texts = staff_client.get(PAGE_URL).context["config"]["chipsText"]
+
+        assert texts == {
+            "title": "Filters",
+            "clearAll": "Clear all",
+            "remove": "Remove this filter",
+        }
+
+    def test_the_page_ships_the_new_selects(self, staff_client, grid_dataset) -> None:
+        content = staff_client.get(PAGE_URL).content.decode()
+
+        for name in ("printer", "artist", "paper_type", "print_type", "color"):
+            assert f'name="{name}"' in content
+
+    def test_the_grid_is_told_which_filters_exist(
+        self, staff_client, grid_dataset
+    ) -> None:
+        response = staff_client.get(PAGE_URL)
+
+        assert "color" in response.context["config"]["filterNames"]
+
+
+@pytest.mark.django_db
+class TestTheFilterBar:
+    """The five filters S30 added stay behind a disclosure.
+
+    Seven selects on screen made the bar four rows tall, and the grid's
+    pagination fell below the fold. The two the bar always had stay on screen;
+    the rest open by themselves when one of them is doing the filtering.
+    """
+
+    def test_the_new_selects_live_behind_a_disclosure(
+        self, staff_client, grid_dataset
+    ) -> None:
+        content = staff_client.get(PAGE_URL).content.decode()
+        before, _, after = content.partition('class="dd-more-filters"')
+
+        assert 'name="country"' in before
+        assert 'name="stamp_type"' in before
+        for name in ("printer", "artist", "paper_type", "print_type", "color"):
+            assert f'name="{name}"' in after
+
+    def test_the_disclosure_opens_when_one_of_them_is_set(
+        self, staff_client, grid_dataset
+    ) -> None:
+        closed = staff_client.get(PAGE_URL).context["extra_filters_open"]
+        opened = staff_client.get(PAGE_URL, {"printer": 1}).context[
+            "extra_filters_open"
+        ]
+
+        assert closed is False
+        assert opened is True
+
+
+@pytest.mark.django_db
+class TestTheAssetsAreStamped:
+    """A browser that kept yesterday's script ran today's page.
+
+    That is what S30 looked like from the outside: the filters were on screen
+    but nothing filtered. The stamp changes with the newest DataDesk asset, so
+    the URL changes with it.
+    """
+
+    def test_the_page_asks_for_a_versioned_script(
+        self, staff_client, grid_dataset
+    ) -> None:
+        content = staff_client.get(PAGE_URL).content.decode()
+
+        assert "datadesk/workbench.js?v=" in content
+        assert "datadesk/datadesk.css?v=" in content
+
+    def test_the_stamp_is_not_empty(self) -> None:
+        from datadesk.context import asset_version
+
+        assert asset_version() != ""

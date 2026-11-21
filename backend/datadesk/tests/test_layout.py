@@ -167,3 +167,47 @@ class TestTheTypeScale:
 
     def test_the_body_uses_the_scale(self) -> None:
         assert "font: var(--dd-text) /" in self.stylesheet()
+
+
+class TestTheWorkbenchFitsTheWindow:
+    """S30's filter bar pushed the pagination below the fold.
+
+    The grid used to carry `calc(100vh - 300px)`, a number tuned to a two-row
+    filter bar. Adding five selects made the bar four rows and the footer ended
+    up at 899px in a 900px window. The card is now a column as tall as the
+    window and the grid takes what is left, so the number does not exist.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_the_page_is_a_column_as_tall_as_the_window(self) -> None:
+        rule = self.rule(".dd-workbench-page")
+
+        assert "display: flex" in rule
+        assert "flex-direction: column" in rule
+        assert "height: calc(100vh" in rule
+
+    def test_the_grid_takes_what_the_filters_leave(self) -> None:
+        rule = self.rule(".dd-workbench-page > #workbench")
+
+        assert "flex: 1 1 auto" in rule
+        assert "min-height" in rule
+
+    def test_the_script_does_not_guess_the_height(self) -> None:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        script = (path / "workbench.js").read_text(encoding="utf-8")
+
+        assert 'height: "100%"' in script
+        assert 'height: "calc(100vh - 300px)"' not in script
+
+    def test_a_hidden_element_is_hidden(self) -> None:
+        """`.dd-active-filters { display: flex }` used to beat the attribute and
+        leave an empty 17px strip even with no filters on."""
+        stylesheet = self.stylesheet()
+
+        assert re.search(r"\[hidden\]\s*\{[^}]*display:\s*none", stylesheet)

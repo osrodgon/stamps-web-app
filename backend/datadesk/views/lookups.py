@@ -188,6 +188,8 @@ def lookup_config(key: str) -> dict[str, Any]:
         "texts": {
             "name": str(_("Name")),
             "usage": str(_("Used by")),
+            "series": str(_("Series")),
+            "seeSeries": str(_("See the series that use it")),
             "empty": str(_("No rows yet.")),
             "delete": str(_("Delete")),
             "inUse": str(_("In use: merge it into another row")),
@@ -224,6 +226,7 @@ def lookup_config(key: str) -> dict[str, Any]:
         ),
         "plurals": {
             "usage": plural_forms("Used by %(count)s row", "Used by %(count)s rows"),
+            "series": plural_forms("%(count)s series", "%(count)s series"),
             "rows": plural_forms("%(count)s row", "%(count)s rows"),
             "moved": plural_forms(
                 "Moved %(count)s reference", "Moved %(count)s references"

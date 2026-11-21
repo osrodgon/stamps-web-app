@@ -63,6 +63,13 @@
   box-sizing: border-box;
 }
 
+/* `hidden` is an attribute, not a suggestion: a class with its own `display`
+ * (a flex bar, a drawer) was overriding it and leaving an empty strip on
+ * screen. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -400,8 +407,19 @@ kbd {
 
 /* --- Workbench --------------------------------------------------------- */
 
+/* The workbench is the one screen that fills the window: the filters take what
+ * they need and the grid takes the rest, so the pagination footer cannot end up
+ * below the fold when a filter row is added (it did, with a hardcoded height). */
 .dd-workbench-page {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--dd-topbar-height) - 64px);
+}
+
+.dd-workbench-page > #workbench {
+  flex: 1 1 auto;
+  min-height: 200px;
 }
 
 .dd-filters {
@@ -442,6 +460,72 @@ kbd {
 .dd-filter select:focus {
   outline: 2px solid var(--dd-navy);
   outline-offset: -1px;
+}
+
+/* The filters that do not need to be on screen: a disclosure that takes the
+ * whole width when it opens, so the bar grows downwards and not sideways. */
+.dd-more-filters {
+  flex: 1 1 100%;
+}
+
+.dd-more-filters-toggle {
+  cursor: pointer;
+  font-size: var(--dd-text-xs);
+  color: var(--dd-navy);
+  font-weight: 600;
+  width: fit-content;
+}
+
+.dd-more-filters-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  padding-top: 10px;
+}
+
+/* The filters that are on, as links that turn them off. They sit between the
+ * form and the grid because that is where the question "why is this list
+ * short?" gets asked. */
+.dd-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--dd-line);
+  background: #fbfcfd;
+}
+
+.dd-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid #c9d3e0;
+  border-radius: 12px;
+  background: #eef2f7;
+  color: var(--dd-navy);
+  font-size: var(--dd-text-xs);
+  text-decoration: none;
+}
+
+.dd-filter-chip:hover {
+  border-color: var(--dd-navy);
+  background: #e3eaf3;
+}
+
+.dd-filter-chip-key {
+  font-weight: 600;
+}
+
+.dd-filter-chip-x {
+  margin-left: 2px;
+  color: var(--dd-muted);
+}
+
+.dd-filter-clear {
+  margin-left: 4px;
 }
 
 .dd-workbench-toolbar {
@@ -1751,4 +1835,17 @@ kbd {
 
 .dd-logout {
   margin: 0;
+}
+
+/* The usage number of a reference row is a door: it opens the workbench with
+ * that filter. Underlined because a number that looks like text is not a hint
+ * that clicking it does something. */
+.dd-usage-link {
+  color: var(--dd-navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dd-usage-link:hover {
+  color: var(--dd-navy-hover);
 }

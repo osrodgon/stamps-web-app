@@ -10,7 +10,7 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}DataDesk{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'datadesk/vendor/tabulator.min.css' %}">
-  <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}">
+  <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}?v={{ datadesk_asset_version }}">
   {% block extra_css %}{% endblock %}
 </head>
 {% comment %}

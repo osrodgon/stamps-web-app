@@ -842,3 +842,29 @@ msgstr "Este sello no tiene imagen."
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "No description yet."
 msgstr "Sin descripción todavía."
+
+#: datadesk/views/workbench.py
+msgid "Filters"
+msgstr "Filtros"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Remove this filter"
+msgstr "Quitar este filtro"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Clear all"
+msgstr "Quitar todos"
+
+#: datadesk/views/lookups.py
+msgid "See the series that use it"
+msgstr "Ver las series que lo usan"
+
+#: datadesk/views/lookups.py
+msgid "%(count)s series"
+msgid_plural "%(count)s series"
+msgstr[0] "%(count)s serie"
+msgstr[1] "%(count)s series"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "More filters"
+msgstr "Más filtros"

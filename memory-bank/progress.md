@@ -401,14 +401,41 @@
       build → `verticalFillMode` crash; now waits for `tableBuilt`, reproduced with
       `HEAD`'s JS too), and `?rows=N` is not read by the view at all
       (`NewRowSettings()` takes no argument), see known gaps.
-- [ ] **S30 — "See affected series" from a reference table** (planned 2026-11-20):
-      the usage number becomes a link when it is above zero. Free for year, country
-      and stamp type because those filters already exist; four new `IssueFilters`
-      (printer, artist, paper type, print type) plus a visible active-filter chip
-      with its clear button — that chip is the real work, not the query. Colour is a
-      stamp-level M2M, so it needs `stamps__colors` + `distinct` and the link must
-      say "series" while the usage column counts stamps (1.177 stamps in 1.044
-      series).
+- [x] **S30 — "See affected series" from a reference table** (2026-11-21): the
+      usage number is a link to the workbench with that filter, above zero only, and
+      the list says why it is filtered with one chip per active filter and a "clear
+      all". Five filters added (`printer`, `artist`, `paper_type`, `print_type`,
+      `color`); the four are series columns and the colour is `Exists`, **not** the
+      `stamps__colors` + `distinct` the plan said: a join multiplies rows and
+      inflates `Count("stamps")`, and a test with a two-colour stamp pins it. The
+      link counts **series** (`Count("stamps__issue", distinct=True)` annotated in
+      the same query) and the cell title still says the stamps when the two numbers
+      differ; a year links with `year_min` + `year_max` because `Year.pk` is not the
+      year. The chips are painted in the script from the form — the page reloads the
+      grid without reloading itself, so server-rendered chips went stale the moment
+      a filter was set from the bar (seen in the browser). `filters_from()` is now
+      one function shared by the page and the grid endpoint; before, the endpoint had
+      its own copy and the new filters would have stopped at the page. 16 tests; 509
+      datadesk and 1525 backend green; checked in Chromium (link → 1 series + chip →
+      back to 2.542; colour 40 series vs 50 stamps; chip appears without reload).
+- [x] **S30b — The workbench fits the window again** (2026-11-21, found the same
+      day by using it): the five new selects made the bar four rows tall (193px)
+      and the grid kept `height: calc(100vh - 300px)`, a number S24 tuned to a
+      two-row bar — at 1440×900 the pagination footer sat at y=899, outside the
+      window. The card is now a column as tall as the window and the grid takes
+      what the filters leave (`flex: 1` + `height: "100%"`), so the footer is
+      always inside, closed (104px), open (221px) or with chips; checked at
+      1440×900, 1366×768 and 1366×600. The empty chips strip also kept 17px
+      because `display: flex` beat the `hidden` attribute: a global
+      `[hidden] { display: none !important }` fixes it everywhere (dialogs and the
+      review panel checked). The five new selects moved behind a "More filters"
+      `<details>` that opens itself when one of them filters, so the bar is back to
+      its old height. And the scare: "the filters don't work" was the previous
+      `workbench.js` in the browser — the selects come from the template, the
+      filtering from the script, so the page showed the new filters and filtered
+      nothing while the URL was right. DataDesk's assets now carry `?v=` with the
+      newest asset's mtime (`datadesk/context.py`), so the browser asks again when
+      they change. 8 tests; 517 datadesk and 1533 backend green.
 - [ ] **S31 — Backups screen** (planned 2026-11-20): `POST /datadesk/backup`
       already runs `stamps_db_backup` in `stamps` mode (S15). What is missing is the
       place: list what is in `backups/`, run one with a mode, and download it. The

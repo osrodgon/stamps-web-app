@@ -160,7 +160,7 @@ S28: aquella es piel, estas tocan datos, consultas y disco.
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
 | S29 | Ver la imagen y la descripción de un sello | — | M | sí | ✅ 2026-11-21 |
-| S30 | «Ver series afectadas» desde una tabla de referencia | S8, S19, S27 | S (3) / M (8) | sí | ⏳ pendiente |
+| S30 | «Ver series afectadas» desde una tabla de referencia | S8, S19, S27 | S (3) / M (8) | sí | ✅ 2026-11-21 |
 | S31 | Pantalla de backups: listar, lanzar, descargar | S15 | S | sí | ⏳ pendiente |
 | S32 | Restore con mantenimiento, dump previo y secuencias | S31 | M | sí, pero es el botón rojo | ⏳ pendiente |
 
@@ -1440,7 +1440,7 @@ lee en ningún sitio de la vista, así que el control siempre enseña 4 (anotado
 
 ### S30 — «Ver series afectadas» desde una tabla de referencia
 
-**Depende de**: S8, S19, S27.
+**Depende de**: S8, S19, S27. **Estado**: ✅ 2026-11-21.
 
 **Lo que hay hoy**: los filtros del workbench son `year_min`, `year_max`, `q`,
 `country`, `stamp_type` y `attention`, así que solo 2 de los 8 lookups tienen
@@ -1478,6 +1478,54 @@ el chip de color dice «series» y el número es de series; las flechas de S27 y
 vez, porque el chip se escribe igual) · `service.py`, `views/workbench.py`,
 `views/lookups.py`, plantillas de workbench y lookups, `workbench.js`, `lookups.js`,
 tests.
+
+**Implementado (2026-11-21)**, con tres correcciones al plan:
+
+- **El color va con `Exists`, no con `stamps__colors` + `distinct`**: el propio
+  `service.py` documenta que un join multiplica filas y rompe el `Count("stamps")`
+  del grid. Hay un test con un sello de dos colores que comprueba que la serie
+  sigue contando 1 sello.
+- **Los chips se pintan en el script, no en el servidor.** El formulario actualiza
+  la URL con `replaceState` y recarga solo el grid; unos chips renderizados por
+  Django se quedaban viejos al cambiar un filtro desde la propia barra (se vio en
+  el navegador: `?printer=11` con la lista filtrada y sin chip). Ahora salen del
+  formulario, con las etiquetas traducidas en el config, así que chips y grid no
+  pueden discrepar. Primera pintura incluida.
+- **`filters_from()` es una sola función**, en `views/workbench.py`, y
+  `workbench_api.py` la importa: el endpoint del grid tenía su propia copia del
+  parser y los cinco filtros nuevos se habrían quedado solo en la página.
+  `IssueFilters.FILTER_NAMES` y `FILTER_FIELDS` son la lista única, y el config le
+  pasa `filterNames` al script para que la URL no pierda ninguno.
+- El enlace de un año usa `year_min` **y** `year_max` con el número del año (el id
+  de `Year` no es el año), y `filter_url` viaja por fila para que el script no
+  componga la URL.
+- El color anota `Count("stamps__issue", distinct=True)` en la misma consulta: la
+  columna dice **series** («40 series») y el `title` de la celda sigue diciendo los
+  sellos («Used by 50 rows») cuando los dos números difieren.
+
+**Revisión tras usarlo (2026-11-21, mismo día)**, con dos cosas que no salieron en
+las pruebas:
+
+- **El grid se salía de la pantalla.** Añadir cinco `select` dejó la barra en cuatro
+  filas (193 px) y el grid seguía con `height: calc(100vh - 300px)`, un número que
+  S24 había ajustado a una barra de dos filas: en 1440×900 el pie con la paginación
+  quedaba en y=899, justo fuera. Ahora `.dd-workbench-page` es una columna tan alta
+  como la ventana y el grid toma lo que dejan los filtros (`flex: 1`, `height:
+  100%`), así que el pie está siempre dentro por muy alta que sea la barra. De paso:
+  `[hidden]` no ocultaba la fila de chips vacía porque `display: flex` pisaba el
+  atributo, y la regla `[hidden] { display: none !important }` lo arregla para todos.
+- **Los cinco filtros nuevos van detrás de «More filters»** (un `<details>`, sin
+  JS), y se abren solos cuando uno de ellos está filtrando; la barra vuelve a medir
+  104 px en reposo. Alternativa descartada: quitarlos y filtrar solo desde las tablas
+  de referencia.
+- **El episodio del script viejo**: «los filtros no funcionan» resultó ser el
+  `workbench.js` anterior en el navegador. Los `select` los pinta el servidor y los
+  lee el script, así que la página enseñaba los filtros nuevos y no filtraba nada —
+  la URL sí llevaba el parámetro. Ahora los assets de DataDesk llevan `?v=` con la
+  fecha del fichero más nuevo (`datadesk/context.py`, context processor), así que el
+  navegador vuelve a pedirlos en cuanto algo cambia; en producción el manifiesto ya
+  los hashea y el sello no estorba. Comprobación para el futuro: si vuelve a pasar,
+  mirar si `workbench.js` servido contiene `paintChips`.
 
 ---
 
@@ -3141,3 +3189,86 @@ debajo; `j`/`k` cambian la imagen, una descripción tipada cuenta 1 cambio y sal
 en la revisión como `texto → texto ZZZ`, el undo la devuelve y deja el botón de
 revisión desactivado; `mode=new` selecciona, escribe y deshace; sin errores de
 consola.
+
+### ✅ S30 — «Ver series afectadas» desde una tabla de referencia (2026-11-21)
+
+El número de uso de una tabla de referencia era un callejón sin salida: contaba
+algo y no dejaba verlo. Ahora es un enlace a la lista filtrada, y la lista dice
+por qué está filtrada.
+
+- **Cinco filtros nuevos** en `IssueFilters`: `printer`, `artist`, `paper_type`,
+  `print_type` y `color`. Los cuatro primeros son columnas de la serie y van por
+  `FILTER_FIELDS`; el color es del sello y va con `Exists`, como las colas de
+  «necesita atención», porque un join multiplicaría filas y rompería el
+  `Count("stamps")`. Un test con un sello de dos colores lo fija: la serie sigue
+  contando 1 sello.
+- **`FILTER_NAMES` es la lista única** (servicio, parser, formulario y script).
+  `filters_from()` vive en `views/workbench.py` y la importa el endpoint del grid:
+  había dos parsers y los filtros nuevos se habrían quedado a medias.
+- **Los chips se pintan en el script**, desde el formulario: la página recarga el
+  grid sin recargarse, así que unos chips del servidor se quedaban viejos al
+  cambiar un filtro en la barra (visto en el navegador). Etiquetas traducidas en el
+  config (`filterLabels`, `chipsText`), cada chip es un enlace a la misma página sin
+  ese parámetro, más «Clear all».
+- **El enlace dice series.** El color anota `Count("stamps__issue", distinct=True)`
+  en la misma consulta: la celda dice «40 series» y el `title` sigue diciendo los
+  sellos («Used by 50 rows») cuando difieren. Un año enlaza con `year_min` y
+  `year_max` puestos a su número, porque el id de `Year` no es el año.
+- **A 0 no hay enlace**: un enlace a una lista vacía es un callejón disfrazado.
+- La barra de filtros pasa a siete `select` (el mayor, 300 colores): son tablas
+  pequeñas y un `select` nativo no necesita script.
+
+Ficheros: `service.py` (`IssueFilters`, `FILTER_NAMES`, `FILTER_FIELDS`,
+`filter_issues`), `views/workbench.py` (parser único, opciones, etiquetas),
+`views/workbench_api.py` (usa el parser), `views/lookups.py` (textos),
+`lookups.py` (`series_counts`, `series_of`, `filter_url`, `series_usage`),
+`templates/datadesk/workbench.html`, `static/datadesk/workbench.js` (chips),
+`static/datadesk/lookups.js` (el número como enlace), `datadesk.css`, catálogos y
+tests.
+
+Verificado: **509 datadesk y 1525 backend en verde**; en Chromium, la tabla de
+artistas enlaza con `?artist=60`, la lista abre con 1 serie y el chip «Artist: … ×»
+que la quita vuelve a la lista completa; `?color=33` abre con el chip «Color:
+Amarillo ×» y el contador coincide con el enlace (40 series / 40 issues); cambiar
+el imprenta desde la barra pinta su chip sin recargar; a 1440 px sin scroll
+horizontal.
+
+### ✅ S30b — El workbench vuelve a caber en la pantalla (2026-11-21)
+
+La primera revisión de S30 con el navegador encontró dos cosas que ningún test ve:
+
+- **La barra creció y se llevó por delante la paginación.** Siete `select` en una
+  barra flexible son cuatro filas (193 px), y el grid seguía con
+  `height: calc(100vh - 300px)` —un número que S24 ajustó a dos filas—: a 1440×900
+  el pie quedaba en y=899, fuera de la ventana. Ahora la tarjeta es una columna tan
+  alta como la ventana (`calc(100vh - topbar - 64px)`) y el grid toma el resto con
+  `flex: 1 1 auto` y `height: "100%"` en Tabulator, así que el pie está siempre
+  dentro, con la barra cerrada (104 px), abierta (221 px) o con chips. Comprobado a
+  1440×900, 1366×768 y 1366×600.
+- **La fila de chips vacía ocupaba 17 px** porque `.dd-active-filters
+  { display: flex }` vencía al atributo `hidden`; una regla global
+  `[hidden] { display: none !important }` lo arregla en todas las pantallas (se
+  comprobó que el panel de revisión y los diálogos siguen abriendo).
+- **Los cinco filtros nuevos van detrás de «More filters»**, un `<details>` sin JS
+  que se abre solo cuando uno de ellos filtra. La barra vuelve a su altura de antes
+  y el control sigue a mano cuando hace falta.
+
+Y el falso positivo que costó la tarde: **«los filtros no funcionan» era el
+`workbench.js` anterior en el navegador**. Los `select` los pinta el servidor y los
+lee el script, así que con el JS viejo la página enseñaba los filtros nuevos, la URL
+llevaba el parámetro y la lista salía entera. Se arregló al recargar, y ahora no
+puede repetirse en silencio: los assets de DataDesk llevan `?v=` con la fecha del
+fichero más nuevo (`datadesk/context.py` + context processor), de modo que el
+navegador los vuelve a pedir en cuanto cambian. En producción el manifiesto ya
+hashea; el sello solo cubre el desarrollo y cualquier servido sin hash.
+
+Ficheros: `views/workbench.py` (dos grupos de filtros, `extra_filters_open`),
+`templates/datadesk/workbench.html` (el `<details>`), `datadesk.css` (columna,
+`[hidden]`, desplegable), `workbench.js` (`height: 100%`), `datadesk/context.py`,
+`_backend/settings.py` (context processor), `base.html` y las tres plantillas con
+script, catálogos y tests.
+
+Verificado: **517 datadesk y 1533 backend en verde**; en Chromium, 1366×768 con el
+desplegable abierto deja el pie visible (y=700 en 768), `?printer=11` abre el
+desplegable con el filtro puesto y su chip, quitarlo vuelve a 2.542 series, y elegir
+artista dentro del desplegable filtra sin recargar.
