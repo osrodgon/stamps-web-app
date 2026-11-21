@@ -26,9 +26,7 @@ from typing import Any
 from django.apps import apps
 from django.db import models, transaction
 from django.db.models import Count, QuerySet
-from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import urlencode
 
 from datadesk.audit import new_commit_id, record, snapshot
 from datadesk.registry import Lookup, get_lookup
@@ -136,18 +134,20 @@ def series_of(lookup: Lookup, row: models.Model, annotations: dict[str, Count]) 
     return usage_of(row, annotations)
 
 
-def filter_url(key: str, row: models.Model) -> str:
-    """Returns the workbench with this row's filter applied.
+def filter_params(key: str, row: models.Model) -> dict[str, int]:
+    """Returns the workbench filters that show the series behind a row.
+
+    The parameters and not the URL: this module is the service layer and a test
+    can run with the app unmounted, where ``reverse("datadesk:issues")`` does not
+    exist. The view turns these into the link the grid uses.
 
     The years are the one case where the id is not the value: a series points at
     a ``Year`` row, and the workbench filters by the number, with the range's
     two ends set to it.
     """
     if key == "year":
-        query = {"year_min": row.year, "year_max": row.year}
-    else:
-        query = {key: row.pk}
-    return f"{reverse('datadesk:issues')}?{urlencode(query)}"
+        return {"year_min": row.year, "year_max": row.year}
+    return {key: row.pk}
 
 
 def lookup_queryset(key: str, query: str = "") -> QuerySet:
@@ -189,7 +189,7 @@ def lookup_page(
             "name": str(getattr(row, lookup.name_field)),
             "usage": usage_of(row, annotations),
             "series": series_of(lookup, row, annotations),
-            "filter_url": filter_url(key, row),
+            "filter": filter_params(key, row),
         }
         for row in queryset[(page - 1) * size : page * size]
     ]
@@ -489,5 +489,5 @@ def _row_ref(key: str, lookup: Lookup, row: models.Model) -> dict[str, Any]:
         "name": str(getattr(annotated, lookup.name_field)),
         "usage": usage_of(annotated, annotations),
         "series": series_of(lookup, annotated, annotations),
-        "filter_url": filter_url(key, annotated),
+        "filter": filter_params(key, annotated),
     }

@@ -140,11 +140,14 @@ class TestTheGrid:
 class TestTheSeriesBehindARow:
     """S30: the usage number is a door, and the number is the one behind it."""
 
-    def test_every_row_carries_its_series_and_their_link(self, artists, series) -> None:
+    def test_every_row_carries_its_series_and_its_filter(
+        self, artists, series
+    ) -> None:
+        """The service returns the parameters, not the URL: it can run unmounted."""
         row = next(r for r in lookup_page("artist").rows if r["name"] == "Murillo")
 
         assert row["series"] == 1
-        assert row["filter_url"] == f"/datadesk/issues/?artist={row['id']}"
+        assert row["filter"] == {"artist": row["id"]}
 
     def test_a_colour_counts_series_and_not_stamps(self, db) -> None:
         """The usage column counts stamps; the grid behind it counts series."""
@@ -159,12 +162,12 @@ class TestTheSeriesBehindARow:
         assert row["usage"] == 2
         assert row["series"] == 1
 
-    def test_a_year_links_its_own_range(self, db) -> None:
+    def test_a_year_filters_its_own_range(self, db) -> None:
         issue_with_year()
 
         row = lookup_page("year").rows[0]
 
-        assert row["filter_url"] == "/datadesk/issues/?year_min=1987&year_max=1987"
+        assert row["filter"] == {"year_min": 1987, "year_max": 1987}
 
     def test_a_rename_answers_the_row_with_its_link(self, artists, series, staff_client) -> None:
         artist = artists[1]
@@ -529,6 +532,16 @@ class TestTheEndpoints:
             "Murillo y su taller",
         }
         assert body["data"][0]["usage"] == 1
+
+    def test_the_rows_carry_the_link_to_the_series_behind_them(
+        self, staff_client, artists, series
+    ) -> None:
+        """The URL is composed by the view, which is the only layer mounted."""
+        body = staff_client.get(ROWS_URL.format(key="artist")).json()
+        row = next(r for r in body["data"] if r["name"] == "Murillo")
+
+        assert row["filter_url"] == f"/datadesk/issues/?artist={row['id']}"
+        assert "filter" not in row
 
     def test_the_rename_endpoint_answers_409_with_the_id(
         self, staff_client, artists

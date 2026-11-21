@@ -1518,6 +1518,15 @@ las pruebas:
   JS), y se abren solos cuando uno de ellos está filtrando; la barra vuelve a medir
   104 px en reposo. Alternativa descartada: quitarlos y filtrar solo desde las tablas
   de referencia.
+- **La capa de servicio no compone URLs.** `lookup_page()` construía el enlace de
+  cada fila con `reverse("datadesk:issues")`, y ese namespace solo existe con la
+  app montada: en CI, con `DATADESK_ENABLED` apagado, los catorce tests que llaman
+  al servicio directamente morían con `NoReverseMatch` (`test_lookups` y el revert
+  de un rename en `test_activity`). Ahora el servicio devuelve `filter: {...}` y la
+  vista compone el `filter_url` (`with_filter_url()`), como ya hacía el workbench
+  con las URLs de sus filas. Y `pytest.ini` fija `DATADESK_ENABLED=False`, así que
+  los tests corren siempre sin montar —como CI— y `mounted` la enciende donde toca:
+  un `reverse` en el servicio falla en local en vez de en la pipeline.
 - **El episodio del script viejo**: «los filtros no funcionan» resultó ser el
   `workbench.js` anterior en el navegador. Los `select` los pinta el servidor y los
   lee el script, así que la página enseñaba los filtros nuevos y no filtraba nada —

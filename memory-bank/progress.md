@@ -436,6 +436,16 @@
       nothing while the URL was right. DataDesk's assets now carry `?v=` with the
       newest asset's mtime (`datadesk/context.py`), so the browser asks again when
       they change. 8 tests; 517 datadesk and 1533 backend green.
+- [x] **S30c — The CI caught a `reverse` in the service layer** (2026-11-21):
+      `lookup_page()` built each row's `filter_url` with
+      `reverse("datadesk:issues")`, which only exists with the app mounted; in CI
+      (`DATADESK_ENABLED` off) the fourteen tests that call the service directly
+      died with `NoReverseMatch`, and locally `.env` hid it by leaving the app on.
+      The service now returns `filter: {...}` and `views/lookups.py` composes the
+      URL (`with_filter_url()`), where the namespace is guaranteed; `pytest.ini`
+      pins `DATADESK_ENABLED=False` so the suite is CI-shaped by default. 1 test
+      added for the endpoint contract; 518 datadesk with the flag on, 1534 backend
+      with it off.
 - [ ] **S31 — Backups screen** (planned 2026-11-20): `POST /datadesk/backup`
       already runs `stamps_db_backup` in `stamps` mode (S15). What is missing is the
       place: list what is in `backups/`, run one with a mode, and download it. The

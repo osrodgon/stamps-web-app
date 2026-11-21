@@ -8,6 +8,7 @@ in ``datadesk.lookups``; this is the HTTP and the words.
 from typing import Any
 
 from django.http import HttpRequest, Http404, JsonResponse
+from django.utils.http import urlencode
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -104,7 +105,9 @@ class LookupRowsJsonView(DataDeskAccessMixin, View):
             return JsonResponse(
                 {"success": False, "message": "Unknown lookup"}, status=404
             )
-        return JsonResponse(page.as_dict())
+        payload = page.as_dict()
+        payload["data"] = with_filter_url(payload["data"])
+        return JsonResponse(payload)
 
 
 class LookupRenameJsonView(JsonPostView):
@@ -117,7 +120,7 @@ class LookupRenameJsonView(JsonPostView):
         row = rename_lookup(
             _key(kwargs["key"]), payload.get("id"), payload.get("name"), request.user
         )
-        return written("Saved.", {"data": row})
+        return written("Saved.", {"data": with_filter_url([row])[0]})
 
 
 class LookupDeleteJsonView(JsonPostView):
@@ -161,6 +164,21 @@ class LookupNextYearsJsonView(JsonPostView):
         """Creates the years the screen asked for and reports how many are new."""
         created = create_next_years(payload.get("count", NEXT_YEARS))
         return written(f"Created {created} years.", {"created": created})
+
+
+def with_filter_url(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Turns each row's filter parameters into the workbench URL it links to.
+
+    Here and not in ``datadesk.lookups``: the service is reachable without the
+    app mounted, where the ``datadesk`` namespace does not exist and ``reverse``
+    raises. The view only runs when the screen can be reached.
+    """
+    base = reverse("datadesk:issues")
+    for row in rows:
+        query = row.pop("filter", None)
+        if query:
+            row["filter_url"] = f"{base}?{urlencode(query)}"
+    return rows
 
 
 def lookup_config(key: str) -> dict[str, Any]:
