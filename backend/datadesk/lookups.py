@@ -32,6 +32,8 @@ from datadesk.audit import new_commit_id, record, snapshot
 from datadesk.registry import Lookup, get_lookup
 from datadesk.write import WriteError
 
+from colors_api.models import Color
+
 DEFAULT_SIZE = 50
 MAX_SIZE = 200
 """A page of a reference table: 300 colours are three pages, not a scroll."""
@@ -112,6 +114,42 @@ def usage_of(row: models.Model, annotations: dict[str, Count]) -> int:
     return sum(getattr(row, name) or 0 for name in annotations)
 
 
+def series_counts(lookup: Lookup) -> dict[str, Count]:
+    """Returns the annotation counting the series behind a row, when it differs.
+
+    A colour is on stamps, so the usage column counts stamps while the workbench
+    behind the link shows series: the second number is not a detail, it is the
+    only one the link can honestly say. It costs nothing to annotate it in the
+    same query, and the two counts do not multiply because both ``distinct``.
+    """
+    if lookup.model is not Color:
+        return {}
+    return {"series_usage": Count("stamps__issue", distinct=True)}
+
+
+def series_of(lookup: Lookup, row: models.Model, annotations: dict[str, Count]) -> int:
+    """Returns how many series hold this row: the series the link will show."""
+    if lookup.model is Color:
+        return row.series_usage or 0
+    return usage_of(row, annotations)
+
+
+def filter_params(key: str, row: models.Model) -> dict[str, int]:
+    """Returns the workbench filters that show the series behind a row.
+
+    The parameters and not the URL: this module is the service layer and a test
+    can run with the app unmounted, where ``reverse("datadesk:issues")`` does not
+    exist. The view turns these into the link the grid uses.
+
+    The years are the one case where the id is not the value: a series points at
+    a ``Year`` row, and the workbench filters by the number, with the range's
+    two ends set to it.
+    """
+    if key == "year":
+        return {"year_min": row.year, "year_max": row.year}
+    return {key: row.pk}
+
+
 def lookup_queryset(key: str, query: str = "") -> QuerySet:
     """Returns the rows of a lookup with their usage annotated.
 
@@ -123,9 +161,9 @@ def lookup_queryset(key: str, query: str = "") -> QuerySet:
         KeyError: If the key is not a registered lookup.
     """
     lookup = get_lookup(key)
-    rows = lookup.model.objects.annotate(**usage_counts(lookup)).order_by(
-        lookup.name_field
-    )
+    rows = lookup.model.objects.annotate(
+        **usage_counts(lookup), **series_counts(lookup)
+    ).order_by(lookup.name_field)
     text = query.strip()
     if text:
         rows = rows.filter(**{f"{lookup.name_field}__icontains": text})
@@ -150,6 +188,8 @@ def lookup_page(
             "id": row.pk,
             "name": str(getattr(row, lookup.name_field)),
             "usage": usage_of(row, annotations),
+            "series": series_of(lookup, row, annotations),
+            "filter": filter_params(key, row),
         }
         for row in queryset[(page - 1) * size : page * size]
     ]
@@ -184,7 +224,7 @@ def rename_lookup(key: str, pk: Any, name: Any, user) -> dict[str, Any]:
             raise WriteError("The row does not exist.", status=404)
 
         if str(getattr(row, lookup.name_field)) == str(value):
-            return _row_ref(lookup, row)
+            return _row_ref(key, lookup, row)
 
         clash = (
             lookup.model.objects.filter(**{lookup.name_field: value})
@@ -207,7 +247,7 @@ def rename_lookup(key: str, pk: Any, name: Any, user) -> dict[str, Any]:
         row.save()
         record(commit_id, user, row, "update", before, snapshot(row))
 
-    return {"id": row.pk, "name": str(getattr(row, lookup.name_field))}
+    return _row_ref(key, lookup, row)
 
 
 def delete_lookup(key: str, pk: Any, user) -> dict[str, Any]:
@@ -438,12 +478,16 @@ def _move_references(lookup: Lookup, source: models.Model, target: models.Model)
     return moved
 
 
-def _row_ref(lookup: Lookup, row: models.Model) -> dict[str, Any]:
-    """Returns the row as the grid reads it, with its usage count."""
+def _row_ref(key: str, lookup: Lookup, row: models.Model) -> dict[str, Any]:
+    """Returns the row as the grid reads it, with its counts and its link."""
     annotations = usage_counts(lookup)
-    annotated = lookup.model.objects.annotate(**annotations).get(pk=row.pk)
+    annotated = lookup.model.objects.annotate(
+        **annotations, **series_counts(lookup)
+    ).get(pk=row.pk)
     return {
         "id": annotated.pk,
         "name": str(getattr(annotated, lookup.name_field)),
         "usage": usage_of(annotated, annotations),
+        "series": series_of(lookup, annotated, annotations),
+        "filter": filter_params(key, annotated),
     }

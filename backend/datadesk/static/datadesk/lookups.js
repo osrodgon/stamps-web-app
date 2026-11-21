@@ -71,8 +71,29 @@
     return response.json().catch(() => ({ success: false }));
   };
 
-  /** "Used by 3 rows", with the count left to the translator. */
-  const usageFormatter = (cell) => plural("usage", cell.getValue() || 0);
+  /**
+   * The series behind a row, and the way to them.
+   *
+   * The number is `series` and not `usage`: a colour is on stamps, so the usage
+   * column counts stamps while the workbench behind the link counts series, and
+   * a link that said "1.177 series" would be a lie. A row nobody uses is just a
+   * number — a link to an empty list is a dead end dressed as an action.
+   */
+  const usageFormatter = (cell) => {
+    const row = cell.getRow().getData();
+    const count = row.series ?? row.usage ?? 0;
+    if (!count) {
+      return document.createTextNode(plural("series", 0));
+    }
+    const link = document.createElement("a");
+    link.className = "dd-usage-link";
+    link.href = row.filter_url;
+    link.textContent = plural("series", count);
+    if (row.usage !== count) {
+      link.title = plural("usage", row.usage);
+    }
+    return link;
+  };
 
   /** Delete, or the reason there is no delete: it is in use. */
   const deleteFormatter = (cell) => {
@@ -120,7 +141,7 @@
       },
       {
         field: "usage",
-        title: texts.usage,
+        title: texts.series,
         formatter: usageFormatter,
         headerSort: false,
         hozAlign: "right",

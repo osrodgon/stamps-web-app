@@ -327,6 +327,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # The DataDesk assets carry a version stamp: without it a
+                # browser can run yesterday's script against today's page.
+                "datadesk.context.assets",
             ],
         },
     },

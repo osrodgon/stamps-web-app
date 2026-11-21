@@ -844,3 +844,29 @@ msgstr "This stamp has no picture."
 #: datadesk/templates/datadesk/issue_workspace.html
 msgid "No description yet."
 msgstr "No description yet."
+
+#: datadesk/views/workbench.py
+msgid "Filters"
+msgstr "Filters"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Remove this filter"
+msgstr "Remove this filter"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Clear all"
+msgstr "Clear all"
+
+#: datadesk/views/lookups.py
+msgid "See the series that use it"
+msgstr "See the series that use it"
+
+#: datadesk/views/lookups.py
+msgid "%(count)s series"
+msgid_plural "%(count)s series"
+msgstr[0] "%(count)s series"
+msgstr[1] "%(count)s series"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "More filters"
+msgstr "More filters"

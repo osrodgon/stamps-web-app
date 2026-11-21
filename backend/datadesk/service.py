@@ -80,6 +80,36 @@ DEFAULT_SORT: tuple[str, str] = ("year", "asc")
 DEFAULT_PAGE_SIZE = 100
 MAX_PAGE_SIZE = 200
 
+FILTER_NAMES: tuple[str, ...] = (
+    "year_min",
+    "year_max",
+    "q",
+    "country",
+    "stamp_type",
+    "printer",
+    "artist",
+    "paper_type",
+    "print_type",
+    "color",
+    "attention",
+)
+"""Every filter, in the order the URL and the chips show them.
+
+One list, used by ``IssueFilters.to_query``, the workbench's parser and the
+javascript that keeps the URL in step: a filter added here is added everywhere,
+and a chip cannot exist for something the grid ignores.
+"""
+
+FILTER_FIELDS: dict[str, str] = {
+    "country": "country_id",
+    "stamp_type": "stamp_type_id",
+    "printer": "printer_id",
+    "artist": "artist_id",
+    "paper_type": "paper_type_id",
+    "print_type": "print_type_id",
+}
+"""Filters that are one foreign key on the series, mapped to their column."""
+
 @dataclass(frozen=True)
 class IssueFilters:
     """The filters the workbench can apply, as they arrive from the query string.
@@ -90,6 +120,13 @@ class IssueFilters:
         q: Free text over the issue name.
         country: Country id.
         stamp_type: Stamp type id.
+        printer: Printer id.
+        artist: Artist id.
+        paper_type: Paper type id.
+        print_type: Print type id.
+        color: Colour id, matched against the **stamps** of the series: a
+            colour is not a series attribute, so this one is a semi join and
+            not a column comparison (see ``filter_issues``).
         attention: One of ``ATTENTION_KEYS``.
     """
 
@@ -98,12 +135,17 @@ class IssueFilters:
     q: str = ""
     country: int | None = None
     stamp_type: int | None = None
+    printer: int | None = None
+    artist: int | None = None
+    paper_type: int | None = None
+    print_type: int | None = None
+    color: int | None = None
     attention: str = ""
 
     def to_query(self) -> dict[str, Any]:
         """Returns the filters that are actually set, for rebuilding links."""
         values: dict[str, Any] = {}
-        for name in ("year_min", "year_max", "q", "country", "stamp_type", "attention"):
+        for name in FILTER_NAMES:
             value = getattr(self, name)
             if value not in ("", None):
                 values[name] = value
@@ -151,10 +193,21 @@ def filter_issues(queryset: QuerySet[Issue], filters: IssueFilters) -> QuerySet[
         queryset = queryset.filter(year__year__lte=filters.year_max)
     if filters.q:
         queryset = queryset.filter(name__icontains=filters.q)
-    if filters.country is not None:
-        queryset = queryset.filter(country_id=filters.country)
-    if filters.stamp_type is not None:
-        queryset = queryset.filter(stamp_type_id=filters.stamp_type)
+
+    for name, column in FILTER_FIELDS.items():
+        value = getattr(filters, name)
+        if value is not None:
+            queryset = queryset.filter(**{column: value})
+
+    if filters.color is not None:
+        # A colour belongs to the stamp, not to the series, so this is the same
+        # kind of condition as the "needs attention" ones: an ``Exists`` and not
+        # a join, which would multiply rows and inflate ``Count("stamps")``.
+        queryset = queryset.filter(
+            Exists(
+                Stamp.objects.filter(issue=OuterRef("pk"), colors=filters.color)
+            )
+        )
 
     if filters.attention == "stamps_without_image":
         # The only queue that is not a queryset condition: see ATTENTION_CONDITIONS.

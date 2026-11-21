@@ -22,28 +22,17 @@
         <span class="dd-label">{% translate "Name" %}</span>
         <input type="search" name="q" value="{{ filters.q }}">
       </label>
-      <label class="dd-filter">
-        <span class="dd-label">{% translate "Country" %}</span>
-        <select name="country">
-          <option value="">{% translate "Any" %}</option>
-          {% for country in countries %}
-            <option value="{{ country.pk }}" {% if filters.country == country.pk %}selected{% endif %}>
-              {{ country.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </label>
-      <label class="dd-filter">
-        <span class="dd-label">{% translate "Stamp type" %}</span>
-        <select name="stamp_type">
-          <option value="">{% translate "Any" %}</option>
-          {% for stamp_type in stamp_types %}
-            <option value="{{ stamp_type.pk }}" {% if filters.stamp_type == stamp_type.pk %}selected{% endif %}>
-              {{ stamp_type.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </label>
+      {% for option in filter_options %}
+        <label class="dd-filter">
+          <span class="dd-label">{{ option.label }}</span>
+          <select name="{{ option.key }}">
+            <option value="">{% translate "Any" %}</option>
+            {% for row in option.rows %}
+              <option value="{{ row.id }}"{% if row.selected %} selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      {% endfor %}
       <label class="dd-filter">
         <span class="dd-label">{% translate "Needs attention" %}</span>
         <select name="attention">
@@ -57,7 +46,39 @@
         </select>
       </label>
       <button type="reset" class="dd-btn dd-btn-ghost" id="workbench-reset">{% translate "Reset" %}</button>
+
+      {% comment %}
+        The five filters S30 added live behind a disclosure: seven selects on
+        screen at once made the bar four rows tall and pushed the grid's
+        pagination below the fold. They open by themselves when one of them is
+        set, so a link from a reference table shows the control that is doing
+        the filtering.
+      {% endcomment %}
+      <details class="dd-more-filters"{% if extra_filters_open %} open{% endif %}>
+        <summary class="dd-more-filters-toggle">{% translate "More filters" %}</summary>
+        <div class="dd-more-filters-body">
+          {% for option in extra_filter_options %}
+            <label class="dd-filter">
+              <span class="dd-label">{{ option.label }}</span>
+              <select name="{{ option.key }}">
+                <option value="">{% translate "Any" %}</option>
+                {% for row in option.rows %}
+                  <option value="{{ row.id }}"{% if row.selected %} selected{% endif %}>{{ row.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          {% endfor %}
+        </div>
+      </details>
     </form>
+
+    {% comment %}
+      The filters that are on, as links that turn them off and a "clear all".
+      The script paints them from the form and the URL, so the chips and the
+      grid cannot disagree about what is filtered; the labels travel in the
+      config, translated, because the script holds no interface text.
+    {% endcomment %}
+    <div class="dd-active-filters" id="workbench-chips" hidden></div>
 
     <p class="dd-banner dd-banner-ok" id="workbench-banner" hidden></p>
 
@@ -85,5 +106,5 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="{% static 'datadesk/workbench.js' %}"></script>
+  <script src="{% static 'datadesk/workbench.js' %}?v={{ datadesk_asset_version }}"></script>
 {% endblock %}

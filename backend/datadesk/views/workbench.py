@@ -8,10 +8,50 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 
-from countries_api.models import Country
 from datadesk.mixins import DataDeskAccessMixin
-from datadesk.service import DEFAULT_PAGE_SIZE, IssueFilters, page_of_issue
-from stamp_types_api.models import StampType
+from datadesk.registry import LOOKUPS
+from datadesk.service import (
+    ATTENTION_KEYS,
+    DEFAULT_PAGE_SIZE,
+    FILTER_NAMES,
+    IssueFilters,
+    page_of_issue,
+)
+
+FILTER_LOOKUPS: tuple[str, ...] = (
+    "country",
+    "stamp_type",
+    "printer",
+    "artist",
+    "paper_type",
+    "print_type",
+    "color",
+)
+"""The filters that are one reference table, in the order the form shows them.
+
+The keys are the registry ones, so the label, the model and the column that
+names a row come from ``datadesk.registry`` instead of a second copy here.
+"""
+
+PRIMARY_LOOKUPS: tuple[str, ...] = ("country", "stamp_type")
+"""The two the bar has always had: they are on screen, not behind a disclosure."""
+
+EXTRA_LOOKUPS: tuple[str, ...] = (
+    "printer",
+    "artist",
+    "paper_type",
+    "print_type",
+    "color",
+)
+"""The five S30 added. Behind "More filters" so the bar keeps its old height:
+seven selects at once pushed the grid's pagination below the fold."""
+
+PRIMARY_LABELS: dict[str, Any] = {
+    "year_min": _("From year"),
+    "year_max": _("To year"),
+    "q": _("Name"),
+}
+"""The filters that are not a reference table."""
 
 COLUMNS: tuple[dict[str, Any], ...] = (
     {"field": "year", "title": _("Year"), "visible": True, "align": "right", "grow": 1},
@@ -71,8 +111,11 @@ class WorkbenchView(DataDeskAccessMixin, TemplateView):
         context.update(
             filters=filters,
             filter_query=filters.to_query(),
-            countries=Country.objects.order_by("name"),
-            stamp_types=StampType.objects.order_by("name"),
+            filter_options=filter_options(filters, PRIMARY_LOOKUPS),
+            extra_filter_options=filter_options(filters, EXTRA_LOOKUPS),
+            extra_filters_open=any(
+                getattr(filters, key) is not None for key in EXTRA_LOOKUPS
+            ),
             page_size=DEFAULT_PAGE_SIZE,
             config=grid_config(focus=focus, initial_page=initial_page),
         )
@@ -84,25 +127,62 @@ def filters_from(request: HttpRequest) -> IssueFilters:
 
     The URL is the single source of truth: the page renders with those filters
     and the grid asks for the same values, so a shared link opens the same view.
+    Every filter is read from ``FILTER_NAMES``, so a filter added to the service
+    cannot be missing here.
     """
 
-    def _int(name: str) -> int | None:
-        raw = request.GET.get(name, "").strip()
-        if raw == "":
-            return None
-        try:
-            return int(raw)
-        except ValueError:
-            return None
+    values: dict[str, Any] = {}
+    for name in FILTER_NAMES:
+        if name == "q":
+            values[name] = request.GET.get("q", "").strip()
+        elif name == "attention":
+            value = request.GET.get("attention", "").strip()
+            # Anything not registered is ignored, not passed through: the
+            # dashboard links and the chips are the only places a key comes
+            # from, and a typo must not turn into a filter nobody defined.
+            values[name] = value if value in ATTENTION_KEYS else ""
+        else:
+            values[name] = _int(request, name)
+    return IssueFilters(**values)
 
-    return IssueFilters(
-        year_min=_int("year_min"),
-        year_max=_int("year_max"),
-        q=request.GET.get("q", "").strip(),
-        country=_int("country"),
-        stamp_type=_int("stamp_type"),
-        attention=request.GET.get("attention", "").strip(),
-    )
+
+def filter_options(
+    filters: IssueFilters, keys: tuple[str, ...] = FILTER_LOOKUPS
+) -> list[dict[str, Any]]:
+    """Returns the rows of the given reference filters, already selected.
+
+    The tables are small enough to ship whole (the largest is 300 colours), and
+    a native ``select`` needs no script: it works before the grid does, and it
+    keeps the form the single place a filter is set.
+    """
+    options = []
+    for key in keys:
+        lookup = LOOKUPS[key]
+        chosen = getattr(filters, key)
+        options.append(
+            {
+                "key": key,
+                "label": lookup.label,
+                "rows": [
+                    {
+                        "id": row.pk,
+                        "name": str(getattr(row, lookup.name_field)),
+                        "selected": row.pk == chosen,
+                    }
+                    for row in lookup.model.objects.order_by(lookup.name_field)
+                ],
+            }
+        )
+    return options
+
+
+def _filter_label(name: str) -> Any:
+    """Returns the translated name of a filter, for the chip the script paints."""
+    if name in PRIMARY_LABELS:
+        return PRIMARY_LABELS[name]
+    if name == "attention":
+        return _("Needs attention")
+    return LOOKUPS[name].label
 
 
 def _int(request: HttpRequest, name: str) -> int | None:
@@ -124,6 +204,13 @@ def grid_config(focus: int | None = None, initial_page: int = 1) -> dict[str, An
     return {
         "dataUrl": reverse("datadesk:issue_grid"),
         "columns": [{**column, "title": str(column["title"])} for column in COLUMNS],
+        "filterNames": list(FILTER_NAMES),
+        "filterLabels": {name: str(_filter_label(name)) for name in FILTER_NAMES},
+        "chipsText": {
+            "title": str(_("Filters")),
+            "clearAll": str(_("Clear all")),
+            "remove": str(_("Remove this filter")),
+        },
         "pageSize": DEFAULT_PAGE_SIZE,
         "emptyText": str(_("No issues match these filters.")),
         "counterText": str(_("issues")),

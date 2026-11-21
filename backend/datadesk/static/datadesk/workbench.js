@@ -12,15 +12,11 @@
   );
   const form = document.getElementById("workbench-filters");
   const countLabel = document.getElementById("workbench-count");
+  const chipsBox = document.getElementById("workbench-chips");
   const columnsBox = document.getElementById("workbench-columns");
-  const FILTER_NAMES = [
-    "year_min",
-    "year_max",
-    "q",
-    "country",
-    "stamp_type",
-    "attention",
-  ];
+  /* The server owns the list, so a filter added to `IssueFilters` cannot be
+   * missing from the URL the page writes back. */
+  const FILTER_NAMES = config.filterNames || [];
   const COLUMNS_KEY = "datadesk.workbench.columns";
   const DEBOUNCE_MS = 300;
 
@@ -56,6 +52,80 @@
       }
     });
     return params;
+  };
+
+  /** What the form shows for a filter: the name of the lookup, or the text. */
+  const filterValue = (name) => {
+    const field = form.elements[name];
+    if (!field) {
+      return "";
+    }
+    if (field.tagName === "SELECT") {
+      const option = field.options[field.selectedIndex];
+      return option && option.value ? option.textContent.trim() : "";
+    }
+    return (field.value || "").trim();
+  };
+
+  /** Paints the filters that are on, each with the link that removes it.
+   *
+   * From the form and not from the server-rendered page, so the chips and the
+   * grid cannot disagree: changing a filter repaints both. The labels come from
+   * the config, translated, because the script holds no interface text.
+   */
+  const paintChips = () => {
+    if (!chipsBox) {
+      return;
+    }
+    chipsBox.textContent = "";
+    const params = readFilters();
+    let shown = 0;
+
+    FILTER_NAMES.forEach((name) => {
+      const value = filterValue(name);
+      if (value === "") {
+        return;
+      }
+      shown += 1;
+
+      const rest = new URLSearchParams(params);
+      rest.delete(name);
+      const query = rest.toString();
+      const chip = document.createElement("a");
+      chip.className = "dd-chip dd-filter-chip";
+      chip.href = query
+        ? `${window.location.pathname}?${query}`
+        : window.location.pathname;
+      chip.title = (config.chipsText || {}).remove || "";
+
+      const key = document.createElement("span");
+      key.className = "dd-filter-chip-key";
+      key.textContent = `${(config.filterLabels || {})[name] || name}:`;
+      const cross = document.createElement("span");
+      cross.className = "dd-filter-chip-x";
+      cross.setAttribute("aria-hidden", "true");
+      cross.textContent = "×";
+
+      chip.append(key, document.createTextNode(` ${value} `), cross);
+      chipsBox.append(chip);
+    });
+
+    if (shown === 0) {
+      chipsBox.hidden = true;
+      return;
+    }
+
+    const title = document.createElement("span");
+    title.className = "dd-label";
+    title.textContent = (config.chipsText || {}).title || "";
+    const clear = document.createElement("a");
+    clear.className = "dd-btn dd-btn-ghost dd-filter-clear";
+    clear.href = window.location.pathname;
+    clear.textContent = (config.chipsText || {}).clearAll || "";
+
+    chipsBox.prepend(title);
+    chipsBox.append(clear);
+    chipsBox.hidden = false;
   };
 
   /** Mirrors the filters into the URL so a reload or a shared link keeps them. */
@@ -187,7 +257,10 @@
      * wants: fitting is what keeps the default nine visible without a
      * horizontal scrollbar. */
     layout: "fitColumns",
-    height: "calc(100vh - 300px)",
+    /* The card is a column as tall as the window and the grid takes what the
+     * filters leave: a fixed `100vh - 300px` was tuned to a two-row bar and put
+     * the pagination below the fold as soon as a filter row appeared. */
+    height: "100%",
     placeholder: config.emptyText,
     selectableRows: 1,
     columns: [openColumn, ...config.columns.map(buildColumn), deleteColumn],
@@ -411,6 +484,7 @@
   /** Reloads the grid with the filters currently in the form. */
   const reload = () => {
     syncUrl();
+    paintChips();
     table.setData();
   };
 
@@ -420,6 +494,10 @@
     window.clearTimeout(debounceTimer);
     debounceTimer = window.setTimeout(reload, DEBOUNCE_MS);
   });
+
+  /* The page arrives already filtered when the URL says so: the chips have to
+   * say it before the first click. */
+  paintChips();
 
   form.addEventListener("reset", () => {
     window.setTimeout(() => {
