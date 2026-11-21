@@ -54,8 +54,19 @@ PRIMARY_LABELS: dict[str, Any] = {
 """The filters that are not a reference table."""
 
 COLUMNS: tuple[dict[str, Any], ...] = (
-    {"field": "year", "title": _("Year"), "visible": True, "align": "right", "grow": 1},
-    {"field": "date", "title": _("Date"), "visible": True, "grow": 1},
+    {
+        "field": "year",
+        "title": _("Year"),
+        "visible": True,
+        "align": "right",
+        "grow": 1,
+        # Without a floor the year and the date are the first to be squeezed,
+        # and a header reading "YE…" is a header nobody reads.
+        "min": 92,
+    },
+    # A fixed width, not a share: a date has one length and the grid must not
+    # shrink it below it, whatever else the user turns on in the columns menu.
+    {"field": "date", "title": _("Date"), "visible": True, "width": 112},
     {"field": "name", "title": _("Name"), "visible": True, "grow": 4, "min": 180},
     {"field": "country", "title": _("Country"), "visible": True, "grow": 2},
     {"field": "stamp_type", "title": _("Stamp type"), "visible": True, "grow": 2},
@@ -66,9 +77,30 @@ COLUMNS: tuple[dict[str, Any], ...] = (
         "visible": True,
         "align": "right",
         "grow": 1,
+        "min": 102,
     },
-    {"field": "mnh", "title": _("MNH"), "visible": True, "align": "right", "grow": 1},
-    {"field": "used", "title": _("Used"), "visible": True, "align": "right", "grow": 1},
+    {
+        "field": "mnh",
+        "title": _("MNH"),
+        "visible": True,
+        "align": "right",
+        "grow": 1,
+        # "37500.00 €" is ten characters: the unit lives in the cell, so the
+        # column has to fit it.
+        "min": 104,
+        "money": True,
+    },
+    {
+        "field": "used",
+        "title": _("Used"),
+        "visible": True,
+        "align": "right",
+        "grow": 1,
+        # "37500.00 €" is ten characters: the unit lives in the cell, so the
+        # column has to fit it.
+        "min": 104,
+        "money": True,
+    },
     {"field": "print_type", "title": _("Print type"), "visible": False, "grow": 2},
     {"field": "artist", "title": _("Artist"), "visible": False, "grow": 2},
     {"field": "paper_type", "title": _("Paper type"), "visible": False, "grow": 2},

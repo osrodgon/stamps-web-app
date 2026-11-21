@@ -211,3 +211,52 @@ class TestTheWorkbenchFitsTheWindow:
         stylesheet = self.stylesheet()
 
         assert re.search(r"\[hidden\]\s*\{[^}]*display:\s*none", stylesheet)
+
+
+class TestTheS28Look:
+    """The shelved polish: typeface, controls, motion, elevation, rhythm.
+
+    Each of these is one decision that a later tidy-up could quietly undo —
+    a system font back, the navy header back, a solid outline back — so each
+    gets a line here.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_the_font_is_self_hosted_and_first_in_the_stack(self) -> None:
+        assert '@font-face' in self.stylesheet()
+        assert 'url("vendor/inter-latin-var.woff2")' in self.stylesheet()
+        assert '"Inter", system-ui' in self.rule(":root")
+
+    def test_the_grid_header_is_light_and_the_navy_stays_on_the_topbar(self) -> None:
+        header = self.stylesheet().split(
+            "#workbench .tabulator-header .tabulator-col,", 1
+        )[1].split("}", 1)[0]
+
+        assert "background: #f8f9fb" in header
+        assert "var(--dd-navy)" not in header
+
+    def test_focus_on_a_control_is_a_soft_ring(self) -> None:
+        rule = self.rule(".dd-filter input,\n.dd-filter select")
+
+        assert "height: var(--dd-input-height)" in rule
+        focus = self.stylesheet().split(".dd-filter input:focus,", 1)[1].split("}", 1)[0]
+        assert "outline: none" in focus
+        assert "box-shadow: var(--dd-ring)" in focus
+
+    def test_the_row_grew_to_thirty_eight(self) -> None:
+        assert "--dd-row-height: 38px" in self.stylesheet()
+
+    def test_an_empty_cell_says_so(self) -> None:
+        assert ".tabulator-cell:empty::after" in self.stylesheet()
+
+    def test_motion_can_be_turned_off(self) -> None:
+        stylesheet = self.stylesheet()
+
+        assert "--dd-ease: 120ms ease" in stylesheet
+        assert "prefers-reduced-motion: reduce" in stylesheet

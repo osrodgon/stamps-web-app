@@ -145,6 +145,34 @@
     return marks.join(" ");
   };
 
+  /** An empty cell gets a muted dash instead of a blank.
+   *
+   * Tabulator writes a non-breaking space for an empty value, so CSS `:empty`
+   * never matches: the dash has to come from the formatter. Columns with a
+   * formatter of their own (the gaps, the chevron) already say something.
+   */
+  const emptyFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      const dash = document.createElement("span");
+      dash.className = "dd-empty";
+      dash.textContent = "\u2014";
+      return dash;
+    }
+    return document.createTextNode(String(value));
+  };
+
+  /** Money is euros: the header says what the column is, the value says how
+   * much of it. Kept out of the locale formatters on purpose (S28): this is a
+   * unit, not a number format. */
+  const moneyFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      return emptyFormatter(cell);
+    }
+    return document.createTextNode(`${value} \u20ac`);
+  };
+
   /** Builds one Tabulator column from the server-provided definition. */
   const buildColumn = (definition) => {
     const column = {
@@ -156,6 +184,9 @@
     if (definition.align) {
       column.hozAlign = definition.align;
     }
+    if (definition.width) {
+      column.width = definition.width;
+    }
     if (definition.grow) {
       column.widthGrow = definition.grow;
     }
@@ -166,6 +197,12 @@
       column.formatter = gapFormatter;
       column.headerSort = false;
       column.width = 90;
+    }
+    if (definition.money) {
+      column.formatter = moneyFormatter;
+    }
+    if (!column.formatter) {
+      column.formatter = emptyFormatter;
     }
     return column;
   };
@@ -210,7 +247,7 @@
   const deleteFormatter = (cell) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "dd-row-delete-action";
+    button.className = "dd-remove";
     button.textContent = "×";
     button.title = (config.texts || {}).deleteSeries || "";
     button.setAttribute("aria-label", button.title);

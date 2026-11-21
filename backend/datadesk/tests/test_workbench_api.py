@@ -326,7 +326,8 @@ class TestWorkbenchPage:
 
         ``fitColumns`` divides evenly unless every column says how much it
         wants, and an even split would leave the name as narrow as the stamp
-        count.
+        count. A column with one possible length (the date) may fix its width
+        instead of asking for a share, but it cannot be left to chance.
         """
         response = staff_client.get(PAGE_URL)
         config = json.loads(
@@ -335,7 +336,7 @@ class TestWorkbenchPage:
             .split("</script>")[0]
         )
         grows = {
-            column["field"]: column.get("grow")
+            column["field"]: column.get("grow") or column.get("width")
             for column in config["columns"]
             if column["visible"]
         }
@@ -557,3 +558,19 @@ class TestTheAssetsAreStamped:
         from datadesk.context import asset_version
 
         assert asset_version() != ""
+
+
+@pytest.mark.django_db
+class TestTheCurrencyIsNamed:
+    """The market-value columns carry their unit: the mockup showed the € and
+    the grid showed a bare number."""
+
+    def test_the_money_columns_are_marked(self, staff_client, grid_dataset) -> None:
+        config = staff_client.get(PAGE_URL).context["config"]
+        money = {
+            column["field"]: column.get("money")
+            for column in config["columns"]
+            if column["field"] in ("mnh", "used")
+        }
+
+        assert money == {"mnh": True, "used": True}

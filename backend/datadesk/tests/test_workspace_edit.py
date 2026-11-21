@@ -206,7 +206,9 @@ class TestTheSeriesStripIsAForm:
 
         assert len(labels["issue"]) == 15
         assert labels["issue"]["name"] == "Name"
-        assert labels["issue"]["market_value_mnh"] == "Market value MNH"
+        assert labels["issue"]["market_value_mnh"] == "Market value MNH (€)"
+        # The unit travels with the label so the review says what the number is.
+        assert labels["issue"]["market_value_used"] == "Market value used (€)"
         assert labels["stamp"] == {
             "edifil_code": "Edifil",
             "fesofi_code": "Fesofi",

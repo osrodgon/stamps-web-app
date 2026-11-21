@@ -369,19 +369,34 @@
       says what went and `Supr` only opens the dialog. Rows carry their two URLs
       in the grid JSON. 13 tests; 488 datadesk and 1504 backend tests green;
       harnesses at 23 (workbench), 89 (edit), 79 (new) and 12 (lookups) checks.
-- [ ] **S28 — Visual polish: typeface, controls, elevation** (planned 2026-11-20,
-      explicitly not urgent): after deploying, the interface "feels dated", so the
-      question was whether to bring in Bootstrap or Materialize. Three mockups of
-      the same workbench were built (`memory-bank/mockups/workbench-compare.html`:
-      current, Bootstrap 5.3.3, polished on the S24 tokens) and they settled it —
-      Bootstrap trades "dated" for "generic" and does not lay out the data (its
-      table auto-sizes, so Year and Date collide and read as one cell), Materialize
-      is Material 1 from 2014 with jQuery, and Tailwind needs a build step there is
-      no Node for. The polish is five CSS-only changes: self-hosted Inter, 34px
-      controls with a soft focus ring and an own select chevron, 120ms transitions,
-      two shadow levels with a light grid header instead of the navy one, and a 4px
-      rhythm with tabular numbers and a muted `—` for empty cells. Same markup, no
-      new dependency but the font. Detail and acceptance in the plan, §4 S28.
+- [x] **S28 — Visual polish: typeface, controls, elevation** (2026-11-21): the
+      five changes are in. Inter 4.001 self-hosted (the latin variable file Google
+      Fonts serves, byte-identical to the mockup's, pinned with its real version
+      and sha256); 34px controls with `--dd-line-strong`, hover and a soft ring;
+      120ms motion with `prefers-reduced-motion`; a borderless card on
+      `--dd-shadow-rest`, `--dd-shadow-float` for what floats and a **light grid
+      header** with the selection marked by a 2px left bar; a 4px rhythm, 38px
+      rows and tabular numbers. The `—` of an empty cell needed a formatter:
+      Tabulator writes `&nbsp;`, so `:empty` never matched. Column minimums were
+      added so no header truncates at 1440 (and "Total printed" became "Printed"
+      on the header only, with a `label` key so the review panel keeps the full
+      name). 6 new pins in `test_layout`; 524 datadesk and 1540 backend green;
+      screenshots of every screen at 1440x900 and 1366x768.
+- [x] **S28b — Five things the review found** (2026-11-21): the workbench date
+      column shrank because its `buildColumn` never copied `width` (now a fixed
+      112, with width support added); the shortcuts line had no margin (it is a
+      direct child of a card with `padding: 0`); Tabulator's root is `#888` and
+      only rows painted over it, which left a grey band under a short series
+      (both grids now set a surface background); the series card painted square
+      corners because its strip has a background (the strip and the commit bar are
+      rounded instead of clipping the card, which cut 12px off the colour editor's
+      dropdown); and the market values had no currency (`money` flag plus a
+      formatter for "1.20 €", and a `unit` in the strip fields and the review
+      labels); and the workbench's × of delete was not centred: it used a class
+      with no box of its own, so a 16px glyph sat at the top of a 38px row. It
+      now uses the same `.dd-remove` as the stamp's × (the whole cell), and the
+      open chevron is centred with flex for the same reason. 2 tests; 526
+      datadesk and 1542 backend green.
 - [x] **S29 — See a stamp's picture and its description** (2026-11-21): the
       thumbnail was a colour swatch and `Stamp.description` was shown nowhere, so
       the series screen gained a **preview pane on the right of the grid** tied to
