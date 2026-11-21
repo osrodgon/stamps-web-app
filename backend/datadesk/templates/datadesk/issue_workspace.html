@@ -161,7 +161,35 @@
           </span>
         {% endif %}
       </div>
-      <div id="stamp-grid"></div>
+      <div class="dd-grid-body">
+        <div id="stamp-grid"></div>
+
+        {% comment %}
+          The thumbnail is 26px tall inside a 38px row: at that size it is a
+          colour swatch, not a picture, and the description has no column of
+          its own. The pane follows the selected row (no hover, no click on the
+          picture) and edits the description in place, so the value travels in
+          the same change set as every other field.
+        {% endcomment %}
+        <aside class="dd-preview" id="stamp-preview" aria-live="polite">
+          <p class="dd-hint dd-preview-empty" id="preview-empty">
+            {% translate "Select a stamp to see its picture and description." %}
+          </p>
+          <div class="dd-preview-body" id="preview-body" hidden>
+            <img class="dd-preview-image" id="preview-image" alt="">
+            <p class="dd-hint dd-preview-missing" id="preview-missing" hidden>
+              {% translate "This stamp has no picture." %}
+            </p>
+            <p class="dd-preview-identity" id="preview-identity"></p>
+            <label class="dd-preview-field">
+              <span class="dd-field-key">{% translate "Stamp description" %}</span>
+              <textarea class="dd-input dd-preview-text" id="preview-description"
+                        rows="6"
+                        placeholder="{% translate 'No description yet.' %}"></textarea>
+            </label>
+          </div>
+        </aside>
+      </div>
     </div>
 
     {% if mode == "new" %}

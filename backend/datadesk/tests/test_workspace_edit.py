@@ -211,6 +211,7 @@ class TestTheSeriesStripIsAForm:
             "edifil_code": "Edifil",
             "fesofi_code": "Fesofi",
             "name": "Name",
+            "description": "Stamp description",
             "face_value": "Face value",
             "total_printed": "Total printed",
             "market_value_mnh": "MNH",

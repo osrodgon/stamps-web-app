@@ -382,16 +382,25 @@
       two shadow levels with a light grid header instead of the navy one, and a 4px
       rhythm with tabular numbers and a muted `—` for empty cells. Same markup, no
       new dependency but the font. Detail and acceptance in the plan, §4 S28.
-- [ ] **S29 — See a stamp's picture and its description** (planned 2026-11-20):
-      the thumbnail is capped at 26px tall inside 38px rows, so it is a colour
-      swatch rather than a photo, and `Stamp.description` is never serialized
-      anywhere (the strip's "Description" is `Issue.description`, a different
-      field). Without hover and without clicking the picture, the honest answer is
-      a preview pane tied to the **selected row** — selection already exists and
-      `j`/`k` drive it — showing the picture at a real size and the description
-      underneath, editable and part of the change set. A S/M/L thumbnail size in
-      the toolbar is the follow-up preference, not the fix: at 72px a 57-stamp
-      series is 4.000px of scroll.
+- [x] **S29 — See a stamp's picture and its description** (2026-11-21): the
+      thumbnail was a colour swatch and `Stamp.description` was shown nowhere, so
+      the series screen gained a **preview pane on the right of the grid** tied to
+      the selected row — no hover, no click on the picture. Selection did not exist
+      there (`j`/`k` were the workbench's), so S29 adds `selectableRows: 1` and
+      `j`/`k`. The description is **not a visible column** (prose in a 13px cell is
+      an ellipsis) but a **hidden one** with `patch: "description"`, which puts it
+      in the change set, the review panel ("Stamp description") and the
+      `localStorage` draft with no new machinery; changing stamp does not lose what
+      was typed. The pane writes with `quietCell` and undo does too, so a keystroke
+      is not an undo step and undo no longer re-arms itself; the base comes from
+      `previewStart` (value on focus), not `cell.getOldValue()`, which is the one
+      from page load. It works in both modes, the pane stacks under the grid below
+      1100px, and the S/M/L size selector is deliberately left out. 5 tests; 493
+      datadesk and 1509 backend green. **Two older bugs found on the way**:
+      `mode=new` painted no rows at all (`setData` in the same tick as Tabulator's
+      build → `verticalFillMode` crash; now waits for `tableBuilt`, reproduced with
+      `HEAD`'s JS too), and `?rows=N` is not read by the view at all
+      (`NewRowSettings()` takes no argument), see known gaps.
 - [ ] **S30 — "See affected series" from a reference table** (planned 2026-11-20):
       the usage number becomes a link when it is above zero. Free for year, country
       and stamp type because those filters already exist; four new `IssueFilters`
@@ -458,6 +467,11 @@
       chosen when creating a series (S16) and created/merged from the lookups
       screen (S19); correcting one on an existing stamp still needs admin. This
       is the one gap left after S22 closed the plan.
+- [ ] DataDesk: `?rows=N` on `mode=new` does nothing — `NewRowSettings()` is built
+      with no arguments in `views/workspace.py`, so the control always shows 4.
+      Found while checking S29; S11's acceptance said `rows=1–100` works, so either
+      the parameter was never wired or it was lost. Fix is reading `rows` from
+      `request.GET` and clamping it into the settings.
 
 ---
 

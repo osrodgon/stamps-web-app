@@ -371,6 +371,9 @@ def serialize_stamp(
         "edifil": stamp.edifil_code or "",
         "fesofi": stamp.fesofi_code or "",
         "name": stamp.name,
+        # The description has no column (prose in a 13px cell is an ellipsis);
+        # it travels with the row so the preview pane can show and edit it.
+        "description": stamp.description or "",
         "face_value": stamp.face_value,
         "colors": [
             {"name": name, "tone": tone_for(name)}

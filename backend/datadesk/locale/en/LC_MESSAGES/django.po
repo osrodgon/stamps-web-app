@@ -221,6 +221,10 @@ msgid "Description"
 msgstr "Description"
 
 #: datadesk/views/workspace.py
+msgid "Stamp description"
+msgstr "Stamp description"
+
+#: datadesk/views/workspace.py
 msgid "Note"
 msgstr "Note"
 
@@ -828,3 +832,15 @@ msgstr "The row was created."
 #: datadesk/views/lookups.py
 msgid "That row already existed."
 msgstr "That row already existed."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Select a stamp to see its picture and description."
+msgstr "Select a stamp to see its picture and description."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This stamp has no picture."
+msgstr "This stamp has no picture."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No description yet."
+msgstr "No description yet."

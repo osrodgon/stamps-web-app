@@ -312,6 +312,29 @@ class TestApplyChanges:
 
         assert result.applied == 1
 
+    def test_a_stamp_description_is_written_from_the_pane(
+        self, series, staff_user
+    ) -> None:
+        """The description has no column, but it is a field like any other."""
+        stamp = Stamp.objects.order_by("pk").first()
+        change = stamp_patch(stamp, description="Cuadro conmemorativo")
+
+        result = apply_changes([change], staff_user)
+
+        assert result.applied == 1
+        stamp.refresh_from_db()
+        assert stamp.description == "Cuadro conmemorativo"
+
+    def test_a_cleared_description_becomes_null(self, series, staff_user) -> None:
+        stamp = Stamp.objects.order_by("pk").first()
+        Stamp.objects.filter(pk=stamp.pk).update(description="Algo")
+
+        result = apply_changes([stamp_patch(stamp, description="")], staff_user)
+
+        assert result.applied == 1
+        stamp.refresh_from_db()
+        assert stamp.description is None
+
     def test_creates_a_stamp_of_an_existing_series(self, series, staff_user) -> None:
         change = {
             "model": "stamp",

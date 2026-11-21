@@ -774,6 +774,78 @@ kbd {
   padding: 12px 16px 16px;
 }
 
+/* The grid and the preview pane share the width. The pane is fixed and the
+ * grid keeps the rest: `minmax(0, 1fr)` is what lets a Tabulator grid shrink
+ * instead of pushing the page sideways. */
+.dd-grid-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+  align-items: start;
+}
+
+.dd-preview {
+  position: sticky;
+  top: 12px;
+  padding: 10px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: #fbfcfd;
+}
+
+.dd-preview-empty {
+  margin: 0;
+}
+
+.dd-preview-image {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 3px;
+  background: #fff;
+}
+
+/* The same treatment the 26px thumbnail gets: a stamp without a picture shows
+ * the placeholder, greyed, and the caption says why. */
+.dd-preview-image.dd-thumb-missing {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.dd-preview-missing {
+  margin: 6px 0 0;
+}
+
+.dd-preview-identity {
+  margin: 8px 0 6px;
+  font-size: var(--dd-text-sm);
+  font-weight: 600;
+  color: var(--dd-navy);
+  overflow-wrap: anywhere;
+}
+
+.dd-preview-field {
+  display: block;
+}
+
+.dd-preview-text {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Below this the pane would leave the grid unusable, so it stacks under it. */
+@media (max-width: 1100px) {
+  .dd-grid-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dd-preview {
+    position: static;
+  }
+}
+
 .dd-grid-head {
   display: flex;
   align-items: center;

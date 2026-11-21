@@ -159,7 +159,7 @@ S28: aquella es piel, estas tocan datos, consultas y disco.
 
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
-| S29 | Ver la imagen y la descripción de un sello | — | M | sí | ⏳ pendiente |
+| S29 | Ver la imagen y la descripción de un sello | — | M | sí | ✅ 2026-11-21 |
 | S30 | «Ver series afectadas» desde una tabla de referencia | S8, S19, S27 | S (3) / M (8) | sí | ⏳ pendiente |
 | S31 | Pantalla de backups: listar, lanzar, descargar | S15 | S | sí | ⏳ pendiente |
 | S32 | Restore con mantenimiento, dump previo y secuencias | S31 | M | sí, pero es el botón rojo | ⏳ pendiente |
@@ -1368,7 +1368,7 @@ anillo, y las capturas.
 
 ### S29 — Ver la imagen y la descripción de un sello
 
-**Depende de**: —.
+**Depende de**: —. **Estado**: ✅ 2026-11-21.
 
 **Lo que hay hoy (medido)**: la columna de imagen mide 64 px y la miniatura está
 limitada a `max-height: 26px; max-width: 54px` dentro de filas de 38 px (S24) —a
@@ -1380,20 +1380,27 @@ campo. `StampRequestSerializer` ya incluye `description`, así que el camino de
 escritura lo acepta sin tocar backend, y `""` en columna nullable ya se convierte
 en `None`.
 
-**Decisión**: sin hover y sin clic sobre la imagen quedan dos mecanismos honestos,
-y se descarta el resto (modal, zoom, galería: eso ya es «algo por el estilo» y saca
-de la edición).
+**Decisión (cerrada al implementar, 2026-11-21)**: sin hover y sin clic sobre la
+imagen, el mecanismo es un **panel a la derecha del grid** atado a la fila
+seleccionada, con **`j`/`k` en el workspace** (no existían ahí: la selección
+tampoco, así que S29 las añade) y **editable en los dos modos**:
 
 1. **Panel de previsualización atado a la fila seleccionada.** No añade gesto
-   nuevo: la selección ya existe y la usan `j`/`k`, `Enter` y las flechas de S27.
-   Es lo que resuelve el problema sin engordar las filas, que es justo lo que falla
-   en la alternativa.
-2. **Selector de tamaño S/M/L** (26/48/72 px) en la toolbar, persistido en
-   `localStorage` como la elección de columnas. Es una preferencia, no una
-   solución: con 57 sellos, filas de 72 px son ~4.000 px de scroll.
+   nuevo. La selección existe en el workbench desde S10 pero **no en la pantalla
+   de la serie**: `selectableRows` no estaba puesto y `j`/`k` eran del workbench.
+   S29 pone `selectableRows: 1` y mueve la selección con `j`/`k`.
+2. **Selector de tamaño S/M/L** (26/48/72 px) **descartado** en este paso: es una
+   preferencia de densidad, no la solución, y con 57 sellos 72 px son ~4.000 px de
+   scroll. Queda como posible paso posterior.
 
-Recomendación: el panel primero y solo; el selector después, si al usarlo sigue
-haciendo falta control de densidad.
+La descripción vive en una **columna oculta** (`visible: false`) con
+`patch: "description"`: así entra en el change set, en el panel de revisión
+(`Stamp description`, porque «Description» ya es la de la serie) y en el borrador
+de `localStorage` sin maquinaria nueva, y seleccionar otro sello no pierde lo
+escrito. El panel escribe en esa celda con los eventos silenciados (`quietCell`):
+una pulsación no es un paso de undo, y el undo ya no se reengancha a sí mismo.
+La celda `getOldValue()` es la del arranque de la página, no la que se edita, así
+que la base se toma de `previewStart` (valor al enfocar).
 
 **Diseño**: panel a la derecha del grid (debajo en pantallas estrechas) con la
 imagen a tamaño real, nombre y código, y la descripción debajo. Se alimenta de la
@@ -1419,6 +1426,15 @@ un sello), zoom/modal/galería.
 **Tamaño**: M · `views/workspace.py`, `templates/datadesk/issue_workspace.html`,
 `static/datadesk/issue_workspace.js`, `datadesk.css`, tests de workspace y el arnés
 de `mode=edit`.
+
+**Implementado (2026-11-21)**: panel a la derecha, `j`/`k` y columna oculta en los
+dos modos; verificado en Chromium a 1366 px (imagen de 258 px de ancho, sin scroll
+horizontal) y a 1024 px (el panel pasa debajo). Dos bugs **previos** aparecieron al
+probarlo y se arreglaron aquí porque bloqueaban la comprobación: `mode=new` llamaba
+`grid.setData()` en el mismo tick que construye Tabulator y reventaba con
+`renderer ... verticalFillMode` (ahora espera a `tableBuilt`); y `?rows=N` no se
+lee en ningún sitio de la vista, así que el control siempre enseña 4 (anotado en
+`progress.md`, sin tocar en este paso).
 
 ---
 
@@ -3070,3 +3086,58 @@ Preguntas abiertas antes de empezar: panel solo o panel + selector (recomendado:
 panel solo); descripción editable desde el principio (recomendado: sí); los ocho
 lookups o los tres gratis (recomendado: los ocho); si el restore se quiere de
 verdad; y volumen en producción o solo descarga.
+
+### ✅ S29 — Ver la imagen y la descripción de un sello (2026-11-21)
+
+La miniatura de 26 px dentro de filas de 38 no es una foto, y la descripción del
+sello no se veía en ningún sitio. Se resolvió con un **panel a la derecha del
+grid, atado a la fila seleccionada**: sin hover y sin clic sobre la imagen, y la
+selección **no existía en esta pantalla** —`selectableRows` no estaba puesto y
+`j`/`k` eran del workbench—, así que S29 los añade.
+
+Decisiones al implementar:
+
+- **La descripción no es una columna visible** (prosa en una celda de 13 px es un
+  elipsis), pero sí una **columna oculta** (`visible: false`, `patch:
+  "description"`): así `patchOf`, `fieldLabels`, `readValue`/`writeValue`, `sync`,
+  el undo y el borrador de `localStorage` funcionan sin saber que hay un panel, y
+  cambiar de sello no pierde lo escrito. `field_labels()` la recoge sola, así que
+  la revisión la llama **Stamp description** («Description» ya es la de la serie).
+- **`quietCell`**: el panel escribe en la celda con los eventos silenciados, y el
+  undo también. Una pulsación no es un paso de undo, y el `cellEdited` de reemplazo
+  ya no reengancha el undo a sí mismo (antes, cada `Ctrl+Z` empujaba una operación).
+- **La base se toma de `previewStart`** (el valor al enfocar), no de
+  `cell.getOldValue()`: esa es la del arranque de la página y hacía que la revisión
+  dijera `— → texto`.
+- **Selección que no es un toggle**: Tabulator deselecciona la fila al volver a
+  pulsarla; `rowClick` la vuelve a seleccionar, porque el panel es «dónde estás».
+- **`j`/`k`** mueven por id (dos llamadas devuelven componentes distintos para la
+  misma fila) con guarda de campo y de diálogo abierto.
+- En `mode=new` el panel también está: la fila es un borrador (`new-1` mientras no
+  tenga nombre), la imagen es el placeholder, y la descripción entra en el draft y
+  en el payload de create por `patchOf`. `render()` conserva la selección por id.
+- **El selector S/M/L se descarta** en este paso: es densidad, no legibilidad, y a
+  72 px una serie de 57 sellos son ~4.000 px de scroll.
+
+Dos bugs **anteriores** aparecieron al probarlo en un navegador de verdad:
+
+- **`mode=new` no pintaba ninguna fila**: `resize()` llamaba `grid.setData()` en el
+  mismo tick que construye Tabulator y `_wipeElements` reventaba con
+  `Cannot read properties of null (reading 'verticalFillMode')`. Ahora espera a
+  `tableBuilt`. Reproducido también con el JS de `HEAD`, así que no era de S29.
+- **`?rows=N` no se lee en ningún sitio** de la vista: `NewRowSettings()` se
+  construye sin argumentos y el control enseña siempre 4. Anotado en
+  `progress.md`; no se toca aquí.
+
+Ficheros: `datadesk/service.py` (`description` en `serialize_stamp`),
+`views/workspace.py` (columna oculta), `templates/datadesk/issue_workspace.html`
+(panel), `static/datadesk/issue_workspace.js` (`selectableRows`, panel, `j`/`k`,
+`quietCell`, arreglo de `tableBuilt`), `datadesk.css` (`.dd-grid-body` de dos
+columnas, panel sticky, apilado por debajo de 1100 px), catálogos en/es y tests.
+
+Verificado: **493 datadesk y 1509 backend en verde**; en Chromium a 1366 px la
+imagen mide 258 px de ancho y no hay scroll horizontal, a 1024 px el panel pasa
+debajo; `j`/`k` cambian la imagen, una descripción tipada cuenta 1 cambio y sale
+en la revisión como `texto → texto ZZZ`, el undo la devuelve y deja el botón de
+revisión desactivado; `mode=new` selecciona, escribe y deshace; sin errores de
+consola.
