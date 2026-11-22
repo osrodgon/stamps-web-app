@@ -162,6 +162,22 @@
     return document.createTextNode(String(value));
   };
 
+  /** The separators of the active language, sent by the server. */
+  const separators = config.separators || { thousand: ",", decimal: "." };
+
+  /** A number with its thousands grouped the way this language groups them.
+   *
+   * The server decides the characters; the script only puts them in, so a
+   * number reads as money here and as a quantity there without a second format
+   * system in the browser. */
+  const groupNumber = (value) => {
+    const [whole, fraction] = String(value).split(".");
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, separators.thousand);
+    return fraction === undefined
+      ? grouped
+      : `${grouped}${separators.decimal}${fraction}`;
+  };
+
   /** Money is euros: the header says what the column is, the value says how
    * much of it. Kept out of the locale formatters on purpose (S28): this is a
    * unit, not a number format. */
@@ -170,7 +186,22 @@
     if (value === null || value === undefined || value === "") {
       return emptyFormatter(cell);
     }
-    return document.createTextNode(`${value} \u20ac`);
+    return document.createTextNode(`${groupNumber(value)} \u20ac`);
+  };
+
+  /** A quantity: stamps printed, and anything else that is not money. */
+  const numberFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      return emptyFormatter(cell);
+    }
+    return document.createTextNode(groupNumber(value));
+  };
+
+  /** The written date comes with the row: month names are not a client job. */
+  const dateFormatter = (cell) => {
+    const text = cell.getRow().getData().date_text;
+    return text ? document.createTextNode(text) : emptyFormatter(cell);
   };
 
   /** Builds one Tabulator column from the server-provided definition. */
@@ -198,8 +229,14 @@
       column.headerSort = false;
       column.width = 90;
     }
-    if (definition.money) {
+    if (definition.format === "money") {
       column.formatter = moneyFormatter;
+    }
+    if (definition.format === "number") {
+      column.formatter = numberFormatter;
+    }
+    if (definition.format === "date") {
+      column.formatter = dateFormatter;
     }
     if (!column.formatter) {
       column.formatter = emptyFormatter;

@@ -13,9 +13,11 @@ from urllib.parse import urlencode
 
 from django.db.models import QuerySet
 from django.templatetags.static import static
-from django.utils.formats import number_format
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import formats, timezone
+from django.utils.dates import MONTHS, WEEKDAYS_ABBR
+from django.utils.dateparse import parse_date
+from django.utils.formats import number_format
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView
 
@@ -31,7 +33,13 @@ from datadesk.service import (
     neighbours_of_issue,
     stamp_rows,
 )
-from datadesk.texts import plural_forms
+from datadesk.texts import (
+    date_template,
+    date_text,
+    month_abbreviations,
+    plural_forms,
+    separators,
+)
 from datadesk.views.workbench import filters_from
 from years_api.models import Year
 
@@ -74,22 +82,26 @@ STAMP_COLUMNS: tuple[dict[str, Any], ...] = (
         "title": _("Printed"),
         "label": _("Total printed"),
         "align": "right",
+        "format": "number",
     },
     {
         "field": "mnh",
         "patch": "market_value_mnh",
         "title": _("MNH"),
         "align": "right",
-        "width": 90,
-        "money": True,
+        # "999.999,99 €" with the separators in: the unit lives in the cell.
+        "width": 120,
+        "min": 120,
+        "format": "money",
     },
     {
         "field": "used",
         "patch": "market_value_used",
         "title": _("Used"),
         "align": "right",
-        "width": 90,
-        "money": True,
+        "width": 120,
+        "min": 120,
+        "format": "money",
     },
     {"field": "has_image", "title": _("Image"), "align": "center", "width": 64},
 )
@@ -457,6 +469,9 @@ def series_form_fields(prefill: dict[str, Any] | None = None) -> list[dict[str, 
         elif field["kind"] == "date":
             low, high = series_year_bounds()
             field["min"], field["max"] = f"{low}-01-01", f"{high}-12-31"
+            # The field shows the date written out and keeps the ISO value in a
+            # data attribute: the picker is ours, so its text is ours too.
+            field["value_text"] = date_text(parse_date(field["value"]) or None)
         elif "lookup" in field:
             field["value_label"] = (
                 raw.get("label", "")
@@ -597,6 +612,10 @@ def workspace_config(
         # table that ships with every series — the strip's lookups are typed
         # (S18) — because it is small and does not grow with use.
         "colours": colour_options(),
+        # What the script puts between digits: the format is the language's.
+        "separators": separators(),
+        "numberFields": number_fields(),
+        "calendar": calendar_texts(),
         "issuesUrl": reverse("datadesk:issues"),
         "fallbackImage": static("datadesk/no_stamp.webp"),
     }
@@ -805,6 +824,57 @@ def field_labels() -> dict[str, dict[str, str]]:
         # carries them in `mode=edit`, where the pane edits them), but the review
         # panel names the field too.
         | {"colors": str(_("Colors"))},
+    }
+
+
+def calendar_texts() -> dict[str, Any]:
+    """Returns the month and weekday names the picker needs, in the active language.
+
+    The picker is ours, so it cannot borrow the browser's calendar: the names come
+    from Django's translations, which is the only place this app keeps them.
+    """
+    months = [str(MONTHS[index]) for index in range(1, 13)]
+    # The field writes the abbreviation, like the grid does — it is the same
+    # list — and the select shows the month whole.
+    months_short = month_abbreviations()
+    # Django's weekday names start on Monday and its `firstDay` counts from
+    # Sunday, so the list travels already rotated: the grid only slices it.
+    weekdays = [str(WEEKDAYS_ABBR[index]) for index in range(7)]
+    first_day = int(formats.get_format("FIRST_DAY_OF_WEEK"))
+    offset = 6 if first_day == 0 else first_day - 1
+    weekdays = weekdays[offset:] + weekdays[:offset]
+    return {
+        "months": months,
+        "monthsShort": months_short,
+        "weekdays": weekdays,
+        # 0 is Sunday, which is what `Date.getDay()` returns.
+        "firstDay": first_day,
+        "template": date_template(),
+        "today": timezone.localdate().isoformat(),
+        "minYear": series_year_bounds()[0],
+        "maxYear": series_year_bounds()[1],
+    }
+
+
+def number_fields() -> dict[str, list[str]]:
+    """Returns the fields that read as numbers, for the review panel.
+
+    The panel shows ``before → after``: without this it prints ``37500.00 →
+    36000000`` next to a grid that says ``37.500,00 €``. The list is built from
+    the same definitions the editor uses, so a new numeric field cannot be
+    missing from it.
+    """
+    return {
+        "issue": [
+            field["name"]
+            for field in SERIES_FIELDS
+            if field["kind"] == "number"
+        ],
+        "stamp": [
+            str(column["patch"])
+            for column in STAMP_COLUMNS
+            if column.get("format") in ("money", "number")
+        ],
     }
 
 

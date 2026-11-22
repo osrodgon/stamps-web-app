@@ -509,27 +509,35 @@
       commit (one created, one refused) → edit the created one → fix and commit
       the refused one → reload with both rows stored.
 
-- [ ] **S34 — Money, dates and the row total say what they are** (planned
-      2026-11-22 from three screenshots of the production instance; **not urgent**,
-      the app is usable as it is). Five findings, by severity: the workbench footer
-      says "Showing 1-100 of 2600 rows" while the counter above says 2540 — the
-      2.600 is Tabulator deriving it from pages × size (26 × 100) because remote
-      pagination does not know the total, which the endpoint **does** return; money
-      carries no separators and is clipped ("37500.00 €", "45000....", "1875.0..." in
-      both grids, `max_digits=8` needs room for "999.999,99 €"); the workbench date
-      is ISO (`1850-01-01`); the same number is written three ways (`2,540 series`,
-      `5 / 2,540`, `2540 issues`); and the UI calls the entity *issues* in the menu
-      and the workbench while everything else calls it *series*. The pager's
-      `First/Prev/Next/Last` are Tabulator's and stay English in Spanish. Decision:
-      **the server formats, the script paints** — the grid response adds
-      `date_text`/`mnh_text`/`used_text` per row (the `_with_urls` trick) and the
-      footer text for that page, so no `Intl` and no format templates in JS. The two
-      conventions are explicit: **thousands separator and decimal mark of the active
-      language** (`37.500,00 €` in Spanish, `37,500.00 €` in English — never
-      ungrouped), and **dates as day/month/year in Spanish and month/day/year in
-      English** (1 December 1853 reads `01/12/1853` in Spanish, `12/01/1853` in
-      English), from the language's `SHORT_DATE_FORMAT`, never ISO. Detail,
-      acceptance and files in plan §4 S34.
+- [x] **S34 — Money, the print run and dates say what they are** (2026-11-22, from
+      the production screenshots and then reported again while using it): the server
+      decides the characters and the script only puts them in. `datadesk/texts.py`
+      gained `separators()` (thousands and decimal mark of the active language —
+      Spanish uses **dots**, not Django's no-break space, which in a 13px cell does
+      not read as a separator) and `date_text()`, which writes the month by name:
+      `1 dic 1853` / `Dec 1, 1853`. That supersedes the first design
+      (`01/12/1853` / `12/01/1853`): correct, but it still made the reader work out
+      which number is the month. Columns now say how they are written
+      (`"format": "money" | "number" | "date"`, replacing S28's `money: True`); money
+      and the print run are grouped in the script from the cell value, so an edit
+      paints at once instead of the text the server sent at load, while the read-only
+      date travels written (`date_text`). Money columns went to `min: 120` (twelve
+      characters for `999.999,99 €`) and the date to 128. `config.numberFields` makes
+      the review panel format too, so it says `37.500,00 → 36.000.000` instead of
+      `37500.00 → 36000000`. **Not covered on purpose**: the strip's inputs keep the
+      stored value (`36000000`), because a number input cannot hold separators and
+      guessing them on read (`2.19` is 2,19 or 219 depending on the language) can
+      write the wrong number. 13 tests; 581 datadesk / 1597 backend; Chromium in both
+      languages with real data.
+- [ ] **S34b — The workbench footer says the real total, and the word is "series"**
+      (the rest of S34): the footer says "Showing 1-100 of 2600 rows" while the
+      counter says 2540, because Tabulator derives the total from pages × size in
+      remote pagination and the endpoint's `total` never reaches it; the pager's
+      `First/Prev/Next/Last` are the library's and stay English in Spanish; and the
+      entity is *issues* in the menu and the counter while everything else says
+      *series*. The plan: send the footer sentence for the page from the server,
+      translate or replace the four buttons, and rename the text only (not the URL,
+      not the template names, not the model). Detail in plan §4 S34b.
 - [x] **S35 — Change a stamp's colours from the preview pane** (2026-11-22): the
       gap the app had carried since S18, closed. The writer already did it; what
       changed is the screen and the language the row speaks. `serialize_stamp()`
@@ -583,6 +591,35 @@
       name and description and in the pane's colour and description. 3 pins in
       `test_layout`; 568 datadesk green. No template or JS change: the class was
       already right, the style was not reaching it.
+- [x] **S38 — Pick the date in our own calendar** (2026-11-22): the series date
+      field stops being an `input[type=date]`. The native picker speaks the
+      browser's language, wears the browser's chrome and cannot show the month by
+      name. The field now shows the date written out (`12 may 1987`) and keeps the
+      ISO value in `data-value`, like a reference field keeps its id; `formValue()`
+      learned that branch, so the change set, the review, the draft and the writer
+      keep speaking ISO, and undo writes it back with `setDate(value, quiet)` so a
+      replayed value is not a new edit. The calendar is ours: month select with full
+      names, year box, `‹`/`›`, weekday header (rotated server-side because Django
+      lists Monday-first and its `firstDay` counts from Sunday), the day grid and
+      "Clear the date". Esc closes it without leaving the page, and so does a click
+      outside, a scroll or a resize. The month abbreviations come from
+      `date_format(..., "M")`, the same source `date_text` reads, because
+      `django.utils.dates.MONTHS_3` is **not translated** in this version. The field
+      is read-only on purpose: typing is where `01/12` and `12/01` start arguing, and
+      the year box puts 1853 one gesture away. Two follow-ups from looking at it: the
+      month is a **button** that opens a grid of twelve instead of a `select` (the
+      native list is square and not ours), and a **Today** button sits next to
+      "Clear the date". The panel follows the field on scroll instead of closing —
+      closing on scroll also closed it when the browser scrolled to reach it — and
+      the outside click is decided with `composedPath()`, because the control that
+      was just clicked may have been repainted by its own handler (picking a month
+      does exactly that). Widths measured afterwards: the month box was short enough
+      for "Septiembre" to run under the chevron and the year box was 85px for four
+      digits — the panel is 286, the month keeps what is left (102px of room against
+      the 70 "septiembre" needs), the year is 56 and needs `min-width: 0` because an
+      input's automatic minimum is its twenty-character default and it eats the flex
+      basis. 9 tests (5 page, 4 texts) + 1 restored; 590 datadesk / 1606 backend;
+      Chromium in both languages.
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton

@@ -561,16 +561,61 @@ class TestTheAssetsAreStamped:
 
 
 @pytest.mark.django_db
+class TestHowAValueIsWritten:
+    """The row carries the date as prose; the page carries the separators."""
+
+    def test_the_row_carries_the_date_written_out(self, staff_client, grid_dataset):
+        rows = staff_client.get(GRID_URL).json()["data"]
+
+        dated = [row for row in rows if row["date"]]
+        assert dated
+        assert all(row["date_text"] for row in dated)
+        assert dated[0]["date_text"] != dated[0]["date"]
+
+    def test_the_separators_come_with_the_page(self, staff_client, grid_dataset):
+        config = staff_client.get(PAGE_URL).context["config"]
+
+        assert config["separators"] == {"thousand": ",", "decimal": "."}
+
+    def test_they_follow_the_language(self, staff_client, grid_dataset):
+        staff_client.cookies["django_language"] = "es"
+
+        config = staff_client.get(PAGE_URL).context["config"]
+        rows = staff_client.get(GRID_URL).json()["data"]
+
+        assert config["separators"] == {"thousand": ".", "decimal": ","}
+        written = next(row for row in rows if row["date"])["date_text"]
+        assert written.split(" ")[1].islower()
+
+
 class TestTheCurrencyIsNamed:
     """The market-value columns carry their unit: the mockup showed the € and
     the grid showed a bare number."""
 
     def test_the_money_columns_are_marked(self, staff_client, grid_dataset) -> None:
         config = staff_client.get(PAGE_URL).context["config"]
-        money = {
-            column["field"]: column.get("money")
+        formats = {
+            column["field"]: column.get("format")
+            for column in config["columns"]
+            if column["field"] in ("mnh", "used", "total_printed", "date")
+        }
+
+        assert formats == {
+            "date": "date",
+            "mnh": "money",
+            "used": "money",
+            "total_printed": "number",
+        }
+
+    def test_the_money_columns_fit_the_widest_value(
+        self, staff_client, dataset
+    ) -> None:
+        """``999.999,99 €`` with the separators in: a clipped number is no number."""
+        config = staff_client.get(PAGE_URL).context["config"]
+        widths = {
+            column["field"]: column.get("min")
             for column in config["columns"]
             if column["field"] in ("mnh", "used")
         }
 
-        assert money == {"mnh": True, "used": True}
+        assert widths == {"mnh": 120, "used": 120}

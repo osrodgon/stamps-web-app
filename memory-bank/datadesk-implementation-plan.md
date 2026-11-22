@@ -201,7 +201,8 @@ distintas. Es deuda de presentación, no de datos.
 
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
-| S34 | El dinero, las fechas y el total del pie dicen lo que son | S8, S24, S28 | S–M | sí, aunque no es urgente | ⏳ pendiente |
+| S34 | El dinero, las fechas y el total del pie dicen lo que son | S8, S24, S28 | S–M | sí, aunque no es urgente | ✅ 2026-11-22 |
+| S34b | El pie del workbench dice el total de verdad, y la palabra «series» | S34 | S | sí | ⏳ pendiente |
 
 ---
 
@@ -246,6 +247,19 @@ navegador. Se vio al poner el campo de color al lado de la tira.
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
 | S37 | Un control tiene el mismo aspecto en cualquier sitio | S24, S28, S29, S35 | XS | sí | ✅ 2026-11-22 |
+
+---
+
+### Décima tanda (S38, la fecha se elige en nuestro calendario)
+
+El campo de fecha era un `input[type=date]`: el calendario que abre es el del
+navegador, así que habla el idioma del navegador y no el de la página, tiene su
+propio aspecto y no puede enseñar el mes por su nombre. Y escribir la fecha a mano
+es justo donde `01/12` y `12/01` empiezan a discutir.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S38 | Elegir la fecha en un calendario nuestro | S10, S16, S34 | S–M | sí | ✅ 2026-11-22 |
 
 ---
 
@@ -1815,15 +1829,18 @@ plantillas de formato en JS.
 - **Las cantidades llevan el separador de miles del idioma activo**, y la marca
   decimal con él: `37.500,00 €` en castellano y `37,500.00 €` en inglés. Nunca
   `37500.00 €`: sin agrupar, en una tabla de miles de filas, el número se cuenta a
-  ojo y se cuenta mal. Se hace con `number_format(value, decimal_pos=2,
-  force_grouping=True)`, que es lo que ya usa el panel, y el mismo criterio para
-  los tres contadores (`2.540` / `2,540`).
-- **Las fechas van en día/mes/año en castellano y en mes/día/año en inglés**, que
-  es lo que pide cada idioma: una serie fechada el 1 de diciembre de 1853 se lee
-  `01/12/1853` con la interfaz en castellano y `12/01/1853` con la interfaz en
-  inglés. Es el `SHORT_DATE_FORMAT` del idioma activo (con ceros a la izquierda),
-  nunca el ISO que se ve hoy. El formato sale del idioma de la petición, así que
-  el conmutador EN/ES de la barra cambia fechas y cantidades a la vez.
+  ojo y se cuenta mal. Los caracteres los decide el servidor (`datadesk/texts.py`,
+  `separators()`) y el script solo los inserta; en castellano se usa el punto y no
+  el espacio duro que trae Django, porque en una celda de 13 px el espacio no se
+  lee como separador. El mismo criterio para los tres contadores (`2.540` /
+  `2,540`).
+- **Las fechas llevan el mes por su nombre**, que es lo que se decidió al
+  implementarlo (2026-11-22, revisando el primer diseño): `1 dic 1853` en
+  castellano y `Dec 1, 1853` en inglés. El primer diseño era `01/12/1853` y
+  `12/01/1853`, y era correcto pero seguía obligando a pensar cuál es cuál; con el
+  mes escrito no hay duda en ningún idioma. Nunca el ISO que se veía antes. El
+  formato sale del idioma de la petición, así que el conmutador EN/ES de la barra
+  cambia fechas y cantidades a la vez.
 - **El pie lo pinta el servidor**: la respuesta trae el texto de esa página
   (`Showing 1-100 of 2,540 rows` / `Mostrando 1-100 de 2.540 filas`), construido
   con `page`, `size`, `total` y el plural del catálogo, y sustituye al contador de
@@ -1862,6 +1879,41 @@ del sello), `service.py` (los valores que se formatean), `workbench.js` y
 `issue_workspace.js` (el formateador genérico y el contador), `base.html` y
 `workbench.html` (*series*), los dos catálogos `.po`/`.mo`, tests y comprobación
 en navegador con la serie de 1853.
+
+**Hecho el 2026-11-22, y lo que queda**: el dinero, la tirada, las fechas y la
+revisión ya se escriben como manda el idioma (ver §7). Queda **S34b**, que es lo
+que no entra en «formatear un valor» sino en «pintar el pie»: el total real del
+paginator y la palabra *series*.
+
+---
+
+### S34b — El pie del workbench dice el total de verdad
+
+**Depende de**: S34.
+
+El pie dice «Showing 1-100 of 2600 rows» y arriba pone «2540 issues», y los dos
+números salen del mismo endpoint que **sí** devuelve `total`. El 2.600 lo inventa
+Tabulator: en modo remoto deduce el total de páginas × tamaño. Además el paginador
+está en inglés también en castellano (`First`, `Prev`, `Next`, `Last` los pinta la
+biblioteca) y la cifra sale sin agrupar, mientras el panel y la navegación de la
+serie ya la agrupan.
+
+- El endpoint devuelve el texto de esa página (`Showing 1-100 of 2,540 rows` /
+  `Mostrando 1-100 de 2.540 filas`), hecho con `page`, `size`, `total` y el plural
+  del catálogo, y sustituye al contador de Tabulator.
+- Los cuatro botones: o se traducen con el módulo de idioma de Tabulator, o el pie
+  es nuestro y nos llevamos también los botones; se decide al implementar, pero en
+  castellano no puede quedar `Next`.
+- Una sola palabra para la entidad: **series**. El panel ya la usa; el menú
+  (*Issues*) y el contador (*2540 issues*) son los que se desvían. Solo texto: ni
+  URLs (`/datadesk/issues/`), ni nombres de plantilla, ni el modelo `Issue`.
+
+**Aceptación**: el pie y el contador dicen el total real y coinciden; el texto del
+pie sale de `total` y no de páginas × tamaño (un test lo fija); en castellano no
+queda una palabra inglesa en el paginador; el menú dice «Series».
+
+**Tamaño**: S · `views/workbench_api.py`, `views/workbench.py`, `workbench.js`,
+`base.html`, los catálogos y tests.
 
 ---
 
@@ -3909,3 +3961,116 @@ Tres pins en `test_layout` (el look no está dentro de `.dd-field`, la base llev
 geometría, el textarea lleva relleno vertical). 568 datadesk en verde. Sin cambios
 de plantilla ni de JS: dos controles llevaban la clase correcta desde S29/S35 y no
 les llegaba el estilo.
+
+### ✅ S34 — El dinero, la tirada y las fechas dicen lo que son (2026-11-22)
+
+El núcleo de S34, el que se veía en las capturas de producción: importes sin
+separadores y recortados, la tirada en crudo y la fecha en ISO. Lo que faltaba por
+otro lado (el total del pie y la palabra *series*) queda como S34b.
+
+- **El servidor decide los caracteres, el script los pone.** `datadesk/texts.py`
+  gana `separators()`, que devuelve el millar y el decimal del idioma activo y lo
+  manda en la configuración de las dos pantallas. En castellano el millar es el
+  **punto**, no el espacio duro que trae Django: `37 500` es correcto y en una celda
+  de 13 px no se lee como un separador.
+- **La fecha lleva el mes escrito**: `datadesk/texts.py` gana `date_text()`, que da
+  `1 dic 1853` en castellano y `Dec 1, 1853` en inglés, y los tokens se vuelven a
+  juntar en castellano porque Django capitaliza la abreviatura (`Dic`) y los meses
+  en castellano van en minúscula. Es un cambio respecto al primer diseño, que Era
+  `01/12/1853` / `12/01/1853`: correcto, pero obligaba a pensar cuál es cuál. La
+  columna de fecha pasa a 128 px para que `Dec 1, 1853` quepa.
+- **Una sola llave para el formato**: la columna dice cómo se escribe
+  (`"format": "money" | "number" | "date"`) y sustituye al `money: True` que S28
+  había dejado. El dinero y la tirada se formatean en el script desde el valor de la
+  celda, así que **una edición se pinta al momento** y no con el texto que el
+  servidor mandó al cargar; la fecha, que no se edita, sí viaja escrita
+  (`date_text`).
+- **La tirada también**: `total_printed` en las dos rejillas lleva
+  `format: "number"`, y los importes suben su `min` a 120 px porque
+  `999.999,99 €` son doce caracteres con separadores.
+- **La revisión cuenta lo mismo**: `config.numberFields` dice qué campos son
+  numéricos, así que el panel pasa de `37500.00 → 36000000` a
+  `37.500,00 → 36.000.000`. Sin eso, la rejilla y la revisión habrían hablado dos
+  idiomas en la misma pantalla.
+
+Verificado en Chromium con datos reales: en inglés `Jan 1, 1850` / `37,500.00 €` /
+`2,250.00 €`, y al conmutar a castellano `1 ene 1850` / `37.500,00 €` / `750,00 €`;
+la columna Tirada sale agrupada; cambiar la tirada de una serie deja la revisión en
+`36.000.000 → 37.000.000`.
+
+**Lo que no entra**: los campos de la tira siguen enseñando el valor guardado
+(`36000000`), porque un `input[type=number]` no admite separadores y adivinarlos al
+leer («2.19» es 2,19 o 219 según el idioma) puede escribir un número equivocado. Y
+el popup del calendario es el del navegador: el idioma de la página no lo cambia
+(ver §7 de S34b y la nota de abajo).
+
+13 tests nuevos (`test_texts.py` con los dos idiomas y el respaldo a Django, la
+fila con `date_text`, los separadores en las dos configuraciones, los formatos de
+las columnas y los `min` del dinero, y los campos numéricos de la revisión); 581
+datadesk y 1597 backend en verde.
+
+### ✅ S38 — Elegir la fecha en un calendario nuestro (2026-11-22)
+
+El campo de fecha de la serie deja de ser un `input[type=date]`. El nativo trae el
+calendario del navegador: su idioma, su aspecto y ningún nombre de mes; y escribir
+`01/12/1853` a mano es volver a la ambigüedad que S34 acaba de quitar de la lista.
+
+- **El campo enseña la fecha escrita y guarda el ISO aparte** (`data-value`), como
+  un campo de referencia guarda el id y enseña el nombre. `formValue()` aprende esa
+  rama, así que el change set, la revisión, el borrador y el escritor siguen
+  hablando ISO; el deshacer la reescribe con `setDate(valor, quiet)` para que
+  repetir un valor no cuente como una edición.
+- **Nuestro calendario**: mes en un `select` con el nombre entero, caja de año,
+  `‹`/`›`, cabecera de días y rejilla, y «Quitar la fecha». Se abre bajo el campo
+  (y encima si no cabe), se cierra con `Esc` —parando el evento, para no salir de
+  la página—, con un clic fuera, al hacer scroll o al redimensionar.
+- **Los nombres son de Django, no del script**: `MONTHS` y `WEEKDAYS_ABBR` viajan
+  en la configuración. La lista de días va **ya rotada** por el servidor, porque
+  Django la ordena de lunes a domingo y su `firstDay` cuenta desde el domingo (que
+  es lo que devuelve `Date.getDay()`): sin rotarla, el castellano empezaba en
+  domingo. Las abreviaturas salen de `date_format(..., "M")`, la misma fuente que
+  `date_text`, así que el campo y la rejilla no pueden escribir el mismo día de dos
+  formas.
+- **Una trampa encontrada al comprobarlo**: `django.utils.dates.MONTHS_3` **no está
+  traducido** en esta versión (junio es «jun» también en inglés), así que las
+  abreviaturas no pueden salir de ahí.
+- **La fecha se elige, no se escribe**: el campo es de solo lectura. Con el año en
+  una caja, 1853 está a un gesto; escribiéndola habría que decidir qué significa
+  `01/12` en cada idioma, que es exactamente lo que S34 evitó.
+- **El mes es un botón, no un `select`** (revisado el mismo día, al verlo): un
+  `select` abre la lista del navegador —cuadrada y con su estilo—, así que el botón
+  muestra el nombre del mes y abre una rejilla de doce, con el mes actual en
+  azul. Es el último control nativo que quedaba en el calendario.
+- **Botón «Hoy»**, pedido en la misma revisión: pone la fecha de hoy y cierra. Iba
+  al lado de «Quitar la fecha», en el pie.
+- **El panel sigue al campo en vez de cerrarse al hacer scroll**: cerrarlo en cada
+  scroll lo cerraba también cuando el navegador desplazaba la página para llegar al
+  botón. Y el cierre por clic fuera se decidió con `composedPath()`, no con
+  `contains()`: el botón que se acaba de pulsar puede haber sido repintado por su
+  propio manejador (elegir un mes lo hace), y entonces `contains()` decía que el
+  clic venía de fuera y cerraba el calendario.
+- **El ancho de la cabecera, medido y no adivinado** (segunda revisión del mismo
+  día): con «Septiembre» la caja del mes era corta y el nombre pasaba por debajo del
+  chevron, mientras la del año gastaba 85 px en cuatro dígitos. Ahora el panel mide
+  286, el mes se lleva lo que sobra (140 y 102 px de hueco frente a los 70 que mide
+  «septiembre») y el año 56, con un `min-width: 0` que hace falta porque el mínimo
+  automático de un `input` es su tamaño por defecto de veinte caracteres y se come
+  el `flex-basis`. El nombre del mes lleva `overflow: hidden` y puntos suspensivos:
+  si un idioma trae un mes más largo, se corta él y no se mete debajo de la flecha.
+- El `select` del mes usaba la clase compartida `.dd-select` con el chevron de la
+  casa, y esa regla tiene que ir **después** de `.dd-input`: el atajo `background`
+  de la base borra la imagen si se declara antes.
+
+Verificado en Chromium: en inglés el campo dice `Jun 30, 1976`, el calendario abre
+en junio de 1976 con los días de domingo a sábado y elegir el 12 deja
+`June 12, 1976` con `1976-06-12` en `data-value`; en castellano dice `30 jun 1976`,
+la semana empieza en lunes y elegir el 1 deja `1 jun 1976` y «1 cambio» en el pie.
+`Esc` cierra el calendario sin salir de la página.
+
+Tests: 5 en `test_workspace.py` (el campo escrito con el ISO al lado, el calendario
+en la página, el mes que no es un `select`, nombres y domingo primero en inglés,
+nombres y lunes primero en castellano), 4 en `test_texts.py` (la lista de meses, minúsculas en castellano,
+mayúsculas en inglés y el template de acuerdo con `date_text`) y uno ajustado en
+`test_workspace_lookups.py` (el único `select` de la página es el del calendario y
+vuelve a decir que la página no tiene ningún `select`). 590 datadesk y 1606 backend
+en verde.

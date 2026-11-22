@@ -169,16 +169,48 @@ class TestWorkspacePage:
         config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
         content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
 
-        money = {
-            column["field"]: column.get("money")
+        formats = {
+            column["field"]: column.get("format")
             for column in config["columns"]
-            if column["field"] in ("mnh", "used")
+            if column["field"] in ("mnh", "used", "total_printed")
         }
-        assert money == {"mnh": True, "used": True}
+        assert formats == {"mnh": "money", "used": "money", "total_printed": "number"}
         assert "Market value MNH (€)" in content
         assert config["fieldLabels"]["issue"]["market_value_mnh"] == (
             "Market value MNH (€)"
         )
+
+    def test_the_page_carries_the_separators_of_the_language(
+        self, staff_client, issue
+    ) -> None:
+        """The script only inserts them: the format is the language's."""
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["separators"] == {"thousand": ",", "decimal": "."}
+
+        staff_client.cookies["django_language"] = "es"
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["separators"] == {"thousand": ".", "decimal": ","}
+
+    def test_the_review_knows_which_fields_are_numbers(
+        self, staff_client, issue
+    ) -> None:
+        """So the panel says "37.500,00" and not "37500.00"."""
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+
+        assert config["numberFields"] == {
+            "issue": [
+                "total_printed",
+                "market_value_mnh",
+                "market_value_used",
+            ],
+            "stamp": [
+                "total_printed",
+                "market_value_mnh",
+                "market_value_used",
+            ],
+        }
 
     def test_the_preview_pane_ships_with_the_page(self, staff_client, issue) -> None:
         content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
@@ -245,6 +277,74 @@ class TestStampRows:
 
         for attribute in ("country", "year", "stamp_type", "printer", "artist"):
             assert attribute not in rows[0]
+
+
+@pytest.mark.django_db
+class TestTheDateField:
+    """The date is written out and picked from our own calendar.
+
+    `input[type=date]` brings the browser's picker: its language, its chrome and
+    no month names — and it cannot show "12 may 1987".
+    """
+
+    def test_the_field_shows_the_date_written_and_keeps_the_iso_one(
+        self, staff_client, issue
+    ) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        assert 'type="date"' not in content
+        assert 'data-value="1987-05-12"' in content
+        assert 'value="May 12, 1987"' in content
+
+    def test_the_page_ships_the_calendar(self, staff_client, issue) -> None:
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        for element in (
+            "date-popover",
+            "calendar-month",
+            "calendar-year",
+            "calendar-weekdays",
+            "calendar-days",
+            "calendar-months",
+            "calendar-today",
+            "calendar-clear",
+        ):
+            assert f'id="{element}"' in content, element
+
+    def test_the_month_is_not_a_native_select(self, staff_client, issue) -> None:
+        """A select opens the browser's list, which is square and not ours."""
+        content = staff_client.get(PAGE_URL.format(pk=issue.pk)).content.decode()
+
+        assert "<select" not in content
+        assert 'id="calendar-month"' in content
+        assert "aria-haspopup" in content
+
+    def test_the_calendar_speaks_the_language(self, staff_client, issue) -> None:
+        calendar = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))[
+            "calendar"
+        ]
+
+        assert len(calendar["months"]) == 12
+        assert len(calendar["monthsShort"]) == 12
+        assert calendar["months"][0] == "January"
+        assert calendar["monthsShort"][4] == "May"
+        assert calendar["weekdays"][0] == "Sun"
+        assert calendar["firstDay"] == 0
+        assert calendar["template"] == "%(month)s %(day)s, %(year)s"
+        assert calendar["minYear"] == 1800
+
+    def test_spanish_names_and_starts_on_monday(self, staff_client, issue) -> None:
+        staff_client.cookies["django_language"] = "es"
+
+        response = staff_client.get(PAGE_URL.format(pk=issue.pk))
+        calendar = config_of(response)["calendar"]
+
+        assert calendar["months"][0] == "enero"
+        assert calendar["monthsShort"][4] == "may"
+        assert calendar["weekdays"][0] == "lun"
+        assert calendar["firstDay"] == 1
+        assert calendar["template"] == "%(day)s %(month)s %(year)s"
+        assert 'value="12 may 1987"' in response.content.decode()
 
 
 @pytest.mark.django_db
