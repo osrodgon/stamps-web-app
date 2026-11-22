@@ -1148,6 +1148,13 @@ kbd {
   background: var(--dd-amber-soft);
 }
 
+/* A stamp that does not exist yet: it is drawn with a spine, which is what a
+ * stored row can never have. Its pending tint comes on top, like any other
+ * row with changes. */
+.dd-row-new {
+  box-shadow: inset 2px 0 0 var(--dd-amber);
+}
+
 .dd-row-saved,
 .dd-row-saved .tabulator-cell {
   background: var(--dd-green-soft);
@@ -1316,6 +1323,22 @@ kbd {
   display: block;
   margin-bottom: 4px;
   font-weight: 600;
+}
+
+/* A row that is not stored yet is listed as what it is: no before, no after,
+ * one badge that says the whole thing. */
+.dd-review-badge {
+  display: inline-block;
+  margin-left: var(--dd-s2);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--dd-amber-soft);
+  color: var(--dd-ink);
+  font-size: var(--dd-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 .dd-review-diff {
@@ -1560,6 +1583,12 @@ kbd {
  * a deletion is not an edit and cannot queue behind one. */
 .dd-grid-locked .dd-stamp-delete {
   opacity: 0.4;
+}
+
+/* ...except on a draft row: removing a stamp that was never written is local,
+ * undoable, and the only way back out of `+ Stamp`. */
+.dd-grid-locked .dd-row-new .dd-stamp-delete {
+  opacity: 1;
 }
 
 /* Once the series is written the workspace has nothing left to edit: further

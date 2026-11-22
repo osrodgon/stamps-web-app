@@ -489,19 +489,25 @@
       mode (503 for the rest of `/datadesk/`) → clear + loaddata + sequencereset,
       with a typed confirmation, and only `stamps`/`full` in the panel: `system`
       resurrects closed sessions and a revoked API key.
-- [ ] **S33 — Add a stamp to an existing series** (planned 2026-11-22, from doing
-      the work, not from reviewing it): DataDesk can create a series with its
-      stamps, clone a whole series and delete a stamp, but **not add one to a
-      series that already exists** — the operation of every loose piece. The
-      backend already accepts it: `/apply` takes `op: "create"` for a stamp of an
-      existing issue (tested, audited, returns the id). What is missing is the
-      screen: a `+ Stamp` button in the `mode=edit` grid head, a draft row with a
-      `new-<n>` id (the same prefix `mode=new` uses), the change set sending
-      `create`, the review listing it as new, undo removing it, and the commit
-      reconciling the real id. Decisions at implementation: stay in the series
-      after a clean commit (recommended) instead of going back to the workbench,
-      and leave the new stamp's colours out (the change set carries no M2M yet).
-      Not persisted in localStorage: a `create` has no `base`, like `mode=new`.
+- [x] **S33 — Add a stamp to an existing series** (2026-11-22, from doing the
+      work, not from reviewing it): `+ Stamp` in the `mode=edit` grid head adds a
+      **draft row** to the grid — `new-<n>` id, name prefilled with the series
+      name, no request until the commit. The change set sends `op: "create"`
+      (`entryFor` decides it from `newRows`) and `sync()` writes the row whole
+      instead of diffing it against a base it does not have; the review lists it
+      with a `NEW` chip and counts it as one change; `Ctrl+Z` takes the row away
+      and puts back one removed with its ×, which never asks the server. After
+      the commit `adoptDraft()` swaps in the real id, `updated_at` and the two
+      per-row URLs, which the server sends as a shape (`url_template()`) because
+      a row without an id cannot have them rendered. A clean commit **reloads the
+      series page** instead of returning to the workbench (`?focus=` stays a
+      manual deep link), and a partial commit reconciles in place, so retrying
+      cannot create the same stamp twice. A row nobody typed in is dropped
+      (`dropBlankDrafts()`), and a `create` is not kept in `localStorage` — it
+      has no `base`. 16 tests (14 in `test_workspace_add_stamp.py`, 2 CSS pins);
+      545 datadesk and 1561 backend green; Chromium: add → review → partial
+      commit (one created, one refused) → edit the created one → fix and commit
+      the refused one → reload with both rows stored.
 
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,

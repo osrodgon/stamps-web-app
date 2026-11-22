@@ -159,6 +159,17 @@
                      value="{{ config.rows.default }}">
             </label>
           </span>
+        {% else %}
+          {% comment %}
+            A stamp is added to the series that is already open: the row appears
+            in this grid as a draft, the change set sends a `create` for it and
+            the review panel shows it before anything is written.
+          {% endcomment %}
+          <span class="dd-grid-tools">
+            <button type="button" class="dd-btn dd-btn-ghost" id="add-stamp">
+              {% translate "+ Stamp" %}
+            </button>
+          </span>
         {% endif %}
       </div>
       <div class="dd-grid-body">

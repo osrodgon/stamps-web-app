@@ -1,10 +1,11 @@
 /* Issue workspace grid.
  *
- * One template, two modes. `edit` shows one series and its stamps and commits
- * one row at a time: Shift+Enter (or the Save button) sends the row being
- * edited to `/datadesk/apply`. `new` starts from blank rows that exist only in
- * this browser: no request, no database row, so reloading throws the draft away
- * on purpose.
+ * One template, two modes. `edit` shows one series and its stamps, and the
+ * edits accumulate in a change set in this browser (S14) that is reviewed and
+ * committed as a batch (S15); a stamp added here exists only as a draft row
+ * until that commit (S33). `new` starts from blank rows that exist only in this
+ * browser: no request, no database row, so reloading throws the draft away on
+ * purpose.
  *
  * Titles, colours, picture URLs, the texts of the commit bar and even the
  * element ids come from the page configuration, so this file holds no interface
@@ -424,6 +425,13 @@
   /** What a row's delete button does, wired by the mode that understands it. */
   let deleteStampRow = null;
 
+  /** Rows that exist only in this page (`new-<n>`), with the name each started
+   * with. `mode=edit` uses it to tell a draft from a stored stamp: the change
+   * set sends a `create` for these and an `update` for the rest, and a draft is
+   * removed here instead of asking the server for its dependencies. Real ids are
+   * numbers, so a made-up one can never collide with a stamp. */
+  const newRows = new Map();
+
   /** Deleting a real stamp: a dialog, not a change in the buffer. */
   const stampDeleteColumn = {
     field: "delete_stamp",
@@ -433,11 +441,16 @@
     hozAlign: "center",
     cssClass: "dd-remove-cell",
     formatter: (cell) => {
+      const data = cell.getRow().getData();
+      const texts = config.texts || {};
       const button = document.createElement("button");
       button.type = "button";
       button.className = "dd-remove dd-stamp-delete";
       button.textContent = "×";
-      button.title = ((config.texts || {}).deleteStamp) || "";
+      /* A draft is not a stamp yet: removing it is local and undoable, and the
+       * label says so instead of promising a deletion. */
+      button.title =
+        (newRows.has(data.id) ? texts.removeRow : texts.deleteStamp) || "";
       button.setAttribute("aria-label", button.title);
       button.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -682,6 +695,7 @@
     const stampItems = document.getElementById("stamp-delete-items");
     const stampCollections = document.getElementById("stamp-delete-collections");
     const badge = document.getElementById("stamp-count");
+    const addStampButton = document.getElementById("add-stamp");
     const texts = config.texts || {};
     const commitLabel = saveButton.textContent;
 
@@ -709,6 +723,8 @@
     /** Undo/redo as a log of values, so nothing has to be snapshotted. */
     const history = [];
     let pointer = 0;
+    /** Whether Tabulator has built the table: before that it has no rows. */
+    let built = false;
     /** Reference rows created while editing: they are saved, so they are not
      * changes, but the review panel says which ones it was. */
     const createdLookups = [];
@@ -763,6 +779,12 @@
       return normalize(left) === normalize(right);
     };
 
+    /** Whether a value says something: zero does, an empty box does not. */
+    const isSet = (value) =>
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== "";
+
     const formValues = () => {
       const values = {};
       Array.from(form.querySelectorAll("[name]")).forEach((control) => {
@@ -779,7 +801,8 @@
         entry = {
           model,
           object_id: id,
-          op: "update",
+          /* A row of this page has no before, so it is created, not changed. */
+          op: model === "stamp" && newRows.has(id) ? "create" : "update",
           patch: {},
           expected_updated_at: baselines.get(key) ?? null,
         };
@@ -812,12 +835,19 @@
       entry.patch = {};
       entry.base = base;
       entry.error = "";
-      Object.keys(base).forEach((field) => {
+      /* A draft has no before to compare with: it is written with every field
+       * it has, plus the series it belongs to. */
+      const draft = model === "stamp" && newRows.has(id);
+      const fields = draft ? Object.keys(fieldOf) : Object.keys(base);
+      fields.forEach((field) => {
         const current = readValue(model, id, field);
-        if (!same(current, base[field])) {
+        if (draft || !same(current, base[field])) {
           entry.patch[field] = current;
         }
       });
+      if (draft) {
+        entry.patch.issue = config.series.id;
+      }
 
       if (!Object.keys(entry.patch).length) {
         buffer.delete(key);
@@ -845,9 +875,13 @@
       return template.replace("%(count)s", String(count));
     };
 
+    /** What one entry counts for: a new row is one thing, not nine fields. */
+    const entryCount = (entry) =>
+      entry.op === "create" ? 1 : Object.keys(entry.patch).length;
+
     const changeCount = () =>
       Array.from(buffer.values()).reduce(
-        (total, entry) => total + Object.keys(entry.patch).length,
+        (total, entry) => total + entryCount(entry),
         0
       );
 
@@ -941,13 +975,19 @@
             JSON.stringify({
               schemaVersion: config.schemaVersion,
               savedAt: new Date().toISOString(),
-              bases: Array.from(bases.entries()),
+              /* A draft row only exists in this page: it has no `base`, so a
+               * draft the browser kept cannot be restored into anything. */
+              bases: Array.from(bases.entries()).filter(
+                ([key]) => !newRows.has(key.slice(key.indexOf(":") + 1))
+              ),
               /* The ids a draft carries mean nothing without their names: a
                * lookup change restored into a page that never searched it would
                * show an id and undo into an empty box. */
               lookups: Array.from(lookupById.entries()),
               entries: Array.from(buffer.values()).filter(
-                (entry) => Object.keys(entry.patch).length
+                (entry) =>
+                  entry.op !== "create" &&
+                  Object.keys(entry.patch).length
               ),
             })
           );
@@ -969,10 +1009,12 @@
     const paintRows = () => {
       grid.getRows().forEach((row) => {
         const element = row.getElement();
-        const key = keyOf("stamp", row.getData().id);
+        const data = row.getData();
+        const entry = buffer.get(keyOf("stamp", data.id));
+        element.classList.toggle("dd-row-new", newRows.has(data.id));
         element.classList.toggle(
           "dd-row-dirty",
-          buffer.has(key) && Boolean(Object.keys(buffer.get(key).patch).length)
+          Boolean(entry && Object.keys(entry.patch).length)
         );
       });
     };
@@ -981,8 +1023,12 @@
     const renderReview = () => {
       const groups = { issue: [], stamp: [] };
       buffer.forEach((entry, key) => {
-        const fields = Object.keys(entry.patch);
-        if (!fields.length) {
+        /* The series of a new stamp is where it goes, not something the user
+         * changed: the panel would only repeat the screen above it. */
+        const fields = Object.keys(entry.patch).filter(
+          (field) => entry.op !== "create" || field !== "issue"
+        );
+        if (!fields.length && entry.op !== "create") {
           return;
         }
         groups[entry.model].push({ key, entry, fields });
@@ -1007,33 +1053,49 @@
           const name = document.createElement("span");
           name.className = "dd-review-name";
           name.textContent = rowName(entry);
+          if (entry.op === "create") {
+            /* A new stamp has no before to show: it is listed as what it is. */
+            const badge = document.createElement("span");
+            badge.className = "dd-review-badge";
+            badge.textContent = texts.newRow || "";
+            name.append(badge);
+          }
           item.append(name);
 
           fields.forEach((field) => {
+            /* Nothing worth reading: a new stamp arrives with every field,
+             * most of them empty, and eight dashes say nothing. */
+            if (entry.op === "create" && !isSet(entry.patch[field])) {
+              return;
+            }
+
             const line = document.createElement("div");
             line.className = "dd-review-diff";
 
             const label = document.createElement("span");
             label.className = "dd-review-field";
             label.textContent = fieldLabel(model, field);
+            line.append(label);
 
-            const from = document.createElement("span");
-            from.className = "dd-review-from";
-            from.textContent = displayValue(
-              model,
-              field,
-              (bases.get(keyOf(model, entry.object_id)) || {})[field]
-            );
-
-            const arrow = document.createElement("span");
-            arrow.className = "dd-review-arrow";
-            arrow.textContent = "→";
+            if (entry.op !== "create") {
+              const from = document.createElement("span");
+              from.className = "dd-review-from";
+              from.textContent = displayValue(
+                model,
+                field,
+                (bases.get(keyOf(model, entry.object_id)) || {})[field]
+              );
+              const arrow = document.createElement("span");
+              arrow.className = "dd-review-arrow";
+              arrow.textContent = "→";
+              line.append(from, arrow);
+            }
 
             const to = document.createElement("span");
             to.className = "dd-review-to";
             to.textContent = displayValue(model, field, entry.patch[field]);
+            line.append(to);
 
-            line.append(label, from, arrow, to);
             item.append(line);
           });
 
@@ -1104,7 +1166,7 @@
       reviewButton.disabled = count === 0 && createdLookups.length === 0;
       saveButton.disabled = count === 0;
       saveButton.textContent = count ? plural("commit", count) : commitLabel;
-      discardButton.disabled = count === 0;
+      discardButton.disabled = count === 0 && newRows.size === 0;
       backupButton.hidden = count < (config.backupThreshold || 0);
       /* Copying and deleting are decisions about the row, not edits to it: a
        * copy is made from the database and a deletion ignores the screen, so
@@ -1114,10 +1176,18 @@
       cloneButton.title = count > 0 ? texts.commitFirst || "" : "";
       deleteButton.title = count > 0 ? texts.commitFirst || "" : "";
       /* The per-row delete cannot run with a change set open; dimming it is
-       * the cue, refusing on click is the rule. */
+       * the cue, refusing on click is the rule. A draft row is the exception:
+       * removing it never reaches the server. */
       document
         .getElementById("stamp-grid")
         .classList.toggle("dd-grid-locked", count > 0);
+      /* The counter counts rows, not changes: a stamp added and not yet
+       * written is already one more stamp in the series. Until Tabulator has
+       * built the table the count is not readable, and the page already shows
+       * the one the server rendered. */
+      if (badge && built) {
+        badge.textContent = String(grid.getRows().length);
+      }
       paintRows();
       /* Undo and a restored draft can change the description under the pane. */
       paintPreview(selectedRow());
@@ -1147,6 +1217,20 @@
       if (!operation) {
         return;
       }
+      /* A row that only exists here: adding it and removing it are opposite
+       * steps, so undo reverses whichever one the log holds. */
+      if (operation.kind === "create" || operation.kind === "remove") {
+        const restore =
+          operation.kind === "remove" ? direction < 0 : direction > 0;
+        if (restore) {
+          restoreDraft(operation.row, operation.start);
+        } else {
+          removeDraft(operation.row.id);
+        }
+        pointer += direction;
+        paint();
+        return;
+      }
       writeValue(
         operation.model,
         operation.id,
@@ -1157,6 +1241,101 @@
       pointer += direction;
       paint();
     };
+
+    /* ---------------------------------------------------------------- *
+     * A stamp that does not exist yet.
+     *
+     * Adding one is the daily operation DataDesk was missing, and it is not a
+     * different form: the row lands in this grid, the change set sends a
+     * `create` for it and the review panel shows it before the database is
+     * touched. Its id is made up (`new-<n>`) and turns into the real one when
+     * the commit comes back.
+     * -------------------------------------------------------------- */
+
+    let nextNewRow = 1;
+
+    /** The row a `+ Stamp` starts: the series name as a default, nothing else. */
+    const newRowData = (id) => {
+      const data = { id };
+      Object.keys(fieldOf).forEach((field) => {
+        data[fieldOf[field]] = "";
+      });
+      const seriesName = controlOf("name");
+      data.name = seriesName ? seriesName.value : "";
+      data.colors = [];
+      data.has_image = false;
+      data.image_url = null;
+      data.updated_at = null;
+      return data;
+    };
+
+    /** The two URLs of a row, from the shapes the server sent (S33). */
+    const rowUrls = (id) => {
+      const templates = config.rowUrls || {};
+      const fill = (template) =>
+        String(template || "").replace("%(id)s", String(id));
+      return {
+        dependencies_url: fill(templates.dependencies),
+        delete_url: fill(templates.delete),
+      };
+    };
+
+    /** Registers a row as local: it has no baseline and its fields are all new. */
+    const rememberDraft = (data, start) => {
+      newRows.set(data.id, start);
+      bases.set(keyOf("stamp", data.id), {});
+    };
+
+    const addStamp = () => {
+      const data = newRowData(config.rowIdPrefix + nextNewRow);
+      nextNewRow += 1;
+      rememberDraft(data, data.name);
+      grid.addRow(data, false).then((row) => {
+        row.select();
+        grid.scrollToRow(row, "nearest", false);
+        paint();
+      });
+      /* Adding and removing a row are undo steps of their own, so `Ctrl+Z`
+       * takes the whole row away instead of erasing it field by field. */
+      push({ kind: "create", row: data, start: data.name });
+    };
+
+    const restoreDraft = (data, start) => {
+      rememberDraft(data, start);
+      grid.addRow(data, false).then((row) => {
+        row.select();
+        paint();
+      });
+    };
+
+    /** Takes a draft row off the grid and out of the change set. */
+    const removeDraft = (id) => {
+      const key = keyOf("stamp", id);
+      buffer.delete(key);
+      bases.delete(key);
+      newRows.delete(id);
+      const row = grid.getRow(id);
+      if (row) {
+        row.delete();
+      }
+      paint();
+    };
+
+    /** Removes a draft as a user action: undoable, and never sent anywhere. */
+    const dropDraft = (id) => {
+      const row = grid.getRow(id);
+      const data = row ? { ...row.getData() } : null;
+      const start = newRows.get(id) ?? "";
+      removeDraft(id);
+      if (data) {
+        push({ kind: "remove", row: data, start });
+      }
+      setStatus("", "");
+    };
+
+    if (addStampButton) {
+      addStampButton.addEventListener("click", addStamp);
+    }
 
     /* ---------------------------------------------------------------- *
      * Editing: the grid.
@@ -1254,10 +1433,56 @@
      * Committing and discarding.
      * -------------------------------------------------------------- */
 
+    /** Whether a draft row is still the empty row `+ Stamp` added. */
+    const blankDraft = (id) => {
+      const row = grid.getRow(id);
+      if (!row) {
+        return true;
+      }
+      const data = row.getData();
+      const start = newRows.get(id) ?? "";
+      return Object.keys(fieldOf).every((field) => {
+        const value = data[fieldOf[field]];
+        /* The name arrives with the series name, which is a default and not
+         * something the user typed: an untouched row is still untouched. */
+        return field === "name" ? same(value, start) : !isSet(value);
+      });
+    };
+
+    /** Opening the button and changing your mind is free: blanks go on commit. */
+    const dropBlankDrafts = () => {
+      Array.from(newRows.keys()).forEach((id) => {
+        if (blankDraft(id)) {
+          removeDraft(id);
+        }
+      });
+    };
+
+    /** Turns a draft into a stored row, with the id and URLs the commit gave it. */
+    const adoptDraft = (temporary, written) => {
+      newRows.delete(temporary);
+      const row = grid.getRow(temporary);
+      if (!row) {
+        return;
+      }
+      row.update({
+        id: written.id,
+        updated_at: written.updated_at,
+        ...rowUrls(written.id),
+      });
+      baselines.set(keyOf("stamp", written.id), written.updated_at);
+      const element = row.getElement();
+      element.classList.remove("dd-row-new", "dd-row-dirty", "dd-row-error");
+      element.classList.add("dd-row-saved");
+      window.setTimeout(() => element.classList.remove("dd-row-saved"), 1200);
+    };
+
     const commit = async () => {
       if (refuseUnresolved()) {
         return;
       }
+
+      dropBlankDrafts();
 
       const changes = Array.from(buffer.values()).filter(
         (entry) => Object.keys(entry.patch).length
@@ -1282,6 +1507,11 @@
           config.series.updated_at = written.updated_at;
         }
         forget(key);
+
+        if (change.op === "create" && change.model === "stamp") {
+          adoptDraft(change.object_id, written);
+          return;
+        }
 
         if (change.model === "stamp") {
           const row = grid.getRow(change.object_id);
@@ -1334,19 +1564,35 @@
         return;
       }
 
-      /* Everything landed: the workbench is where the next series is, with the
-       * one just saved in front of the user. */
-      window.location.assign(config.issuesUrl + "?focus=" + config.series.id);
+      /* The page stays: the job was one row of this series, and leaving it is
+       * the opposite of what was asked. Reloading is what turns a draft into a
+       * stored row — its real id, its two URLs and the picture the server can
+       * find for it. */
+      window.location.reload();
     };
 
     const discard = () => {
+      /* Restore what was changed, then drop the rows that only exist here: a
+       * draft has nothing to go back to. */
       Array.from(buffer.keys()).forEach((key) => {
+        const cut = key.indexOf(":");
+        const model = key.slice(0, cut);
+        const id = key.slice(cut + 1);
+        if (newRows.has(id)) {
+          return;
+        }
         const base = bases.get(key) || {};
         Object.keys(base).forEach((field) => {
-          const [model, id] = key.split(":");
           writeValue(model, Number(id), field, base[field]);
         });
       });
+      Array.from(newRows.keys()).forEach((id) => {
+        const row = grid.getRow(id);
+        if (row) {
+          row.delete();
+        }
+      });
+      newRows.clear();
       buffer.clear();
       bases.clear();
       history.length = 0;
@@ -1547,7 +1793,15 @@
       setStatus(texts.stampDeleted, "ok");
     };
 
-    deleteStampRow = openStampDelete;
+    /* A draft row is removed here: it never reached the server, so there is
+     * nothing to preview and nothing to confirm. */
+    deleteStampRow = (row) => {
+      if (newRows.has(row.id)) {
+        dropDraft(row.id);
+        return;
+      }
+      openStampDelete(row);
+    };
     stampClose.addEventListener("click", closeStampDelete);
     stampCancel.addEventListener("click", closeStampDelete);
     stampConfirm.addEventListener("click", confirmStampDelete);
@@ -1781,6 +2035,13 @@
       }
       event.preventDefault();
       event.returnValue = "";
+    });
+
+    /* `paint()` runs before Tabulator has built the table, where there are no
+     * rows to count yet: the stamp counter is painted again here. */
+    grid.on("tableBuilt", () => {
+      built = true;
+      paint();
     });
 
     offerRecovery();

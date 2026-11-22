@@ -180,13 +180,14 @@ mismos nombres de clase).
 ### Quinta tanda (S33, la operación que falta)
 
 No viene de una revisión de estilo: viene de intentar hacer el trabajo. DataDesk
-sabe crear una serie con sus sellos, clonar una serie entera y borrar un sello,
-pero no sabe **añadir un sello a una serie que ya existe**, que es lo que se hace
-cada vez que llega una pieza suelta. El backend ya lo acepta; falta la pantalla.
+sabía crear una serie con sus sellos, clonar una serie entera y borrar un sello,
+pero no **añadir un sello a una serie que ya existe**, que es lo que se hace cada
+vez que llega una pieza suelta. El backend ya lo aceptaba; faltaba la pantalla, y
+está hecha.
 
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
-| S33 | Añadir un sello a una serie existente | S15, S16, S25 | M | sí | ⏳ pendiente |
+| S33 | Añadir un sello a una serie existente | S15, S16, S25 | M | sí | ✅ 2026-11-22 |
 
 ---
 
@@ -3437,25 +3438,56 @@ Ficheros: `datadesk.css`, `workbench.js` (`width` y `moneyFormatter`),
 
 Verificado: **526 datadesk y 1542 backend en verde**; capturas a 1024-1920.
 
-### ⏳ S33 — Añadir un sello a una serie existente (2026-11-22)
+### ✅ S33 — Añadir un sello a una serie existente (2026-11-22)
 
-Intentando hacer el trabajo, no revisando el estilo: DataDesk sabe crear una serie
-con sus sellos, clonar una serie entera y borrar un sello, pero **no sabe añadir un
-sello a una serie que ya existe**, que es la operación de cada pieza suelta.
+La operación que faltaba, encontrada haciendo el trabajo y no revisando el estilo.
+`+ Stamp` en la barra de `mode=edit` añade una **fila borrador** a la rejilla:
+nace con `new-<n>`, vive en el change set como cualquier otro cambio y se escribe
+al commitear. El backend no se tocó: `/apply` ya aceptaba `op: "create"` para un
+sello de una serie existente.
 
-Detalle y aceptación en §4. Lo importante, y lo que hace que sea más barato de lo
-que parece:
+Decisiones tomadas al implementar:
 
-- **El backend ya está**: `/apply` acepta `op: "create"` para un sello de una serie
-  existente, con su test y su fila de auditoría, y devuelve el id. Lo que falta es
-  la pantalla y que el change set del navegador sepa enviar un `create` (hoy manda
-  `update` siempre).
-- **Es una fila borrador en la misma rejilla**, con id `new-<n>` como en `mode=new`,
-  revisable y deshacible antes del commit; el commit la convierte en fila real.
-- **Decisiones que hay que tomar al implementarlo**: tras un commit limpio, ¿se
-  queda en la serie (recomendado, es donde se está trabajando) o vuelve al
-  workbench como hoy? Y los colores del sello nuevo quedan fuera la primera vez,
-  porque el change set todavía no lleva M2M — es el hueco conocido.
+- **El id se reconcilia**. `entryFor()` marca `op: "create"` para una fila de
+  `newRows` y `sync()` la escribe entera (los ocho campos, más `issue`) en vez de
+  diferenciarla contra una `base` que no tiene. Al volver el commit, `adoptDraft()`
+  cambia el id de la fila por el real y le pone `updated_at` y sus dos URLs.
+- **Las dos URLs de una fila nueva las da el servidor como forma**, no el script:
+  `url_template()` reversea la ruta con una sonda y deja `%(id)s` donde va el id
+  (`/datadesk/stamps/%(id)s/delete/`). Componer la ruta en JS habría sido una
+  segunda fuente de verdad; un test sustituye un id real y compara con `reverse()`.
+- **Commit limpio = recarga de la misma serie**, no vuelta al workbench. Recargar
+  es lo que convierte el borrador en fila guardada: id real, URLs, imagen que el
+  servidor sabe encontrar y contador correcto. `?focus=` del workbench sigue
+  existiendo como enlace directo, pero ya no lo escribe nadie.
+- **Un commit parcial sí reconcilia en caliente**: las filas escritas se adoptan y
+  las rechazadas se quedan con su mensaje, así que reintentar no vuelve a crear el
+  sello que ya entró. Probado en el navegador con una fila buena y una rechazada
+  en el mismo lote: la adoptada se puede editar después y su × abre el diálogo
+  real de S25.
+- **Añadir y quitar son pasos de historial distintos** (`create` / `remove`), porque
+  son operaciones inversas: `Ctrl+Z` quita la fila recién añadida y devuelve la que
+  se acaba de quitar con lo que tuviera escrito. Costó un intento: con un solo
+  `create`, deshacer una eliminación volvía a eliminar.
+- **Una fila sin tocar no es un sello**: `dropBlankDrafts()` la quita al commitear.
+  «Sin tocar» significa que el nombre sigue siendo el de la serie (que es un
+  valor por defecto, no contenido) y ningún otro campo tiene nada.
+- **El × de un borrador no pregunta**: no existe en la base, así que se quita con
+  una entrada de historial y no abre el diálogo de S25 (`dd-row-new` mantiene el ×
+  activo aunque la rejilla esté bloqueada por el change set).
+- **No viaja en `localStorage`**: un `create` no tiene `base`; el borrador guarda
+  solo `update`, igual que `mode=new` no guarda nada. El `beforeunload` sí avisa,
+  porque la fila está en el buffer.
+- **La revisión lo lista como nuevo**: sin `before → after`, con un chip `NEW`
+  (texto del servidor) y solo los campos que llevan algo; el contador cuenta la
+  fila como **un** cambio, no como nueve campos.
+
+Verificado en Chromium con la serie de 1976: añadir → revisión → commit parcial
+(una fila creada, otra rechazada por `face_value` en blanco) → editar la creada →
+arreglar la rechazada → commit limpio y recarga con las dos filas guardadas; el
+contador y el × acompañan. 16 tests nuevos (14 de la pantalla en
+`test_workspace_add_stamp.py` y 2 pins de CSS en `test_layout`); 545 datadesk y
+1561 backend en verde.
 
 ### ✅ S29b — La placa de la imagen del sello (2026-11-22)
 
