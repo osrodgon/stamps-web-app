@@ -880,3 +880,16 @@ msgstr "+ Sello"
 #: datadesk/views/workspace.py
 msgid "New"
 msgstr "Nuevo"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No colours."
+msgstr "Sin colores."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Add a colour"
+msgstr "Añadir un color"
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "Remove %(name)s"
+msgstr "Quitar %(name)s"

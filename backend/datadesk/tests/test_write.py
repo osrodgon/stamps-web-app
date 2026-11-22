@@ -367,6 +367,42 @@ class TestApplyChanges:
         assert result.applied == 1
         assert Issue.objects.get(name="Suelta").year.year == 1999
 
+    def test_changes_the_colours_of_a_stamp(self, series, lookups, staff_user) -> None:
+        """The pane sends ids; the writer resolves them and audits both sides."""
+        stamp = series.stamps.order_by("pk").first()
+        assert stamp.colors.count() == 2
+
+        result = apply_changes(
+            [stamp_patch(stamp, colors=[lookups["red"].pk])], staff_user
+        )
+
+        assert result.success
+        stamp.refresh_from_db()
+        assert [color.name for color in stamp.colors.all()] == ["Rojo"]
+        change = DataDeskChange.objects.get(commit_id=result.commit_id)
+        assert sorted(change.before["colors"]) == sorted(
+            [lookups["red"].pk, lookups["blue"].pk]
+        )
+        assert change.after["colors"] == [lookups["red"].pk]
+
+    def test_the_colours_can_be_emptied(self, series, staff_user) -> None:
+        """A stamp with no colours is a gap the dashboard counts, not an error."""
+        stamp = series.stamps.order_by("pk").first()
+
+        result = apply_changes([stamp_patch(stamp, colors=[])], staff_user)
+
+        assert result.success
+        assert stamp.colors.count() == 0
+
+    def test_a_colour_that_does_not_exist_is_refused(self, series, staff_user) -> None:
+        stamp = series.stamps.order_by("pk").first()
+
+        result = apply_changes([stamp_patch(stamp, colors=[999_999])], staff_user)
+
+        assert result.applied == 0
+        assert result.rejected[0]["errors"]["colors"]
+        assert stamp.colors.count() == 2
+
     def test_a_cleared_date_becomes_null(self, series, staff_user) -> None:
         result = apply_changes([issue_patch(series, date="")], staff_user)
 

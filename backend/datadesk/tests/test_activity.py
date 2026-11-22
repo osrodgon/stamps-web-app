@@ -337,6 +337,32 @@ class TestRevertingAnUpdate:
 
         assert Issue.objects.get(pk=series.pk).updated_at > before
 
+    def test_the_colours_of_a_stamp_come_back(self, series, red, writer) -> None:
+        """A colour is a M2M: `update()` cannot write it, so `_restore` sets it."""
+        from colors_api.models import Color
+
+        blue = Color.objects.create(name="Azul")
+        stamp = series.stamps.order_by("pk").first()
+
+        apply_changes(
+            [
+                {
+                    "model": "stamp",
+                    "object_id": stamp.pk,
+                    "op": "update",
+                    "patch": {"colors": [blue.pk]},
+                }
+            ],
+            writer,
+        )
+        assert [color.name for color in stamp.colors.all()] == ["Azul"]
+        commit = DataDeskChange.objects.filter(operation="update").first().commit_id
+
+        revert_commit(commit, writer)
+
+        stamp.refresh_from_db()
+        assert [color.name for color in stamp.colors.all()] == ["Rojo"]
+
     def test_a_lookup_rename_is_undone_the_same_way(self, db, writer) -> None:
         from artists_api.models import Artist
         from datadesk.lookups import rename_lookup

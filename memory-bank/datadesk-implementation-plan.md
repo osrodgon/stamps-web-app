@@ -191,6 +191,36 @@ está hecha.
 
 ---
 
+### Sexta tanda (S34, vista la app en el servidor — no urgente)
+
+Sale de mirar tres pantallas de la instancia de producción con datos reales. No
+rompe nada y se puede trabajar con ello, pero hay un número que **miente** (el
+total del pie del workbench), otro que **no se lee** (el dinero sin separadores, y
+recortado con puntos suspensivos) y la misma cifra escrita de tres formas
+distintas. Es deuda de presentación, no de datos.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S34 | El dinero, las fechas y el total del pie dicen lo que son | S8, S24, S28 | S–M | sí, aunque no es urgente | ⏳ pendiente |
+
+---
+
+### Séptima tanda (S35, los colores del sello)
+
+El hueco que la app arrastraba desde S18: en `mode=edit` la celda de colores era
+de lectura porque el change set no llevaba M2M, y corregir un color necesitaba
+pasar por el admin de Django. El backend ya lo hacía entero: `/apply` acepta
+`colors` en un `update` (`_colors_of` los saca del patch y `_update_row` hace
+`set()`), el snapshot de S6 guarda los ids y el revert los devuelve. Lo que
+faltaba era la puerta, y está en el panel de la imagen de S29: los colores se ven
+al lado de la foto que los tiene.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S35 | Cambiar los colores de un sello desde el panel de la imagen | S18, S19, S29, S33 | M | sí | ✅ 2026-11-22 |
+
+---
+
 ## 4. Detalle de cada paso
 
 ### D0 — Decisiones
@@ -1712,6 +1742,190 @@ reconciliación de ids, revisión, historial), `templates/datadesk/issue_workspa
 (el botón), `views/workspace.py` (el prefijo de id en `mode=edit` y los textos),
 `datadesk.css` (la fila borrador), tests de escritura (el `create` ya está) y de la
 vista, y comprobación en navegador.
+
+---
+
+### S34 — El dinero, las fechas y el total del pie dicen lo que son
+
+**Depende de**: S8 (workbench y endpoint del grid), S24 (la escala y el ancho de
+las columnas), S28 (la piel y los `min` de columna).
+
+**Lo que se vio en producción** (2.540 series, 9.555 sellos), por orden de
+gravedad:
+
+1. **El pie del workbench dice «Showing 1-100 of 2600 rows» y arriba pone
+   «2540 issues».** El 2.600 no existe: Tabulator, en modo remoto, no sabe el
+   total y lo deduce de páginas × tamaño (26 × 100). El endpoint **sí** devuelve
+   `total` (y `page` y `last_page`), así que el número correcto ya viaja; lo que
+   está mal es quién lo pinta.
+2. **Las cantidades no llevan separador de miles y se recortan**: `37500.00 €` en
+   el workbench, y en MNH de las dos rejillas `45000....`, `1875.0...`,
+   `9000.0...`. Recortar un número es peor que recortar un nombre: el número **es**
+   el dato. Y con `max_digits=8, decimal_places=2` hay que dejar sitio a
+   `999.999,99 €`, que son doce caracteres, no los diez del comentario de
+   `min: 104`.
+3. **La fecha del workbench va en ISO** (`1850-01-01`) mientras el resto de la app
+   habla el formato del idioma. Se lee como un código.
+4. **La misma cifra se escribe de tres formas**: `2,540 series` en el panel,
+   `5 / 2,540` en la navegación de la serie y `2540 issues` en el workbench.
+5. **Dos palabras para la misma cosa**: *issues* en el menú y en el workbench,
+   *series* en el panel, en el editor, en las tablas de referencia y en los
+   mensajes de borrado.
+6. **El paginador está en inglés también en castellano**: `First`, `Prev`, `Next`,
+   `Last` los pinta Tabulator, no nuestros catálogos.
+
+**Decisión**: el **servidor formatea y el script pinta**, que es la regla que ya
+gobierna los títulos, los textos del pie y las URLs por fila. No hay `Intl` ni
+plantillas de formato en JS.
+
+- El endpoint del grid añade a cada fila los valores ya escritos de las columnas
+  que se formatean (`date_text`, `mnh_text`, `used_text`), con el mismo mecanismo
+  que ya añade `dependencies_url` y `delete_url` (`_with_urls` → una función
+  `_with_display`). La columna lleva `"format": "money" | "date"` en su definición
+  y un solo formateador genérico lee `row[field + "_text"]`, así que la décima
+  columna que se formatee mañana no toca JavaScript.
+- **Las cantidades llevan el separador de miles del idioma activo**, y la marca
+  decimal con él: `37.500,00 €` en castellano y `37,500.00 €` en inglés. Nunca
+  `37500.00 €`: sin agrupar, en una tabla de miles de filas, el número se cuenta a
+  ojo y se cuenta mal. Se hace con `number_format(value, decimal_pos=2,
+  force_grouping=True)`, que es lo que ya usa el panel, y el mismo criterio para
+  los tres contadores (`2.540` / `2,540`).
+- **Las fechas van en día/mes/año en castellano y en mes/día/año en inglés**, que
+  es lo que pide cada idioma: una serie fechada el 1 de diciembre de 1853 se lee
+  `01/12/1853` con la interfaz en castellano y `12/01/1853` con la interfaz en
+  inglés. Es el `SHORT_DATE_FORMAT` del idioma activo (con ceros a la izquierda),
+  nunca el ISO que se ve hoy. El formato sale del idioma de la petición, así que
+  el conmutador EN/ES de la barra cambia fechas y cantidades a la vez.
+- **El pie lo pinta el servidor**: la respuesta trae el texto de esa página
+  (`Showing 1-100 of 2,540 rows` / `Mostrando 1-100 de 2.540 filas`), construido
+  con `page`, `size`, `total` y el plural del catálogo, y sustituye al contador de
+  Tabulator (`paginationCounter` con una función que devuelve esa cadena). Los
+  cuatro botones: o se traducen con el módulo de idioma de Tabulator, o el pie es
+  nuestro y nos llevamos también los botones; se decide al implementar, pero en
+  castellano no puede quedar `Next`.
+- **El contador de arriba usa el mismo número ya escrito** (`total_text`), para
+  que el panel, la navegación y el workbench no puedan discrepar.
+- **Una sola palabra**: *series* en la interfaz (el panel ya la usa; el menú y el
+  workbench son los que se desvían). Solo texto: ni URLs (`/datadesk/issues/`),
+  ni nombres de plantilla, ni el modelo `Issue`.
+- **Anchos**: los `min` de MNH y Used suben a lo que mide `999.999,99 €` (120 px)
+  en las dos rejillas, y la columna del sello (`width: 90`) pasa a ese mínimo. La
+  fecha mantiene su ancho fijo de 112.
+
+**Aceptación**: el pie y el contador dicen el total real (2.540, no 2.600) y las
+dos cifras coinciden; las cantidades llevan el separador de miles del idioma
+(`37.500,00 €` / `37,500.00 €`) y **no se recortan** con el valor máximo posible;
+las fechas se leen `01/12/1853` en castellano y `12/01/1853` en inglés, nunca en
+ISO; los tres contadores usan el mismo formato; en castellano no queda ninguna
+palabra inglesa en el paginador; el orden de las columnas sigue siendo por el
+valor crudo, no por el texto pintado. Tests: que el texto del pie sale de `total`
+y no de páginas × tamaño; que `999.999,99 €` cabe en el `min` de las columnas de
+dinero; y uno con una serie fechada el 1 de diciembre de 1853 que fija los dos
+textos, `01/12/1853` y `12/01/1853`, para que nadie «unifique» el formato.
+
+**Fuera de alcance**: la prosa de la tira (los `textarea` de descripción y nota
+cortan a dos filas; si se quiere, entra aquí como detalle menor, pero es otro
+asunto), el ancho de los `select` de la barra de filtros, y cualquier cambio de
+datos.
+
+**Tamaño**: S–M · `views/workbench_api.py` (`_with_display`, el pie),
+`views/workbench.py` (los `min` y el contador), `views/workspace.py` (los `min`
+del sello), `service.py` (los valores que se formatean), `workbench.js` y
+`issue_workspace.js` (el formateador genérico y el contador), `base.html` y
+`workbench.html` (*series*), los dos catálogos `.po`/`.mo`, tests y comprobación
+en navegador con la serie de 1853.
+
+---
+
+### S35 — Cambiar los colores de un sello desde el panel de la imagen
+
+**Depende de**: S18 (el patrón de campo escrito con autocompletado y `+ Crear`),
+S19 (la tabla de colores, renombrar y fusionar), S29 (el panel de la imagen) y S33
+(las filas borrador, que también llevan colores).
+
+**Lo que hay hoy**: `Stamp.colors` es una M2M y el change set no la llevaba, así
+que en `mode=edit` la celda solo pinta chips; elegir un color solo se puede al
+crear una serie (`mode=new`, con el editor `list` de Tabulator) o desde las tablas
+de referencia, que renombran y fusionan pero no asignan. Es el hueco que quedó
+anotado al cerrar S22.
+
+**Lo que ya está hecho, y es casi todo**: `/apply` acepta `colors` en un `update`
+(`_colors_of()` los saca del patch antes del serializer y `_update_row()` hace
+`obj.colors.set()`), `snapshot()` guarda la M2M como ids ordenados, y el revert de
+S21 **también los devuelve** (`_restore()` los saca del `before` y hace `set()`).
+Hay creación de colores (`lookups/color/create`) y la paleta con su tono
+(`colour_options()`).
+
+**Decisión**: el editor vive en **el panel de la imagen de S29**, no en la celda.
+Los colores son parte de lo que se ve en la pieza —como el dentado— y el panel ya
+es donde se mira el sello; la celda sigue siendo de lectura (un `list` de Tabulator
+en una fila de 38 px no cabe, y en `mode=new` ya está el editor de la fila rápida).
+
+- **Chips con × y un campo con autocompletado**, el patrón de S18: un `input list`
+  con el `datalist` de colores y un `+ Crear "X"` que aparece cuando el nombre
+  escrito no existe, más un chip por color con su tono y su × para quitarlo. Nada
+  cuelga de la foto: ni hover ni clic sobre la imagen (la regla de S29 se mantiene).
+- **Un solo idioma para el color: el id.** `serialize_stamp()` manda
+  `colors: [id, id]` en vez de `{name, tone}`, y el nombre y el tono salen de la
+  paleta que viaja en la página. Así el valor de la fila, el patch, la revisión, el
+  borrador y el `localStorage` hablan de lo mismo, y `patch.colors` es una lista de
+  ids sin traducción por el medio.
+- **La paleta viaja también en `mode=edit`** (`config.colours`, que hoy solo se
+  manda en `mode=new`). Es una excepción consciente a la regla de S18 —allí se
+  dejaron de mandar artistas e imprentas— y tiene motivo: un editor de varios
+  valores necesita sus opciones de antemano, y resolver un nombre escrito a su id
+  exige la tabla entera. Con los datos reales son **300 colores**, no las «decenas»
+  que suponía este plan: unos 18 KB de JSON en cada página de serie (nginx lo
+  comprime a una cuarta parte). Para un usuario en una LAN es aceptable; si molesta,
+  la salida es un endpoint `lookups/color/all` con ETag que se pida al abrir el
+  editor.
+- **La columna lleva `patch: "colors"` solo en `mode=edit`**, con lo que el color
+  entra en el change set sin maquinaria nueva: `entryFor`, `sync`, revisión,
+  `Ctrl+Z`, `beforeunload` y el borrador ya saben qué hacer con un campo más.
+  Consecuencia buena: **un borrador de S33 también puede llevar colores** antes de
+  commitear (el `create` ya acepta `colors`), que era su «fuera de alcance».
+- **El control es el mismo en los dos modos**: en `edit` escribe la celda y hace
+  `sync` + `push`; en `new` escribe la celda y actualiza el borrador de la fila
+  (el mismo gancho que ya usa la descripción en el panel). En `mode=new` conviven
+  con el editor de la fila rápida y no se pelean: los dos escriben el mismo valor
+  de la fila.
+- **Los nombres para la revisión y el deshacer** salen del mapa de lookups, que se
+  siembra con la paleta al arrancar (`rememberLookup("color", id, nombre)`): así el
+  panel escribe `Rosa · Violeta → Azul`, y un borrador restaurado de `localStorage`
+  sigue mostrando nombres y no ids.
+- **Comparar como conjunto**: `same()` compara `String(valor)`, así que `[1,2]` y
+  `[2,1]` parecerían un cambio; se normaliza la lista de colores antes de comparar.
+- **La celda vacía pinta `—`**: `colorsFormatter` devuelve `""` cuando el sello no
+  tiene colores, y hay 1.648 sellos así en producción, o sea que el hueco se ve.
+- **El panel `New colour` de la barra se queda**: lo decidió el usuario al abrir
+  el paso. El `+ Crear` del panel hace lo mismo con el nombre ya escrito, pero el
+  botón crea un color sin tener que seleccionar un sello, así que las dos puertas
+  conviven y comparten la paleta (`addToPalette`).
+
+**Aceptación**: se selecciona un sello, se le añade un color desde el panel y la
+revisión lo lista como un cambio más (`Colors: Rosa · Violeta → Azul`); quitar un
+chip también; el commit los escribe y la recarga los enseña; `Ctrl+Z` deshace
+añadir y quitar; un color desconocido se crea con `+ Crear "X"` y queda asignado
+en el mismo gesto; un sello sin colores enseña `—` en la celda y «ninguno» en el
+panel sin romper nada; un borrador de S33 admite colores antes de commitear. La
+auditoría guarda los ids en `before` y `after`, y el revert de ese commit devuelve
+los colores anteriores.
+
+**Tests que hoy no existen**: un `update` de colores por `/apply` (hoy solo está
+probado el `create` de una serie con colores), dejarlos en `[]` para quitarlos
+todos, el revert de un cambio de color (la rama `_restore` de S21 está sin cubrir
+para M2M) y el `config` de la página (la paleta en `mode=edit`, `patch` en la
+columna y los ids en la fila).
+
+**Fuera de alcance**: renombrar y fusionar colores (S19), crear un color que no sea
+desde el campo del panel (el `+ Crear` lo cubre), el orden de los chips (van por
+nombre, como en la celda) y el filtro por color del workbench (S30 ya lo tiene).
+
+**Tamaño**: M · `service.py` (ids en la fila), `views/workspace.py` (la paleta y el
+`patch` de la columna), `issue_workspace.js` (el control del panel, los ganchos de
+los dos modos, `same`, la revisión y la siembra de nombres), la plantilla del panel,
+`datadesk.css` (los chips del panel), tests de escritura y de revert, y
+comprobación en navegador con la serie de 1853.
 
 ---
 
@@ -3513,3 +3727,64 @@ comparten la misma placa, la miniatura no pierde píxeles).
 
 Verificado en Chromium con la serie de 1976 (sello de marco blanco): el dentado se
 distingue en el panel y en las miniaturas, incluso a 26 px; 529 datadesk en verde.
+
+### ✅ S35 — Cambiar los colores de un sello desde el panel de la imagen (2026-11-22)
+
+El hueco que la app arrastraba desde S18, cerrado. El backend ya estaba entero
+(`/apply` acepta `colors` en un `update`, el snapshot guarda la M2M como ids y el
+revert la devuelve); lo que cambió es la pantalla y el idioma en que la fila habla.
+
+Decisiones tomadas al implementar:
+
+- **Los ids son el único idioma del color.** `serialize_stamp()` manda
+  `[pk, pk]` ordenados por nombre en vez de `{name, tone}`, y el nombre y el tono
+  salen de la paleta que viaja en la página. Con eso el valor de la celda, el
+  patch, el borrador, la revisión y el deshacer dicen lo mismo, y no hay una
+  traducción id→nombre por el medio que se pueda desincronizar.
+- **La paleta viaja en los dos modos.** Es la excepción consciente a S18: un
+  editor de varios valores necesita sus opciones y un chip necesita el tono de un
+  id. Cuesta **una consulta más** en la pantalla de la serie (la paleta), que no
+  depende del tamaño de la página: el test de S9 pasó de 1 a 2 consultas de color y
+  lo dice. Y cuesta **peso**: con los datos reales son **300 colores**, no las
+  «decenas» que el diseño suponía, o sea unos 18 KB de JSON por pantalla (nginx los
+  comprime). Se acepta para un usuario en una LAN; si molesta, la salida está
+  escrita en §4: un endpoint con ETag y `editorParams.values` como promesa.
+- **El panel es el widget, la celda no.** La columna de colores lleva
+  `patch: "colors"` solo en `mode=edit` —para que el change set sepa el campo— pero
+  `buildColumn` no le pone editor (un `input` convertiría una lista de ids en una
+  caja de texto) y en `mode=new` conserva el `list` de la fila rápida. El campo del
+  panel **no** es un `data-lookup`: `unresolvedLookup()` bloquea el commit con un
+  nombre sin fila, y aquí un nombre sin fila se crea, no se rechaza. Hay un test que
+  lo fija.
+- **El control es el mismo en los dos modos.** En `edit` escribe la celda, hace
+  `sync` y empuja un paso de historial; en `new` escribe la celda y actualiza el
+  borrador de la fila. Verificado en `mode=new` provocando un `render()` (teclear en
+  el nombre de la serie): el color sobrevive, así que el borrador lo tiene de verdad
+  y el `create` lo enviará.
+- **Teclear y commitear no pierde nada**: `flushTypedColour()` mete el color escrito
+  (si existe) antes de commitear o de crear la serie. Sin eso, escribir «Rosa» y
+  pulsar `Shift+Enter` lo habría tirado en silencio.
+- **El tercer arreglo del pase**: la celda de un sello sin colores pintaba vacío y
+  ahora pinta el `—` de S28 — en los datos reales hay 1.648 sellos así.
+- **El panel `New colour` de la barra se queda** (decisión del usuario): crea un
+  color sin seleccionar un sello, y las dos puertas comparten la paleta con
+  `addToPalette()`, que también alimenta la lista del editor de la fila rápida.
+- **Los nombres para la revisión y el deshacer** se siembran del mapa de lookups con
+  la paleta, así que un borrador restaurado de `localStorage` enseña nombres.
+
+Verificado en Chromium con la serie de 1976: añadir un color escribiendo (chip, «1
+change», `Castaño +2` en la celda), quitarlo con su ×, `Ctrl+Z` de las dos cosas
+(una entrada cada una), la revisión con `Castaño · Pizarra → Castaño · Pizarra ·
+Rosa`, commit y recarga con el color guardado, la serie restaurada a su estado
+anterior y deshacer con `Ctrl+Shift+Z`. Además: una serie con un sello sin colores
+(panel con «No colours.» y la celda con `—`), `+ Create "Prueba S35"` creando el
+color y asignándolo en el mismo gesto, y `mode=new` con el `list` de la celda
+todavía abriendo (Tabulator 6 lo pinta con `.tabulator-edit-list-item`, no con
+`.tabulator-list`, que es lo que yo buscaba al principio).
+
+Tests: 13 nuevos — 8 en `test_workspace_colours.py` (ids en la fila, orden por
+nombre, lista vacía, la paleta con nombre y tono, los controles del panel, el campo
+que no es un lookup, el mismo control en `mode=new`), 3 en `test_write.py` (cambiar
+los colores, vaciarlos, un id que no existe), 1 en `test_activity.py` (el revert
+devuelve los colores, la rama `_restore` que no estaba cubierta) y 1 de la columna
+partida en dos en `test_workspace_edit.py`. 558 datadesk y 1574 backend en verde.

@@ -1057,6 +1057,60 @@ kbd {
   display: block;
 }
 
+/* The colours of the selected stamp, edited right here: the chip carries its ×
+ * and the field completes as you type. Everything hangs under the picture, never
+ * on it (no hover, no click on the image). */
+.dd-preview-colours {
+  margin: 0 0 10px;
+}
+
+.dd-preview-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.dd-preview-chips:empty {
+  margin: 0;
+}
+
+/* A chip is a row of things here, not a badge: the name and its ×. */
+.dd-preview-chips .dd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 0;
+}
+
+.dd-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--dd-label);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.dd-chip-x:hover,
+.dd-chip-x:focus-visible {
+  opacity: 1;
+  background: rgba(18, 22, 28, 0.1);
+}
+
+.dd-preview-colour-field {
+  display: block;
+}
+
 .dd-preview-text {
   width: 100%;
   min-height: 90px;

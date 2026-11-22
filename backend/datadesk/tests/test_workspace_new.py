@@ -456,9 +456,12 @@ class TestEditModeIsUnchanged:
         ):
             assert f'id="{element}"' not in content, element
 
-        assert "colours" not in config_of(
-            staff_client.get(f"/datadesk/issues/{series.pk}/")
-        )
+        # The colour palette travels in both modes: the pane edits colours on the
+        # series screen too (S35). What belongs to `mode=new` is the rest.
+        config = config_of(staff_client.get(f"/datadesk/issues/{series.pk}/"))
+
+        assert "fillColumns" not in config
+        assert "createUrl" not in config
 
 
 @pytest.mark.django_db

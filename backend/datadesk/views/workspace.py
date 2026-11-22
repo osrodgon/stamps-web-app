@@ -99,8 +99,9 @@ Only fields a stamp stores: the eight series attributes (country, year, stamp
 type, print type, printer, artist, paper type, perforation) are shown once, in
 the strip above, and never repeated per row. ``patch`` is the model field the
 column writes when it is edited and the key the change is sent with; a column
-without it is read-only (colours are a multi-select, the picture is served from
-the frontend's tree).
+without it is read-only (the picture is served from the frontend's tree). The
+colours earn their ``patch`` only in ``mode=edit``, where the preview pane is
+their widget: the cell keeps painting the chips and never opens an editor.
 """
 
 SERIES_FIELDS: tuple[dict[str, Any], ...] = (
@@ -583,12 +584,19 @@ def workspace_config(
             "unresolved": str(
                 _("%(name)s is not a saved value yet. Use the + button to add it.")
             ),
+            "remove": str(_("Remove %(name)s")),
             "newRows": str(_("New reference rows")),
             "savedRow": str(_("Saved now: reference rows are reused.")),
         },
         "columns": [
             {**column, "title": str(column["title"])} for column in STAMP_COLUMNS
         ],
+        # The pane edits the colours of the stamp it is showing, so the colour
+        # table has to be in the page: a multi-value editor needs its options up
+        # front, and a chip needs the name and the tone of an id. It is the one
+        # table that ships with every series — the strip's lookups are typed
+        # (S18) — because it is small and does not grow with use.
+        "colours": colour_options(),
         "issuesUrl": reverse("datadesk:issues"),
         "fallbackImage": static("datadesk/no_stamp.webp"),
     }
@@ -596,6 +604,16 @@ def workspace_config(
         _("No stamp rows yet.") if mode == "new" else _("No stamps in this issue.")
     )
     config["applyUrl"] = reverse("datadesk:apply")
+
+    if mode == "edit":
+        # The pane edits the colours of the selected stamp, so the change set has
+        # to know the field: a column with a `patch` is a column the buffer can
+        # carry. The cell stays read-only either way — a multi-value editor does
+        # not fit a 38px row, and the pane is where the stamp is looked at.
+        config["columns"] = [
+            {**column, "patch": "colors"} if column["field"] == "colors" else column
+            for column in config["columns"]
+        ]
 
     if mode == "edit" and series is not None:
         config["series"] = {
@@ -677,7 +695,6 @@ def workspace_config(
             prefill=prefill,
             fastRow={"fields": list(FAST_FIELDS), "on": True},
             fillColumns=fill_columns(),
-            colours=colour_options(),
             fieldLabels=field_labels(),
             createUrl=reverse("datadesk:issue_create"),
             newUrl=reverse("datadesk:issue_new"),
@@ -783,7 +800,11 @@ def field_labels() -> dict[str, dict[str, str]]:
             str(column["patch"]): str(column.get("label", column["title"]))
             for column in STAMP_COLUMNS
             if "patch" in column
-        },
+        }
+        # The colours have no `patch` in the shared definition (the grid only
+        # carries them in `mode=edit`, where the pane edits them), but the review
+        # panel names the field too.
+        | {"colors": str(_("Colors"))},
     }
 
 

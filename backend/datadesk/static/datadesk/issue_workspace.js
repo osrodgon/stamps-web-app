@@ -141,6 +141,13 @@
     }
   });
 
+  /* The rows carry colour ids, not names, so the palette the page ships is the
+   * one place a name lives: seeding the map gives the review panel and undo a
+   * name to show, and a restored draft something better than "12, 15". */
+  (config.colours || []).forEach((colour) => {
+    rememberLookup("color", colour.value, colour.label);
+  });
+
   /** The + button only makes sense for a name the page does not know. */
   const paintLookupButton = (control) => {
     const field = control.dataset.lookup;
@@ -268,15 +275,24 @@
     });
   });
 
-  /** The colour behind a cell value: `mode=edit` sends objects, `new` ids. */
+  /** The colour behind a cell value: the rows carry ids, the palette the names.
+   *
+   * A colour created from this page is pushed into `config.colours`, so an id
+   * painted a second later already has its name and its tone. */
   const colourOf = (value) => {
-    if (value && typeof value === "object") {
-      return value;
-    }
     const known = (config.colours || []).find(
       (colour) => String(colour.value) === String(value)
     );
     return known ? { name: known.label, tone: known.tone } : null;
+  };
+
+  /** The muted dash an empty cell gets. Tabulator writes `&nbsp;`, so CSS
+   * `:empty` never matches and the mark has to be painted. */
+  const emptyDash = () => {
+    const dash = document.createElement("span");
+    dash.className = "dd-empty";
+    dash.textContent = "\u2014";
+    return dash;
   };
 
   /** Renders the colours as tinted chips.
@@ -289,7 +305,9 @@
   const colorsFormatter = (cell) => {
     const colors = (cell.getValue() || []).map(colourOf).filter(Boolean);
     if (!colors.length) {
-      return "";
+      /* A stamp with no colours is a gap the dashboard counts, so the cell says
+       * it instead of being blank. */
+      return emptyDash();
     }
     const box = document.createElement("span");
     box.className = "dd-chips";
@@ -327,10 +345,7 @@
   const emptyFormatter = (cell) => {
     const value = cell.getValue();
     if (value === null || value === undefined || value === "") {
-      const dash = document.createElement("span");
-      dash.className = "dd-empty";
-      dash.textContent = "\u2014";
-      return dash;
+      return emptyDash();
     }
     return document.createTextNode(String(value));
   };
@@ -369,15 +384,18 @@
     if (definition.mono) {
       column.cssClass = "dd-mono";
     }
-    if (definition.patch) {
+    if (definition.patch && definition.field !== "colors") {
+      /* The colours carry a `patch` in `mode=edit` so the change set knows the
+       * field, but their widget is the pane: an input editor on the cell would
+       * turn a list of ids into a text box. */
       column.editor = definition.editor === "number" ? "number" : "input";
     }
     if (definition.field === "colors") {
       column.formatter = colorsFormatter;
-      /* Only `mode=new` offers the editor: there the colours are the row's and
-       * travel as ids. In `mode=edit` the change set still carries no M2M, so
-       * the cell stays read-only; the lookup screen of S19 owns that. */
-      if ((config.colours || []).length) {
+      /* Only `mode=new` edits colours in the cell (the fast row lives there). In
+       * `mode=edit` the pane owns the widget: a multi-select does not fit a 38px
+       * row, and the stamp is looked at on the right. */
+      if (config.mode === "new" && (config.colours || []).length) {
         column.editor = "list";
         column.editorParams = {
           multiselect: true,
@@ -527,10 +545,215 @@
     }
   };
 
+  /* --------------------------------------------------------------------- *
+   * The colours of the selected stamp, edited in the pane.
+   *
+   * The cell shows them; the pane changes them. A multi-select does not fit a
+   * 38px row, and the stamp is looked at here: the chips carry their × and the
+   * field completes as you type (S18), so a colour nobody has yet is created in
+   * the same gesture. Nothing hangs off the picture — every control sits under
+   * it.
+   * ------------------------------------------------------------------- */
+
+  const paneColours = document.getElementById("preview-colours");
+  const paneColoursEmpty = document.getElementById("preview-colours-empty");
+  const colourPicker = document.getElementById("colour-picker");
+  const colourPickerCreate = document.getElementById("colour-picker-create");
+
+  /** What each mode does when the pane rewrites the colours of a row. */
+  const colourHooks = { changed: () => {} };
+
+  /** The ids a row holds, whatever the server or an editor left there. */
+  const rowColourIds = (row) =>
+    (row.getData().colors || []).map((value) =>
+      value && typeof value === "object" ? value.value : value
+    );
+
+  /** Colour lists compare as sets: the same two colours are not a change. */
+  const sameIds = (left, right) =>
+    left.map(String).sort().join(",") === right.map(String).sort().join(",");
+
+  /** The id of a colour named like this, or "" when nobody has it. */
+  const colourIdOf = (name) => {
+    const wanted = name.trim().toLowerCase();
+    const known = (config.colours || []).find(
+      (colour) => String(colour.label).trim().toLowerCase() === wanted
+    );
+    return known ? known.value : "";
+  };
+
+  /** Paints the chips of a row, each with the × that removes it. */
+  const paintColours = (row) => {
+    paneColours.textContent = "";
+    const ids = row ? rowColourIds(row) : [];
+    paneColoursEmpty.hidden = ids.length > 0;
+    if (!row) {
+      return;
+    }
+    ids.forEach((id) => {
+      const colour = colourOf(id);
+      if (!colour) {
+        return;
+      }
+      const chip = document.createElement("span");
+      chip.className = `dd-chip dd-chip-${colour.tone}`;
+      chip.append(document.createTextNode(colour.name));
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "dd-chip-x";
+      remove.textContent = "×";
+      remove.title = (lookupTexts.remove || "").replace(
+        "%(name)s",
+        colour.name
+      );
+      remove.setAttribute("aria-label", remove.title);
+      remove.addEventListener("click", () => {
+        changeColours(row, (current) =>
+          current.filter((item) => String(item) !== String(id))
+        );
+      });
+      chip.append(remove);
+      paneColours.append(chip);
+    });
+  };
+
+  /** Writes the colour list of a row and tells the mode that owns it. */
+  const changeColours = (row, transform) => {
+    const previous = rowColourIds(row);
+    const next = transform([...previous]);
+    if (sameIds(previous, next)) {
+      return;
+    }
+    writeCell(row.getCell("colors"), next);
+    paintColours(row);
+    colourHooks.changed(row, previous, next);
+  };
+
+  /** The + only makes sense for a name nobody has yet. */
+  const paintCreateButton = () => {
+    const name = colourPicker.value.trim();
+    const known = name !== "" && colourIdOf(name) !== "";
+    colourPickerCreate.hidden = name === "" || known;
+    colourPickerCreate.textContent = (lookupTexts.create || "+ %(name)s").replace(
+      "%(name)s",
+      name
+    );
+  };
+
+  /** Adds the colour written in the field to the selected stamp. */
+  const addTypedColour = (row) => {
+    const name = colourPicker.value.trim();
+    if (!row || name === "") {
+      return;
+    }
+    const id = colourIdOf(name);
+    if (id === "") {
+      paintCreateButton();
+      return;
+    }
+    colourPicker.value = "";
+    colourPickerCreate.hidden = true;
+    changeColours(row, (current) =>
+      current.some((item) => String(item) === String(id))
+        ? current
+        : [...current, id]
+    );
+  };
+
+  /** A colour written in the field but not confirmed yet: the commit takes it.
+   *
+   * Pressing Enter adds it, but typing a name and going straight to the commit
+   * is the same intention, and losing it would be a silent surprise. */
+  const flushTypedColour = () => {
+    const row = selectedRow();
+    if (!row || colourPicker.value.trim() === "") {
+      return;
+    }
+    if (colourIdOf(colourPicker.value) !== "") {
+      addTypedColour(row);
+    }
+  };
+
+  /** A colour created here joins the palette the chips and the cell read. */
+  const addToPalette = (colour) => {
+    if (
+      !colour ||
+      (config.colours || []).some(
+        (known) => String(known.value) === String(colour.id)
+      )
+    ) {
+      return;
+    }
+    config.colours.push({
+      value: colour.id,
+      label: colour.name,
+      tone: colour.tone || "neutral",
+    });
+    rememberLookup("color", colour.id, colour.name);
+    /* `mode=new` edits colours in the cell too: the list the editor opens would
+     * not know the row that was just created. */
+    const column = grid.getColumn("colors");
+    const params = column && column.getDefinition().editorParams;
+    if (params && params.values) {
+      params.values.push({ label: colour.name, value: colour.id });
+    }
+  };
+
+  colourPicker.addEventListener("focus", () => {
+    paintCreateButton();
+    searchLookup("color", colourPicker.value.trim());
+  });
+
+  colourPicker.addEventListener("input", () => {
+    paintCreateButton();
+    requestLookupSearch("color", colourPicker.value.trim());
+  });
+
+  /* Picking a colour from the list is the whole gesture: it goes on the stamp. */
+  colourPicker.addEventListener("change", () => {
+    if (colourPicker.value.trim() !== "" && colourIdOf(colourPicker.value) !== "") {
+      addTypedColour(selectedRow());
+      return;
+    }
+    paintCreateButton();
+  });
+
+  colourPicker.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addTypedColour(selectedRow());
+    }
+  });
+
+  colourPickerCreate.addEventListener("click", async () => {
+    const row = selectedRow();
+    const name = colourPicker.value.trim();
+    if (!row || name === "") {
+      return;
+    }
+    colourPickerCreate.disabled = true;
+    const created = await createLookupRow("color", name);
+    colourPickerCreate.disabled = false;
+    if (!created) {
+      return;
+    }
+    addToPalette(created);
+    colourPicker.value = "";
+    colourPickerCreate.hidden = true;
+    lookupHooks.notice(lookupTexts.created, "ok");
+    changeColours(row, (current) =>
+      current.some((item) => String(item) === String(created.id))
+        ? current
+        : [...current, created.id]
+    );
+  });
+
   const paintPreview = (row) => {
     previewBody.hidden = !row;
     previewEmpty.hidden = Boolean(row);
     if (!row) {
+      paintColours(null);
       return;
     }
     const data = row.getData();
@@ -539,6 +762,7 @@
     previewMissing.hidden = Boolean(data.image_url);
     previewIdentity.textContent =
       [data.edifil, data.name].filter(Boolean).join(" · ") || String(data.id);
+    paintColours(row);
     /* Assigning `.value` moves the caret to the end even when the text is the
      * same, which would fight the user in the middle of a sentence. */
     const description = descriptionValue(row);
@@ -772,10 +996,16 @@
       }
     };
 
-    /** Empty and null compare equal: a cleared number and an empty one are one. */
+    /** Empty and null compare equal: a cleared number and an empty one are one.
+     * A list of colours compares as a set: the same two colours in another order
+     * are not a change. */
     const same = (left, right) => {
-      const normalize = (value) =>
-        value === null || value === undefined ? "" : String(value);
+      const normalize = (value) => {
+        if (Array.isArray(value)) {
+          return value.map(String).sort().join(",");
+        }
+        return value === null || value === undefined ? "" : String(value);
+      };
       return normalize(left) === normalize(right);
     };
 
@@ -815,6 +1045,15 @@
     const displayValue = (model, field, value) => {
       if (value === null || value === undefined || value === "") {
         return "—";
+      }
+      /* A list of colours reads by its names: "12, 15" says nothing. */
+      if (Array.isArray(value)) {
+        return (
+          value
+            .map((id) => lookupLabelOf("color", id))
+            .filter(Boolean)
+            .join(" · ") || "—"
+        );
       }
       if (model !== "issue") {
         return String(value);
@@ -1429,6 +1668,16 @@
       });
     };
 
+    /* The colours are typed in the pane too: the value lands in the cell (the
+     * pane wrote it already) and from here on it is one more field of the change
+     * set, undoable like any other. */
+    colourHooks.changed = (row, previous, next) => {
+      const id = row.getData().id;
+      remember("stamp", id, "colors", previous);
+      sync("stamp", id);
+      push({ model: "stamp", id, field: "colors", from: previous, to: next });
+    };
+
     /* ---------------------------------------------------------------- *
      * Committing and discarding.
      * -------------------------------------------------------------- */
@@ -1611,6 +1860,7 @@
       if (active && active !== document.body) {
         active.blur();
       }
+      flushTypedColour();
       await Promise.resolve();
       commit();
     };
@@ -2718,16 +2968,7 @@
       /* The chip takes its tone from the palette entry, so the new colour has
        * to exist both in the page configuration and in the list the open
        * editor holds. */
-      config.colours.push({
-        value: row.id,
-        label: row.name,
-        tone: row.tone || "neutral",
-      });
-      const column = grid.getColumn("colors");
-      const params = column && column.getDefinition().editorParams;
-      if (params && params.values) {
-        params.values.push({ label: row.name, value: row.id });
-      }
+      addToPalette(row);
       closeColour();
       setStatus(lookupTexts.created, "ok");
     });
@@ -2803,6 +3044,7 @@
       if (active && active !== document.body) {
         active.blur();
       }
+      flushTypedColour();
       await Promise.resolve();
       create();
     };
@@ -2997,6 +3239,17 @@
         return;
       }
       record(row.getData().id, "description", previewStart, value);
+    };
+
+    /* The colours are typed in the pane here too: the row is a draft, so the
+     * list is kept in it — the create payload sends the ids. */
+    colourHooks.changed = (row, previous, next) => {
+      const draft = drafts.find((item) => item.id === row.getData().id);
+      if (!draft) {
+        return;
+      }
+      draft.colors = next;
+      draft.touched = touched(draft);
     };
   };
 

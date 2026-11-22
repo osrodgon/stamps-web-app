@@ -509,6 +509,51 @@
       commit (one created, one refused) → edit the created one → fix and commit
       the refused one → reload with both rows stored.
 
+- [ ] **S34 — Money, dates and the row total say what they are** (planned
+      2026-11-22 from three screenshots of the production instance; **not urgent**,
+      the app is usable as it is). Five findings, by severity: the workbench footer
+      says "Showing 1-100 of 2600 rows" while the counter above says 2540 — the
+      2.600 is Tabulator deriving it from pages × size (26 × 100) because remote
+      pagination does not know the total, which the endpoint **does** return; money
+      carries no separators and is clipped ("37500.00 €", "45000....", "1875.0..." in
+      both grids, `max_digits=8` needs room for "999.999,99 €"); the workbench date
+      is ISO (`1850-01-01`); the same number is written three ways (`2,540 series`,
+      `5 / 2,540`, `2540 issues`); and the UI calls the entity *issues* in the menu
+      and the workbench while everything else calls it *series*. The pager's
+      `First/Prev/Next/Last` are Tabulator's and stay English in Spanish. Decision:
+      **the server formats, the script paints** — the grid response adds
+      `date_text`/`mnh_text`/`used_text` per row (the `_with_urls` trick) and the
+      footer text for that page, so no `Intl` and no format templates in JS. The two
+      conventions are explicit: **thousands separator and decimal mark of the active
+      language** (`37.500,00 €` in Spanish, `37,500.00 €` in English — never
+      ungrouped), and **dates as day/month/year in Spanish and month/day/year in
+      English** (1 December 1853 reads `01/12/1853` in Spanish, `12/01/1853` in
+      English), from the language's `SHORT_DATE_FORMAT`, never ISO. Detail,
+      acceptance and files in plan §4 S34.
+- [x] **S35 — Change a stamp's colours from the preview pane** (2026-11-22): the
+      gap the app had carried since S18, closed. The writer already did it; what
+      changed is the screen and the language the row speaks. `serialize_stamp()`
+      sends **ids** (`[pk, pk]`, ordered by name) instead of `{name, tone}`, and the
+      name and tone come from the palette the page carries, so the cell, the patch,
+      the review, undo and the draft all say the same thing. The **pane** owns the
+      widget — chips with their tone and an ×, plus a typed field with a datalist and
+      `+ Create "X"` (the S18 pattern) — in both modes: in `edit` it writes the cell
+      and pushes a history step, in `new` it writes the cell and updates the row's
+      draft. The column gets `patch: "colors"` only in `mode=edit` (the change set
+      needs the field) and **never** an editor; the pane field is deliberately not a
+      `data-lookup`, because `unresolvedLookup()` blocks the commit on a typed name
+      and here an unknown name is created, not refused. The palette ships in both
+      modes — one more query, independent of page size, and **300 colours** on the
+      real data (~18 KB of JSON per series page) rather than the tens the design
+      assumed; accepted for one user on a LAN, with a cached endpoint as the escape
+      hatch — and `same()` compares colour lists as sets. `flushTypedColour()` takes
+      a colour typed and not confirmed before a commit, so typing and pressing
+      `Shift+Enter` does not lose it. An empty cell now paints `—` (1.648 stamps have
+      no colour on the real data). The toolbar's `New colour` panel stays, by
+      decision, sharing the palette through `addToPalette()`. 13 tests (8 page, 3
+      writer, 1 revert, 1 split in two); 558 datadesk / 1574 backend; Chromium: add,
+      remove, undo both, review with names, commit and reload, a colourless stamp,
+      `+ Create` end to end and `mode=new` with both doors live.
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
@@ -545,11 +590,6 @@
 ### Known gaps
 
 - [ ] JWT validation runs on first page load only; API-level checks TBD
-- [ ] DataDesk: a stamp's colours cannot be edited in `mode=edit` — the colour
-      cell is read-only there because the change set carries no M2M. Colours are
-      chosen when creating a series (S16) and created/merged from the lookups
-      screen (S19); correcting one on an existing stamp still needs admin. This
-      is the one gap left after S22 closed the plan.
 - [ ] DataDesk: `?rows=N` on `mode=new` does nothing — `NewRowSettings()` is built
       with no arguments in `views/workspace.py`, so the control always shows 4.
       Found while checking S29; S11's acceptance said `rows=1–100` works, so either

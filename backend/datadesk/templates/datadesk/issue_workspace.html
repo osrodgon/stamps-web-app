@@ -192,6 +192,30 @@
               {% translate "This stamp has no picture." %}
             </p>
             <p class="dd-preview-identity" id="preview-identity"></p>
+
+            {% comment %}
+              The colours are edited here, not in the cell: a multi-select does
+              not fit a 38px row, and the pane is where the stamp is looked at.
+              The chips carry their × and the field completes as you type (S18);
+              a name nobody has creates the colour in the same gesture.
+            {% endcomment %}
+            <div class="dd-preview-colours">
+              <span class="dd-field-key">{% translate "Colors" %}</span>
+              <span class="dd-chips dd-preview-chips" id="preview-colours"></span>
+              <span class="dd-hint" id="preview-colours-empty">
+                {% translate "No colours." %}
+              </span>
+              <span class="dd-lookup dd-preview-colour-field">
+                <input class="dd-input" id="colour-picker" type="text"
+                       autocomplete="off" spellcheck="false" list="lookup-color"
+                       placeholder="{% translate 'Add a colour' %}"
+                       aria-label="{% translate 'Add a colour' %}">
+                <datalist id="lookup-color"></datalist>
+                <button type="button" class="dd-lookup-create"
+                        id="colour-picker-create" hidden></button>
+              </span>
+            </div>
+
             <label class="dd-preview-field">
               <span class="dd-field-key">{% translate "Stamp description" %}</span>
               <textarea class="dd-input dd-preview-text" id="preview-description"
