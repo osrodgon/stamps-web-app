@@ -26,6 +26,14 @@
   --dd-line-strong: #d3d9e1;
   --dd-bg: #f5f6f8;
   --dd-surface: #fff;
+  /* The plate behind a stamp picture. The files are RGBA with the piece cut
+   * out, so this is the background of every stamp — and it cannot be white:
+   * most stamps have a white frame, and against white the perforation, which
+   * is the edge of the piece, disappears. */
+  --dd-plate: #cfd6df;
+  /* The edge of the plate is darker than the plate: a lighter hairline reads as
+   * a glow, and these pictures already have a white margin of their own. */
+  --dd-plate-edge: #b6c0cc;
   --dd-navy: #232f3e;
   --dd-navy-hover: #1a2531;
 
@@ -1021,8 +1029,9 @@ kbd {
   width: 100%;
   max-height: 240px;
   object-fit: contain;
+  border: 1px solid var(--dd-plate-edge);
   border-radius: 3px;
-  background: #fff;
+  background: var(--dd-plate);
 }
 
 /* The same treatment the 26px thumbnail gets: a stamp without a picture shows
@@ -1098,6 +1107,10 @@ kbd {
   margin: 0 auto;
   border-radius: 2px;
   object-fit: contain;
+  background: var(--dd-plate);
+  /* The hairline is a shadow and not a border: at 26px, two border pixels are
+   * two pixels of stamp. */
+  box-shadow: 0 0 0 1px var(--dd-plate-edge);
 }
 
 /* The placeholder is a picture, so it is dimmed instead of outlined. */
