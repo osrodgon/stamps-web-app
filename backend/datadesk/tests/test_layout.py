@@ -260,3 +260,36 @@ class TestTheS28Look:
 
         assert "--dd-ease: 120ms ease" in stylesheet
         assert "prefers-reduced-motion: reduce" in stylesheet
+
+
+class TestThePicturePlate:
+    """A stamp is shown on a plate, and the plate cannot be white.
+
+    The files are RGBA with the piece cut out, so the screen paints the
+    background. Most stamps have a white frame: against white the perforation
+    — the edge of the piece — disappears and the stamp reads as a square.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_the_plate_is_a_token_and_not_white(self) -> None:
+        plate = re.search(r"--dd-plate:\s*(#[0-9a-fA-F]{6});", self.stylesheet())
+
+        assert plate is not None
+        assert plate.group(1).lower() != "#ffffff"
+
+    def test_both_sizes_use_the_same_plate(self) -> None:
+        assert "background: var(--dd-plate)" in self.rule(".dd-preview-image")
+        assert "background: var(--dd-plate)" in self.rule(".dd-thumb")
+
+    def test_the_thumbnail_keeps_its_pixels(self) -> None:
+        """A border would cost the 26px picture two of its pixels."""
+        rule = self.rule(".dd-thumb")
+
+        assert re.search(r"\n\s*border:", rule) is None
+        assert "box-shadow: 0 0 0 1px var(--dd-plate-edge)" in rule

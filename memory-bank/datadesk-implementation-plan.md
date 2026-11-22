@@ -154,12 +154,14 @@ faltan tipografía, estados y elevación.
 
 ### Cuarta tanda (S29–S32, tras la primera revisión con datos reales)
 
-Cuatro cosas que se ven usando la app a diario. No son de la misma naturaleza que
-S28: aquella es piel, estas tocan datos, consultas y disco.
+Cuatro cosas que se ven usando la app a diario, más un arreglo pequeño que salió
+del panel de S29 (la placa de la imagen). No son de la misma naturaleza que S28:
+aquella es piel, estas tocan datos, consultas y disco.
 
 | ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
 |---|---|---|---|---|---|
 | S29 | Ver la imagen y la descripción de un sello | — | M | sí | ✅ 2026-11-21 |
+| S29b | La placa de la imagen del sello, que no sea blanca | S29 | XS | sí | ✅ 2026-11-22 |
 | S30 | «Ver series afectadas» desde una tabla de referencia | S8, S19, S27 | S (3) / M (8) | sí | ✅ 2026-11-21 |
 | S31 | Pantalla de backups: listar, lanzar, descargar | S15 | S | sí | ⏳ pendiente |
 | S32 | Restore con mantenimiento, dump previo y secuencias | S31 | M | sí, pero es el botón rojo | ⏳ pendiente |
@@ -172,6 +174,19 @@ Relación con S28: sin dependencia dura, pero S28 y S29 tocan el mismo
 `datadesk.css` y la misma pantalla. Si se hacen las dos, **S28 primero** para no
 repintar dos veces; S29 puede ir delante sin romper nada (S28 es solo CSS sobre los
 mismos nombres de clase).
+
+---
+
+### Quinta tanda (S33, la operación que falta)
+
+No viene de una revisión de estilo: viene de intentar hacer el trabajo. DataDesk
+sabe crear una serie con sus sellos, clonar una serie entera y borrar un sello,
+pero no sabe **añadir un sello a una serie que ya existe**, que es lo que se hace
+cada vez que llega una pieza suelta. El backend ya lo acepta; falta la pantalla.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S33 | Añadir un sello a una serie existente | S15, S16, S25 | M | sí | ⏳ pendiente |
 
 ---
 
@@ -1402,6 +1417,15 @@ una pulsación no es un paso de undo, y el undo ya no se reengancha a sí mismo.
 La celda `getOldValue()` es la del arranque de la página, no la que se edita, así
 que la base se toma de `previewStart` (valor al enfocar).
 
+**La placa de la imagen.** Los ficheros del árbol son **WebP RGBA con el sello
+recortado** (alpha 0 en las esquinas), así que el fondo lo pone la pantalla. Y la
+mayoría de los sellos llevan marco blanco o casi blanco: **sobre blanco el dentado
+desaparece** y el sello se lee como un cuadrado. La imagen va sobre una placa gris
+neutra con un hairline, nunca sobre `#fff`; hoy el panel pinta `background: #fff`
+en `.dd-preview-image`, que es justo el caso malo. La miniatura de 26 px tiene el
+mismo problema en menor escala, porque se apoya en la fila blanca. (Las mismas
+imágenes las enseña la app pública de Flet, así que la regla vale también allí.)
+
 **Diseño**: panel a la derecha del grid (debajo en pantallas estrechas) con la
 imagen a tamaño real, nombre y código, y la descripción debajo. Se alimenta de la
 fila seleccionada sin petición nueva: la imagen ya se sirve por
@@ -1412,7 +1436,8 @@ revisión. Etiqueta **«Stamp description»**, porque «Description» ya es la d
 serie en la franja. Las etiquetas vienen del config del servidor (test de S22).
 
 **Aceptación**: la imagen se distingue sin hover ni clic sobre ella, y `j`/`k` la
-cambian sin tocar el ratón; la serie de 57 sellos se recorre sin scroll horizontal
+cambian sin tocar el ratón; se apoya en una placa que no es blanca y el dentado se
+distingue del fondo; la serie de 57 sellos se recorre sin scroll horizontal
 a 1366 px y el alto de fila no cambia con el panel cerrado; la descripción se lee y
 se guarda, aparece en la revisión con su `before → after` y se deshace con `Ctrl+Z`
 como el resto; un sello sin descripción no finge tenerla; catálogos limpios
@@ -1628,6 +1653,67 @@ tests, README (el modo mantenimiento y el aviso de las secuencias).
 
 ---
 
+### S33 — Añadir un sello a una serie existente
+
+**Depende de**: S15 (change set y commit por lotes), S16 (filas de `mode=new`),
+S25 (borrar un sello, que es el mismo sitio de la barra).
+
+**Lo que hay hoy**: `mode=new` crea la serie **con** sus filas; S17 clona una serie
+entera; S25 borra un sello. En `mode=edit` la barra del grid no tiene ninguna
+herramienta, y el change set del navegador envía siempre `op: "update"`
+(`entryFor`). El backend, en cambio, **ya sabe**: `apply_changes()` acepta
+`op: "create"` para un sello de una serie existente (`_insert_row`, con su test
+`test_creates_a_stamp_of_an_existing_series`), escribe su fila de auditoría y
+devuelve el id en `data.rows`. Lo que falta es la pantalla.
+
+**Decisión**: la creación de un sello es una **fila borrador** dentro de la misma
+rejilla, no un formulario aparte. Se añade con un botón `+ Stamp` en la barra de
+`mode=edit`, entra en el change set con `op: "create"` y se escribe al commitear,
+como cualquier otro cambio: la revisión la enseñanza antes de tocar la base y el
+rechazo la devuelve con su mensaje.
+
+- **Id temporal `new-<n>`**, el mismo prefijo que ya usa `mode=new`
+  (`config.rowIdPrefix`); los ids reales son numéricos, así que no colisionan. Al
+  commitear, la respuesta trae `id` y `updated_at`, y la fila pasa a ser real.
+- **Qué se pide**: solo lo que el sello guarda. La serie ya está abierta y sus ocho
+  atributos no se preguntan. `name` arranca con el de la serie (el mismo criterio
+  que las filas de `mode=new`, que lo siguen hasta que se editan) y `face_value`
+  vacío.
+- **Una fila vacía no se envía**: si no se ha tocado nada, se descarta al
+  commitear, como en `mode=new`. Tampoco puede quedar una fila a medias sin
+  explicación: si falta un campo obligatorio, el servidor la rechaza y la fila se
+  queda con el mensaje.
+- **La revisión la lista como nueva**, sin `before → after`, y suma al contador
+  de cambios. **`Ctrl+Z` la quita** (añadir es una entrada del historial) y
+  borrarla antes de commitear no toca el servidor.
+- **No se persiste en `localStorage`.** Un `create` no tiene `base`, así que el
+  borrador solo guarda updates (igual que `mode=new`, que no guarda nada); el
+  guard de `beforeunload` ya avisa cuando hay algo pendiente.
+- **Tras un commit limpio, la página se queda en la serie** en vez de volver al
+  workbench: el commit de hoy redirige con `?focus=<id>` porque el trabajo era
+  editar una serie concreta, pero aquí el trabajo es añadir una fila **a esta**
+  serie, y salir de ella es lo contrario de lo que se pidió.
+
+**Aceptación**: se añade un sello, aparece como fila, la revisión lo lista como
+nuevo, el commit lo escribe y la página no se va; la fila es entonces una fila
+normal (editable, borrable con S25). La auditoría tiene su `create` y S21 lo
+revierte como el resto (el sello desaparece). Una fila sin tocar se descarta sin
+error. El contador de sellos de la barra cuadra. Recargar con una fila nueva
+pendiente pregunta antes de salir. El change set sigue sin llevar M2M.
+
+**Fuera de alcance**: los colores del sello nuevo (es el hueco conocido: el change
+set no lleva M2M; se ponen desde la tabla de colores o al crear la serie), duplicar
+filas o pegar TSV en `mode=edit` (eso es de `mode=new`), y añadir sellos desde el
+workbench sin abrir la serie.
+
+**Tamaño**: M · `issue_workspace.js` (op en el change set, fila borrador,
+reconciliación de ids, revisión, historial), `templates/datadesk/issue_workspace.html`
+(el botón), `views/workspace.py` (el prefijo de id en `mode=edit` y los textos),
+`datadesk.css` (la fila borrador), tests de escritura (el `create` ya está) y de la
+vista, y comprobación en navegador.
+
+---
+
 ## 5. Riesgos y cómo se cortan
 
 | Riesgo | Se detecta en | Plan B |
@@ -1661,10 +1747,10 @@ Bitácora de lo construido. Cada paso terminado añade su bloque aquí, con fech
 ficheros y las decisiones que se tomaron **al implementar** (las que no estaban
 en el diseño). Es lo primero que hay que leer al retomar el trabajo.
 
-Rama de trabajo: `development` (sin rama propia todavía). Nada de esto está
-commiteado: vive en el working tree. El plan y el diseño están dentro del repo
-(`memory-bank/`), no en `~/.opencode`, para que un rebuild del contenedor no los
-borre.
+Cada paso ha llegado a `development` por su propia rama y PR; las entradas de esta
+bitácora cuentan lo que se hizo, no lo que falta — lo que falta está en §3 con su
+`⏳`. El plan y el diseño viven dentro del repo (`memory-bank/`), no en
+`~/.opencode`, para que un rebuild del contenedor no los borre.
 
 ### ✅ S1 — Esqueleto de app, flag y montaje (2026-11-18)
 
@@ -3117,33 +3203,6 @@ descartados con argumentos, no por gusto —el primero no reparte los anchos de 
 tabla y el segundo es Material de 2014—, y el pulido son cinco cambios de CSS sin
 dependencias. Detalle y aceptación en §4, S28.
 
-### ⏳ Cuarta tanda (S29–S32) — planificada, no empezada
-
-Cuatro cosas encontradas usando la app con datos reales. Detalle y aceptación en
-§4; nada implementado todavía.
-
-- **S29** — la miniatura de 26 px no deja ver el sello y la descripción del sello
-  no se muestra en ningún sitio. Se resuelve con un panel atado a la fila
-  seleccionada (sin hover ni clic sobre la imagen) que enseña la foto a tamaño real
-  y la descripción, editable y dentro del change set. El selector S/M/L queda como
-  preferencia posterior.
-- **S30** — «Ver series afectadas» desde un lookup: gratis para año, país y tipo de
-  sello (los filtros ya existen), cuatro filtros nuevos para imprenta, artista,
-  papel y tipo de impresión, y color con `stamps__colors` + `distinct`. El trabajo
-  real es el chip de filtro activo, no la consulta; y el enlace de color habla de
-  series, no de sellos.
-- **S31** — pantalla de backups: listar, lanzar y descargar. El backup ya existe
-  (S15); lo que falta es el sitio y la descarga, porque `BACKUP_DIR` vive dentro del
-  contenedor.
-- **S32** — restore con dump previo, modo mantenimiento y `sqlsequencereset`, solo
-  `stamps` y `full`. `loaddata` sobrescribe por PK pero no borra lo ausente, y
-  `clear_data` + `loaddata` sin `setval` rompe el siguiente insert.
-
-Preguntas abiertas antes de empezar: panel solo o panel + selector (recomendado:
-panel solo); descripción editable desde el principio (recomendado: sí); los ocho
-lookups o los tres gratis (recomendado: los ocho); si el restore se quiere de
-verdad; y volumen en producción o solo descarga.
-
 ### ✅ S29 — Ver la imagen y la descripción de un sello (2026-11-21)
 
 La miniatura de 26 px dentro de filas de 38 no es una foto, y la descripción del
@@ -3377,3 +3436,48 @@ Ficheros: `datadesk.css`, `workbench.js` (`width` y `moneyFormatter`),
 `views/workspace.py` (`width`, `money`, `unit`), la plantilla de la serie y tests.
 
 Verificado: **526 datadesk y 1542 backend en verde**; capturas a 1024-1920.
+
+### ⏳ S33 — Añadir un sello a una serie existente (2026-11-22)
+
+Intentando hacer el trabajo, no revisando el estilo: DataDesk sabe crear una serie
+con sus sellos, clonar una serie entera y borrar un sello, pero **no sabe añadir un
+sello a una serie que ya existe**, que es la operación de cada pieza suelta.
+
+Detalle y aceptación en §4. Lo importante, y lo que hace que sea más barato de lo
+que parece:
+
+- **El backend ya está**: `/apply` acepta `op: "create"` para un sello de una serie
+  existente, con su test y su fila de auditoría, y devuelve el id. Lo que falta es
+  la pantalla y que el change set del navegador sepa enviar un `create` (hoy manda
+  `update` siempre).
+- **Es una fila borrador en la misma rejilla**, con id `new-<n>` como en `mode=new`,
+  revisable y deshacible antes del commit; el commit la convierte en fila real.
+- **Decisiones que hay que tomar al implementarlo**: tras un commit limpio, ¿se
+  queda en la serie (recomendado, es donde se está trabajando) o vuelve al
+  workbench como hoy? Y los colores del sello nuevo quedan fuera la primera vez,
+  porque el change set todavía no lleva M2M — es el hueco conocido.
+
+### ✅ S29b — La placa de la imagen del sello (2026-11-22)
+
+Los WebP del árbol son RGBA con el sello recortado (alpha 0 en las esquinas), así
+que el fondo lo pone la pantalla — y el panel de S29 lo pinta **blanco**
+(`.dd-preview-image { background: #fff }`). La mayoría de los sellos tienen marco
+blanco: sobre blanco el dentado desaparece y la pieza se ve como un cuadrado.
+
+Va aparte de S29 porque no es la lógica del panel sino una placa: una superficie
+gris neutra con un hairline detrás de la imagen (y detrás de la miniatura de 26 px,
+que se apoya en la fila blanca). La regla es de producto, no solo de DataDesk: la
+app pública de Flet enseña las mismas imágenes y tiene el mismo problema.
+
+La placa es `--dd-plate`, un token, y la usan los dos tamaños: el panel y la
+miniatura de 26 px. Se probaron tres grises en el navegador (`#d7dde5`, `#cfd6df`,
+`#c2cad4`) y se quedó **`#cfd6df`**: el primero casi no se distingue del blanco del
+marco y el tercero convierte la placa en un bloque. El borde va con un token propio,
+`--dd-plate-edge` (`#b6c0cc`): más claro que la placa parece un halo, y estas
+imágenes ya traen su propio margen blanco. En el panel va de borde; en la miniatura
+es un `box-shadow` y no un `border`, porque a 26 px dos píxeles de borde son dos
+píxeles de sello. Tres tests lo fijan (el token no es blanco, los dos tamaños
+comparten la misma placa, la miniatura no pierde píxeles).
+
+Verificado en Chromium con la serie de 1976 (sello de marco blanco): el dentado se
+distingue en el panel y en las miniaturas, incluso a 26 px; 529 datadesk en verde.

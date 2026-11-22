@@ -461,6 +461,18 @@
       pins `DATADESK_ENABLED=False` so the suite is CI-shaped by default. 1 test
       added for the endpoint contract; 518 datadesk with the flag on, 1534 backend
       with it off.
+- [x] **S29b — A stamp picture needs a plate that is not white** (2026-11-22): the
+      WebP files are RGBA with the stamp cut out (alpha 0 at the corners), so the
+      background is whatever the screen paints behind them. Most stamps have a
+      white or near-white frame, and **against white the perforation disappears**:
+      the piece reads as a square. The S29 pane paints `background: #fff` on
+      `.dd-preview-image`, which is exactly the bad case, and the 26px thumbnail
+      sits on a white row. Fix: a neutral grey plate with a hairline behind the
+      picture and the thumbnail. The rule is product-wide — the public Flet app
+      shows the same images and has the same problem. Done: `--dd-plate` (#cfd6df, after trying #d7dde5 and #c2cad4 in the browser)
+      behind both sizes, hairline border in the pane and a hairline `box-shadow` on
+      the 26px thumbnail (a border there costs two pixels of stamp). 3 pins in
+      `test_layout`; 529 datadesk green.
 - [ ] **S31 — Backups screen** (planned 2026-11-20): `POST /datadesk/backup`
       already runs `stamps_db_backup` in `stamps` mode (S15). What is missing is the
       place: list what is in `backups/`, run one with a mode, and download it. The
@@ -477,6 +489,19 @@
       mode (503 for the rest of `/datadesk/`) → clear + loaddata + sequencereset,
       with a typed confirmation, and only `stamps`/`full` in the panel: `system`
       resurrects closed sessions and a revoked API key.
+- [ ] **S33 — Add a stamp to an existing series** (planned 2026-11-22, from doing
+      the work, not from reviewing it): DataDesk can create a series with its
+      stamps, clone a whole series and delete a stamp, but **not add one to a
+      series that already exists** — the operation of every loose piece. The
+      backend already accepts it: `/apply` takes `op: "create"` for a stamp of an
+      existing issue (tested, audited, returns the id). What is missing is the
+      screen: a `+ Stamp` button in the `mode=edit` grid head, a draft row with a
+      `new-<n>` id (the same prefix `mode=new` uses), the change set sending
+      `create`, the review listing it as new, undo removing it, and the commit
+      reconciling the real id. Decisions at implementation: stay in the series
+      after a clean commit (recommended) instead of going back to the workbench,
+      and leave the new stamp's colours out (the change set carries no M2M yet).
+      Not persisted in localStorage: a `create` has no `base`, like `mode=new`.
 
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
