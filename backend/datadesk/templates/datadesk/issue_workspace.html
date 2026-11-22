@@ -95,6 +95,33 @@
               <span class="dd-hint dd-year-hint" id="year-new-hint" hidden>
                 {% translate "This year does not exist yet: it will be created when the series is saved." %}
               </span>
+            {% elif field.kind == "date" %}
+              {% comment %}
+                Not `input[type=date]`: the native picker speaks the browser's
+                language and wears the browser's chrome, and it cannot show the
+                month by name. The field shows the date written out and keeps the
+                ISO value in `data-value`, so everything that reads the form keeps
+                reading an ISO date.
+              {% endcomment %}
+              <span class="dd-date">
+                <input class="dd-input dd-date-value" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="text" readonly
+                       value="{{ field.value_text }}"
+                       data-value="{{ field.value }}"
+                       min="{{ field.min }}" max="{{ field.max }}"
+                       autocomplete="off"
+                       aria-haspopup="dialog" aria-controls="date-popover">
+                <button type="button" class="dd-date-open" id="date-open"
+                        aria-label="{% translate 'Choose the date' %}"
+                        title="{% translate 'Choose the date' %}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+                       stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2"/>
+                    <path d="M3 10h18M8 3v4M16 3v4"/>
+                  </svg>
+                </button>
+              </span>
             {% elif field.kind == "select" %}
               {% comment %}
                 Typed, not chosen: the datalist asks the server as the user
@@ -391,6 +418,43 @@
       </div>
     {% endif %}
   </section>
+
+  {% comment %}
+    Our own calendar, positioned under the date field when it opens. It belongs to
+    the page and not to the strip: inside the field's label a click would also
+    focus the field and close what was just opened.
+  {% endcomment %}
+  <div class="dd-calendar" id="date-popover" role="dialog" hidden
+       aria-label="{% translate 'Choose the date' %}">
+    <div class="dd-calendar-head">
+      <button type="button" class="dd-calendar-nav" id="calendar-prev"
+              aria-label="{% translate 'Previous month' %}"
+              title="{% translate 'Previous month' %}">‹</button>
+      {% comment %}
+        The month is a button and not a `select`: a select opens the browser's
+        list, which is square and not ours. Clicking it shows the twelve months.
+      {% endcomment %}
+      <button type="button" class="dd-input dd-select dd-calendar-month"
+              id="calendar-month" aria-label="{% translate 'Month' %}"
+              aria-haspopup="true" aria-expanded="false"></button>
+      <input class="dd-input dd-calendar-year" id="calendar-year" type="number"
+             inputmode="numeric" step="1" aria-label="{% translate 'Year' %}">
+      <button type="button" class="dd-calendar-nav" id="calendar-next"
+              aria-label="{% translate 'Next month' %}"
+              title="{% translate 'Next month' %}">›</button>
+    </div>
+    <div class="dd-calendar-week" id="calendar-weekdays" aria-hidden="true"></div>
+    <div class="dd-calendar-days" id="calendar-days"></div>
+    <div class="dd-calendar-months" id="calendar-months" hidden></div>
+    <div class="dd-calendar-foot">
+      <button type="button" class="dd-btn dd-btn-ghost" id="calendar-today">
+        {% translate "Today" %}
+      </button>
+      <button type="button" class="dd-btn dd-btn-ghost" id="calendar-clear">
+        {% translate "Clear the date" %}
+      </button>
+    </div>
+  </div>
 
   {{ config|json_script:"stamp-config" }}
 {% endblock %}

@@ -111,10 +111,17 @@
   const lookupControl = (field) =>
     document.querySelector('[data-lookup="' + field + '"]');
 
-  /** The value the API sees for a control: an id when the field is a lookup. */
+  /** The value the API sees for a control: an id when the field is a lookup, an
+   * ISO date when the field shows the date written out, its text otherwise. */
   const formValue = (control) => {
     const field = control.dataset ? control.dataset.lookup : "";
-    return field ? lookupIdOf(field, control.value) : control.value;
+    if (field) {
+      return lookupIdOf(field, control.value);
+    }
+    if (control.dataset && control.dataset.value !== undefined) {
+      return control.dataset.value;
+    }
+    return control.value;
   };
 
   /** Writes a lookup control from an id, showing the name it identifies. */
@@ -275,6 +282,289 @@
     });
   });
 
+  /* --------------------------------------------------------------------- *
+   * The date field and its calendar.
+   *
+   * `input[type=date]` comes with the browser's picker: its language, its chrome
+   * and no month names — and its look is not this app's. This one borrows the
+   * month and weekday names from the server, writes the date the way the grid
+   * writes it ("1 dic 1853") and keeps the ISO value in `data-value`, so the
+   * form keeps speaking ISO dates to the writer.
+   * ------------------------------------------------------------------- */
+
+  const dateField = document.getElementById("field-date");
+  const dateOpenButton = document.getElementById("date-open");
+  const calendarPanel = document.getElementById("date-popover");
+  const calendarMonth = document.getElementById("calendar-month");
+  const calendarYear = document.getElementById("calendar-year");
+  const calendarWeekdays = document.getElementById("calendar-weekdays");
+  const calendarDays = document.getElementById("calendar-days");
+  const calendarMonths = document.getElementById("calendar-months");
+  const calendarToday = document.getElementById("calendar-today");
+  const calendarClear = document.getElementById("calendar-clear");
+  const calendarTexts = config.calendar || {};
+  const monthNames = calendarTexts.months || [];
+  const monthNamesShort = calendarTexts.monthsShort || monthNames;
+  const weekdayNames = calendarTexts.weekdays || [];
+  const dateTemplate = calendarTexts.template || "%(day)s %(month)s %(year)s";
+  /** The month the panel is showing; the day grid is painted from it. */
+  const calendarShown = { year: 0, month: 1 };
+
+  const pad = (value) => String(value).padStart(2, "0");
+  const isoOf = (year, month, day) => `${year}-${pad(month)}-${pad(day)}`;
+
+  /** "1853-12-01" -> "1 dic 1853", with the words the server sent. */
+  const formatDate = (iso) => {
+    if (!iso) {
+      return "";
+    }
+    const [year, month, day] = iso.split("-");
+    return dateTemplate
+      .replace("%(day)s", String(Number(day)))
+      .replace("%(month)s", monthNamesShort[Number(month) - 1] || month)
+      .replace("%(year)s", year);
+  };
+
+  /** Writes a date into the field; `quiet` is undo, which is not an edit. */
+  const setDate = (iso, quiet) => {
+    if (!dateField) {
+      return;
+    }
+    dateField.dataset.value = iso || "";
+    dateField.value = formatDate(iso);
+    if (!quiet) {
+      /* The rest of the page reads the field through these two events: the
+       * change set, the undo log and the year that follows a date. */
+      dateField.dispatchEvent(new Event("input", { bubbles: true }));
+      dateField.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  };
+
+  const currentDate = () => (dateField ? dateField.dataset.value || "" : "");
+
+  const paintCalendar = () => {
+    if (!calendarDays) {
+      return;
+    }
+    const first = new Date(calendarShown.year, calendarShown.month - 1, 1);
+    const length = new Date(calendarShown.year, calendarShown.month, 0).getDate();
+    /* Django's weekday list starts on Sunday and so does `getDay()`, but the
+     * first column of the grid is the language's first day of the week. */
+    const lead = (first.getDay() - (calendarTexts.firstDay || 0) + 7) % 7;
+    const chosen = currentDate();
+    const today = calendarTexts.today || "";
+
+    calendarDays.textContent = "";
+    for (let blank = 0; blank < lead; blank += 1) {
+      calendarDays.append(document.createElement("span"));
+    }
+    for (let day = 1; day <= length; day += 1) {
+      const iso = isoOf(calendarShown.year, calendarShown.month, day);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dd-calendar-day";
+      button.textContent = String(day);
+      if (iso === chosen) {
+        button.classList.add("is-selected");
+      }
+      if (iso === today) {
+        button.classList.add("is-today");
+      }
+      button.addEventListener("click", () => {
+        setDate(iso);
+        closeCalendar();
+      });
+      calendarDays.append(button);
+    }
+  };
+
+  /** Which grid the panel is showing: the days of a month, or the twelve. */
+  let calendarView = "days";
+
+  const paintMonths = () => {
+    if (!calendarMonths) {
+      return;
+    }
+    calendarMonths.textContent = "";
+    monthNames.forEach((name, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dd-calendar-month-pick";
+      button.textContent = name;
+      if (index + 1 === calendarShown.month) {
+        button.classList.add("is-selected");
+      }
+      button.addEventListener("click", () => {
+        showMonth(calendarShown.year, index + 1);
+        showView("days");
+      });
+      calendarMonths.append(button);
+    });
+  };
+
+  const showView = (view) => {
+    calendarView = view;
+    const months = view === "months";
+    calendarMonths.hidden = !months;
+    calendarDays.hidden = months;
+    calendarWeekdays.hidden = months;
+    calendarMonth.setAttribute("aria-expanded", String(months));
+    if (months) {
+      paintMonths();
+    } else {
+      paintCalendar();
+    }
+  };
+
+  const showMonth = (year, month) => {
+    calendarShown.year = year;
+    calendarShown.month = month;
+    if (calendarMonth) {
+      calendarMonth.textContent = monthNames[month - 1] || String(month);
+    }
+    if (calendarYear) {
+      calendarYear.value = String(year);
+    }
+    if (calendarView === "months") {
+      paintMonths();
+    } else {
+      paintCalendar();
+    }
+  };
+
+  const openCalendar = () => {
+    if (!calendarPanel || !dateField) {
+      return;
+    }
+    const iso = currentDate() || calendarTexts.today || "";
+    const [year, month] = iso.split("-").map(Number);
+    showView("days");
+    showMonth(year || new Date().getFullYear(), month || 1);
+
+    calendarPanel.hidden = false;
+    positionCalendar();
+  };
+
+  /** Puts the panel under its field, above it when there is no room below. */
+  const positionCalendar = () => {
+    if (!calendarPanel || !dateField || calendarPanel.hidden) {
+      return;
+    }
+    const field = dateField.getBoundingClientRect();
+    const panel = calendarPanel.getBoundingClientRect();
+    const left = Math.min(field.left, window.innerWidth - panel.width - 8);
+    const below = field.bottom + 6;
+    const above = field.top - panel.height - 6;
+    const flip = below + panel.height > window.innerHeight && above > 0;
+    calendarPanel.style.left = `${Math.max(8, left)}px`;
+    calendarPanel.style.top = `${flip ? above : below}px`;
+  };
+
+  const closeCalendar = () => {
+    if (calendarPanel) {
+      calendarPanel.hidden = true;
+    }
+  };
+
+  if (calendarPanel && dateField) {
+    calendarMonth.addEventListener("click", () => {
+      showView(calendarView === "months" ? "days" : "months");
+    });
+
+    weekdayNames.slice(0, 7).forEach((name) => {
+      const label = document.createElement("span");
+      label.textContent = name;
+      calendarWeekdays.append(label);
+    });
+
+    const lowest = Number(calendarTexts.minYear) || 1800;
+    const highest = Number(calendarTexts.maxYear) || 2100;
+    calendarYear.min = String(lowest);
+    calendarYear.max = String(highest);
+    calendarYear.addEventListener("change", () => {
+      const typed = Number(calendarYear.value) || lowest;
+      showMonth(Math.min(Math.max(typed, lowest), highest), calendarShown.month);
+    });
+
+    const stepMonth = (delta) => {
+      const months = calendarShown.year * 12 + (calendarShown.month - 1) + delta;
+      const year = Math.floor(months / 12);
+      showMonth(
+        Math.min(Math.max(year, lowest), highest),
+        (((months % 12) + 12) % 12) + 1
+      );
+    };
+    document
+      .getElementById("calendar-prev")
+      .addEventListener("click", () => stepMonth(-1));
+    document
+      .getElementById("calendar-next")
+      .addEventListener("click", () => stepMonth(1));
+
+    calendarToday.addEventListener("click", () => {
+      if (calendarTexts.today) {
+        setDate(calendarTexts.today);
+      }
+      closeCalendar();
+    });
+
+    calendarClear.addEventListener("click", () => {
+      setDate("");
+      closeCalendar();
+    });
+
+    const toggle = (event) => {
+      event.preventDefault();
+      if (calendarPanel.hidden) {
+        openCalendar();
+      } else {
+        closeCalendar();
+      }
+    };
+    dateOpenButton.addEventListener("click", toggle);
+    dateField.addEventListener("click", openCalendar);
+    dateField.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openCalendar();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (calendarPanel.hidden) {
+        return;
+      }
+      /* The path is what the event was dispatched through: the control that was
+       * clicked may have been repainted away by its own handler by the time this
+       * runs (picking a month does exactly that), and `contains` would then say
+       * the click came from outside. */
+      const path = event.composedPath ? event.composedPath() : [];
+      if (
+        path.includes(calendarPanel) ||
+        path.includes(dateField) ||
+        path.includes(dateOpenButton)
+      ) {
+        return;
+      }
+      closeCalendar();
+    });
+
+    /* Esc closes the calendar and goes no further: the page's Esc leaves it. */
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !calendarPanel.hidden) {
+        event.stopImmediatePropagation();
+        closeCalendar();
+        dateField.focus();
+      }
+    });
+
+    /* The panel is anchored to the field: it follows it instead of closing on
+     * every scroll, which also meant closing itself when the browser scrolled
+     * the page to reach it. */
+    window.addEventListener("resize", positionCalendar);
+    window.addEventListener("scroll", positionCalendar, true);
+  }
+
   /** The colour behind a cell value: the rows carry ids, the palette the names.
    *
    * A colour created from this page is pushed into `config.colours`, so an id
@@ -350,13 +640,37 @@
     return document.createTextNode(String(value));
   };
 
+  /** The separators of the active language, sent by the server. */
+  const separators = config.separators || { thousand: ",", decimal: "." };
+
+  /** A number with its thousands grouped the way this language groups them.
+   *
+   * The server decides the characters; the script only puts them in, and it
+   * formats from the cell value so an edit shows the new number at once. */
+  const groupNumber = (value) => {
+    const [whole, fraction] = String(value).split(".");
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, separators.thousand);
+    return fraction === undefined
+      ? grouped
+      : `${grouped}${separators.decimal}${fraction}`;
+  };
+
   /** Money is euros: see the workbench's formatter. */
   const moneyFormatter = (cell) => {
     const value = cell.getValue();
     if (value === null || value === undefined || value === "") {
       return emptyFormatter(cell);
     }
-    return document.createTextNode(`${value} \u20ac`);
+    return document.createTextNode(`${groupNumber(value)} \u20ac`);
+  };
+
+  /** A quantity: stamps printed. */
+  const numberFormatter = (cell) => {
+    const value = cell.getValue();
+    if (value === null || value === undefined || value === "") {
+      return emptyFormatter(cell);
+    }
+    return document.createTextNode(groupNumber(value));
   };
 
   const buildColumn = (definition) => {
@@ -412,8 +726,11 @@
       column.headerSort = false;
       column.cssClass = "dd-image-cell";
     }
-    if (definition.money) {
+    if (definition.format === "money") {
       column.formatter = moneyFormatter;
+    }
+    if (definition.format === "number") {
+      column.formatter = numberFormatter;
     }
     if (!column.formatter) {
       column.formatter = emptyFormatter;
@@ -979,9 +1296,12 @@
           return;
         }
         /* A lookup is shown by its name and sent by its id, so undo and redo
-         * write the name the map remembers for that id. */
+         * write the name the map remembers for that id; the date shows itself
+         * written out and keeps the ISO value aside. */
         if (control.dataset.lookup) {
           setLookup(control, field, value);
+        } else if (control === dateField) {
+          setDate(value === null || value === undefined ? "" : String(value), true);
         } else {
           control.value = value === null || value === undefined ? "" : value;
         }
@@ -1045,6 +1365,12 @@
     const displayValue = (model, field, value) => {
       if (value === null || value === undefined || value === "") {
         return "—";
+      }
+      /* A number reads with its separators here too: the grid says
+       * "37.500,00 €" and the panel would say "37500.00". */
+      const numbers = (config.numberFields || {})[model] || [];
+      if (numbers.includes(field)) {
+        return groupNumber(value);
       }
       /* A list of colours reads by its names: "12, 15" says nothing. */
       if (Array.isArray(value)) {
@@ -3113,7 +3439,7 @@
       if (!dateInput || !yearInput) {
         return;
       }
-      const iso = dateInput.value.trim();
+      const iso = String(dateInput.dataset.value || "").trim();
       const dated = /^\d{4}-\d{2}-\d{2}$/.test(iso);
       if (dated) {
         yearInput.value = iso.slice(0, 4);

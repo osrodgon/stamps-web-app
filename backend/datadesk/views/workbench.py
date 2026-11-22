@@ -17,6 +17,7 @@ from datadesk.service import (
     IssueFilters,
     page_of_issue,
 )
+from datadesk.texts import separators
 
 FILTER_LOOKUPS: tuple[str, ...] = (
     "country",
@@ -66,7 +67,14 @@ COLUMNS: tuple[dict[str, Any], ...] = (
     },
     # A fixed width, not a share: a date has one length and the grid must not
     # shrink it below it, whatever else the user turns on in the columns menu.
-    {"field": "date", "title": _("Date"), "visible": True, "width": 112},
+    # "Dec 1, 1853" is the widest form it takes.
+    {
+        "field": "date",
+        "title": _("Date"),
+        "visible": True,
+        "width": 128,
+        "format": "date",
+    },
     {"field": "name", "title": _("Name"), "visible": True, "grow": 4, "min": 180},
     {"field": "country", "title": _("Country"), "visible": True, "grow": 2},
     {"field": "stamp_type", "title": _("Stamp type"), "visible": True, "grow": 2},
@@ -85,10 +93,10 @@ COLUMNS: tuple[dict[str, Any], ...] = (
         "visible": True,
         "align": "right",
         "grow": 1,
-        # "37500.00 €" is ten characters: the unit lives in the cell, so the
-        # column has to fit it.
-        "min": 104,
-        "money": True,
+        # "999.999,99 €" is what a cell has to hold with the thousands
+        # separators in: the unit lives in the cell, so the column fits it.
+        "min": 120,
+        "format": "money",
     },
     {
         "field": "used",
@@ -96,10 +104,10 @@ COLUMNS: tuple[dict[str, Any], ...] = (
         "visible": True,
         "align": "right",
         "grow": 1,
-        # "37500.00 €" is ten characters: the unit lives in the cell, so the
-        # column has to fit it.
-        "min": 104,
-        "money": True,
+        # "999.999,99 €" is what a cell has to hold with the thousands
+        # separators in: the unit lives in the cell, so the column fits it.
+        "min": 120,
+        "format": "money",
     },
     {"field": "print_type", "title": _("Print type"), "visible": False, "grow": 2},
     {"field": "artist", "title": _("Artist"), "visible": False, "grow": 2},
@@ -111,6 +119,8 @@ COLUMNS: tuple[dict[str, Any], ...] = (
         "visible": False,
         "align": "right",
         "grow": 1,
+        "min": 104,
+        "format": "number",
     },
     {"field": "gaps", "title": _("Gaps"), "visible": False, "grow": 1},
 )
@@ -245,6 +255,9 @@ def grid_config(focus: int | None = None, initial_page: int = 1) -> dict[str, An
             "remove": str(_("Remove this filter")),
         },
         "pageSize": DEFAULT_PAGE_SIZE,
+        # What the script puts between digits: the format is the language's, and
+        # the script only inserts the characters it was handed.
+        "separators": separators(),
         "emptyText": str(_("No issues match these filters.")),
         "counterText": str(_("issues")),
         "openText": str(_("Open")),

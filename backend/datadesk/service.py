@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from datadesk.images import ImageIndex, has_picture, image_index
 from datadesk.registry import get_lookup
+from datadesk.texts import date_text
 from issues_api.models import Issue
 from stamps_api.models import Stamp
 
@@ -430,7 +431,10 @@ def serialize_issue(issue: Issue) -> dict[str, Any]:
     return {
         "id": issue.pk,
         "year": issue.year.year,
+        # The grid sorts and filters on the ISO value and shows the written one:
+        # "1 dic 1853" is a date, "1853-12-01" is a code.
         "date": issue.date.isoformat() if issue.date else None,
+        "date_text": date_text(issue.date),
         "name": issue.name,
         "country": issue.country.name if issue.country else None,
         "country_id": issue.country_id,

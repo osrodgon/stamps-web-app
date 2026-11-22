@@ -226,6 +226,7 @@ class TestTheFieldIsTyped:
 
         assert 'data-lookup="country"' in content
         assert "<select" not in content
+        assert 'id="field-country"' in content
 
 
 @pytest.mark.django_db

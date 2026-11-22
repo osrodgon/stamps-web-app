@@ -893,3 +893,27 @@ msgstr "Añadir un color"
 #, python-format
 msgid "Remove %(name)s"
 msgstr "Quitar %(name)s"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Choose the date"
+msgstr "Elegir la fecha"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Previous month"
+msgstr "Mes anterior"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Next month"
+msgstr "Mes siguiente"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Month"
+msgstr "Mes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Clear the date"
+msgstr "Quitar la fecha"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Today"
+msgstr "Hoy"
