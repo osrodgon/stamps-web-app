@@ -293,3 +293,29 @@ class TestThePicturePlate:
 
         assert re.search(r"\n\s*border:", rule) is None
         assert "box-shadow: 0 0 0 1px var(--dd-plate-edge)" in rule
+
+
+class TestTheDraftRow:
+    """A stamp added to an open series is drawn as what it is: a draft.
+
+    It has no id yet, so it cannot be marked like a stored row with pending
+    changes — and its × removes it here instead of asking the server, which is
+    why it stays available while the grid is locked.
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_a_draft_row_has_a_spine_of_its_own(self) -> None:
+        assert "inset 2px 0 0 var(--dd-amber)" in self.rule(".dd-row-new")
+
+    def test_a_draft_can_be_removed_with_the_change_set_open(self) -> None:
+        locked = self.rule(".dd-grid-locked .dd-stamp-delete")
+        draft = self.rule(".dd-grid-locked .dd-row-new .dd-stamp-delete")
+
+        assert "opacity: 0.4" in locked
+        assert "opacity: 1" in draft

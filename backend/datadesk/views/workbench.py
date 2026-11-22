@@ -134,9 +134,10 @@ class WorkbenchView(DataDeskAccessMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         filters = filters_from(self.request)
 
-        # ``focus`` is how the workspace says "the series you just saved is this
-        # one": the page it lives on has to be resolved here, because the grid
-        # pages on the server.
+        # ``focus`` is a deep link to one series: the page it lives on has to be
+        # resolved here, because the grid pages on the server. The workspace no
+        # longer redirects here after a commit (S33 stays on the series), so this
+        # is what a hand-written link uses.
         focus = _int(self.request, "focus")
         initial_page = page_of_issue(focus, filters) if focus is not None else 1
 

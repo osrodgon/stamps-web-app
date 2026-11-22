@@ -874,3 +874,11 @@ msgstr "More filters"
 #: datadesk/views/workspace.py
 msgid "Printed"
 msgstr "Printed"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "+ Stamp"
+msgstr "+ Stamp"
+
+#: datadesk/views/workspace.py
+msgid "New"
+msgstr "New"

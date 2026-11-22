@@ -226,10 +226,12 @@ UNDO_LIMIT = 200
 """How many edits the browser keeps for Ctrl+Z. Beyond this the oldest goes."""
 
 NEW_ROW_PREFIX = "new-"
-"""Rows of ``mode=new`` exist only in the browser, so their ids are made up.
+"""Ids of the rows that exist only in the browser.
 
-The real ids are numbers, so a ``new-`` prefix can never collide with one; the
-prefix travels in the page configuration so the script holds no convention.
+``mode=new`` generates them from scratch and ``mode=edit`` uses the same prefix
+for a stamp that has not been written yet. The real ids are numbers, so a
+``new-`` prefix can never collide with one; the prefix travels in the page
+configuration so the script holds no convention.
 """
 
 
@@ -615,8 +617,10 @@ def workspace_config(
             "commitFirst": str(_("Commit or discard the pending changes first.")),
             "confirmYear": str(_("Type %(year)s to confirm")),
             "deleteStamp": str(_("Delete this stamp")),
+            "removeRow": str(_("Remove this row")),
             "stampDeleted": str(_("The stamp was deleted.")),
             "stampDeleteFailed": str(_("The stamp was not deleted.")),
+            "newRow": str(_("New")),
         }
         # The plural rules stay on the server: the browser only substitutes the
         # number into the form it was given, so Spanish and English keep their
@@ -646,6 +650,14 @@ def workspace_config(
         config["storageKey"] = f"datadesk:buffer:edit:{series.pk}"
         config["schemaVersion"] = BUFFER_SCHEMA
         config["undoLimit"] = UNDO_LIMIT
+        # A stamp added from this page has no id until it is written, so its two
+        # URLs cannot be rendered with one. The server sends the shape and the
+        # page fills in the id it gets back from the commit.
+        config["rowIdPrefix"] = NEW_ROW_PREFIX
+        config["rowUrls"] = {
+            "dependencies": url_template("datadesk:stamp_dependencies"),
+            "delete": url_template("datadesk:stamp_delete"),
+        }
 
     if mode == "new":
         config.update(
@@ -686,6 +698,27 @@ def workspace_config(
             },
         )
     return config
+
+
+def url_template(viewname: str, probe: int = 0) -> str:
+    """Returns a per-row URL with ``%(id)s`` where the row id goes.
+
+    A stamp added from the workspace has no id until the commit writes it, so
+    the page cannot render its dependencies and delete URLs with it — and
+    composing the route in the script would be a second source of truth for a
+    URL ``reverse()`` owns. The server sends the shape and the page fills in the
+    id the commit returns; a test substitutes a real id and compares it with
+    ``reverse()`` so the two cannot drift.
+
+    Args:
+        viewname: URL pattern that takes the stamp id.
+        probe: The id ``reverse()`` is called with, and therefore the number the
+            template replaces.
+
+    Returns:
+        The URL with ``/%(id)s/`` where the probe sits.
+    """
+    return reverse(viewname, args=[probe]).replace(f"/{probe}/", "/%(id)s/")
 
 
 def lookup_endpoints() -> dict[str, dict[str, str]]:
