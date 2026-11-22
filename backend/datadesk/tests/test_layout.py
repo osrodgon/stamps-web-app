@@ -319,3 +319,36 @@ class TestTheDraftRow:
 
         assert "opacity: 0.4" in locked
         assert "opacity: 1" in draft
+
+
+class TestOneControlLook:
+    """A control looks the same wherever it lives.
+
+    The look used to be scoped to `.dd-field`, so the same `.dd-input` outside a
+    label rendered as a raw browser input — which is what the preview pane's
+    colour field and description textarea did, next to a strip of styled fields
+    (S37).
+    """
+
+    def stylesheet(self) -> str:
+        path = settings.BASE_DIR / "datadesk" / "static" / "datadesk"
+        return (path / "datadesk.css").read_text(encoding="utf-8")
+
+    def rule(self, selector: str) -> str:
+        return self.stylesheet().split(selector + " {", 1)[1].split("}", 1)[0]
+
+    def test_the_look_is_not_scoped_to_a_label(self) -> None:
+        stylesheet = self.stylesheet()
+
+        assert "\n.dd-input {" in stylesheet
+        assert "\n.dd-field .dd-input {" not in stylesheet
+
+    def test_the_base_carries_the_controls_geometry(self) -> None:
+        rule = self.rule(".dd-input")
+
+        assert "min-height: var(--dd-input-height)" in rule
+        assert "border-radius: var(--dd-radius)" in rule
+        assert "font-size: var(--dd-text-sm)" in rule
+
+    def test_a_textarea_is_not_a_box_of_one_line(self) -> None:
+        assert "padding: var(--dd-s1) var(--dd-s2)" in self.rule("textarea.dd-input")

@@ -554,6 +554,35 @@
       writer, 1 revert, 1 split in two); 558 datadesk / 1574 backend; Chromium: add,
       remove, undo both, review with names, commit and reload, a colourless stamp,
       `+ Create` end to end and `mode=new` with both doors live.
+- [x] **S36 — The list order is decided by the series' catalogue code** (2026-11-22,
+      reported from using the list): two series of the same date did not always come
+      out in the same order. The default order was year → date → **name** and stopped
+      there, so two series of one date with one name — the normal case, an emission
+      split into several series the same day — were a tie the database broke as it
+      liked, and with OFFSET paging that can repeat a row on one page and skip another.
+      The real data has **419 repeated dates** (955 series); the biggest is 29-12-1998
+      with **15 series called "España 2000"**. The tiebreak is now the series' code in
+      the catalogue: `first_code` = `Min` of its stamps' **Fesofi** code, falling back
+      to **Edifil** per stamp (Edifil is missing on 2,761 of 9,557 stamps and on 696
+      series; Fesofi on 61 stamps and 6 series). Compared by **length then text**, so
+      "3649" comes before "1998042", and the order ends in the `pk`, which makes it
+      total — two pages can no longer disagree. `issue_positions()` gained the same
+      annotation, so the workspace arrows walk that order too. Cost on the real data:
+      grid page 65 → 68 ms, dashboard counters unchanged, positions 2 → 8 ms, no new
+      index. 7 tests; 565 datadesk / 1581 backend green.
+- [x] **S37 — A control looks the same wherever it lives** (2026-11-22): the preview
+      pane's colour field and description rendered as raw browser inputs next to a
+      strip of styled ones. The cause was not the pane: the control look was declared
+      as `.dd-field .dd-input`, so **it only applied inside a strip label**, and there
+      were three copies of the block (`.dd-field .dd-input`, `.dd-rows .dd-input`,
+      `.dd-filter input`) while the pane's fourth never existed. The block is now plain
+      `.dd-input`; the rows control keeps its narrow box and its alignment, the filter
+      bar keeps its selects and its own chevron, and a `textarea.dd-input` gained
+      vertical padding (its first line touched the border). Measured in the browser: 34
+      px, radius 8, `--dd-line-strong`, 13 px Inter and the same padding in the strip's
+      name and description and in the pane's colour and description. 3 pins in
+      `test_layout`; 568 datadesk green. No template or JS change: the class was
+      already right, the style was not reaching it.
 - [ ] Phase 1 — Scaffold: `backend/datadesk/`, `/datadesk/` mount, `DATADESK_ENABLED`,
       login/logout + staff gate + login throttling, vendorized HTMX/Alpine/Tabulator,
       en/es i18n catalog, `updated_at` + `DataDeskChange` migrations, `service.py` skeleton
