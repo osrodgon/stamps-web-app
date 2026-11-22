@@ -14,7 +14,6 @@ from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from datadesk.images import ImageIndex, has_picture, image_index
-from datadesk.palette import tone_for
 from datadesk.registry import get_lookup
 from issues_api.models import Issue
 from stamps_api.models import Stamp
@@ -428,9 +427,12 @@ def serialize_stamp(
         # it travels with the row so the preview pane can show and edit it.
         "description": stamp.description or "",
         "face_value": stamp.face_value,
+        # Ids, not names: the pane edits the colours and the change set speaks
+        # ids. The name and the tone come from the palette the page carries, so a
+        # renamed colour shows one name in the session and not two.
         "colors": [
-            {"name": name, "tone": tone_for(name)}
-            for name in sorted(color.name for color in stamp.colors.all())
+            color.pk
+            for color in sorted(stamp.colors.all(), key=lambda row: row.name)
         ],
         "total_printed": stamp.total_printed,
         "mnh": _decimal(stamp.market_value_mnh),

@@ -263,11 +263,14 @@ class TestTheConfigCarriesTheEndpoints:
             "created",
             "failed",
             "unresolved",
+            "remove",
             "newRows",
             "savedRow",
         }
         assert texts["create"] == '+ Create "%(name)s"'
         assert "%(name)s" in texts["unresolved"]
+        # The pane's colour chips say what their × does, and they name it.
+        assert texts["remove"] == "Remove %(name)s"
 
     def test_the_review_panel_has_a_group_for_them(self, staff_client, issue) -> None:
         texts = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["lookupText"]

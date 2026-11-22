@@ -198,11 +198,20 @@ class TestWorkspacePage:
 class TestStampRows:
     """The shape of the rows the grid consumes."""
 
-    def test_colors_travel_with_their_name_and_tone(self, staff_client, issue) -> None:
-        rows = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["data"]
+    def test_colors_travel_as_ids(self, staff_client, issue) -> None:
+        """The pane edits them, so the row carries what the change set sends.
 
-        assert rows[0]["colors"] == [{"name": "Carmín", "tone": "red"}]
-        assert rows[1]["colors"] == [{"name": "Azul", "tone": "blue"}]
+        The name and the tone live in the palette the page ships, once per
+        screen instead of once per row.
+        """
+        config = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))
+        rows = config["data"]
+        palette = {entry["value"]: entry for entry in config["colours"]}
+
+        assert rows[0]["colors"] == [Color.objects.get(name="Carmín").pk]
+        assert rows[1]["colors"] == [Color.objects.get(name="Azul").pk]
+        assert palette[rows[0]["colors"][0]]["label"] == "Carmín"
+        assert palette[rows[0]["colors"][0]]["tone"] == "red"
 
     def test_decimals_travel_as_strings(self, staff_client, issue) -> None:
         rows = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["data"]
@@ -280,7 +289,10 @@ class TestQueryCount:
         ]
 
         assert len(stamp_queries) == 1
-        assert len(color_queries) == 1
+        # One for the colours of the stamps (a prefetch) and one for the palette
+        # the pane offers: the second does not depend on the page size, so it is
+        # the same on a series of two stamps and on one of a hundred.
+        assert len(color_queries) == 2
 
 
 @pytest.mark.django_db

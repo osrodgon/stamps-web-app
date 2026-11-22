@@ -106,11 +106,23 @@ class TestTheGridKnowsWhatItMayEdit:
         assert patches["mnh"] == "market_value_mnh"
         assert patches["used"] == "market_value_used"
 
-    def test_colours_and_the_picture_are_read_only(self, staff_client, issue) -> None:
+    def test_the_picture_is_the_only_column_with_no_field_behind_it(
+        self, staff_client, issue
+    ) -> None:
         columns = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["columns"]
 
         read_only = {column["field"] for column in columns if not column.get("patch")}
-        assert read_only == {"colors", "has_image"}
+        assert read_only == {"has_image"}
+
+    def test_the_colours_carry_a_patch_but_no_editor(
+        self, staff_client, issue
+    ) -> None:
+        """They are the change set's, but the pane edits them, not the cell."""
+        columns = config_of(staff_client.get(PAGE_URL.format(pk=issue.pk)))["columns"]
+        colours = next(column for column in columns if column["field"] == "colors")
+
+        assert colours["patch"] == "colors"
+        assert "editor" not in colours
 
     def test_only_total_printed_uses_the_numeric_editor(
         self, staff_client, issue
@@ -220,6 +232,8 @@ class TestTheSeriesStripIsAForm:
             "total_printed": "Total printed",
             "market_value_mnh": "MNH",
             "market_value_used": "Used",
+            # The pane edits them, so the review names them too.
+            "colors": "Colors",
         }
 
     def test_the_model_labels_are_translated(self, staff_client, issue) -> None:

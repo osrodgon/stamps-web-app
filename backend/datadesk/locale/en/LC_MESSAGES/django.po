@@ -882,3 +882,16 @@ msgstr "+ Stamp"
 #: datadesk/views/workspace.py
 msgid "New"
 msgstr "New"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No colours."
+msgstr "No colours."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Add a colour"
+msgstr "Add a colour"
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "Remove %(name)s"
+msgstr "Remove %(name)s"
