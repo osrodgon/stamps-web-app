@@ -858,9 +858,13 @@ kbd {
   text-overflow: ellipsis;
 }
 
-/* Form controls of the series strip (mode=new). The `.dd-field` prefix beats
- * the login form's `.dd-field input` rule, which shares this class name. */
-.dd-field .dd-input {
+/* Every control that carries `.dd-input` looks the same, wherever it lives: the
+ * series strip, the preview pane of the stamp, the colour dialog. The look used
+ * to be scoped to `.dd-field`, so the same class outside a label rendered as a
+ * raw browser input — which is what the pane's colour and description fields
+ * did until they were compared with the strip. The login form keeps its own
+ * `.dd-field input` rule on purpose: its markup carries no `.dd-input`. */
+.dd-input {
   font: inherit;
   font-size: var(--dd-text-sm);
   width: 100%;
@@ -873,14 +877,22 @@ kbd {
   transition: border-color var(--dd-ease), box-shadow var(--dd-ease);
 }
 
-.dd-field .dd-input:hover {
+.dd-input:hover {
   border-color: #b9c2cd;
 }
 
-.dd-field .dd-input:focus {
+.dd-input:focus {
   outline: none;
   border-color: var(--dd-navy);
   box-shadow: var(--dd-ring);
+}
+
+/* A textarea is not a box of one line: without vertical padding the first line
+ * touches the border. */
+textarea.dd-input {
+  min-height: 46px;
+  padding: var(--dd-s1) var(--dd-s2);
+  resize: vertical;
 }
 
 /* Derived from the date, so it reads as a value and not as an empty box the
@@ -898,11 +910,6 @@ kbd {
   border-color: var(--dd-red);
   background: var(--dd-red-soft);
   outline-color: var(--dd-red);
-}
-
-.dd-field textarea.dd-input {
-  min-height: 46px;
-  resize: vertical;
 }
 
 /* A reference field is typed, so the "+ Crear" button only shows up when the
@@ -964,31 +971,13 @@ kbd {
   color: var(--dd-muted);
 }
 
-/* The rows control sits in the grid head, not in the strip, so it repeats the
- * control look instead of inheriting the scoped one. */
+/* The rows control sits in the grid head: the same control, in a narrow box and
+ * with its number aligned. */
 .dd-rows .dd-input {
-  font: inherit;
-  font-size: var(--dd-text-sm);
   width: 64px;
   height: var(--dd-input-height);
-  padding: 0 var(--dd-s2);
-  border: 1px solid var(--dd-line-strong);
-  border-radius: var(--dd-radius);
-  background: #fff;
-  color: var(--dd-ink);
   text-align: right;
   font-variant-numeric: tabular-nums;
-  transition: border-color var(--dd-ease), box-shadow var(--dd-ease);
-}
-
-.dd-rows .dd-input:hover {
-  border-color: #b9c2cd;
-}
-
-.dd-rows .dd-input:focus {
-  outline: none;
-  border-color: var(--dd-navy);
-  box-shadow: var(--dd-ring);
 }
 
 /* Shift+Enter has nothing to commit yet: the notice flashes instead. */
@@ -1105,10 +1094,6 @@ kbd {
 .dd-chip-x:focus-visible {
   opacity: 1;
   background: rgba(18, 22, 28, 0.1);
-}
-
-.dd-preview-colour-field {
-  display: block;
 }
 
 .dd-preview-text {

@@ -10,7 +10,8 @@ from decimal import Decimal
 from math import ceil
 from typing import Any
 
-from django.db.models import Count, Exists, F, OuterRef, Q, QuerySet
+from django.db.models import Count, Exists, F, Min, OuterRef, Q, QuerySet, Value
+from django.db.models.functions import Coalesce, Length, NullIf
 from django.utils.translation import gettext_lazy as _
 
 from datadesk.images import ImageIndex, has_picture, image_index
@@ -170,18 +171,70 @@ class IssuePage:
     size: int = DEFAULT_PAGE_SIZE
 
 
+def catalogue_code():
+    """Returns the expression that names an issue in the catalogue.
+
+    The first code of its stamps, taking **Fesofi** and falling back to **Edifil**
+    per stamp: on the real data 2.761 of 9.557 stamps have no Edifil code (696
+    series without a single one), while only 61 lack Fesofi, so Edifil would leave
+    a quarter of the catalogue out of the order. An empty string counts as no code
+    — the columns are nullable but the grid also writes ``""``.
+    """
+    return NullIf(
+        Coalesce(NullIf("stamps__fesofi_code", Value("")), "stamps__edifil_code"),
+        Value(""),
+    )
+
+
+def with_catalogue_key(queryset: QuerySet[Issue]) -> QuerySet[Issue]:
+    """Annotates ``first_code``: the lowest catalogue code of the series."""
+    return queryset.annotate(first_code=Min(catalogue_code()))
+
+
+def catalogue_order() -> list[Any]:
+    """Returns the catalogue order: the smaller code first.
+
+    Length first, then the text: a four-digit code comes before a seven-digit one
+    (``5696`` before ``2017055``, which is what "the smaller code" means to a
+    collector), and two codes of the same width compare as text. A series with no
+    code at all goes last.
+    """
+    return [
+        Length("first_code").asc(nulls_last=True),
+        F("first_code").asc(nulls_last=True),
+    ]
+
+
+def chronological_order() -> list[Any]:
+    """Returns the workbench's default order: year, date, catalogue, name, pk.
+
+    The code is what decides between two series of the same date, and the pk is
+    the last key so the order is **total**. That is not cosmetic: the grid pages
+    with OFFSET, and an order that leaves ties to the database can return the same
+    row on two pages and never show another.
+    """
+    return [
+        "year__year",
+        F("date").asc(nulls_last=True),
+        *catalogue_order(),
+        "name",
+        "pk",
+    ]
+
+
 def issue_queryset() -> QuerySet[Issue]:
     """Returns the workbench rows: issues with their lookups and stamp count.
 
-    Ordering is chronological — year, then emission date, then name — with the
-    undated series at the end. That is a default, not a rule: the grid lets the
-    user sort by any column.
+    Ordering is chronological — year, then emission date, then the catalogue code
+    of the series, then the name — with the undated series at the end. That is a
+    default, not a rule: the grid lets the user sort by any column, and every
+    order ends in the same tiebreak (see ``sort_issues``).
     """
-    return (
-        Issue.objects.select_related(*ISSUE_SELECT_RELATED)
-        .annotate(stamp_count=Count("stamps"))
-        .order_by("year__year", F("date").asc(nulls_last=True), "name")
-    )
+    return with_catalogue_key(
+        Issue.objects.select_related(*ISSUE_SELECT_RELATED).annotate(
+            stamp_count=Count("stamps")
+        )
+    ).order_by(*chronological_order())
 
 
 def filter_issues(queryset: QuerySet[Issue], filters: IssueFilters) -> QuerySet[Issue]:
@@ -222,27 +275,41 @@ def filter_issues(queryset: QuerySet[Issue], filters: IssueFilters) -> QuerySet[
 def sort_issues(
     queryset: QuerySet[Issue], sort: str, direction: str
 ) -> QuerySet[Issue]:
-    """Orders by a whitelisted column; unknown fields fall back to the default."""
+    """Orders by a whitelisted column; unknown fields fall back to the default.
+
+    Whatever the chosen column, the order ends in the catalogue code and the pk:
+    the ties the column leaves are the ones the user notices (the fifteen series
+    of a single date, all with the same name), and a total order is what keeps
+    two pages of the same list from disagreeing. The queryset has to carry the
+    ``first_code`` annotation (``with_catalogue_key``).
+    """
     path = SORT_FIELDS.get(sort)
     if path is None:
-        return queryset.order_by(
-            "year__year", F("date").asc(nulls_last=True), "name"
-        )
+        return queryset.order_by(*chronological_order())
 
     descending = direction.lower() == "desc"
     expression = F(path)
     if sort == "date":
-        expression = F("date").desc(nulls_last=True) if descending else F("date").asc(
-            nulls_last=True
+        primary = (
+            F("date").desc(nulls_last=True)
+            if descending
+            else F("date").asc(nulls_last=True)
         )
-        return queryset.order_by(expression, "name")
+        return queryset.order_by(primary, *catalogue_order(), "name", "pk")
     if sort == "year":
         return queryset.order_by(
             expression.desc() if descending else expression.asc(),
             F("date").asc(nulls_last=True),
+            *catalogue_order(),
             "name",
+            "pk",
         )
-    return queryset.order_by(expression.desc() if descending else expression.asc())
+    return queryset.order_by(
+        expression.desc() if descending else expression.asc(),
+        *catalogue_order(),
+        "name",
+        "pk",
+    )
 
 
 def issue_page(
@@ -280,7 +347,10 @@ def issue_positions(filters: IssueFilters | None = None) -> list[int]:
     list, with the filters and order the user was looking at.
     """
     queryset = sort_issues(
-        filter_issues(Issue.objects.all(), filters or IssueFilters()), *DEFAULT_SORT
+        filter_issues(
+            with_catalogue_key(Issue.objects.all()), filters or IssueFilters()
+        ),
+        *DEFAULT_SORT,
     )
     return list(queryset.values_list("pk", flat=True))
 

@@ -221,6 +221,34 @@ al lado de la foto que los tiene.
 
 ---
 
+### Octava tanda (S36, el orden dentro de una fecha)
+
+Reportado al usar la lista: dos series con la misma fecha no siempre salían en el
+mismo orden. No es cosmético — el orden no era **total** (dos series podían
+empatar en año, fecha y nombre), así que la base decidía, y con paginación por
+`OFFSET` eso puede enseñar una fila dos veces y no enseñar otra. En los datos
+reales hay **419 fechas repetidas** (955 series), y la mayor es el 29-12-1998 con
+**15 series llamadas «España 2000»**.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S36 | El orden de la lista lo decide el código de la serie | S7, S8, S9 | S | sí | ✅ 2026-11-22 |
+
+---
+
+### Novena tanda (S37, el look de los controles)
+
+Un detalle de piel con una causa de fondo: el aspecto de un control estaba
+declarado **dentro de `.dd-field`**, así que el mismo `.dd-input` fuera de una
+etiqueta —los campos del panel de la imagen— se pintaba como un control del
+navegador. Se vio al poner el campo de color al lado de la tira.
+
+| ID | Paso | Depende de | Tamaño | Deja algo usable | Estado |
+|---|---|---|---|---|---|
+| S37 | Un control tiene el mismo aspecto en cualquier sitio | S24, S28, S29, S35 | XS | sí | ✅ 2026-11-22 |
+
+---
+
 ## 4. Detalle de cada paso
 
 ### D0 — Decisiones
@@ -1926,6 +1954,45 @@ nombre, como en la celda) y el filtro por color del workbench (S30 ya lo tiene).
 los dos modos, `same`, la revisión y la siembra de nombres), la plantilla del panel,
 `datadesk.css` (los chips del panel), tests de escritura y de revert, y
 comprobación en navegador con la serie de 1853.
+
+---
+
+### S36 — El orden de la lista lo decide el código de la serie
+
+**Depende de**: S7 (el queryset de lectura), S8 (el grid y su paginación), S9 (la
+medida del coste).
+
+**Lo que pasaba**: el orden por defecto era año → fecha → **nombre**, y ahí se
+acababa. Dos series de la misma fecha con el mismo nombre —que es el caso normal:
+una emisión parte en varias series del mismo día— quedaban empatadas y el orden lo
+decidía la base: distinto entre peticiones, y con `OFFSET` capaz de repetir una
+fila en dos páginas y saltarse otra. En los datos reales hay 419 fechas repetidas.
+
+**Decisión**: el desempate es el **código de la serie en el catálogo**, y el orden
+es **total** (la última clave es el `pk`).
+
+- **Qué código**: el del primer sello, tomando **Fesofi** y cayendo a **Edifil** por
+  sello. Al revés no vale: 2.761 de 9.557 sellos no tienen Edifil (696 series sin
+  ninguno), y solo 61 no tienen Fesofi. Un `""` cuenta como «sin código», porque la
+  columna es nullable pero el grid también escribe vacío.
+- **Cómo se compara**: por **longitud y luego texto**, que es el orden numérico para
+  los códigos de la misma familia y deja los especiales detrás: «3649» antes que
+  «1998042». Las series sin ningún código van al final de su fecha.
+- **Dónde**: en `chronological_order()`, que usan el grid, `issue_positions()` (las
+  flechas de la serie y el `1.234 / 2.540`) y `page_of_issue()`. Cualquier otra
+  columna ordena por lo que se pidió y **termina en el mismo desempate**, así que
+  dos clics en «Name» tampoco pueden desordenar la lista.
+- **Qué cuesta**: una anotación `Min` sobre la unión que ya se hacía para contar
+  sellos. Medido con los datos reales: página del grid 65 → 68 ms, contadores del
+  panel 21 → 20 ms, posiciones de la serie 2 → 8 ms. Sin índice nuevo.
+
+**Aceptación**: dos series del 1-1-1853 salen por su código (Isabel II 0017 antes
+que Escudo de Madrid 0022) y no por su nombre; las quince del 29-12-1998 salen por
+código y la del código especial al final; una serie sin códigos va la última de su
+fecha; paginar de una en una devuelve cada fila una sola vez. Siete tests en
+`test_service_read.py`, y la suite corre en SQLite mientras los números se
+comprobaron en Postgres, así que el `NULLS LAST` y el `LENGTH` están fijados en los
+dos motores.
 
 ---
 
@@ -3788,3 +3855,57 @@ que no es un lookup, el mismo control en `mode=new`), 3 en `test_write.py` (camb
 los colores, vaciarlos, un id que no existe), 1 en `test_activity.py` (el revert
 devuelve los colores, la rama `_restore` que no estaba cubierta) y 1 de la columna
 partida en dos en `test_workspace_edit.py`. 558 datadesk y 1574 backend en verde.
+
+### ✅ S36 — El orden de la lista lo decide el código de la serie (2026-11-22)
+
+Bug de uso, no de estilo: con la misma fecha y el mismo nombre, el orden lo decidía
+la base. Ahora `issue_queryset()` anota `first_code` (`Min` del código Fesofi de
+sus sellos, con Edifil como respaldo por sello) y todas las ordenaciones terminan en
+`(longitud del código, código, nombre, pk)`.
+
+- **Fesofi, no Edifil**, aunque Edifil se enseñe primero en el grid: los datos
+  mandan. Edifil falta en el 29% de los sellos y en 696 series; Fesofi en 61 sellos
+  y 6 series. El respaldo por sello evita que dos catálogos se mezclen en una misma
+  serie.
+- **Longitud primero**: en el grupo del 29-12-1998 conviven códigos de hoja (3649) y
+  de emisión (1998042); ordenar como texto pondría el especial el primero, y
+  numéricamente el 3649 es menor. Con longitud + texto, el especial queda al final.
+- **El `pk` al final** no es adorno: es lo que hace el orden total y lo que impide
+  que dos páginas se solapen. Hay un test que pagina de una en una y comprueba que
+  no se repite ninguna fila.
+- **`issue_positions()` no tenía la anotación** y ahora la necesita (ordena por
+  `first_code`): se le añade con `with_catalogue_key()`, y así las flechas de la
+  serie y el contador `4 / 2.541` caminan exactamente la lista que se ve.
+- Medido en Postgres con los datos reales: 65 → 68 ms la página del grid, los
+  contadores del panel igual (20 ms) y `issue_positions()` 2 → 8 ms. Sin índice.
+- 7 tests nuevos en `test_service_read.py` (el código manda sobre el nombre, el más
+  corto primero, sin código al final, el respaldo Edifil, una ordenación por columna
+  que también acaba en el código, el orden total al paginar y las posiciones
+  coincidiendo con el grid). 565 datadesk y 1581 backend en verde.
+
+### ✅ S37 — Un control tiene el mismo aspecto en cualquier sitio (2026-11-22)
+
+El campo de color del panel y su descripción se pintaban como controles del
+navegador al lado de una tira de campos con el estilo de la app. La causa no era
+el panel: el aspecto de un control estaba declarado en `.dd-field .dd-input`, así
+que **dependía de ir dentro de una etiqueta de la tira**. Había tres copias del
+mismo bloque (`.dd-field .dd-input`, `.dd-rows .dd-input` y `.dd-filter input`) y la
+cuarta —el panel— no existía.
+
+- El bloque pasa a `.dd-input`, sin prefijo, y las dos copias que solo repetían
+  geometría se quedan con lo que las hace distintas: el control de filas, su ancho
+  y su alineación; la barra de filtros, sus `select` y el chevron propio.
+- Un `textarea.dd-input` gana relleno vertical (`var(--dd-s1)`): con el relleno de
+  una línea, la primera línea tocaba el borde. Se nota en la tira y en el panel.
+- El panel deja de forzar `display: block` en su campo de color: usa el mismo
+  `.dd-lookup` que la tira, así que el `+ Crear "X"` cae debajo del campo igual.
+- Medido en el navegador: 34 px de alto, radio 8, borde `--dd-line-strong`, 13 px
+  Inter y el mismo relleno en los cuatro campos (nombre y descripción de la tira,
+  color y descripción del panel). Y el campo de referencia de la tira, enfocado con
+  la lista cargada, enseña la misma flecha nativa que el del panel: no había dos
+  estilos, había uno a medias.
+
+Tres pins en `test_layout` (el look no está dentro de `.dd-field`, la base lleva la
+geometría, el textarea lleva relleno vertical). 568 datadesk en verde. Sin cambios
+de plantilla ni de JS: dos controles llevaban la clase correcta desde S29/S35 y no
+les llegaba el estilo.
