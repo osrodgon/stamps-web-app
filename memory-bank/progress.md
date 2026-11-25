@@ -633,7 +633,7 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0 done, A1 next)
+### AI API — real sources (A0 and A1 done, A1b next)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
@@ -642,9 +642,8 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, Colnect for the market, an allowed-sites search for an indicative
 price — and keeps it as a normaliser:
 
-**Next: A1 (contract + observations model) and A1b (opencode provider), which can
-run in parallel.** Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block in
-`activeContext.md`.
+**Next: A1b (opencode provider).** A1 is done. Resume at `ai-api-plan.md` §3–§4
+and the "Retomar aquí" block in `activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -659,6 +658,19 @@ run in parallel.** Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" 
       tiene una Store API pública y exacta (`?sku=`) con `Número EDIFIL`, título de
       serie, facial, tirada, color y dentado, que es el puente de identidad que A6
       necesitaba.
+- [x] **A1 — Contrato y modelo de observaciones** (2026-11-25): `SourceObservation`
+      en `backend/ai_api/models.py` con `source`, `external_id`, `url`, `issue` /
+      `stamp` (dos FK y un `CheckConstraint` de exactamente una), `kind` (`catalog`,
+      `ask`, `sold`, `auction_hammer`), `price`, `currency`, `condition`,
+      `observed_at`, `raw` y `raw_hash` (identidad sin la fecha, `unique`, calculada
+      en `save()`); migración aplicada y revertida (el directorio está gitignoreado,
+      CI la construye desde los modelos). Respuesta con `sources`, `observations`,
+      `valuation` (`estimate`, `min`, `max`, `currency`, `sample_size`, `method`,
+      `sources`, `as_of`), `gaps` y `description_source` (también por sello); los
+      `market_value_*` quedan como obsoletos y el endpoint los pone a `null` aunque
+      el proveedor escriba algo. Prompts sin la sección de valuación y sin el
+      «EXPANSION» con conocimiento interno. 22 tests nuevos (15 de modelo, 7 de
+      contrato), 1.655 verdes.
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi

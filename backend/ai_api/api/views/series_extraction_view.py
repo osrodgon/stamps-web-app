@@ -159,7 +159,19 @@ class SeriesExtractionView(Logger, APIView):
                     })).data,
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
-            
+
+            # No observation backs a price yet, so the price fields stay empty
+            # even if the provider wrote something. A7 fills them from the
+            # observations and A9 adds the validator that enforces this for every
+            # factual field; until then, a number here would be unauditable.
+            validated = response_serializer.validated_data
+            validated["market_value_mnh"] = None
+            validated["market_value_used"] = None
+            for stamp in validated.get("stamps") or []:
+                if isinstance(stamp, dict):
+                    stamp["market_value_mnh"] = None
+                    stamp["market_value_used"] = None
+
             self.log.debug(f"AI series extraction completed successfully for series: {name}")
             return Response(
                 data=response_serializer.data,

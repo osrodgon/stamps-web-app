@@ -1,13 +1,13 @@
 # Active Context
 
 ## Current Task
-- **AI API A0 done (2026-11-25)**: the source probe ran; the report is
-  `memory-bank/ai-sources-spike.md`. Delcampe scraping is discarded (its
-  `robots.txt` forbids the search path), Colnect needs the CAPI key, Iberphil is a
-  weak lot-level source, and **Fesofi's public Store API is the identity bridge**
-  (`?sku=` → `Número EDIFIL` + series facts). Spike validated by the user, A0 closed
-  in the plan's step table; **next steps are A1** (the observations model) and
-  **A1b** (opencode replaces Gemini and Groq). Details in Notes below.
+- **AI API A0 + A1 done (2026-11-25)**: the source probe ran (report in
+  `memory-bank/ai-sources-spike.md`) and the extraction contract is now
+  evidence-based: `SourceObservation` stores every price with its source, URL,
+  kind, condition and date, and the response carries `sources`, `observations`,
+  `valuation`, `gaps` and `description_source` while the old `market_value_*` stay
+  null. Spike validated by the user, A0 and A1 closed in the plan's step table;
+  **next step is A1b** (opencode replaces Gemini and Groq). Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -72,34 +72,40 @@
 
 ## Retomar aquí (guardado 2026-11-25)
 
-**A0 está cerrado. Lo siguiente son A1 y A1b, que pueden ir a la vez.** Nada de A1
-en adelante tiene una línea de código escrita.
+**A0 y A1 están cerrados. Lo siguiente es A1b.** A1 dejó el modelo de observaciones
+y el contrato; A2 prepara la capa HTTP que las llena y A6 empieza a llenarlas con
+Fesofi.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A1 — Contrato y modelo de observaciones** (M): `SourceObservation` con fuente,
-  URL, tipo, precio, condición y fecha; respuesta con `sources`, `observations`,
-  `valuation` y `gaps`; prompts sin la sección de valuación ni el «EXPANSION».
 - **A1b — Proveedor opencode** (S): `OpenCodeProvider` contra
   `https://opencode.ai/inference/openai/v1/chat/completions` con
   `Authorization: Bearer oc_sk_…`; fuera `gemini_provider.py`, `groq_provider.py`,
   sus tests, `GEMINI_*` / `GROQ_*` y las dos dependencias. Claves nuevas:
   `OPENCODE_API_KEY` (mejor de service account), `OPENCODE_MODEL` y
   `OPENCODE_BASE_URL` (opcional).
+- **A2 — Capa de fuentes** (M): `sources/base.py`, `http.py` con allowlist y
+  timeouts, y los arreglos de §1 (SSRF, timeout de Serper, 404/422/500, una sola
+  fuente de configuración).
+- **A6 — Fesofi** (L): el puente de identidad; es lo primero que llena
+  `observations` y `description_source`.
 - **Bloqueado**: A3 (Colnect) hasta que exista la clave CAPI; se pide en
   `colnect.com/en/capi/use_request` y el procedimiento está en el plan §A3. No
-  bloquea A1, A1b, A2 ni A6.
+  bloquea A1b, A2 ni A6.
 - **Sin decidir**: el modelo concreto (los gratuitos del Console dan 403 desde
   fuera, así que será de pago) y dónde se dispara la investigación (DataDesk, app
   Flet o comando), que condiciona A8.
 - **Estado del árbol de trabajo**: `backend/ai_api/probe.py`, el comando
-  `ai_sources_probe`, `ai_api/test/test_probe.py`, `ai-api-plan.md`,
-  `ai-sources-spike.md` y `.json` están **sin commitear**. También hay cambios
-  previos sin commitear que no son de este trabajo (`AGENTS.md`,
+  `ai_sources_probe`, `ai_api/models.py`, los serializers nuevos, los prompts, la
+  vista, los tests (`test_probe.py`, `test_observations.py`, `test_contract.py`) y
+  los documentos de memoria están **sin commitear**. También hay cambios previos
+  sin commitear que no son de este trabajo (`AGENTS.md`,
   `user-collections-plan.md` y los tres mockups de colecciones): no se tocan.
-- **Verificación rápida**: `python -m pytest ai_api -q` → **126 verdes** (99
-  previos + 27 del sondeo). La suite completa quedó en **1.633**.
+  `ai_api/migrations/` está gitignoreado; CI construye el esquema desde los modelos.
+- **Verificación rápida**: `python -m pytest ai_api -q` → **148 verdes**; la suite
+  completa, **1.655**. `manage.py spectacular` genera el esquema sin avisos y la
+  migración aplica y revierte.
 
 ## Notes
 - **AI API A0 done (2026-11-25)**: the source probe ran and its report is
@@ -117,9 +123,10 @@ en adelante tiene una línea de código escrita.
   stamp.
 - **Decidido por el usuario (2026-11-25)**: **Fesofi sí** (primera fuente de
   identidad y de hechos de catálogo), **Iberphil fuera** de la primera versión y
-  **Delcampe fuera del plan** (tampoco por agregador). Queda una sola decisión
-  pendiente: **la clave de la CAPI de Colnect**, que bloquea A3 y con ella la
-  valoración. Dos cifras para A6/A7: 2.733 de los 2.761 sellos sin Edifil tienen
+  **Delcampe fuera del plan** (tampoco por agregador). Siguen abiertas la clave de
+  la CAPI de Colnect (bloquea A3), el motor que use opencode y dónde se dispara la
+  investigación (condiciona A8). Dos cifras para A6/A7: 2.733 de los 2.761 sellos
+  sin Edifil tienen
   Fesofi (Fesofi recupera el 99% de los códigos), y 2.433 de las 2.541 series ya
   tienen algún valor puesto por el LLM actual, sin auditoría.
 - **AI API plan (2026-11-24, parked)**: `memory-bank/ai-api-plan.md` holds the plan to
@@ -150,6 +157,21 @@ en adelante tiene una línea de código escrita.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A1: el contrato deja de ser una promesa y pasa a ser evidencia.
+  `SourceObservation` (source, external_id, url, issue/stamp, kind, price, currency,
+  condition, observed_at, raw, raw_hash) guarda cada precio con la página que lo
+  sostiene; el sujeto son dos FK y un `CheckConstraint` de exactamente una; `kind`
+  tiene cuatro valores porque un precio de catálogo no es una oferta; y `raw_hash`
+  deja la fecha fuera, así que ver el mismo precio dos veces no duplica y uno
+  distinto queda como histórico. La respuesta gana `sources`, `observations`,
+  `valuation` (estimate/min/max/currency/sample_size/method/sources/as_of), `gaps`
+  y `description_source` — también por sello —, y los `market_value_*` quedan
+  obsoletos: el endpoint los pone a `null` aunque el proveedor escriba algo, porque
+  nada los sostiene todavía. Los prompts pierden la sección de valuación entera (la
+  búsqueda imposible y el −25 %) y el «EXPANSION» con conocimiento interno; ahora el
+  texto se escribe sólo con lo que trae la entrada y `notes` se queda vacío si no
+  hay nada que decir. 22 tests nuevos (15 de modelo, 7 de contrato), 1.655 verdes,
+  esquema sin avisos, migración aplicada y revertida.
 - [Today] AI API: decisiones de arquitectura anotadas, sin tocar código. **opencode
   será el único proveedor** y Gemini y Groq se borran (nuevo paso **A1b**: un
   `OpenCodeProvider` detrás de `BaseLLMProvider`, el registro de la factoría con una

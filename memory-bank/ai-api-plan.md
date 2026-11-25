@@ -93,15 +93,15 @@ quitará si la búsqueda de precios no lo necesita.
 ## 4. Pasos
 
 Dependencias: A0 → A1 → A2 → A6 → A7 → A8 → A9 → A10. A1b (proveedor opencode)
-puede ir en paralelo con A1. A3 (Colnect) entra en cuanto exista la clave CAPI, en
-paralelo a A6. A4 y A5 están fuera del plan (decidido 2026-11-25: Delcampe por
-`robots.txt`, Iberphil por fuente débil).
+no depende de nada y puede ir cuando convenga. A3 (Colnect) entra en cuanto exista
+la clave CAPI, en paralelo a A6. A4 y A5 están fuera del plan (decidido
+2026-11-25: Delcampe por `robots.txt`, Iberphil por fuente débil).
 
 | Paso | Qué | Tamaño | Depende de | Estado |
 |---|---|---|---|---|
 | A0 | Prueba de fuentes | S | — | **hecho 2026-11-25** |
-| A1 | Contrato y modelo de observaciones | M | A0 | siguiente |
-| A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | pendiente, puede ir con A1 |
+| A1 | Contrato y modelo de observaciones | M | A0 | **hecho 2026-11-25** |
+| A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | siguiente |
 | A2 | Capa de fuentes + arreglos de seguridad | M | A1 | pendiente |
 | A3 | Adaptador Colnect | L | A2, clave CAPI | pendiente, bloqueado por la clave |
 | A4 | Adaptador Delcampe | M | — | **fuera del plan** |
@@ -134,7 +134,7 @@ descartado**; Iberphil sólo publica el martillo en algunas fichas y sin código
 y **Fesofi, que no estaba en el plan, expone una Store API pública y exacta
 (`?sku=`) con `Número EDIFIL`, título de serie, facial, tirada, color y dentado**.
 
-### A1 — Contrato y modelo de datos (M)
+### A1 — Contrato y modelo de datos (M) — **HECHO 2026-11-25**
 
 El cambio de fondo: el endpoint deja de devolver cifras que nadie puede auditar y
 devuelve **observaciones con fuente**.
@@ -151,6 +151,44 @@ devuelve **observaciones con fuente**.
 
 Aceptación: migración aplicable y reversible; serializers de la respuesta con los
 campos nuevos; tests de contrato con datos fijos.
+
+**Hecho el 2026-11-25.** Lo que hay, con las decisiones que se tomaron al
+implementarlo:
+
+- `backend/ai_api/models.py` con `SourceObservation`. La migración se genera y se
+  aplica en local, pero **`migrations/` está gitignoreado** (`.gitignore:70`): CI
+  construye el esquema desde los modelos. Comprobado que aplica y revierte
+  (`migrate ai_api zero` y vuelta).
+- `subject` son **dos FK anulables** (`issue`, `stamp`) más un `CheckConstraint`
+  que exige exactamente una, en vez de un `GenericForeignKey`: se consulta sin
+  `contenttypes` y el error salta en la base, no en Python.
+- `kind` tiene **cuatro** valores, no tres: `catalog`, `ask`, `sold` y
+  `auction_hammer`. El de catálogo entró con la decisión del 2026-11-25 (un precio
+  de Edifil no es ni una oferta ni una venta y hay que poder distinguirlo).
+- `raw_hash` es la identidad de la observación: fuente, id externo, sujeto, tipo,
+  condición, precio y divisa; **la fecha no entra**, para que ver el mismo precio
+  dos veces no duplique la fila y un precio distinto sí quede como histórico.
+  `unique=True` y se calcula en `save()`.
+- Respuesta (`api/serializers/observation_serializer.py`): `Observation`,
+  `SourceReport`, `Gap` y `Valuation` (`estimate`, `min`, `max`, `currency`,
+  `sample_size`, `method`, `sources`, `as_of`). En `sources` el campo se llama
+  `source` y no `name` a propósito: con dos campos distintos para el mismo
+  `choices`, drf-spectacular avisaba de un enum duplicado.
+- `description_source` por defecto `llm`, y `to_representation` se lo pone también
+  a cada sello. Los prompts ya no piden cifras; el texto se escribe sólo con lo que
+  trae la entrada y `notes` queda vacío si la fuente no dice nada.
+- `market_value_mnh` / `market_value_used` siguen en la forma por compatibilidad,
+  pero son `required=False` y **el endpoint los pone a `null`** aunque el proveedor
+  escriba algo (serie y sellos): hasta que A7 los calcule desde observaciones, un
+  número ahí no se puede auditar. A9 añade el validador que lo hace cumplir para
+  todos los campos factuales.
+- 22 tests nuevos: 15 del modelo (`test_observations.py`: identidad, duplicados,
+  precio distinto, sujeto, defaults) y 7 de contrato (`test_contract.py`: ida y
+  vuelta completa, payload antiguo con defaults, etiqueta de procedencia, fuente
+  desconocida rechazada, valuación sin estimación, y el endpoint devolviendo nulos
+  aunque el mock escriba precios). **1.655 tests verdes**; esquema OpenAPI sin
+  avisos.
+
 
 ### A1b — Proveedor opencode (S) — **decidido 2026-11-25**
 
@@ -480,4 +518,24 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   `.env.example` líneas 19–34, `ai_api/test/test_gemini_provider.py`,
   `test_groq_provider.py`, `test_provider_factory.py`,
   `test_llm_service_facade.py` y `validate_multi_provider_implementation.py`.
+
+### 2026-11-25 — A1 hecho (contrato y modelo de observaciones)
+
+- `backend/ai_api/models.py`: `SourceObservation` con `source`, `external_id`,
+  `url`, `issue` / `stamp` (dos FK anulables y un `CheckConstraint` de
+  exactamente una), `kind` (**cuatro** valores: `catalog`, `ask`, `sold`,
+  `auction_hammer`), `price`, `currency`, `condition`, `observed_at`, `raw` y
+  `raw_hash` (identidad sin la fecha, `unique`, calculada en `save()`).
+- `backend/ai_api/api/serializers/observation_serializer.py`: `Observation`,
+  `SourceReport`, `Gap` y `Valuation` (`estimate`, `min`, `max`, `currency`,
+  `sample_size`, `method`, `sources`, `as_of`).
+- `series_extraction_response_serializer.py`: bloques nuevos con defaults,
+  `description_source` (`llm` por defecto, también en cada sello) y los
+  `market_value_*` marcados como obsoletos; el endpoint los pone a `null` aunque
+  el proveedor escriba algo.
+- `services/prompts.py`: fuera la sección de valuación (la búsqueda imposible y el
+  −25 %) y fuera el «EXPANSION» con conocimiento interno; el texto se escribe sólo
+  con lo que trae la entrada y `notes` queda vacío si no hay nada que decir.
+- 22 tests nuevos (15 de modelo, 7 de contrato), 1.655 verdes, esquema OpenAPI sin
+  avisos, migración aplicada y revertida. El detalle está en la ficha del paso, §4.
 
