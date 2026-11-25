@@ -12,6 +12,22 @@ At the **very start of every session** (before any tool calls or responses), you
 - Working directory: `/workspaces/stamps-web-app`
 - Memory-bank location: `/workspaces/stamps-web-app/memory-bank/`
 
+## Working style (agreed 2026-11-22)
+
+- **Plan first, and announce the work before touching a file.** The user decides
+  when programming starts; while a plan is being discussed, change nothing but
+  the plan. Before every step, say **what** is going to be done and **how**
+  (files, approach, what the step leaves working) and wait for the go-ahead when
+  the user is in review mode.
+- **New code follows the style that is already there**, file by file: the
+  frontend's own patterns (see "Frontend conventions" in
+  `memory-bank/user-collections-plan.md` §5) before any personal preference.
+  When a new need has no precedent, copy the closest existing component or
+  service instead of inventing a second way of doing it.
+- **Tests are part of the step, not a follow-up.** A step is done when the unit
+  tests it needs exist or are updated (services with mocked responses, components
+  where Flet allows it) and the whole suite stays green.
+
 ## Language and GitHub
 
 - **GitHub issue titles are also branch names.** Issue creation lowercases the

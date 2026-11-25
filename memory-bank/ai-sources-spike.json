@@ -1,0 +1,912 @@
+{
+  "generated_at": "2026-11-25T08:47:12Z",
+  "client": "requests/urllib3 (HTTP/1.1)",
+  "user_agent": "stamps-web-app-probe/0.1 (+https://github.com/oscarro/stamps-web-app)",
+  "subjects": [
+    {
+      "issue_id": 2551,
+      "name": "Isabel II",
+      "year": 1850,
+      "first_edifil": "1",
+      "first_fesofi": "0001",
+      "stamps": 5
+    },
+    {
+      "issue_id": 71,
+      "name": "Pro Catacumbas de San Dámaso",
+      "year": 1928,
+      "first_edifil": "402",
+      "first_fesofi": "0402",
+      "stamps": 32
+    },
+    {
+      "issue_id": 81,
+      "name": "Quinta de Goya en la Exposición de Sevilla",
+      "year": 1930,
+      "first_edifil": "517",
+      "first_fesofi": "0517",
+      "stamps": 14
+    },
+    {
+      "issue_id": 842,
+      "name": "Expo 92 Sevilla",
+      "year": 1992,
+      "first_edifil": "3164",
+      "first_fesofi": "3196",
+      "stamps": 57
+    },
+    {
+      "issue_id": 1010,
+      "name": "Correspondencia epistolar escolar",
+      "year": 1998,
+      "first_edifil": "3560",
+      "first_fesofi": "1998026",
+      "stamps": 27
+    }
+  ],
+  "sources": {
+    "colnect": {
+      "robots": {
+        "label": "robots.txt",
+        "url": "https://colnect.com/robots.txt",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://colnect.com/robots.txt",
+        "elapsed_ms": 177,
+        "bytes": 11614,
+        "content_type": "text/plain",
+        "server": "nginx",
+        "shape": "text",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "# robots.txt for Colnect Collectors Community - https://colnect.com\r\n#\r\n# WARNING! Using any data from Colnect by automated means is strictly prohibited without written consent from Colnect\r\n#\r\n# For "
+      },
+      "robots_rule_for_list": null,
+      "robots_crawl_delay": "Crawl-delay: 10",
+      "capi_http1": {
+        "label": "CAPI over HTTP/1.1",
+        "url": "https://api.colnect.net/en/api/000000/categories",
+        "method": "GET",
+        "status": 426,
+        "final_url": "https://api.colnect.net/en/api/000000/categories",
+        "elapsed_ms": 175,
+        "bytes": 98,
+        "content_type": "application/octet-stream",
+        "server": "nginx",
+        "shape": "binary",
+        "challenge": null,
+        "verdict": "rejected: HTTP/2 required by the server",
+        "body_head": "{\"error\":\"HTTP/2 required\",\"message\":\"This endpoint requires HTTP/2. Please upgrade your client.\"}"
+      },
+      "capi_body": "{\"error\":\"HTTP/2 required\",\"message\":\"This endpoint requires HTTP/2. Please upgrade your client.\"}",
+      "capi_http2": {
+        "available": true,
+        "error": "ImportError",
+        "reason": "Using http2=True, but the 'h2' package is not installed. Make sure to install httpx using `pip install httpx[http2]`."
+      },
+      "public_site": {
+        "label": "public site (1850)",
+        "url": "https://colnect.com/en/stamps/list/country/67-Spain/year/1850",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://colnect.com/en/stamps/list/country/67-Spain/year/1850",
+        "elapsed_ms": 171,
+        "bytes": 5149,
+        "content_type": "text/html; charset=utf-8",
+        "server": "nginx",
+        "shape": "html",
+        "challenge": "anubis",
+        "verdict": "blocked by a bot challenge (anubis)",
+        "body_head": "<!doctype html><html lang=\"es\"><head><title>Colnect Protección de coleccionistas</title><link rel=\"stylesheet\" href=\"/.within.website/x/xess/xess.min.css?cachebuster=1.25.0\"><meta name=\"viewport\" cont"
+      }
+    },
+    "delcampe": {
+      "robots": {
+        "label": "robots.txt",
+        "url": "https://www.delcampe.net/robots.txt",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.delcampe.net/robots.txt",
+        "elapsed_ms": 183,
+        "bytes": 14316,
+        "content_type": "text/plain",
+        "server": "nginx",
+        "shape": "text",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "User-agent: Bingbot\nUser-agent: Pinterestbot\nDisallow:\nCrawl-delay: 1\n\nUser-agent: 008\nuser-agent: AhrefsBot\nUser-agent: Alexibot\nUser-agent: AlvinetSpider\nUser-agent: Antenne Hatena\nUser-agent: Apoca"
+      },
+      "robots_readable": true,
+      "robots_rule_for_search": "Disallow: /en_GB/collectables/search",
+      "searches": [
+        {
+          "subject": {
+            "issue_id": 2551,
+            "name": "Isabel II",
+            "year": 1850,
+            "first_edifil": "1",
+            "first_fesofi": "0001",
+            "stamps": 5
+          },
+          "request": {
+            "label": "search 1 1850",
+            "url": "https://www.delcampe.net/en_GB/collectables/search?term=1+1850",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://www.delcampe.net/en_GB/collectables/search?term=1+1850",
+            "elapsed_ms": 441,
+            "bytes": 499794,
+            "content_type": "text/html; charset=UTF-8",
+            "server": "nginx",
+            "shape": "html",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "    <!DOCTYPE html>\n<html lang=\"en_GB\">\n    <head><title>Search: 1 1850 | Delcampe</title>\n        <meta name=\"description\" content=\"Browse search results for &quot;1 1850&quot; on Delcampe and find t"
+          },
+          "cards_returned": 5,
+          "cards": [
+            {
+              "title": "Israel 1999 J. Ensor 1v, joint issue Belgium, First Day Cover, Various - Joint Issues - Art - Modern Art (1850-present)",
+              "url": "/en_GB/collectables/stamps/israel/1990-99/covers-documents/israel-1999-j-ensor-1v-joint-issue-belgium-first-day-cover-various-joint-issues-art-modern-art-1850-present-2679967265.html",
+              "price": "€1.50",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "PRUSSIA 1850s 1 Silbergroschen Rose Postal Stationery Cover RHEYDT to CREFELD Bankhaus von Beckerath, Lot 112026-1 30",
+              "url": "/en_GB/collectables/stamps/germany/2-german-states/prussia/covers-documents/prussia-1850s-1-silbergroschen-rose-postal-stationery-cover-rheydt-to-crefeld-bankhaus-von-beckerath-lot-112026-1-30-2679963959.html",
+              "price": "€4.99",
+              "selling_type": "Auction"
+            },
+            {
+              "title": "Austria 1987 Art, A. Neuwirth painting 1v, First Day Cover, Nature - Trees & Forests - Art - Modern Art (1850-present)",
+              "url": "/en_GB/collectables/stamps/austria/other-unclassified/austria-1987-art-a-neuwirth-painting-1v-first-day-cover-nature-trees-forests-art-modern-art-1850-present-2679963302.html",
+              "price": "€1.50",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Austria 1987 Rainer painting 1v, First Day Cover, Art - Modern Art (1850-present)",
+              "url": "/en_GB/collectables/stamps/austria/other-unclassified/austria-1987-rainer-painting-1v-first-day-cover-art-modern-art-1850-present-2679963266.html",
+              "price": "€1.50",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Aland 2007 Tove Jansson painting 1v, Gutterpair, Mint NH, Art - Modern Art (1850-present) - Paintings",
+              "url": "/en_GB/collectables/stamps/aland/aland-2007-tove-jansson-painting-1v-gutterpair-mint-nh-art-modern-art-1850-present-paintings-2679962183.html",
+              "price": "€2.90",
+              "selling_type": "Fixed price"
+            }
+          ],
+          "titles_with_edifil": 0,
+          "titles_with_code": 5
+        },
+        {
+          "subject": {
+            "issue_id": 71,
+            "name": "Pro Catacumbas de San Dámaso",
+            "year": 1928,
+            "first_edifil": "402",
+            "first_fesofi": "0402",
+            "stamps": 32
+          },
+          "request": {
+            "label": "search 402 1928",
+            "url": "https://www.delcampe.net/en_GB/collectables/search?term=402+1928",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://www.delcampe.net/en_GB/collectables/search?term=402+1928",
+            "elapsed_ms": 446,
+            "bytes": 481884,
+            "content_type": "text/html; charset=UTF-8",
+            "server": "nginx",
+            "shape": "html",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "    <!DOCTYPE html>\n<html lang=\"en_GB\">\n    <head><title>Search: 402 1928 | Delcampe</title>\n        <meta name=\"description\" content=\"Browse search results for &quot;402 1928&quot; on Delcampe and fi"
+          },
+          "cards_returned": 5,
+          "cards": [
+            {
+              "title": "ESPAÑA. 1928. CATACUMBAS. Conjunto de 12 cartas multitud de franqueos con diversos sellos de la serie. Ed.402/33.",
+              "url": "/en_GB/collectables/stamps/other-unclassified/espana-1928-catacumbas-conjunto-de-12-cartas-multitud-de-franqueos-con-diversos-sellos-de-la-serie-ed-402-33-2674011947.html",
+              "price": "€150.00",
+              "selling_type": "Auction house"
+            },
+            {
+              "title": "1928- ED. 402, 403 y 404 PRO CATACUMBAS DE SAN DÁMASO EN ROMA. PIO XI Y ALFONSO XIII - SERIE DE TOLEDO- NUEVO CON FIJASE",
+              "url": "/en_GB/collectables/stamps/spain-1889-1931-kingdom-alphonse-xiii/unused-stamps/1928-ed-402-403-y-404-pro-catacumbas-de-san-damaso-en-roma-pio-xi-y-alfonso-xiii-serie-de-toledo-nuevo-con-fijase-2653315340.html",
+              "price": "€0.80",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Pro Catacumbas MNH 1928 Edifil 402/33 sín fijasellos Yvert 339/66",
+              "url": "/en_GB/collectables/stamps/spain-1889-1931-kingdom-alphonse-xiii/unused-stamps/pro-catacumbas-mnh-1928-edifil-402-33-sin-fijasellos-yvert-339-66-2643626489.html",
+              "price": "€50.00",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "ALLEMAGNE - 1928 . Y&T n° 402 oblitéré Karlsruhe",
+              "url": "/en_GB/collectables/stamps/germany/1924-1932/used-stamps/allemagne-1928-y-t-n-402-oblitere-karlsruhe-2640958925.html",
+              "price": "€0.10",
+              "selling_type": "Auction"
+            },
+            {
+              "title": "ALLEMAGNE - 1928 . Y&T n° 402 oblitéré. Perforé FZ / Perfin",
+              "url": "/en_GB/collectables/stamps/philately-coins/perfins/allemagne-1928-y-t-n-402-oblitere-perfore-fz-perfin-2640208526.html",
+              "price": "€0.15",
+              "selling_type": "Auction"
+            }
+          ],
+          "titles_with_edifil": 1,
+          "titles_with_code": 5
+        },
+        {
+          "subject": {
+            "issue_id": 81,
+            "name": "Quinta de Goya en la Exposición de Sevilla",
+            "year": 1930,
+            "first_edifil": "517",
+            "first_fesofi": "0517",
+            "stamps": 14
+          },
+          "request": {
+            "label": "search 517 1930",
+            "url": "https://www.delcampe.net/en_GB/collectables/search?term=517+1930",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://www.delcampe.net/en_GB/collectables/search?term=517+1930",
+            "elapsed_ms": 473,
+            "bytes": 482189,
+            "content_type": "text/html; charset=UTF-8",
+            "server": "nginx",
+            "shape": "html",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "    <!DOCTYPE html>\n<html lang=\"en_GB\">\n    <head><title>Search: 517 1930 | Delcampe</title>\n        <meta name=\"description\" content=\"Browse search results for &quot;517 1930&quot; on Delcampe and fi"
+          },
+          "cards_returned": 5,
+          "cards": [
+            {
+              "title": "Austria Mi nr 512 - 517 MH/* Falz 1930",
+              "url": "/en_GB/collectables/stamps/austria-1850-1918-empire/unused-stamps/austria-mi-nr-512-517-mh-falz-1930-342920045.html",
+              "price": "€32.17",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Spain: 1930 Mi 502 - 517 MH/* part of set!, 10 Pts has brown spot at left side",
+              "url": "/en_GB/collectables/stamps/spain-1889-1931-kingdom-alphonse-xiii/unused-stamps/spain-1930-mi-502-517-mh-part-of-set-10-pts-has-brown-spot-at-left-side-236325220.html",
+              "price": "€24.12",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Spain: 1930 Mi 508 - 517 MH/* part of set!",
+              "url": "/en_GB/collectables/stamps/spain-1889-1931-kingdom-alphonse-xiii/unused-stamps/spain-1930-mi-508-517-mh-part-of-set-236325218.html",
+              "price": "€24.12",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "ESPAÑA. 1930. Dos cartas circuladas con la serie completa, al dorso llegada. Ed.517/30.",
+              "url": "/en_GB/collectables/stamps/other-unclassified/espana-1930-dos-cartas-circuladas-con-la-serie-completa-al-dorso-llegada-ed-517-30-2674012112.html",
+              "price": "€75.00",
+              "selling_type": "Auction house"
+            },
+            {
+              "title": "ESPAÑA. 1930. BARCELONA a USA. Carta certificada, espectacular franqueo, al dorso llegada. Ed.499/504, 517/19, 311, 317,",
+              "url": "/en_GB/collectables/stamps/other-unclassified/espana-1930-barcelona-a-usa-carta-certificada-espectacular-franqueo-al-dorso-llegada-ed-499-504-517-19-311-317-2674012058.html",
+              "price": "€50.00",
+              "selling_type": "Auction house"
+            }
+          ],
+          "titles_with_edifil": 0,
+          "titles_with_code": 5
+        },
+        {
+          "subject": {
+            "issue_id": 842,
+            "name": "Expo 92 Sevilla",
+            "year": 1992,
+            "first_edifil": "3164",
+            "first_fesofi": "3196",
+            "stamps": 57
+          },
+          "request": {
+            "label": "search 3164 1992",
+            "url": "https://www.delcampe.net/en_GB/collectables/search?term=3164+1992",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://www.delcampe.net/en_GB/collectables/search?term=3164+1992",
+            "elapsed_ms": 359,
+            "bytes": 353948,
+            "content_type": "text/html; charset=UTF-8",
+            "server": "nginx",
+            "shape": "html",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "    <!DOCTYPE html>\n<html lang=\"en_GB\">\n    <head><title>Search: 3164 1992 | Delcampe</title>\n        <meta name=\"description\" content=\"Browse search results for &quot;3164 1992&quot; on Delcampe and "
+          },
+          "cards_returned": 5,
+          "cards": [
+            {
+              "title": "Spain 1992. Expo Sevilla'92. Ed 3164-87 (**) (sellos)",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/unused-stamps/spain-1992-expo-sevilla-92-ed-3164-87-sellos-2665075703.html",
+              "price": "€3.50",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "ESPAÑA 1992 Nº 3164/3187 USADO 1º DIA",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/used-stamps/espana-1992-no-3164-3187-usado-1o-dia-2643611954.html",
+              "price": "€4.82",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "ESPAÑA 1992 - EXPO'92 SEVILLA - EDIFIL Nº 3164/3187 usados - YVERT 2771/2794 used",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/used-stamps/espana-1992-expo-92-sevilla-edifil-no-3164-3187-usados-yvert-2771-2794-used-2562227111.html",
+              "price": "€4.50",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "ESPAÑA 1992 - EXPO'92 SEVILLA - EDIFIL Nº 3164 usado - YVERT 2771",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/used-stamps/espana-1992-expo-92-sevilla-edifil-no-3164-usado-yvert-2771-2562214712.html",
+              "price": "€0.30",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Spain 1992. Expo Sevilla'92. Ed 3164-87 (**)",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/unused-stamps/spain-1992-expo-sevilla-92-ed-3164-87-2506411985.html",
+              "price": "€3.80",
+              "selling_type": "Fixed price"
+            }
+          ],
+          "titles_with_edifil": 2,
+          "titles_with_code": 5
+        },
+        {
+          "subject": {
+            "issue_id": 1010,
+            "name": "Correspondencia epistolar escolar",
+            "year": 1998,
+            "first_edifil": "3560",
+            "first_fesofi": "1998026",
+            "stamps": 27
+          },
+          "request": {
+            "label": "search 3560 1998",
+            "url": "https://www.delcampe.net/en_GB/collectables/search?term=3560+1998",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://www.delcampe.net/en_GB/collectables/search?term=3560+1998",
+            "elapsed_ms": 362,
+            "bytes": 330936,
+            "content_type": "text/html; charset=UTF-8",
+            "server": "nginx",
+            "shape": "html",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "    <!DOCTYPE html>\n<html lang=\"en_GB\">\n    <head><title>Search: 3560 1998 | Delcampe</title>\n        <meta name=\"description\" content=\"Browse search results for &quot;3560 1998&quot; on Delcampe and "
+          },
+          "cards_returned": 5,
+          "cards": [
+            {
+              "title": "1998-ED. 3560 a 3583-M.P.61A-B -EL QUIJOTE por MINGOTE-NUEVO",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/unused-stamps/1998-ed-3560-a-3583-m-p-61a-b-el-quijote-por-mingote-nuevo-2618211311.html",
+              "price": "€5.25",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Spain 1998 Don Quijote Minipliegos Ed 3560-83",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/unused-stamps/spain-1998-don-quijote-minipliegos-ed-3560-83-2598672386.html",
+              "price": "€3.83",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "Spain 1998 Don Quijote Minipliegos Ed 3560-83 (**)",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1991-2000/unused-stamps/spain-1998-don-quijote-minipliegos-ed-3560-83-2554418414.html",
+              "price": "€3.45",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "130 ESPAÑA ESPAGNE 1998 / DON QUIJOTE de la MANCHA / EDIFIL 3560 / 3583 MNH YVERT 3132 / 3155 MNH",
+              "url": "/en_GB/collectables/stamps/spain/blocks-sheetlets-panes/130-espana-espagne-1998-don-quijote-de-la-mancha-edifil-3560-3583-mnh-yvert-3132-3155-mnh-2123095263.html",
+              "price": "€9.00",
+              "selling_type": "Fixed price"
+            },
+            {
+              "title": "España Spain 3560/83 1998 Correspondencia Epistolar escolar Quijote MNH",
+              "url": "/en_GB/collectables/stamps/spain/1931-today-2nd-rep-juan-carlos-i/1951-1960/unused-stamps/espana-spain-3560-83-1998-correspondencia-epistolar-escolar-quijote-mnh-1982615158.html",
+              "price": "€5.80",
+              "selling_type": "Fixed price"
+            }
+          ],
+          "titles_with_edifil": 1,
+          "titles_with_code": 5
+        }
+      ]
+    },
+    "iberphil": {
+      "robots": {
+        "label": "robots.txt",
+        "url": "https://www.iberphil.com/robots.txt",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.iberphil.com/robots.txt",
+        "elapsed_ms": 116,
+        "bytes": 457,
+        "content_type": "text/plain",
+        "server": "BunnyCDN-ES1-895",
+        "shape": "text",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "User-agent: *\nAllow: /\nDisallow: /generate-pdf/\nDisallow: /en/generate-pdf/\nDisallow: /es/generate-pdf/\n\n# Meta / Facebook crawlers\nUser-agent: meta-externalagent\nDisallow: /\n\nUser-agent: Claude-Searc"
+      },
+      "robots_rule_for_lots": null,
+      "history": {
+        "label": "history index",
+        "url": "https://www.iberphil.com/es/subastas-historico",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.iberphil.com/es/subastas-historico",
+        "elapsed_ms": 997,
+        "bytes": 60018,
+        "content_type": "text/html; charset=utf-8",
+        "server": "BunnyCDN-ES1-895",
+        "shape": "html",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met"
+      },
+      "auction": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026",
+      "auction_count_found": 1,
+      "results": {
+        "label": "results page",
+        "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/informacion-de-subasta",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/informacion-de-subasta",
+        "elapsed_ms": 549,
+        "bytes": 27082,
+        "content_type": "text/html; charset=utf-8",
+        "server": "BunnyCDN-ES1-895",
+        "shape": "html",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met"
+      },
+      "sold_lots": {
+        "label": "sold lots table",
+        "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/auction-sold-lots",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/auction-sold-lots",
+        "elapsed_ms": 538,
+        "bytes": 27294,
+        "content_type": "text/html; charset=utf-8",
+        "server": "BunnyCDN-ES1-895",
+        "shape": "html",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met"
+      },
+      "sold_lots_rows": [
+        {
+          "N° Lote": "23",
+          "Clasificación": "Alemania Occidental. Lotes y Colecciones.Extranjero",
+          "Puja inicial (€)": "200,00"
+        },
+        {
+          "N° Lote": "52",
+          "Clasificación": "Dinamarca. Lotes y Colecciones.Extranjero",
+          "Puja inicial (€)": "150,00"
+        },
+        {
+          "N° Lote": "101",
+          "Clasificación": "Francia. Stock de Series y Sellos",
+          "Puja inicial (€)": "250,00"
+        },
+        {
+          "N° Lote": "137",
+          "Clasificación": "Gran Bretaña. Lotes y Colecciones.Extranjero",
+          "Puja inicial (€)": "1.200,00"
+        },
+        {
+          "N° Lote": "146",
+          "Clasificación": "Gran Bretaña. Lotes y Colecciones.Extranjero",
+          "Puja inicial (€)": "400,00"
+        }
+      ],
+      "lot_url": "https://www.iberphil.com/es/subastas-sellos/48-Subasta-Online-Sellos-Espaa-y-Colonias-23-07-2026/lote-3117-%257CSOBRE%257C1837",
+      "lot": {
+        "label": "one lot page",
+        "url": "https://www.iberphil.com/es/subastas-sellos/48-Subasta-Online-Sellos-Espaa-y-Colonias-23-07-2026/lote-3117-%257CSOBRE%257C1837",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://www.iberphil.com/es/subastas-sellos/48-Subasta-Online-Sellos-Espaa-y-Colonias-23-07-2026/lote-3117-%257CSOBRE%257C1837",
+        "elapsed_ms": 758,
+        "bytes": 43125,
+        "content_type": "text/html; charset=utf-8",
+        "server": "BunnyCDN-ES1-895",
+        "shape": "html",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met",
+        "description": "SOBRE 1837. CEUTA a CORELLA (NAVARRA). Marca C / AFRICA, en rojo de Ceuta (P.E.8) edición 2004. MAGNIFICA Y… Lote 3117 · Subasta Online Sellos España y…",
+        "starting_price": "375",
+        "starting_free": false,
+        "hammer_price": "375",
+        "sold": true,
+        "mentions_edifil": false,
+        "mentions_fesofi": false
+      },
+      "lot_pages": [
+        {
+          "label": "sold lot 1",
+          "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-23-%257C%257C1949ca",
+          "method": "GET",
+          "status": 200,
+          "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-23-%257C%257C1949ca",
+          "elapsed_ms": 908,
+          "bytes": 56285,
+          "content_type": "text/html; charset=utf-8",
+          "server": "BunnyCDN-ES1-895",
+          "shape": "html",
+          "challenge": null,
+          "verdict": "reachable",
+          "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met",
+          "description": "**/º MNH/USADO (1949ca). Interesante y muy completa colección de Alemania Occidental entre 1949 y 2008, en… Lote 23 · Subasta Online Lotes y Colecciones…",
+          "starting_price": "200",
+          "starting_free": false,
+          "hammer_price": null,
+          "sold": false,
+          "mentions_edifil": false,
+          "mentions_fesofi": false
+        },
+        {
+          "label": "sold lot 2",
+          "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-52-%257C%257C1975ca",
+          "method": "GET",
+          "status": 200,
+          "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-52-%257C%257C1975ca",
+          "elapsed_ms": 369,
+          "bytes": 55790,
+          "content_type": "text/html; charset=utf-8",
+          "server": "BunnyCDN-ES1-1446",
+          "shape": "html",
+          "challenge": null,
+          "verdict": "reachable",
+          "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met",
+          "description": "** MNH (1975ca). Interesante colección completa de Feroe entre 1975 y 2010, en nuevo e incluyendo la serie… Lote 52 · Subasta Online Lotes y Colecciones…",
+          "starting_price": "150",
+          "starting_free": false,
+          "hammer_price": null,
+          "sold": false,
+          "mentions_edifil": false,
+          "mentions_fesofi": false
+        },
+        {
+          "label": "sold lot 3",
+          "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-101-%257C%257CYvert-2261621000",
+          "method": "GET",
+          "status": 200,
+          "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-101-%257C%257CYvert-2261621000",
+          "elapsed_ms": 1918,
+          "bytes": 41216,
+          "content_type": "text/html; charset=utf-8",
+          "server": "BunnyCDN-ES1-1446",
+          "shape": "html",
+          "challenge": null,
+          "verdict": "reachable",
+          "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met",
+          "description": "** MNH Yvert 2261/62(1000). 1983. Conjunto de mil series completas ASCENSIONES EN GLOBO de Francia 1983 en… Lote 101 · Subasta Online Lotes y Colecciones…",
+          "starting_price": "250",
+          "starting_free": false,
+          "hammer_price": null,
+          "sold": false,
+          "mentions_edifil": false,
+          "mentions_fesofi": false
+        },
+        {
+          "label": "sold lot 4",
+          "url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-137-%257C%257C1840ca",
+          "method": "GET",
+          "status": 200,
+          "final_url": "https://www.iberphil.com/es/subastas-sellos/47-Subasta-Online-Lotes-y-Colecciones-18-06-2026/lote-137-%257C%257C1840ca",
+          "elapsed_ms": 1247,
+          "bytes": 56371,
+          "content_type": "text/html; charset=utf-8",
+          "server": "BunnyCDN-ES1-1446",
+          "shape": "html",
+          "challenge": null,
+          "verdict": "reachable",
+          "body_head": "<!doctype html>\n<html lang=\"es\">\n   <head>\n      <meta charset=\"utf-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      \n                        <met",
+          "description": "º USADO (1840ca). Interesante colección de Gran Bretaña entre 1840 y 1934, en usado y con numerosos sellos… Lote 137 · Subasta Online Lotes y Colecciones…",
+          "starting_price": "1.200",
+          "starting_free": false,
+          "hammer_price": null,
+          "sold": false,
+          "mentions_edifil": false,
+          "mentions_fesofi": false
+        }
+      ],
+      "search_available": false
+    },
+    "fesofi": {
+      "home": {
+        "label": "catalogue home",
+        "url": "https://catalogodesellos.fesofi.es/",
+        "method": "GET",
+        "status": 200,
+        "final_url": "https://catalogodesellos.fesofi.es/",
+        "elapsed_ms": 197,
+        "bytes": 74180,
+        "content_type": "text/html; charset=UTF-8",
+        "server": "",
+        "shape": "html",
+        "challenge": null,
+        "verdict": "reachable",
+        "body_head": "<!DOCTYPE html>\n<!--[if lte IE 9 ]><html class=\"ie lt-ie9\" lang=\"es\"> <![endif]-->\n<!--[if (gte IE 9)|!(IE)]><!--><html lang=\"es\"> <!--<![endif]-->\n<head>\n\t<meta charset=\"UTF-8\" />\n\t<meta name=\"viewpo"
+      },
+      "searches": [
+        {
+          "subject": {
+            "issue_id": 2551,
+            "name": "Isabel II",
+            "year": 1850,
+            "first_edifil": "1",
+            "first_fesofi": "0001",
+            "stamps": 5
+          },
+          "request": {
+            "label": "store api 0001",
+            "url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0001&per_page=3",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0001&per_page=3",
+            "elapsed_ms": 656,
+            "bytes": 6196,
+            "content_type": "application/json; charset=UTF-8",
+            "server": "",
+            "shape": "json",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "[{\"id\":3500,\"name\":\"0001\",\"slug\":\"0001-2\",\"parent\":0,\"type\":\"simple\",\"variation\":\"\",\"permalink\":\"https:\\/\\/catalogodesellos.fesofi.es\\/producto\\/0001-2\\/\",\"sku\":\"0001\",\"short_description\":\"\",\"descript"
+          },
+          "products": [
+            {
+              "name": "0001",
+              "sku": "0001",
+              "permalink": "https://catalogodesellos.fesofi.es/producto/0001-2/",
+              "price": "0",
+              "currency": "EUR",
+              "attributes": {
+                "Año de Emisión": "1850",
+                "Fecha De Emisión": "1 enero de 1850",
+                "Número Fesofi": "0001",
+                "Número EDIFIL": "1",
+                "Título Serie": "Isabel II",
+                "Motivo Sello": "Isabel II",
+                "Facial": "6 cuartos",
+                "Formato": "19 x 23 mm",
+                "Color": "negro",
+                "Dentado": "Sin dentar",
+                "Grabador": "Bartolomé Coromina",
+                "Impresión": "Litografía",
+                "Imprenta": "Fábrica Nacional del Sello",
+                "Tirada": "6.226.727",
+                "Efectos Por Pliego": "255",
+                "Tipo De Correo": "Correo ordinario",
+                "Validez Postal": "31/12/1850",
+                "Valores De La Serie": "5"
+              }
+            }
+          ],
+          "series_matches": true
+        },
+        {
+          "subject": {
+            "issue_id": 71,
+            "name": "Pro Catacumbas de San Dámaso",
+            "year": 1928,
+            "first_edifil": "402",
+            "first_fesofi": "0402",
+            "stamps": 32
+          },
+          "request": {
+            "label": "store api 0402",
+            "url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0402&per_page=3",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0402&per_page=3",
+            "elapsed_ms": 913,
+            "bytes": 6539,
+            "content_type": "application/json; charset=UTF-8",
+            "server": "",
+            "shape": "json",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "[{\"id\":4298,\"name\":\"0402\",\"slug\":\"0402\",\"parent\":0,\"type\":\"simple\",\"variation\":\"\",\"permalink\":\"https:\\/\\/catalogodesellos.fesofi.es\\/producto\\/0402\\/\",\"sku\":\"0402\",\"short_description\":\"\",\"description\""
+          },
+          "products": [
+            {
+              "name": "0402",
+              "sku": "0402",
+              "permalink": "https://catalogodesellos.fesofi.es/producto/0402/",
+              "price": "0",
+              "currency": "EUR",
+              "attributes": {
+                "Año de Emisión": "1928",
+                "Fecha De Emisión": "23 diciembre 1928",
+                "Número Fesofi": "0402",
+                "Número EDIFIL": "402",
+                "Título Serie": "Pro Catacumbas de San Dámaso",
+                "Motivo Sello": "Pio XI y Alfonso XIII. Serie para Toledo",
+                "Facial": "2 cts",
+                "Formato": "46 x 29 mm",
+                "Color": "azul y carmín",
+                "Dentado": "12 1/2 de línea",
+                "Grabador": "J.C.A. Harrison",
+                "Impresión": "Calcografía, sob. galvanoplastia",
+                "Imprenta": "Waterlow and Sons Ltd. de Londres",
+                "Papel": "blanco con goma blanca",
+                "Tirada": "67.700",
+                "Efectos Por Pliego": "50",
+                "Tipo De Correo": "Correo ordinario",
+                "Validez Postal": "06/01/1929",
+                "Valores De La Serie": "16"
+              }
+            }
+          ],
+          "series_matches": true
+        },
+        {
+          "subject": {
+            "issue_id": 81,
+            "name": "Quinta de Goya en la Exposición de Sevilla",
+            "year": 1930,
+            "first_edifil": "517",
+            "first_fesofi": "0517",
+            "stamps": 14
+          },
+          "request": {
+            "label": "store api 0517",
+            "url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0517&per_page=3",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=0517&per_page=3",
+            "elapsed_ms": 746,
+            "bytes": 6023,
+            "content_type": "application/json; charset=UTF-8",
+            "server": "",
+            "shape": "json",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "[{\"id\":4421,\"name\":\"0517\",\"slug\":\"0517\",\"parent\":0,\"type\":\"simple\",\"variation\":\"\",\"permalink\":\"https:\\/\\/catalogodesellos.fesofi.es\\/producto\\/0517\\/\",\"sku\":\"0517\",\"short_description\":\"\",\"description\""
+          },
+          "products": [
+            {
+              "name": "0517",
+              "sku": "0517",
+              "permalink": "https://catalogodesellos.fesofi.es/producto/0517/",
+              "price": "0",
+              "currency": "EUR",
+              "attributes": {
+                "Año de Emisión": "1930",
+                "Fecha De Emisión": "15 junio 1930",
+                "Número Fesofi": "0517",
+                "Número EDIFIL": "517",
+                "Título Serie": "Quinta de Goya en la E de Sevilla",
+                "Motivo Sello": "\"Buen Viaje\"",
+                "Facial": "5 cts",
+                "Formato": "31 x 41 mm",
+                "Color": "oliva y verde",
+                "Dentado": "12 1/2 de línea",
+                "Grabador": "José López Sánchez-Toda",
+                "Impresión": "Calcografía",
+                "Imprenta": "Waterlow and Sons Ltd, Londrés",
+                "Tirada": "474.000",
+                "Efectos Por Pliego": "25",
+                "Tipo De Correo": "Correo ordinario",
+                "Validez Postal": "17/06/1930",
+                "Valores De La Serie": "14"
+              }
+            }
+          ],
+          "series_matches": false
+        },
+        {
+          "subject": {
+            "issue_id": 842,
+            "name": "Expo 92 Sevilla",
+            "year": 1992,
+            "first_edifil": "3164",
+            "first_fesofi": "3196",
+            "stamps": 57
+          },
+          "request": {
+            "label": "store api 3196",
+            "url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=3196&per_page=3",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=3196&per_page=3",
+            "elapsed_ms": 777,
+            "bytes": 6413,
+            "content_type": "application/json; charset=UTF-8",
+            "server": "",
+            "shape": "json",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "[{\"id\":12764,\"name\":\"3196\",\"slug\":\"3196\",\"parent\":0,\"type\":\"simple\",\"variation\":\"\",\"permalink\":\"https:\\/\\/catalogodesellos.fesofi.es\\/producto\\/3196\\/\",\"sku\":\"3196\",\"short_description\":\"\",\"description"
+          },
+          "products": [
+            {
+              "name": "3196",
+              "sku": "3196",
+              "permalink": "https://catalogodesellos.fesofi.es/producto/3196/",
+              "price": "0",
+              "currency": "EUR",
+              "attributes": {
+                "Año de Emisión": "1992",
+                "Fecha De Emisión": "20 abril 1992",
+                "Número Fesofi": "3196",
+                "Número EDIFIL": "3188",
+                "Título Serie": "Expo 92 Sevilla",
+                "Motivo Sello": "H.B. Sevilla siglo XVI",
+                "Facial": "17 + 5 pta",
+                "Formato": "Hoja",
+                "Color": "multicolor",
+                "Dentado": "13 3/4",
+                "Impresión": "Offset",
+                "Imprenta": "Fábrica Nacional de Moneda y Timbre",
+                "Tirada": "25.920.000",
+                "Tipo De Correo": "Correo ordinario",
+                "Validez Postal": "indefinida",
+                "Valores De La Serie": "24"
+              }
+            }
+          ],
+          "series_matches": true
+        },
+        {
+          "subject": {
+            "issue_id": 1010,
+            "name": "Correspondencia epistolar escolar",
+            "year": 1998,
+            "first_edifil": "3560",
+            "first_fesofi": "1998026",
+            "stamps": 27
+          },
+          "request": {
+            "label": "store api 1998026",
+            "url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=1998026&per_page=3",
+            "method": "GET",
+            "status": 200,
+            "final_url": "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1/products?sku=1998026&per_page=3",
+            "elapsed_ms": 554,
+            "bytes": 4506,
+            "content_type": "application/json; charset=UTF-8",
+            "server": "",
+            "shape": "json",
+            "challenge": null,
+            "verdict": "reachable",
+            "body_head": "[{\"id\":23842,\"name\":\"3601SPD\",\"slug\":\"3601spd\",\"parent\":0,\"type\":\"simple\",\"variation\":\"\",\"permalink\":\"https:\\/\\/catalogodesellos.fesofi.es\\/producto\\/3601spd\\/\",\"sku\":\"1998026\",\"short_description\":\"\","
+          },
+          "products": [
+            {
+              "name": "3601SPD",
+              "sku": "1998026",
+              "permalink": "https://catalogodesellos.fesofi.es/producto/3601spd/",
+              "price": "0",
+              "currency": "EUR",
+              "attributes": {
+                "Año de Emisión": "1998",
+                "Fecha De Emisión": "25 septiembre 1998",
+                "Número Fesofi": "1998026",
+                "Formato": "250 x 190 mm",
+                "Matasellos": "Primer Día. Madrid",
+                "Número de Correos": "S.F.C. - 25/98"
+              }
+            }
+          ],
+          "series_matches": false
+        }
+      ]
+    }
+  }
+}

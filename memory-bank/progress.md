@@ -633,13 +633,114 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### Normal-user collections (plan only: `user-collections-plan.md`)
+### AI API — real sources (A0 done, A1 next)
 
-- [ ] Step 1 — `CollectionService` + `CollectionForm` dialog
-- [ ] Step 2 — `CollectionsPage` grid + `CollectionCard`
-- [ ] Step 3 — `CollectionDetailPage` + `CollectionIssueCard`
-- [ ] Step 4 — `StampCatalogPicker` + "Select All in Series"
-- [ ] Step 5 — unit tests (`test_collection_service.py`, `test_collection_form.py`, `test_stamp_catalog_picker.py`)
+Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
+knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
+and Iberphil without a tool, so the market values it returns are invented. The
+plan replaces the model as a *source* with real ones — Fesofi for identity and
+catalogue facts, Colnect for the market, an allowed-sites search for an indicative
+price — and keeps it as a normaliser:
+
+**Next: A1 (contract + observations model) and A1b (opencode provider), which can
+run in parallel.** Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block in
+`activeContext.md`.
+
+- [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
+      cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
+      y 27 tests sin red. Informe en `memory-bank/ai-sources-spike.md`, evidencia en
+      `ai-sources-spike.json`. Lo que contestó cada fuente: **Colnect** 426 en
+      HTTP/1.1 y 401 `Invalid appId!` en HTTP/2 —la red llega a la CAPI, falta la
+      clave— y su sitio público tras **Anubis**, así que el catálogo no se puede
+      scrapear; **Delcampe** prohíbe `/en_GB/collectables/search` en `robots.txt`
+      (su búsqueda sí funciona, con `term=` y no con `q=`), así que se descarta;
+      **Iberphil** sólo enseña el martillo en algunas subastas (la 46 sí, la 47 y la
+      1 no) y nunca un código de catálogo; y **Fesofi**, que no estaba en el plan,
+      tiene una Store API pública y exacta (`?sku=`) con `Número EDIFIL`, título de
+      serie, facial, tirada, color y dentado, que es el puente de identidad que A6
+      necesitaba.
+- **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
+  `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
+  `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi
+  3196 ↔ Edifil 3188, while the series' minimum Edifil is 3164), so matching is
+  stamp by stamp.
+- **Decided by the user (2026-11-25)**: **Fesofi yes** (first identity source and
+  source of catalogue facts), **Iberphil out** of the first version, **Delcampe out
+  of the plan** (not even through an aggregator). One decision is still open: the
+  **Colnect CAPI key**, which blocks A3 and therefore the valuation. Two numbers to
+  carry: 2.733 of the 2.761 stamps without Edifil do have a Fesofi code (Fesofi
+  recovers 99% of them), and 2.433 of the 2.541 series already hold some value put
+  there by the current LLM, unaudited.
+- **Provider decided (2026-11-25): opencode**, and **Gemini and Groq are retired**
+  from the code — not one option among several, the only one. New step **A1b** in
+  the plan: `OpenCodeProvider(BaseLLMProvider)` over the **Console inference API**
+  (`https://opencode.ai/inference/openai/v1/chat/completions`, `Bearer oc_sk_…`),
+  the factory registry down to one entry, and `gemini_provider.py` /
+  `groq_provider.py`, their tests, their keys in `settings.py` + `.env.example` and
+  both SDK dependencies deleted. **opencode is not installed in the backend and
+  `opencode serve` is not used**: the Console key is for inference, not for
+  authenticating a local server. Two catches from the Console docs: **free-tier
+  models only work from inside opencode** (other clients get 403, so the backend
+  needs paid models or Go) and each model is served by one API family (OpenAI chat
+  completions for `glm-5.3`, `kimi-k3`, `minimax-m3`; GPT, Claude and Gemini go
+  elsewhere). **The engine is decided later** and travels in the request body
+  (`OPENCODE_MODEL`), not in the code. **Serper stays for now** — `SERPER_*` and
+  `SearchService` untouched, with A2 still fixing its missing timeout — and goes in
+  its own step if the price search does not need it. Worth keeping in mind: the
+  model on this path is a completion with no tools and can invent just the same;
+  the sources are what fix that, not the provider.
+- **Colnect** has an official API (CAPI): appId + appSecret, HMAC-SHA256, HTTP/2
+  only, and `/market_prices` + `/item_sales`. Free key on request, with
+  daily/weekly/monthly quotas. **Edifil is the matching key**, and it is missing
+  on 2,761 of 9,557 stamps.
+- **Delcampe** — dropped: seller-only official API, and `robots.txt` forbids the
+  search path a scraper would need.
+- **Iberphil** — out of the first version: hammer prices per **lot** only, on some
+  auctions, and no catalogue code in the lot text.
+
+Steps A1 (contract + observations model) → A2 (source layer + the SSRF, timeout and
+error-mapping fixes) → A6 (Fesofi identity) → A7 (valuation) → A8 (budgeted sync +
+backfill command) → A9 (LLM reduced to normalising) → A10 (close-out). A3 (Colnect)
+enters as soon as the CAPI key exists; A4 and A5 are out.
+
+One decision is still open: request the **Colnect CAPI key**; Fesofi enters A6,
+Delcampe and Iberphil are out.
+
+### Normal-user collections — the reading screens (plan: `user-collections-plan.md`)
+
+Plan rewritten 2026-11-22 for the brief: **viewing** what a user owns, with the
+user editing only their own copy. Closed so far: **D0** (the user comes from the
+JWT the login returns) and **D1/D2** (the user creates, renames and deletes their
+collections and adds/removes *their copy* of a stamp; the catalogue is admin-only).
+Closed also: **D4** (the collection card is a collage of up to six stamps — the API
+sends twelve candidates, the frontend paints the first six whose file exists, and
+`no_stamp.webp` when there are none; the six are stable, not random per load).
+Closed also: **D5** (series card: progress, paid and catalogue), **D7** (year → date →
+catalogue code, with a sort selector) and **D8** (stamps you do not own appear dimmed
+with `Add my copy`). **Every decision is closed; the plan is ready to implement.** Implementation has not
+started: resume at **step 1** (plan §9 says exactly where it stopped and which two
+questions are waiting for the user).
+Mockups that go with it:
+`memory-bank/mockups/collections-overview.html`, `collection-series.html` and
+`collection-series-detail.html` (self-contained, real stamp pictures).
+
+- [ ] Step 1 — **JWT + ownership** on the collection endpoints: the token the login
+      returns is sent as `Authorization: JWT` (no token or a bad one → 403, which is
+      today's behaviour), `current_user(request)` resolves the user, the four views
+      stop returning `all()`, and the new views join `USER_VIEWS`; another user's
+      row → 404, tests per endpoint
+- [ ] Step 2 — Collections read: counts and cover
+- [ ] Step 3 — `GET /collections/<pk>/issues/` paginated, with name and year filters
+- [ ] Step 4 — `GET /collections/<pk>/issues/<issue_pk>/` with each stamp and its
+      `item` or `null`, plus the owned/total/paid summary
+- [ ] Step 5 — Item write: `PATCH` (six whitelisted fields), add a copy, remove a copy
+- [ ] Step 6 — `CollectionService` + `CollectionItemService` (Flet-free) + tests
+- [ ] Step 7 — `CollectionsPage` with cards, empty state, create/rename/delete dialog
+- [ ] Step 8 — `CollectionSeriesPage` (paginated rows) + the route resolver in `main.py`
+- [ ] Step 9 — `CollectionIssuePage`: series header read-only + stamp cards with
+      "Your copy"
+- [ ] Step 10 — Close-out: loading/error/empty states, i18n pass, component tests
+- [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)
 
