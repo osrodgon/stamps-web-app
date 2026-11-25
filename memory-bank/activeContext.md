@@ -1,6 +1,23 @@
 # Active Context
 
 ## Current Task
+- **AI API A0 done (2026-11-25)**: the source probe ran; the report is
+  `memory-bank/ai-sources-spike.md`. Delcampe scraping is discarded (its
+  `robots.txt` forbids the search path), Colnect needs the CAPI key, Iberphil is a
+  weak lot-level source, and **Fesofi's public Store API is the identity bridge**
+  (`?sku=` → `Número EDIFIL` + series facts). Spike validated by the user, A0 closed
+  in the plan's step table; **next steps are A1** (the observations model) and
+  **A1b** (opencode replaces Gemini and Groq). Details in Notes below.
+- **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
+  **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
+  superficie exacta a borrar). Se llama por la **API de inferencia del Console**
+  (`https://opencode.ai/inference/...`, `Bearer oc_sk_…`): **no se instala opencode
+  en el backend ni se usa `opencode serve`**. Ojo: los modelos gratuitos del Console
+  sólo funcionan dentro de opencode (403 desde fuera), así que el backend usa
+  modelos de pago. **El motor se decide más adelante** y entra por configuración en
+  la petición (`OPENCODE_MODEL`), no como constante. **Serper se queda de momento**
+  (`SERPER_*` + `SearchService` intactos, A2 le pone el timeout que le falta) y se
+  quitará en su propio paso si la búsqueda de precios no lo necesita.
 - **DataDesk app design (DB maintenance)** — design closed, ready to implement. Staff-only internal Django app to replace slow one-record-at-a-time maintenance in the Flet frontend. Stack: server-rendered templates + HTMX + Alpine + Tabulator, mounted at `/datadesk/` in the existing backend container (no new service, no `/api/v1/` changes). Core ideas: dense issue workbench with "needs attention" queues, issue editor with the stamp grid beneath it, change-set buffer committed in one transaction, generic lookup CRUD with usage counts + merge, audit log with revert.
 - **Name (2026-11-18)**: renamed **Curator → DataDesk**. "Curator" said nothing about the job; DataDesk states it — the app edits the database directly, not through the API. Everything (`backend/datadesk/`, `/datadesk/`, `DATADESK_ENABLED`, `DATADESK_TLS`, `DataDeskChange`, `datadesk_make_messages`, docs and mockup) uses the new name.
 - **Decisions closed**: single user but **deployed on an external server** → own login page (username + password, Django session), `is_staff` gate on every view including JSON endpoints, login throttling, TLS + optional IP allowlist at the proxy; images **displayed** read-only from the frontend's `<year>/<code>.webp` tree (upload/import still out of scope); UI in English + Spanish via Django i18n in `backend/datadesk/locale/` (never touches `assets/locales/en.json` / `es.json`); CSV import/export out of scope (DB is current).
@@ -53,7 +70,64 @@
 - **Review status (2026-11-18)**: closed — §2 schema (opción A, no `Stamp` columns), S3 auth, S7+S8 workbench/querysets, S12 write core (two endpoints), S14 client buffer, S19 lookup merge, S21 revert. Still to skim: S1, S2, S4, S5, S6, S9–S11, S13, S15–S18, S20, S22.
 - Full plan: `memory-bank/datadesk-app-plan.md`. **Implementation started 2026-11-18 — S1 done** (app mounted at `/datadesk/` behind `DATADESK_ENABLED`, provisional `DashboardView`, 3 mount tests). Next step: **S2** (vendored HTMX/Alpine/Tabulator + `base.html`).
 
+## Retomar aquí (guardado 2026-11-25)
+
+**A0 está cerrado. Lo siguiente son A1 y A1b, que pueden ir a la vez.** Nada de A1
+en adelante tiene una línea de código escrita.
+
+- **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
+  (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
+  `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
+- **A1 — Contrato y modelo de observaciones** (M): `SourceObservation` con fuente,
+  URL, tipo, precio, condición y fecha; respuesta con `sources`, `observations`,
+  `valuation` y `gaps`; prompts sin la sección de valuación ni el «EXPANSION».
+- **A1b — Proveedor opencode** (S): `OpenCodeProvider` contra
+  `https://opencode.ai/inference/openai/v1/chat/completions` con
+  `Authorization: Bearer oc_sk_…`; fuera `gemini_provider.py`, `groq_provider.py`,
+  sus tests, `GEMINI_*` / `GROQ_*` y las dos dependencias. Claves nuevas:
+  `OPENCODE_API_KEY` (mejor de service account), `OPENCODE_MODEL` y
+  `OPENCODE_BASE_URL` (opcional).
+- **Bloqueado**: A3 (Colnect) hasta que exista la clave CAPI; se pide en
+  `colnect.com/en/capi/use_request` y el procedimiento está en el plan §A3. No
+  bloquea A1, A1b, A2 ni A6.
+- **Sin decidir**: el modelo concreto (los gratuitos del Console dan 403 desde
+  fuera, así que será de pago) y dónde se dispara la investigación (DataDesk, app
+  Flet o comando), que condiciona A8.
+- **Estado del árbol de trabajo**: `backend/ai_api/probe.py`, el comando
+  `ai_sources_probe`, `ai_api/test/test_probe.py`, `ai-api-plan.md`,
+  `ai-sources-spike.md` y `.json` están **sin commitear**. También hay cambios
+  previos sin commitear que no son de este trabajo (`AGENTS.md`,
+  `user-collections-plan.md` y los tres mockups de colecciones): no se tocan.
+- **Verificación rápida**: `python -m pytest ai_api -q` → **126 verdes** (99
+  previos + 27 del sondeo). La suite completa quedó en **1.633**.
+
 ## Notes
+- **AI API A0 done (2026-11-25)**: the source probe ran and its report is
+  `memory-bank/ai-sources-spike.md` (raw evidence in `ai-sources-spike.json`),
+  produced by `manage.py ai_sources_probe` (`ai_api/probe.py` +
+  `management/commands/ai_sources_probe.py`, 27 tests). Findings: **Colnect** 426 on
+  HTTP/1.1 / 401 `Invalid appId!` on HTTP/2 (network fine, key missing) and its
+  public site behind **Anubis**; **Delcampe** forbids `/en_GB/collectables/search`
+  in `robots.txt`, so scraping is **discarded** (its search does work with `term=`,
+  not `q=`); **Iberphil** only shows the hammer on some lot pages and never a
+  catalogue code; **Fesofi** — not in the plan — has a public exact WooCommerce
+  Store API (`?sku=`) with `Número EDIFIL`, series title, face value, print run,
+  colour and perforation, which is the identity bridge A6 needed. A2 must declare
+  `httpx[http2]`; `min(edifil)` ≠ `min(fesofi)` per series, so matching is stamp by
+  stamp.
+- **Decidido por el usuario (2026-11-25)**: **Fesofi sí** (primera fuente de
+  identidad y de hechos de catálogo), **Iberphil fuera** de la primera versión y
+  **Delcampe fuera del plan** (tampoco por agregador). Queda una sola decisión
+  pendiente: **la clave de la CAPI de Colnect**, que bloquea A3 y con ella la
+  valoración. Dos cifras para A6/A7: 2.733 de los 2.761 sellos sin Edifil tienen
+  Fesofi (Fesofi recupera el 99% de los códigos), y 2.433 de las 2.541 series ya
+  tienen algún valor puesto por el LLM actual, sin auditoría.
+- **AI API plan (2026-11-24, parked)**: `memory-bank/ai-api-plan.md` holds the plan to
+  stop the LLM inventing philately and pull from Colnect (official CAPI:
+  appId/appSecret, HMAC, HTTP/2, `/market_prices` + `/item_sales`, quotas), Delcampe
+  (official API is seller-only → scraping ruled out by `robots.txt` in A0) and
+  Iberphil (hammer prices per **lot**, not per stamp). Steps A1–A10, starting with
+  the observations model.
 - **Dataset actual (2026-11-18)**: 2.540 series y 9.558 sellos (≈3,8 de media), con dispersión amplia — hay series de 1 sello y la mayor tiene 57 (medido en S9). El grid del workbench pagina server-side; el de sellos del workspace no pagina porque es una sola serie, y el caso a probar es la serie de 57 más un fixture de 100, para confirmar que no hay techos escondidos.
 - Frontend uses Flet 0.84.0 (not NiceGUI)
 - Locale files are user-managed — never modify en.json or es.json
@@ -73,9 +147,47 @@
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal User Collections Plan**: Mockups generated and plan saved in `memory-bank/user-collections-plan.md` with images in `memory-bank/mockups/`.
+- **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API: decisiones de arquitectura anotadas, sin tocar código. **opencode
+  será el único proveedor** y Gemini y Groq se borran (nuevo paso **A1b**: un
+  `OpenCodeProvider` detrás de `BaseLLMProvider`, el registro de la factoría con una
+  sola entrada, y fuera `gemini_provider.py`, `groq_provider.py`, sus tests, sus
+  claves en `settings.py` y `.env.example` y las dos dependencias). **El motor se
+  elige más adelante** y viaja en la llamada, no en el código: hay 40 modelos bajo
+  `opencode` y la comparación se hará con una tubería que ejecutar, midiendo campos
+  inventados, huecos declarados, JSON válido y prosa. **Serper se queda de momento**
+  (`SERPER_*` y `SearchService` intactos; A2 le pone el timeout que le falta) y se
+  quitará en su propio paso si la búsqueda de precios no lo necesita. Anotado
+  también el aviso que importa: cambiar de proveedor no cambia la epistemología —
+  opencode sin herramientas puede inventar igual que Gemini; lo que lo arregla son
+  las fuentes (A2/A3/A6).
+- [Today] AI API A0: the source probe is done and its report is
+  `memory-bank/ai-sources-spike.md`. `manage.py ai_sources_probe` walks five real
+  series with `requests` (5 s between requests) and writes the raw evidence as JSON;
+  `ai_api/probe.py` holds the pure parts (robots, challenge detection, parsers) with
+  27 tests and no network. What it answered: Colnect **426 on HTTP/1.1 and 401
+  `Invalid appId!` on HTTP/2** — the network reaches the CAPI, the key is what is
+  missing — and its public catalogue sits behind **Anubis**, so the API is the only
+  door; **Delcampe** works with `term=` (the first pass used `q=`, which it ignores
+  and answers with the browse page, five irrelevant cards) and returns the right
+  listing when the code is in the title, but `robots.txt` **disallows
+  `/en_GB/collectables/search`**, so the scraper is discarded; **Iberphil** lists
+  only the starting price in its sold-lots table, the hammer is on the lot page and
+  only for some auctions (46 yes, 47 and 1 no), and no lot mentions a catalogue
+  code; and **Fesofi**, which the plan did not include, exposes a public exact
+  WooCommerce Store API (`?sku=`) that returns `Número EDIFIL`, series title, face
+  value, print run, colour, perforation and printer — 4 of the 5 series resolved —
+  which is the identity bridge A6 was going to build by guesswork. Two consequences
+  worth carrying: A2 needs `httpx[http2]` (the container has `httpx` without `h2`),
+  and `min(edifil)` ≠ `min(fesofi)` inside a series (Expo 92: Fesofi 3196 ↔ Edifil
+  3188, minimum Edifil 3164), so matching is stamp by stamp. The user validated the
+  spike the same day: Fesofi in, Iberphil out of the first version, Delcampe out of
+  the plan; A0 is closed in the plan's step table and A1 is next.
+- [Today] AI API: plan **saved and parked**, no code touched. Analysed `backend/ai_api/` end to end (99 tests green) and found the real defect behind the invented prices: the prompt tells the model to search Colnect, Delcampe and Iberphil and to "verify sold prices" without a search tool, while also forbidding internal knowledge — and then applies an invented −25%. Checked the three sources: Colnect has an official API with HMAC signing, HTTP/2 and `/market_prices` + `/item_sales` (free key on request, quotas); Delcampe's only official API is seller-side (no market search); Iberphil publishes hammer prices per **lot**, not per stamp. Plan A0–A10 in `memory-bank/ai-api-plan.md`, starting with a `ai_sources_probe` command that decides whether Delcampe can be used at all. Also recorded, for A2, the defects found along the way: SSRF behind `name` + `date: "0"`, Serper with no timeout, exceptions flattened into 500 so the 422 is dead in production, an empty scrape reported as a service error, `stamps` validated as free-form dicts, `StampDetailSerializer` unused, and the dead `issues_extraction` URL in the frontend.
+- [Today] Normal-user collections: plan **closed and parked**. All decisions D0–D10 are settled (the user from the JWT, their own collections and copies, the collage card, the series figures, the order, the dimmed missing stamps) and the three mockups are in `memory-bank/mockups/`. Implementation has **not** started: step 1 (the `current_user(request)` helper plus ownership on the four collection views, which today return `all()`) is announced with its files and tests and waits for the go-ahead, with two questions for the user — close the item field whitelist in step 1 or in step 5, and whether the existing collection tests move to a real JWT header. Resume at plan §6 step 1.
+- [Today] Normal-user collections: the plan was rewritten for the brief (viewing what a user owns; the user only edits their own copy) and three self-contained mockups were drawn with the real stamp pictures: collections overview, the collection's series with pagination, and the series detail with the stamp cards and the «Your copy» block. The old plan (creating collections + the catalogue picker with «Select All in Series») survives only as the later phase. Found while writing it: the collection endpoints return `all()` — every user's rows — and the `?username=` filter in the schema is ignored; the way in is the **JWT** the login returns (`HasSpecificKeyName` already understands it and the four collection views are already in `USER_VIEWS`; the Flet app just sends the master key, which is allowed everywhere), so step 1 is `current_user(request)` plus ownership before any screen. The mockups are in `memory-bank/mockups/`.
 - [Today] DataDesk S38 (y su revisión): the month is a button that opens a grid of twelve, the native `select` list is gone, and a Today button sits next to "Clear the date". The panel follows the field on scroll instead of closing (it closed itself when the browser scrolled to reach it), and an outside click is decided with `composedPath()`: picking a month repaints the button that was clicked, so `contains()` said the click came from outside. 9 tests + 1 restored.
 - [Today] DataDesk S38: the date is picked in a calendar of ours. `input[type=date]` gone — the native picker is the browser's, in the browser's language; now the field shows `12 may 1987` and keeps the ISO in `data-value`, with a month select, a year box, `‹`/`›` and a day grid whose weekday names the server rotates (Django's list is Monday-first, its `firstDay` counts from Sunday). Esc and a click outside close it. 8 tests.
 - [Today] DataDesk S34 (formats): money, the print run and dates now read as the language writes them. `separators()` and `date_text()` live in `texts.py` (dot for Spanish thousands, month by name: `1 dic 1853` / `Dec 1, 1853`), the column definition says `format` instead of `money: True`, and the grouping happens in the script from the cell value so an edited number paints at once. The review panel formats too through `numberFields`. The strip's inputs stay raw on purpose: a number input cannot hold separators. 13 tests.

@@ -33,6 +33,16 @@ This folder contains essential context for working on the Stamps Web App.
 - **§7 at the end is the implementation log**: which steps are done, with date, files touched and
   decisions taken while implementing. Read it first when resuming work after a rebuild
 
+### 8. ai-api-plan.md
+- Improvement plan for `backend/ai_api/` — **A0 done 2026-11-25; next: A1 + A1b**
+- Analysis of the current module, what Colnect, Delcampe, Iberphil and Fesofi actually
+  offer, steps A0–A10 (A1b added for the opencode provider)
+- Read it before touching the extraction pipeline; §3 has the open decisions, §4 the
+  steps with their state, §7 the log of what is done and decided
+- **A0's results are in `ai-sources-spike.md`** (raw evidence in
+  `ai-sources-spike.json`): what each source answered, what it allows, and the
+  Delcampe decision. Read the spike before A1
+
 ## How to Use
 
 1. At session start → read index.md
