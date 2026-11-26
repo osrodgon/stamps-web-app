@@ -393,7 +393,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 |---|---|---|---|---|
 | B1 | Series of a collection (backend) | A6 | M | **hecho 2026-11-26** |
 | B2 | Series detail and item writes (backend) | B1 | M | **hecho 2026-11-26** |
-| B3 | `CollectionSeriesPage` | B2 | L | pendiente |
+| B3 | `CollectionSeriesPage` | B2 | L | **hecho 2026-11-26** |
 | B4 | `CollectionIssuePage` | B3 | L | pendiente |
 | B5 | Close-out | B4 | S | pendiente |
 
@@ -419,11 +419,21 @@ an unknown stamp, and 409 for a duplicate without touching the existing copy. 16
 suite **1.818**. The figures serializer was renamed `CollectionIssueFiguresSerializer`:
 two components called `CollectionIssueSummary` made drf-spectacular warn.
 
-**B3 — `CollectionSeriesPage`.**
+**B3 — `CollectionSeriesPage` — HECHO 2026-11-26.**
 `main.py` grows the parameter resolver; the overview card becomes clickable. The page
 reuses `TablePagination` with `page_size_options=[15, 30, 50]` and its own `label`, the
 name search with debounce and `YearRangeSelector`. `Services` gain `get_collection` and
 `get_series`. Tests: service params, row formatting, paginator defaults.
+
+*Done:* `RouteResolver` (`core/routing.py`) resolves `/collections/<id>` and leaves the
+exact table alone; `CollectionCard` is clickable when it receives `on_open`, and the
+overview passes it. `CollectionSeriesPage` with the breadcrumb, the name and the two
+counters from the overview row, the name/range/sort filters and the shared paginator
+with 15/30/50 and its own label. `IssueProgressCard` paints the row. **The header shows
+series and stamps, not the collection's paid total**: the overview row does not carry it,
+and adding it would be a backend change; the per-series paid is in each row. 37 tests
+more; frontend suite **744**. No browser pass: the running backend image predates B1/B2,
+so the rows cannot load until it is rebuilt.
 
 **B4 — `CollectionIssuePage`.**
 Read-only series header (`hide_action_icons=True`) with the catalogue badge, then one
@@ -553,5 +563,5 @@ three figures and the cover in two queries; 21 tests, suite **1.802**.
 **B2 is done (2026-11-26).** The detail with every stamp and its copy, and adding one
 (201/404/409), are in; 16 tests, suite **1.818**.
 
-**Next action: B3** — the `CollectionSeriesPage` (the second screen), with the route
-resolver and the filters.
+**B3 is done (2026-11-26).** The second screen, the resolver and the clickable cards;
+frontend suite **744**. Next action: **B4** — the series detail and "Your copy".

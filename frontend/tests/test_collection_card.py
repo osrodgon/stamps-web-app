@@ -167,6 +167,14 @@ class TestClick:
 
         assert card.on_click is None
 
+    def test_it_is_clickable_when_given_a_handler(self):
+        opened = []
+
+        card = Cards.build(Cards.data(), on_open=opened.append)
+        card.on_click(None)
+
+        assert opened == [1]
+
     def test_it_keeps_the_callback_for_later(self):
         def open_collection(collection_id: int) -> None:
             """Stand-in for the navigation B3 will add."""

@@ -917,8 +917,13 @@ when A is merged into `development`.
       fourth). `PUT`/`DELETE` already scoped return condition and location with names.
       16 tests; suite 1.818. Serializer renamed `CollectionIssueFiguresSerializer` to stop
       a drf-spectacular name clash.
-- [ ] B3 — `CollectionSeriesPage` (L): route resolver, filters, `TablePagination` with
-      15/30/50
+- [x] B3 — **`CollectionSeriesPage`** (2026-11-26, L): `RouteResolver` resolves
+      `/collections/<id>`; the overview card is clickable (`CollectionCard` wires
+      `on_open`); the page has the breadcrumb, the name and the two counters from the
+      overview row, the name/year/sort filters and `TablePagination` with 15/30/50 and its
+      own label; `IssueProgressCard` paints each row. The header shows series and stamps,
+      **not** the collection's paid total (the overview row does not carry it). Frontend
+      suite 744. No browser pass: the running backend image predates B1/B2.
 - [ ] B4 — `CollectionIssuePage` (L): read-only series header + stamp cards with "Your copy"
 - [ ] B5 — Close-out (S): states, i18n, paginator, browser pass
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"

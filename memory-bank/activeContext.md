@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (phase A closed, B1–B2 done 2026-11-26, B3 next)**: the three reading screens are
+- **Normal-user collections (phase A closed, B1–B3 done 2026-11-26, B4 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -175,12 +175,25 @@ afirmar nada que las fuentes no sostengan.
   browser pass over create, delete, rename and the expired-token path. **B1 is done too**:
   `GET /collections/<pk>/issues/` mirrors `/issues/` and adds the three figures and the
   cover in **two queries**; suite 1.802. **B2 is done too**: the detail with every stamp
-  and its copy, plus adding one (201/404/409); suite **1.818**. **Next: B3** (the second
-  screen), después de mergear B2. Decisions still standing: the series order **mirrors
+  and its copy, plus adding one (201/404/409); suite **1.818**. **B3 is done too**: the
+  route resolver, the clickable cards and the series screen with filters and paginator
+  (frontend suite **744**). **Next: B4** (the series detail and "Your copy"), después de
+  mergear B3. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B3: **la segunda pantalla**. `RouteResolver` (`core/routing.py`)
+  resuelve `/collections/<id>` y deja intacta la tabla exacta de `main.py`;
+  `CollectionCard` se vuelve clicable cuando recibe `on_open` y el overview se lo pasa.
+  `CollectionSeriesPage` trae la miga de pan, el nombre y los dos contadores de la fila
+  del overview, los filtros de nombre/rango/orden y `TablePagination` con 15/30/50 y su
+  propia etiqueta; `IssueProgressCard` pinta cada fila. **La cabecera enseña series y
+  sellos, no el total pagado de la colección**: la fila del overview no lo trae y añadirlo
+  sería tocar el backend; el pagado por serie está en cada fila. `TablePagination` ganó
+  `page_size_options` y `label` sin cambiar sus valores por defecto. 37 tests más, suite
+  del frontend **744**. Sin pasada de navegador: la imagen del backend en marcha es
+  anterior a B1/B2, así que las filas no cargan hasta reconstruirlo.
 - [Today] Colecciones B2: **el detalle de la serie y la escritura del ejemplar**.
   `GET /collections/<pk>/issues/<issue_pk>/` devuelve la serie como la tiene el catálogo
   (reutilizando `IssueResponseSerializer` y `StampResponseSerializer`) con cada sello y su

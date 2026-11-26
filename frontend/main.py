@@ -19,6 +19,7 @@ from pages.admin.stamps_manager_page import StampsManagerPage
 from core.urls import URLs
 from core.log_setup import log_setup
 from core.mock_login import MockLogin
+from core.routing import RouteResolver
 from core.translations import init_language, get_language
 
 
@@ -131,17 +132,17 @@ async def route_change(e: ft.RouteChangeEvent):
 
     page.views.clear()
     handler = ROUTE_HANDLERS.get(route)
+    view = handler(page) if handler else RouteResolver.view(route, page)
 
-    if handler:
-        page.views.append(handler(page))
+    if view is not None:
+        page.views.append(view)
+    elif route == URLs.Frontend.logout:
+        logout = BaseUI()
+
+        await logout._delete_user()
+        await page.push_route(URLs.Frontend.login)
     else:
-        if route == URLs.Frontend.logout:
-            logout = BaseUI()
-            
-            await logout._delete_user()
-            await page.push_route(URLs.Frontend.login)
-        else:
-            page.views.append(NotFoundPage(page))
+        page.views.append(NotFoundPage(page))
 
     page.update()
 
