@@ -16,11 +16,14 @@ exactly.
 
 from __future__ import annotations
 
+import re
 import unicodedata
-from typing import Dict, List, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 from ai_api.sources.errors import SourceError, SourceUnavailable
 from ai_api.sources.http import HttpClient, get_client
+from ai_api.text import snippet, strip_html
 from common.log.logger import Logger
 
 
@@ -40,6 +43,55 @@ YEAR_TAXONOMY = "pa_ano-de-emision"
 # almost always told us which is the right series, and every candidate costs a
 # request.
 MAX_CANDIDATES = 10
+
+# What a product carries, named the way the rest of the pipeline already speaks
+# (`clean_scraped_data` produces the same keys, so the caller can swap one for the
+# other).
+SERIES_FROM_ATTRIBUTES = {
+    "issue_name": "Título Serie",
+    "year": "Año de Emisión",
+    "issue_date": "Fecha De Emisión",
+    "printer": "Imprenta",
+    "print_type": "Impresión",
+    # No attribute says Sello / Hoja Bloque; "Formato" is the size (40,9 x 28,8 mm),
+    # so stamp_type is left for the model to infer from the motive and the text.
+    "series_values": "Valores De La Serie",
+    "engraver": "Grabador",
+    "print_run": "Tirada",
+    "perforation": "Dentado",
+}
+
+STAMP_FROM_ATTRIBUTES = {
+    "edifil_code": "Número EDIFIL",
+    "fesofi_code": "Número Fesofi",
+    "motive": "Motivo Sello",
+    "face_value": "Facial",
+    "color": "Color",
+    "perforation": "Dentado",
+    "total_print_run": "Tirada",
+    "format": "Formato",
+}
+
+
+@dataclass(frozen=True)
+class Match:
+    """What the catalogue answered: the products, and why when there are none.
+
+    `score` is the share of the asked words the series name covers, so 1.0 means
+    every word was there. `gap` is written for a human: it is what the endpoint
+    says when identity could not be established.
+    """
+
+    products: List[dict] = field(default_factory=list)
+    term: Optional[dict] = None
+    score: float = 0.0
+    candidates: List[str] = field(default_factory=list)
+    gap: Optional[str] = None
+
+    @property
+    def found(self) -> bool:
+        """True when there is at least one product to work with."""
+        return bool(self.products)
 
 API_ROOT = "https://catalogodesellos.fesofi.es/wp-json/wc/store/v1"
 
@@ -67,52 +119,158 @@ class FesofiCatalogue(Logger):
     # ------------------------------------------------------------------
 
     def find_product_urls(self, name: str, date: str = "") -> List[str]:
-        """Return the product pages whose series contains the words of `name`.
+        """Return the product pages of the series the name points at."""
+        return [
+            product["permalink"]
+            for product in self.identify(name, date).products
+            if product.get("permalink")
+        ]
 
-        Args:
-            name: free text, e.g. "Navidad", "navidad 1986", "Castillos de España".
-            date: the year or date the caller has; its year is used as a filter.
+    def find_products(self, name: str, date: str = "") -> List[dict]:
+        """Return the products themselves, with their attributes."""
+        return self.identify(name, date).products
 
-        Returns:
-            Product permalinks, best candidate first. Empty when the catalogue
-            has nothing that contains the words.
+    def identify(self, name: str, date: str = "") -> Match:
+        """Find the series that contains the words of `name` in `date`'s year.
+
+        The name can be the series title or the motive of one of its stamps; the
+        year is used as a filter and never as a word. A term that covers more of
+        the words wins, and an exact word-for-word name beats one that merely
+        contains them. Two candidates tied on both are reported as a gap instead of
+        picked at random — that is the difference between "the catalogue says so"
+        and "we guessed".
         """
         year = self._year_of(f"{name} {date}")
         words = self._words(name)
         if not words:
-            return []
+            return Match(gap="The name has no words to search for.")
 
-        terms = self._candidates(words)
-        if not terms:
-            return []
+        query = set(words)
+        candidates = self._candidates(words)
+        if not candidates:
+            return Match(
+                gap=f"No series or motive in the catalogue contains "
+                    f"{', '.join(sorted(query))}."
+            )
 
         year_term = self._year_term(year) if year else None
-        for term in terms:
+        hits = []
+        best_coverage = 0
+        for term in candidates:
+            coverage = self._coverage(query, term.get("name", ""))
+            # The candidates come ordered by coverage, so once one hit is found,
+            # anything below it cannot tie with it and is not worth a request.
+            if hits and coverage < best_coverage:
+                break
             products = self._products(term, year_term)
-            urls = [product.get("permalink") for product in products if product.get("permalink")]
-            if urls:
-                self.log.debug(
-                    f"fesofi: {len(urls)} pages for '{name}' "
-                    f"in '{term['name']}'" + (f" ({year})" if year else "")
+            if not products:
+                continue
+            hits.append(
+                (
+                    coverage,
+                    self._is_exact(query, term.get("name", "")),
+                    term.get("attribute"),
+                    term,
+                    products,
                 )
-                return urls
+            )
+            best_coverage = max(best_coverage, coverage)
 
-        return []
+        if not hits:
+            where = f" in {year}" if year else ""
+            return Match(
+                gap=f"Nothing matches {', '.join(sorted(query))}{where}.",
+                candidates=[term.get("name", "") for term in candidates[:5]],
+            )
 
-    def find_products(self, name: str, date: str = "") -> List[dict]:
-        """Return the products themselves, with their attributes (used by A6)."""
-        year = self._year_of(f"{name} {date}")
-        words = self._words(name)
-        if not words:
-            return []
+        # More words covered first, then an exact name, then the series title over
+        # a stamp motive.
+        hits.sort(key=lambda hit: (-hit[0], not hit[1], hit[2]))
+        best_coverage, best_exact, best_attribute, term, products = hits[0]
 
-        year_term = self._year_term(year) if year else None
-        for term in self._candidates(words):
-            products = self._products(term, year_term)
-            if products:
-                return products
+        rivals = [
+            hit[3].get("name", "")
+            for hit in hits[1:]
+            if (hit[0], hit[1], hit[2]) == (best_coverage, best_exact, best_attribute)
+        ]
+        if rivals:
+            names = ", ".join([term.get("name", "")] + rivals)
+            return Match(
+                gap=f"{names} match the same words; the year does not separate them.",
+                candidates=[term.get("name", "")] + rivals,
+            )
 
-        return []
+        return Match(
+            products=self._whole_series(products, year_term, best_attribute),
+            term=term,
+            score=round(best_coverage / len(query), 2),
+        )
+
+    def _whole_series(
+        self, products: List[dict], year_term: Optional[int], attribute: Optional[int]
+    ) -> List[dict]:
+        """Widen a match on one stamp to the series it belongs to.
+
+        Asking by motive ("la sagrada familia") finds the stamp, but the report is
+        about the series, so the rest of it is fetched from the title the product
+        itself carries. A match already on a series title costs nothing.
+        """
+        if not products or attribute == SERIES_ATTRIBUTE:
+            return products
+
+        title = self._attributes(products[0]).get(self._normalise("Título Serie"))
+        if not title:
+            return products
+
+        for term in self._terms(SERIES_ATTRIBUTE, title):
+            if self._normalise(term.get("name", "")) != self._normalise(title):
+                continue
+            series_term = {
+                **term,
+                "attribute": SERIES_ATTRIBUTE,
+                "taxonomy": SERIES_TAXONOMY,
+            }
+            wider = self._products(series_term, year_term)
+            if len(wider) > len(products):
+                self.log.debug(
+                    f"motive match widened to the series '{title}' "
+                    f"({len(products)} -> {len(wider)} products)"
+                )
+                return wider
+
+        return products
+
+    def facts(self, products: List[dict]) -> Dict[str, Any]:
+        """Turn the products into the shape the rest of the pipeline speaks.
+
+        `serie_info` and `stamps` carry the same keys `clean_scraped_data`
+        produces, so the model sees the same input whether the data came from the
+        API or from a scraped page — but read from the attributes, not guessed from
+        a HTML table.
+        """
+        if not products:
+            return {}
+
+        first = self._attributes(products[0])
+        serie_info = {
+            key: first.get(self._normalise(attribute))
+            for key, attribute in SERIES_FROM_ATTRIBUTES.items()
+        }
+
+        stamps = []
+        for product in products:
+            attributes = self._attributes(product)
+            stamp = {
+                key: attributes.get(self._normalise(attribute))
+                for key, attribute in STAMP_FROM_ATTRIBUTES.items()
+            }
+            stamp["desc_snippet"] = snippet(
+                strip_html(product.get("description") or "")
+            )
+            stamps.append(stamp)
+
+        stamps.sort(key=self._order)
+        return {"serie_info": serie_info, "stamps": stamps}
 
     # ------------------------------------------------------------------
     # Terms
@@ -223,15 +381,58 @@ class FesofiCatalogue(Logger):
     # ------------------------------------------------------------------
 
     @classmethod
-    def _words(cls, name: str) -> List[str]:
-        """Split a name into comparable words, dropping stopwords and the year."""
+    def _words(cls, name: str, keep_years: bool = False) -> List[str]:
+        """Split a name into comparable words, dropping stopwords.
+
+        A year in what the caller asked is a filter, so it is dropped there; a
+        year inside a series name ("Navidad 2018") is part of that name and must
+        stay, which is what `keep_years` does.
+        """
         words = []
         for token in cls._normalise(name).split():
             token = token.strip(".,;:()[]«»\"'¡!¿?")
-            if not token or token in STOPWORDS or cls._is_year(token):
+            if not token or token in STOPWORDS:
+                continue
+            if not keep_years and cls._is_year(token):
                 continue
             words.append(token)
         return words
+
+    @classmethod
+    def _word_set(cls, name: str) -> Set[str]:
+        """The words of a series name, years included."""
+        return set(cls._words(name, keep_years=True))
+
+    @classmethod
+    def _coverage(cls, query: Set[str], name: str) -> int:
+        """How many of the asked words the series name contains."""
+        return len(query & cls._word_set(name))
+
+    @classmethod
+    def _is_exact(cls, query: Set[str], name: str) -> bool:
+        """True when the series name is the asked words and nothing else."""
+        return cls._word_set(name) == query
+
+    @classmethod
+    def _attributes(cls, product: Dict[str, Any]) -> Dict[str, str]:
+        """Flatten a product's attributes into ``{normalised name: value}``.
+
+        The catalogue writes "Fecha De Emisión" with a capital D and "Año de
+        Emisión" without it, so a key compared literally is a key that is missing.
+        """
+        return {
+            cls._normalise(attribute.get("name", "")): ", ".join(
+                term.get("name", "") for term in attribute.get("terms") or []
+            )
+            for attribute in product.get("attributes") or []
+        }
+
+    @staticmethod
+    def _order(stamp: Dict[str, Any]) -> tuple:
+        """Sort by catalogue code, the short one first, like the list order does."""
+        code = str(stamp.get("edifil_code") or stamp.get("fesofi_code") or "")
+        digits = re.sub(r"\D", "", code)
+        return (len(digits), digits) if digits else (99, code)
 
     @staticmethod
     def _is_year(token: str) -> bool:

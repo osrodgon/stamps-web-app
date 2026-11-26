@@ -633,19 +633,18 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0, A1, A1b and A2 done; A6 in progress)
+### AI API — real sources (A0, A1, A1b, A2 and A6 done; Colnect out; A7 next)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
 and Iberphil without a tool, so the market values it returns are invented. The
 plan replaces the model as a *source* with real ones — Fesofi for identity and
-catalogue facts, Colnect for the market, an allowed-sites search for an indicative
-price — and keeps it as a normaliser:
+catalogue facts, `filatelia.online` for asking prices, an allowed-sites search for
+the rest — and keeps it as a normaliser. Colnect, Delcampe and Iberphil are out.
 
-**Next: finish A6.** Its first slice — finding the series by partial name in the
-Fesofi catalogue — is done; what is left is reading the product facts from the
-Store API instead of the HTML, the scored matcher and the `gaps`. A3 waits for the
-Colnect key. Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block in
+**Next: A7 (valuation).** **Colnect is out (2026-11-26)**, so A3 is gone and the
+prices come from `filatelia.online` first and the search over allowed sites after.
+Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block in
 `activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
@@ -703,22 +702,32 @@ Colnect key. Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block 
       sigue siendo master-key only, por decisión. `httpx[http2]==0.28.1` entra en
       `requirements.base.txt` y `httpx`/`httpcore` bajan a WARNING en el log. 35 tests
       nuevos, 1.664 verdes.
-- [ ] **A6 — Identidad y emparejamiento** (en curso, 2026-11-26): primera rebanada
-      hecha. `ai_api/sources/fesofi.py` (`FesofiCatalogue`) busca la serie **por
-      atributo** en la Store API —`Título Serie` y `Año de Emisión`—, así que las
-      palabras del nombre se buscan de forma **parcial** y no exacta, que es lo que
-      fallaba. `SearchService` pasa a ser un localizador: catálogo primero, Serper
-      de respaldo. Comprobado en real: `navidad 1986` → 2884/2883 (Edifil 2867 y
-      2868) y el scrape de 2884 da la serie entera; `castillos de españa 2007` →
-      4605; `expo 92` → 2960; `la sagrada familia 1986` → 2883 porque `name` puede
-      ser el **motivo** de un sello, así que también se busca en `Motivo Sello`.
-      De paso se corrigió un bug de la caché de A2: la clave era la URL sin la
-      query, así que todas las consultas a `/products` compartían entrada. 25 tests
-      nuevos, 1.689 verdes. Además, la descripción de los sellos ya no se corta a
-      180 caracteres: `DESCRIPTION_LIMIT = 2000` y el `…` sólo aparece cuando de
-      verdad no cabe (antes se añadía siempre, y el modelo lo leía como truncado).
-      Falta: leer los hechos del producto en vez del HTML y el matcher con `score` y
-      `gaps`.
+- [x] **A6 — Identidad y emparejamiento** (2026-11-26): dos rebanadas. La primera
+      encuentra la serie por **nombre parcial** en la Store API (`Título Serie` y
+      `Motivo Sello`, con el año como filtro, buscador de términos parcial e
+      insensible a mayúsculas) y deja `SearchService` como localizador: catálogo
+      primero, Serper de respaldo. La segunda lee los **hechos del producto**
+      (`facts()`: códigos, facial, color, dentado, tirada, fecha, motivo y la
+      descripción del catálogo sin HTML) con las mismas claves que
+      `clean_scraped_data`, y añade el matcher con `score`: cobertura, exactitud,
+      serie antes que motivo y nombre más corto, con **empate = `gap`** y los dos
+      nombres. El emparejamiento es sello a sello, y un acierto por motivo se
+      **ensancha a la serie** que el producto declara. La vista prefiere el catálogo
+      y deja búsqueda + raspado de respaldo, con un `gap` de `identity` cuando el
+      respaldo es quien rescata. Cuatro defectos vistos con datos reales: claves con
+      mayúsculas distintas (`Fecha De Emisión`), `Formato` es el tamaño y no el tipo
+      (`stamp_type` no se inventa), serie y motivo con el mismo nombre no empatan, y
+      el ensanche necesita la taxonomía del término. Real: `navidad 1986` →
+      2867/2868, `castillos 2007` → 4349/4350, `isabel ii 1850` → 1–5, `quijote
+      1998` por motivo y ensanchado. 40 tests nuevos entre las dos rebanadas,
+      **1.707 verdes**.
+- [ ] **A7 — Valuación** (siguiente): sin Colnect, dos fuentes de precio en orden.
+      **`filatelia.online`** primero —tienda WooCommerce con la misma Store API que
+      Fesofi y con `Nº Edifil` (`pa_sello-numeracion`, id 45), `Estado` y `Año`:
+      precio de oferta a nivel de sello y con condición—, y la **búsqueda en los
+      sitios permitidos** después. Descartados al mirarlos el 2026-11-26:
+      `circulomadrid.com` (CGI antiguo, catálogo de extranjero) y `stampworld.com`
+      (403 de Cloudflare). Iberphil sigue opcional y a nivel de lote.
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi
@@ -726,8 +735,7 @@ Colnect key. Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block 
   stamp by stamp.
 - **Decided by the user (2026-11-25)**: **Fesofi yes** (first identity source and
   source of catalogue facts), **Iberphil out** of the first version, **Delcampe out
-  of the plan** (not even through an aggregator). One decision is still open: the
-  **Colnect CAPI key**, which blocks A3 and therefore the valuation. Two numbers to
+  of the plan** (not even through an aggregator). Nothing is blocked. Two numbers to
   carry: 2.733 of the 2.761 stamps without Edifil do have a Fesofi code (Fesofi
   recovers 99% of them), and 2.433 of the 2.541 series already hold some value put
   there by the current LLM, unaudited.
@@ -759,12 +767,12 @@ Colnect key. Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block 
   auctions, and no catalogue code in the lot text.
 
 Steps A1 (contract + observations model) → A2 (source layer + the SSRF, timeout and
-error-mapping fixes) → A6 (Fesofi identity) → A7 (valuation) → A8 (budgeted sync +
-backfill command) → A9 (LLM reduced to normalising) → A10 (close-out). A3 (Colnect)
-enters as soon as the CAPI key exists; A4 and A5 are out.
+error-mapping fixes) → A6 (Fesofi identity) → A7 (valuation over the allowed-site
+search) → A8 (budgeted sync + backfill command) → A9 (LLM reduced to normalising) →
+A10 (close-out). A3 (Colnect), A4 (Delcampe) and A5 (Iberphil) are out.
 
-One decision is still open: request the **Colnect CAPI key**; Fesofi enters A6,
-Delcampe and Iberphil are out.
+Nothing is blocked: **Colnect is out too (2026-11-26)**, so A3 is gone and the
+prices move to the search over allowed sites (A7, now M).
 
 ### Normal-user collections — the reading screens (plan: `user-collections-plan.md`)
 

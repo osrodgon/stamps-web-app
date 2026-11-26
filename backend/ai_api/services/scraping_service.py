@@ -25,14 +25,8 @@ from bs4 import BeautifulSoup
 
 from ai_api.sources.errors import SourceError
 from ai_api.sources.http import HttpClient, get_client
+from ai_api.text import DESCRIPTION_LIMIT, snippet
 from common.log.logger import Logger
-
-
-# The description is the best material the model has to write the stamp card, and
-# with today's prices cutting it saves a fraction of a cent. The cap stays as a
-# guard against a pathological page, not as a token diet: it truncates only when
-# the text is longer than this, and says so when it does.
-DESCRIPTION_LIMIT = 2000
 
 
 class ScrapingService(Logger):
@@ -246,16 +240,8 @@ class ScrapingService(Logger):
     
     @staticmethod
     def _snippet(text: str) -> str:
-        """Return the description, cut only when it is longer than the limit.
-
-        The ellipsis is the model's only clue that the text is not complete, so
-        it must not appear on a description that was not cut.
-        """
-        if not text:
-            return "N/A"
-        if len(text) <= DESCRIPTION_LIMIT:
-            return text
-        return text[:DESCRIPTION_LIMIT] + "…"
+        """Return the description, cut only when it is longer than the limit."""
+        return snippet(text)
 
     def clean_scraped_data(self, scraped_data: List[dict]) -> dict:
         """

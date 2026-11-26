@@ -163,6 +163,148 @@ class TestMotive:
         assert asked[0] == "pa_titulo-serie"
 
 
+class TestIdentify:
+    """The match is scored, and a tie is a gap instead of a coin toss."""
+
+    def test_an_exact_name_wins_without_a_year(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/products"):
+                return httpx.Response(200, json=[{"name": "hit", "permalink": "https://x/1/"}])
+            if request.url.path.endswith("/attributes/6/terms"):
+                return httpx.Response(200, json=[])
+            if request.url.path.endswith("/attributes/22/terms"):
+                return httpx.Response(200, json=[])
+            return httpx.Response(200, json=SERIES_TERMS["navidad"])
+
+        match = fesofi(handler).identify("navidad")
+
+        assert match.found
+        assert match.term["name"] == "Navidad"
+        assert match.score == 1.0
+
+    def test_a_tie_between_two_series_is_a_gap(self):
+        terms = [
+            {"id": 1, "name": "Castillos"},
+            {"id": 2, "name": "Castillos"},
+        ]
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/products"):
+                return httpx.Response(200, json=[{"name": "hit", "permalink": "https://x/1/"}])
+            if request.url.path.endswith("/attributes/6/terms"):
+                return httpx.Response(200, json=[])
+            if request.url.path.endswith("/attributes/22/terms"):
+                return httpx.Response(200, json=[])
+            return httpx.Response(200, json=terms)
+
+        match = fesofi(handler).identify("castillos")
+
+        assert not match.found
+        assert "Castillos, Castillos" in match.gap
+        assert match.candidates == ["Castillos", "Castillos"]
+
+    def test_nothing_matching_is_a_gap_with_the_words(self):
+        match = fesofi(router()).identify("zzzz")
+
+        assert not match.found
+        assert "zzzz" in match.gap
+
+    def test_a_year_without_products_is_a_gap(self):
+        handler = router(year_terms=[{"id": 22648, "name": "1986"}], products=[])
+
+        match = fesofi(handler).identify("navidad 1986")
+
+        assert not match.found
+        assert "1986" in match.gap
+
+    def test_the_score_is_the_share_of_words_covered(self):
+        handler = router(
+            products=[{"name": "hit", "permalink": "https://x/1/"}],
+            terms={"castillos": [{"id": 4111, "name": "Castillos"}], "92": []},
+        )
+
+        match = fesofi(handler).identify("castillos 92")
+
+        assert match.score == 0.5
+
+
+class TestFacts:
+    """The attributes become the shape the pipeline already speaks."""
+
+    PRODUCT = {
+        "name": "2884",
+        "permalink": "https://catalogodesellos.fesofi.es/producto/2884/",
+        "description": "<p>Felipe de Bigarny, <b>más conocido</b> por Felipe de Borgoña.</p>",
+        "attributes": [
+            {"name": "Título Serie", "terms": [{"name": "Navidad"}]},
+            {"name": "Año de Emisión", "terms": [{"name": "1986"}]},
+            {"name": "Fecha de Emisión", "terms": [{"name": "16 noviembre 1986"}]},
+            {"name": "Formato", "terms": [{"name": "Hoja"}]},
+            {"name": "Número EDIFIL", "terms": [{"name": "2868"}]},
+            {"name": "Número Fesofi", "terms": [{"name": "2884"}]},
+            {"name": "Motivo Sello", "terms": [{"name": "Natividad. Toledo"}]},
+            {"name": "Facial", "terms": [{"name": "48 pta"}]},
+            {"name": "Color", "terms": [{"name": "multicolor"}]},
+            {"name": "Dentado", "terms": [{"name": "13 3/4"}]},
+            {"name": "Tirada", "terms": [{"name": "4.000.000"}]},
+        ],
+    }
+
+    def test_series_keys_match_the_scraper(self):
+        facts = fesofi(router()).facts([self.PRODUCT])
+        serie = facts["serie_info"]
+
+        assert serie["issue_name"] == "Navidad"
+        assert serie["year"] == "1986"
+        # The catalogue writes "Fecha De Emisión" with a capital D.
+        assert serie["issue_date"] == "16 noviembre 1986"
+        # "Formato" is the size, not the type: stamp_type is not invented here.
+        assert "stamp_type" not in serie
+
+    def test_stamp_keys_and_codes(self):
+        stamp = fesofi(router()).facts([self.PRODUCT])["stamps"][0]
+
+        assert stamp["edifil_code"] == "2868"
+        assert stamp["fesofi_code"] == "2884"
+        assert stamp["motive"] == "Natividad. Toledo"
+        assert stamp["face_value"] == "48 pta"
+        assert stamp["total_print_run"] == "4.000.000"
+
+    def test_the_description_is_text_not_html(self):
+        stamp = fesofi(router()).facts([self.PRODUCT])["stamps"][0]
+
+        assert "<p>" not in stamp["desc_snippet"]
+        assert "más conocido" in stamp["desc_snippet"]
+
+    def test_stamps_are_ordered_by_their_code(self):
+        other = {
+            "name": "2883",
+            "attributes": [
+                {"name": "Número EDIFIL", "terms": [{"name": "2867"}]},
+                {"name": "Número Fesofi", "terms": [{"name": "2883"}]},
+            ],
+        }
+
+        stamps = fesofi(router()).facts([self.PRODUCT, other])["stamps"]
+
+        assert [stamp["edifil_code"] for stamp in stamps] == ["2867", "2868"]
+
+    def test_a_sheet_keeps_its_own_fesofi_code(self):
+        """The FDC sheet has no Edifil; it is ordered by its Fesofi code, not dropped."""
+        sheet = {
+            "name": "2884SPD",
+            "attributes": [{"name": "Número Fesofi", "terms": [{"name": "2884SPD"}]}],
+        }
+
+        stamps = fesofi(router()).facts([self.PRODUCT, sheet])["stamps"]
+
+        assert [stamp["fesofi_code"] for stamp in stamps] == ["2884", "2884SPD"]
+        assert stamps[-1]["edifil_code"] is None
+
+    def test_no_products_is_an_empty_dict(self):
+        assert fesofi(router()).facts([]) == {}
+
+
 class TestLookup:
     """Words in, product pages out."""
 
@@ -239,7 +381,10 @@ class TestLookup:
 
         urls = fesofi(handler).find_product_urls("castillos de españa 2007")
 
-        assert asked == ["4112", "4111"]
+        # The best-covered term is asked first; when it has nothing in that year,
+        # the next one answers.
+        assert asked[0] == "4112"
+        assert "4111" in asked
         assert urls == ["https://catalogodesellos.fesofi.es/producto/4605/"]
 
     def test_a_short_number_helps_pick_the_right_series(self):

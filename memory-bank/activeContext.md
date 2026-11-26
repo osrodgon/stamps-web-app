@@ -1,16 +1,17 @@
 # Active Context
 
 ## Current Task
-- **AI API A0, A1, A1b and A2 done (2026-11-25/26)**: the source probe ran (report in
-  `memory-bank/ai-sources-spike.md`), the extraction contract is evidence-based
-  (`SourceObservation` plus `sources` / `observations` / `valuation` / `gaps` /
-  `description_source`, with the old `market_value_*` always null), **opencode is
-  the only LLM provider**, and since A2 **every outbound call goes through one
-  HTTP client** with an allowlist, retries, a per-host limit and a cache — which
-  took a 29-stamp series from 7.0 s to 0.9 s. **A6 is in progress**: the series is
-  now found by partial name in the Fesofi catalogue (attributes, not Serper), so
-  `navidad 1986` resolves to the 1986 Christmas stamps. A3 waits for the Colnect
-  key. Details in Notes below.
+- **AI API A0, A1, A1b, A2 and A6 done (2026-11-25/26)**: the source probe ran
+  (report in `memory-bank/ai-sources-spike.md`), the extraction contract is
+  evidence-based (`SourceObservation` plus `sources` / `observations` / `valuation`
+  / `gaps` / `description_source`, with the old `market_value_*` always null),
+  **opencode is the only LLM provider**, **every outbound call goes through one HTTP
+  client** (allowlist, retries, per-host limit, cache: a 29-stamp series went from
+  7.0 s to 0.9 s) and **the series is identified in the Fesofi catalogue** — by
+  partial name, with the facts read from its attributes and a scored matcher that
+  reports a tie as a gap. **Next is A7** (valuation): prices come from
+  `filatelia.online` and the allowed-site search; Colnect is out. Details in Notes
+  below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -75,25 +76,24 @@
 
 ## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1, A1b y A2 cerrados; A6 en curso.** El contrato pide evidencia, el proveedor
-es opencode, la red pasa por un cliente con allowlist y caché, y la serie se
-encuentra ya **por nombre parcial** en el catálogo de Fesofi (atributos, sin
-buscador web). Lo que queda de A6 es leer los hechos del producto de la Store API
-en vez del HTML, el matcher con `score` y los `gaps`.
+**A0, A1, A1b, A2 y A6 cerrados. Lo siguiente es A7 (valoración).** El contrato pide
+evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y
+caché, y la identidad la resuelve el catálogo de Fesofi por nombre parcial, con los
+hechos leídos de sus atributos y un matcher que declara los empates.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A6 — Fesofi, lo que falta** (L, en curso): ya resuelve la serie por nombre
-  parcial, buscando en `Título Serie` y en `Motivo Sello`; queda leer los hechos del
-  producto de la Store API (en vez de scrapear el HTML) y el matcher con `score` y
-  `gaps`. Registra su adaptador en `ai_api/sources/registry.py`.
-- **A7 — Valoración** (S): media recortada sobre las observaciones de la misma
-  condición, con `sample_size`, `method`, `sources` y `as_of`; por debajo del mínimo,
-  `null` y un `gap`.
-- **Bloqueado**: A3 (Colnect) hasta que exista la clave CAPI; se pide en
-  `colnect.com/en/capi/use_request` y el procedimiento está en el plan §A3. No
-  bloquea A2 ni A6.
+- **A7 — lo siguiente** (M, sube al quedarse sin Colnect): dos fuentes de precio en
+  orden —**`filatelia.online`** primero (WooCommerce, `Nº Edifil` como atributo,
+  precio de oferta por sello con su `Estado`) y la **búsqueda en sitios permitidos**
+  después (snippet o ficha)—, cada precio una observación con su `kind`; media
+  recortada sobre la misma condición con `sample_size`, `method`, `sources` y
+  `as_of`; por debajo del mínimo, `null` y un `gap`. Descartados al mirarlos:
+  `circulomadrid.com` y `stampworld.com` (403 de Cloudflare).
+- **Ya no hay nada bloqueado**: Colnect queda fuera (2026-11-26), así que ni A3 ni
+  la clave CAPI existen en el plan. Lo único abierto son dos decisiones que no
+  frenan código: el modelo y dónde se dispara la investigación.
 - **Sin decidir**: el valor de `OPENCODE_MODEL` (los gratuitos del Console dan 403
   desde fuera, así que será de pago) y dónde se dispara la investigación (DataDesk,
   app Flet o comando), que condiciona A8.
@@ -102,7 +102,7 @@ en vez del HTML, el matcher con `score` y los `gaps`.
   `.env` de cada entorno ya no lleva `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER` y sí
   `OPENCODE_API_KEY` y `OPENCODE_MODEL`.
 - **Pendiente de A2**: nada. Lo que queda es de otros pasos: los adaptadores de
-  verdad (A3, A6) y la valoración (A7).
+  verdad (A7).
 - **Palanca pendiente y gratis**: `LLM_BATCH_SIZE=15`. Las llamadas al modelo son
   `1 + ceil(n / LLM_BATCH_SIZE)` y van en serie: con el lote en 5, la serie de 6
   sellos hace 3 llamadas y la de 57 haría 13.
@@ -131,20 +131,19 @@ en vez del HTML, el matcher con `score` y los `gaps`.
   colour and perforation, which is the identity bridge A6 needed. A2 must declare
   `httpx[http2]`; `min(edifil)` ≠ `min(fesofi)` per series, so matching is stamp by
   stamp.
-- **Decidido por el usuario (2026-11-25)**: **Fesofi sí** (primera fuente de
-  identidad y de hechos de catálogo), **Iberphil fuera** de la primera versión y
-  **Delcampe fuera del plan** (tampoco por agregador). Siguen abiertas la clave de
-  la CAPI de Colnect (bloquea A3), el motor que use opencode y dónde se dispara la
-  investigación (condiciona A8). Dos cifras para A6/A7: 2.733 de los 2.761 sellos
-  sin Edifil tienen
-  Fesofi (Fesofi recupera el 99% de los códigos), y 2.433 de las 2.541 series ya
-  tienen algún valor puesto por el LLM actual, sin auditoría.
-- **AI API plan (2026-11-24, parked)**: `memory-bank/ai-api-plan.md` holds the plan to
-  stop the LLM inventing philately and pull from Colnect (official CAPI:
-  appId/appSecret, HMAC, HTTP/2, `/market_prices` + `/item_sales`, quotas), Delcampe
-  (official API is seller-only → scraping ruled out by `robots.txt` in A0) and
-  Iberphil (hammer prices per **lot**, not per stamp). Steps A1–A10, starting with
-  the observations model.
+- **Decidido por el usuario**: **Fesofi sí** (primera fuente de identidad y de
+  hechos de catálogo), **Iberphil fuera**, **Delcampe fuera** y **Colnect fuera**
+  (2026-11-26). Siguen abiertas, sin frenar código, el motor de opencode y dónde se
+  dispara la investigación (condiciona A8). Dos cifras para A6/A7: 2.733 de los
+  2.761 sellos sin Edifil tienen Fesofi (Fesofi recupera el 99% de los códigos), y
+  2.433 de las 2.541 series ya tienen algún valor puesto por el LLM actual, sin
+  auditoría.
+- **AI API plan (2026-11-24, en marcha)**: `memory-bank/ai-api-plan.md` holds the plan
+  to stop the LLM inventing philately. De las tres fuentes que se estudiaron al
+  principio —Colnect, Delcampe e Iberphil— **ninguna ha quedado**: Colnect por
+  decisión (2026-11-26), Delcampe por `robots.txt` e Iberphil por ser lotes sin
+  código. La identidad la da **Fesofi** y los precios salen de la búsqueda en
+  sitios permitidos.
 - **Dataset actual (2026-11-18)**: 2.540 series y 9.558 sellos (≈3,8 de media), con dispersión amplia — hay series de 1 sello y la mayor tiene 57 (medido en S9). El grid del workbench pagina server-side; el de sellos del workspace no pagina porque es una sola serie, y el caso a probar es la serie de 57 más un fixture de 100, para confirmar que no hay techos escondidos.
 - Frontend uses Flet 0.84.0 (not NiceGUI)
 - Locale files are user-managed — never modify en.json or es.json
@@ -167,6 +166,53 @@ en vez del HTML, el matcher con `score` y los `gaps`.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A6, segunda rebanada: **los hechos vienen del catálogo**. `identify()`
+  devuelve un `Match` con `products`, `term`, `score`, `candidates` y `gap`; el orden
+  es cobertura de palabras, nombre exacto antes que parcial, serie antes que motivo y
+  nombre más corto, y **un empate es un `gap` con los dos nombres**, no una elección
+  por suerte. `facts()` construye `serie_info` y `stamps` con **las mismas claves que
+  `clean_scraped_data`**, leídas de los atributos: códigos, facial, color, dentado,
+  tirada, fecha, motivo y la descripción del catálogo sin HTML. El emparejamiento es
+  sello a sello por sus códigos, y un acierto por **motivo se ensancha a la serie**
+  que el producto declara, así que «la sagrada familia» da el sello 2883 y el informe
+  sale con los dos de «Navidad 1986». La vista prefiere el catálogo y deja búsqueda +
+  raspado de respaldo, con un `gap` de `identity` cuando el respaldo es quien
+  rescata. Cuatro cosas que sólo se ven con datos reales: `Fecha De Emisión` lleva la
+  D mayúscula y `Año de Emisión` no (las claves se comparan sin acentos ni
+  mayúsculas), `Formato` es el **tamaño** y no el tipo (`stamp_type` no se inventa),
+  un término de serie y uno de motivo con el mismo nombre no empatan porque el
+  atributo desempata, y el ensanche necesita la taxonomía del término. Real:
+  `navidad 1986` → 2867/2868, `castillos 2007` → 4349/4350, `isabel ii 1850` → 1–5,
+  `quijote 1998` por motivo y ensanchado, `zzzz` → `gap`. 15 tests nuevos, 1.707
+  verdes.
+- [Today] AI API: mirados tres sitios más para el precio, ya sin Colnect.
+  **`filatelia.online` entra**: es WooCommerce y expone la misma Store API que
+  Fesofi, pero con atributos de sello —`Nº Edifil` (`pa_sello-numeracion`, id 45),
+  `Estado` (12), `Año` (2)—, así que se resuelve un código a término y sus productos
+  traen precio y condición (la «Prueba Oficial 100 – Navidad – 2009» está a 1.000 €,
+  «Nuevo (sin circular), Sin charnela»). Es precio de **oferta** a nivel de sello,
+  que es lo que la búsqueda genérica no da; su cobertura es su stock, así que
+  `n ≥ 3` fallará a menudo y será un `gap`. **`circulomadrid.com` descartado**:
+  vende y expertiza y muestra P.V.P. y precio de catálogo, pero es un CGI
+  (`cirmar.dll`) con una página por sello, sin búsqueda explotable y con catálogo
+  cargado de extranjero. **`stampworld.com` descartado por ahora**: catálogo con
+  valores y `robots.txt` que permite el uso de referencia, pero 403 de Cloudflare a
+  cualquier cliente que no sea un navegador. Iberphil sigue opcional y a nivel de
+  lote. Anotado en el plan: A7 con las dos fuentes en orden, la allowlist tendrá que
+  sumar `filatelia.online` al implementarse, y los dos descartes con su motivo.
+- [Today] AI API: **Colnect queda fuera** por decisión del usuario. Se cae A3 y con
+  él la clave CAPI, que era el único paso bloqueado del plan. Lo que importa es lo
+  que arrastra: Colnect era la única fuente de **precio de mercado** por API, así
+  que **A7 sube de S a M** y se reescribe —los precios salen de la búsqueda en
+  sitios permitidos (`todocoleccion.net`, `ebay.es`/`ebay.com`), de la snippet o de
+  la ficha, cada uno con su `kind`—, y casi todo lo que se encuentre serán ofertas,
+  no ventas, cosa que la estimación dirá en `method` y `kind` en vez de disimular.
+  **A6 cambia de papel**: Fesofi deja de ser «el primer escalón» y pasa a ser la
+  espina de la identidad; el hueco de Edifil (2.761 sellos) deja de bloquear nada.
+  **Serper deja de ser provisional**: sin Colnect es la puerta a los precios. Y el
+  extra `httpx[http2]` se queda sin motivo —es inofensivo, pero se puede bajar a
+  `httpx==0.28.1`. La forma de la respuesta no cambia: ya estaba pensada para no
+  depender de una fuente concreta.
 - [Today] AI API A6, primera rebanada: la serie se encuentra por **nombre parcial**.
   El fallo era de diseño: `site:… "navidad" "1986"` pedía dos frases literales y no
   encontraba nada aunque Google devuelva el enlace. Ahora `FesofiCatalogue`

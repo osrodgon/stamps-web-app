@@ -16,6 +16,7 @@ from ai_api.sources.errors import (
     SourceNotFound,
     SourceUnavailable,
 )
+from ai_api.sources.fesofi import FesofiCatalogue
 from ai_api.sources.http import get_client
 from ai_api.services.search_service import SearchService
 from ai_api.services.scraping_service import ScrapingService
@@ -113,13 +114,17 @@ class SeriesExtractionView(Logger, APIView):
         date = payload.validated_data.get('date')
         
         try:
-            # Initialize Search, Scrape and AI services
+            # Initialize the catalogue, the search, the scraper and the model
             self.log.debug(f"Starting AI research for name: {name} ({date})")
+            catalogue = FesofiCatalogue()
             search_service = SearchService()
             scraping_service = ScrapingService()
             llm_service = LLMService()
-            
-            # A URL plus date "0" skips the search, but only for a host the
+
+            match = None
+            identity_gap = None
+
+            # A URL plus date "0" skips every lookup, but only for a host the
             # client may fetch: accepting any URL here made the endpoint an
             # authenticated HTTP proxy (SSRF, §1 #3).
             if self._is_url(name) and self._is_zero_date(date):
@@ -128,37 +133,39 @@ class SeriesExtractionView(Logger, APIView):
                         f"{urlparse(name).hostname or name} is not an allowed host."
                     )
                 self.log.debug(f"Using provided URL directly: {name}")
-                url = name
+                clean_data = self._scraped(scraping_service, name)
             else:
-                # Search for an URL that matches the name and date
-                url = search_service.find_series_url(name, date)
-                if url is None:
-                    # No URL found
-                    message = f"Could not find anything for name: {name} and date: {date}"
-                    self.log.warning(message)
-                    return Response(
-                        data=GenericResponseSerializer(GenericResponse({
-                            "error": None,
-                            "message": message
-                        })).data,
-                        status=status.HTTP_404_NOT_FOUND
+                # The catalogue answers with the facts themselves; the search and
+                # the scraper are what is left when it does not.
+                match = catalogue.identify(name, date)
+                if match.found:
+                    self.log.debug(
+                        f"Catalogue match: '{match.term.get('name')}' "
+                        f"(score {match.score})"
                     )
-            
-            # Get all URLs that have information about the series
-            series_urls = scraping_service.extract_links(url)
-
-            # Scrap and clean all information from URLs
-            content = scraping_service.scrape_content(series_urls)
-            clean_data = scraping_service.clean_scraped_data(content)
+                    clean_data = catalogue.facts(match.products)
+                else:
+                    self.log.warning(f"Catalogue has no answer: {match.gap}")
+                    identity_gap = match.gap
+                    url = search_service.find_series_url(name, date)
+                    if url is None:
+                        message = (
+                            f"Could not find anything for name: {name} "
+                            f"and date: {date}"
+                        )
+                        if match.gap:
+                            message = f"{message} ({match.gap})"
+                        self.log.warning(message)
+                        return Response(
+                            data=GenericResponseSerializer(GenericResponse({
+                                "error": None,
+                                "message": message
+                            })).data,
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    clean_data = self._scraped(scraping_service, url)
 
             serie_info = clean_data.get("serie_info") or {}
-            if not serie_info or not content:
-                # Nothing was scraped: that is a contract problem (422), not a
-                # missing series (404) and not a crash behind a 500.
-                self.log.warning(f"Nothing could be scraped from {url}")
-                raise ValueError(
-                    f"No catalogue data could be read from {url}."
-                )
 
             # Send cleaned scraped data to LLM
             name = serie_info.get("issue_name")
@@ -193,6 +200,14 @@ class SeriesExtractionView(Logger, APIView):
                 if isinstance(stamp, dict):
                     stamp["market_value_mnh"] = None
                     stamp["market_value_used"] = None
+
+            # If the catalogue could not identify the series and the search had to
+            # rescue it, say so: the next reader deserves to know which door was
+            # used, and DataDesk can look at it.
+            if identity_gap:
+                validated["gaps"] = list(validated.get("gaps") or []) + [
+                    {"field": "identity", "reason": identity_gap}
+                ]
 
             self.log.debug(f"AI series extraction completed successfully for series: {name}")
             return Response(
@@ -256,6 +271,20 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    def _scraped(self, scraping_service: ScrapingService, url: str) -> dict:
+        """Fetch a series page and clean it, or fail with a reason (422)."""
+        series_urls = scraping_service.extract_links(url)
+        content = scraping_service.scrape_content(series_urls)
+        clean_data = scraping_service.clean_scraped_data(content)
+
+        if not content or not (clean_data.get("serie_info") or {}):
+            # Nothing was scraped: that is a contract problem (422), not a
+            # missing series (404) and not a crash behind a 500.
+            self.log.warning(f"Nothing could be scraped from {url}")
+            raise ValueError(f"No catalogue data could be read from {url}.")
+
+        return clean_data
+
     @staticmethod
     def _is_url(name: str) -> bool:
         """Return True when the value carries an http(s) scheme."""
