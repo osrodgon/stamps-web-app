@@ -391,13 +391,13 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 
 | # | Step | Depends on | Size | Status |
 |---|---|---|---|---|
-| B1 | Series of a collection (backend) | A6 | M | pendiente |
+| B1 | Series of a collection (backend) | A6 | M | **hecho 2026-11-26** |
 | B2 | Series detail and item writes (backend) | B1 | M | pendiente |
 | B3 | `CollectionSeriesPage` | B2 | L | pendiente |
 | B4 | `CollectionIssuePage` | B3 | L | pendiente |
 | B5 | Close-out | B4 | S | pendiente |
 
-**B1 — Series of a collection.**
+**B1 — Series of a collection — HECHO 2026-11-26.**
 `GET /collections/<pk>/issues/` mirroring `/issues/`: same parameters, same defaults,
 same `pagination` block, plus `cover`, `total_stamps`, `owned_stamps`, `paid` and
 `catalogue_mnh`. One annotated query plus `count()`. `CollectionIssuesView` joins
@@ -539,5 +539,8 @@ equal; suites at **1.781** backend / **707** frontend. Two things could not be c
 headlessly and are named above: the painted covers (the renderer here does not paint
 Flutter images) and the empty state (no account without collections on hand).
 
-**Next action: B1** — the series of a collection (backend, mirroring `/issues/`), after
-this is merged.
+**B1 is done (2026-11-26).** `GET /collections/<pk>/issues/` returns the page with the
+three figures and the cover in two queries; 21 tests, suite **1.802**.
+
+**Next action: B2** — the series detail with each stamp and its `item`, and the item
+writes (add a copy, 409 on duplicate, remove).

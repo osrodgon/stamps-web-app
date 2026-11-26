@@ -902,7 +902,13 @@ when A is merged into `development`.
       `ft.Image` app neither), so covers were confirmed by tests only, and the empty state
       was not seen (no account without collections). Collage images are square cells.
       Suites 1.781 backend / 707 frontend. **Phase A closed.**
-- [ ] B1 — Series of a collection (M): mirrors `/issues/`, plus cover and sums
+- [x] B1 — **Series of a collection** (2026-11-26, M): `GET /collections/<pk>/issues/`
+      mirrors `/issues/` (params, defaults, `pagination` block) and adds `cover`,
+      `total_stamps`, `owned_stamps`, `paid` and `catalogue_mnh`. The figures are
+      subqueries, so the stamps join is not multiplied by other users' items: **two
+      queries**, pinned. Decimals as strings, `cover: null` without a `fesofi_code`,
+      `paid: null` without prices. `CollectionIssuesService`,
+      `CollectionIssuePageSerializer`, view in `USER_VIEWS`. 21 tests; suite 1.802.
 - [ ] B2 — Series detail and item writes (M): each stamp with its `item`, add copy (409 on
       duplicate), PUT/DELETE with names
 - [ ] B3 — `CollectionSeriesPage` (L): route resolver, filters, `TablePagination` with

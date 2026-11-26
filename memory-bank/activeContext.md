@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (phase A closed 2026-11-26, B1 next)**: the three reading screens are
+- **Normal-user collections (phase A closed, B1 done 2026-11-26, B2 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -172,12 +172,23 @@ afirmar nada que las fuentes no sostengan.
   header, and the URLs in `URLs.Backend` (frontend suite 660), **mergeado en la PR #477**.
   **A4, A5 and A6 are done too**: the card, the overview screen and the close-out. **Phase A
   is closed**: suites at 1.781 backend / 707 frontend, 22 locale keys per language, and a
-  browser pass over create, delete, rename and the expired-token path. **Next: B1** (the
-  series of a collection), después de mergear A6. Decisions still standing: the series order **mirrors
+  browser pass over create, delete, rename and the expired-token path. **B1 is done too**:
+  `GET /collections/<pk>/issues/` mirrors `/issues/` and adds the three figures and the
+  cover in **two queries**; suite 1.802. **Next: B2** (series detail and item writes),
+  después de mergear B1. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B1: **las series de una colección, al estilo de `/issues/`**.
+  `GET /collections/<pk>/issues/` con los mismos parámetros, valores por defecto y bloque
+  `pagination` que `/issues/` (`sortBy=date`, empate por `id`), más `cover`,
+  `total_stamps`, `owned_stamps`, `paid` y `catalogue_mnh`. Las cifras de la colección van
+  como **subconsultas**, no como joins, para que el join de sellos no se multiplique por
+  los ejemplares de otros usuarios: la página cuesta **dos consultas**, fijado por un test.
+  Decimales como cadenas, `cover: null` si ningún sello tiene `fesofi_code` y `paid: null`
+  si no hay precios guardados. `CollectionIssuesService`,
+  `CollectionIssuePageSerializer` y la vista en `USER_VIEWS`. 21 tests, suite **1.802**.
 - [Today] Colecciones A6 y **cierre de la fase A**. Pasada en navegador real (Playwright
   contra una instancia de Flet con el mock login): la lista pinta las colecciones y el
   contador, **crear** deja la tarjeta y el contador en 3, **borrar** confirma con nombre y
