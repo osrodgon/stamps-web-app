@@ -642,8 +642,8 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, Colnect for the market, an allowed-sites search for an indicative
 price — and keeps it as a normaliser:
 
-**Next: A1b (opencode provider).** A1 is done. Resume at `ai-api-plan.md` §3–§4
-and the "Retomar aquí" block in `activeContext.md`.
+**Next: A2 (source layer and the §1 fixes).** A0, A1 and A1b are done. Resume at
+`ai-api-plan.md` §3–§4 and the "Retomar aquí" block in `activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -671,6 +671,22 @@ and the "Retomar aquí" block in `activeContext.md`.
       el proveedor escriba algo. Prompts sin la sección de valuación y sin el
       «EXPANSION» con conocimiento interno. 22 tests nuevos (15 de modelo, 7 de
       contrato), 1.655 verdes.
+- [x] **A1b — Proveedor opencode** (2026-11-25): `ai_api/services/opencode_provider.py`
+      llama a la API de inferencia del Console (`POST /chat/completions` con
+      `Bearer`, modelo en el cuerpo, `response_format` JSON, timeout y `max_tokens`
+      por configuración) y registra código y cuerpo del error y el `usage` con su
+      coste. `series_extract` **sube a `BaseLLMProvider`** (estaba duplicado en los
+      dos proveedores). La factoría queda con una sola entrada y **sin
+      `LLM_PROVIDER`**; en `settings.py` entran `OPENCODE_API_KEY/MODEL/BASE_URL/
+      TIMEOUT/MAX_TOKENS` y salen `GEMINI_*`, `GROQ_*` y `LLM_PROVIDER`. Borrados
+      `gemini_provider.py`, `groq_provider.py`, sus tests, `test_batch_processing.py`
+      y el script de validación multi-proveedor, y fuera `google-genai` y `groq` de
+      `requirements.base.txt`. 33 tests en tres archivos, 1.628 verdes. **Verificado en
+      real el 2026-11-25** con `glm-5.3-flash`: la extracción desde Swagger devolvió
+      la forma de A1 (precios a `null`, `valuation: null`, `description_source:
+      "llm"`). Al usarlo se vio que tarda; el desglose y las palancas están en la
+      ficha de A2 del plan (llamadas al modelo en serie, scraping secuencial, el 404
+      de Serper vacío, la lectura muerta de `serie_info`).
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi

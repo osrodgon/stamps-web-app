@@ -184,10 +184,10 @@ class Messages:
             return "AI Validation Error"
         
         def missing_api_key():
-            return "GEMINI_API_KEY environment variable is required"
+            return "The LLM API key is required (OPENCODE_API_KEY)"
         
         def missing_model_name():
-            return "GEMINI_MODEL_NAME environment variable is required"
+            return "The LLM model is required (OPENCODE_MODEL)"
         
         def response_format_error():
             return "Invalid AI response format"

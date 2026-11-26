@@ -2,7 +2,7 @@
 Base LLM Provider Interface for AI-powered stamp series extraction.
 
 This module defines the abstract base class for LLM providers, enabling
-support for multiple LLM services (Google Gemini, Groq, etc.) with a
+support for the LLM service behind the API (opencode) with a
 consistent interface.
 
 The base provider defines the contract that all LLM providers must implement,
@@ -16,7 +16,7 @@ Dependencies:
 
 Integration:
     - Used by LLMService to provide a unified interface for different LLM providers
-    - Implemented by specific provider classes (GeminiProvider, GroqProvider, etc.)
+    - Implemented by the provider class (OpenCodeProvider)
     - Part of the ai_api.services module
 
 Usage:
@@ -29,6 +29,7 @@ import re
 import json
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
+from common.api.messages import Messages
 from common.log.logger import Logger
 from _backend.settings import LLM_BATCH_SIZE
 
@@ -48,7 +49,7 @@ class BaseLLMProvider(Logger, ABC):
         prompt_template (str): The template for series extraction prompts
         
     Usage:
-        class GeminiProvider(BaseLLMProvider):
+        class OpenCodeProvider(BaseLLMProvider):
             def __init__(self):
                 super().__init__()
                 # Initialize provider-specific configuration
@@ -64,7 +65,6 @@ class BaseLLMProvider(Logger, ABC):
         super().__init__()
         self.prompt_template = None
     
-    @abstractmethod
     def series_extract(
         self,
         name: str,
@@ -74,9 +74,11 @@ class BaseLLMProvider(Logger, ABC):
         """
         Perform AI-powered extraction of stamp series information.
         
-        This is the main method that all LLM providers must implement.
-        It takes stamp issue parameters and cleaned data, processes them
-        using the specific LLM service, and returns structured information.
+        The workflow is the same for every provider, so it lives here: a small
+        series is one call, a large one is a header call plus a call per batch,
+        and the results are merged. Subclasses only implement the three hooks
+        (`_single_extract`, `_extract_header`, `_extract_batch`) and the
+        transport behind them.
         
         Args:
             name (str): The name of the stamp issue (e.g., "Olimpiadas", "Animales")
@@ -91,14 +93,28 @@ class BaseLLMProvider(Logger, ABC):
         
         Raises:
             ValueError: If clean_data is empty or None
-            ValueError: If the AI service returns an empty response
             Exception: If the AI service call fails or returns invalid data
-        
-        Note:
-            This method must be implemented by all subclasses and should include
-            comprehensive error handling and logging specific to the provider.
         """
-        pass
+        self.log.debug(f"Starting extraction for series: {name} ({date})")
+        
+        if not clean_data or not clean_data.strip():
+            raise ValueError(Messages.AI.missing_input_data())
+        
+        try:
+            parsed_data = self._parse_clean_data(clean_data)
+            stamps = parsed_data.get("stamps", [])
+            serie_info = parsed_data.get("serie_info", {})
+            
+            if self._should_batch(len(stamps)):
+                self.log.debug(f"Batch processing required for {len(stamps)} stamps")
+                return self._batch_extract(name, date, serie_info, stamps)
+            
+            self.log.debug(f"Single extraction for {len(stamps)} stamps")
+            return self._single_extract(clean_data)
+            
+        except Exception as e:
+            self.log.error(f"Extraction failed for series {name}: {str(e)}")
+            raise Exception(Messages.AI.service_error(str(e)))
     
     def _format_prompt(self, input_data: str) -> str:
         """

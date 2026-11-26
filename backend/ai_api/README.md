@@ -24,18 +24,23 @@ The AI API integrates multiple services to provide intelligent stamp series extr
 | :--- | :--- |
 | **SearchService** | Searches for stamp series URLs using the Serper API (Google Search) to find relevant philatelic catalog pages. |
 | **ScrapingService** | Scrapes and cleans content from philatelic catalog pages (primarily catalogodesellos.fesofi.es). |
-| **LLMService** | Processes extracted data using configurable LLM providers (Google Gemini, Groq) to extract structured stamp information. |
+| **LLMService** | Processes extracted data with the LLM provider (opencode) to extract structured stamp information. |
 
 ---
 
 ## Supported LLM Providers
 
-The AI API supports multiple LLM providers through a factory pattern:
+There is one LLM provider: **opencode**, called through its Console inference
+API (`https://opencode.ai/inference/openai/v1/chat/completions`) with a bearer
+token. The backend needs neither the opencode binary nor `opencode serve`.
 
-| Provider | Description | Configuration |
-| :--- | :--- | :--- |
-| **Google Gemini** | Google's generative AI model | Set `LLM_PROVIDER=gemini` |
-| **Groq** | Fast inference API for LLMs | Set `LLM_PROVIDER=groq` |
+| Setting | Description |
+| :--- | :--- |
+| `OPENCODE_API_KEY` | Console API key, `oc_sk_...`. A service account key is preferred for a server. |
+| `OPENCODE_MODEL` | Model to ask for; it travels in the request body, so swapping engines is an `.env` change. |
+
+Free-tier Console models only work from inside opencode; other clients get `403`,
+so the backend needs a paid model or a Go subscription.
 
 ---
 
@@ -46,7 +51,7 @@ The AI API supports multiple LLM providers through a factory pattern:
 Performs AI-powered extraction of stamp series information. This endpoint accepts a series name and date, searches for relevant philatelic catalog pages, scrapes the content, and uses AI to extract structured data.
 
 *   **Summary:** Extract Stamp Series Information using AI
-*   **Description:** Performs AI-powered extraction of series information using configurable LLM providers. Requires a name (either series name or the motive of one of the stamps in the series) and publication date.
+*   **Description:** Performs AI-powered extraction of series information with the LLM provider. Requires a name (either series name or the motive of one of the stamps in the series) and publication date.
 *   **Request Body:**
     A JSON object containing the extraction parameters.
     ```json
@@ -173,9 +178,11 @@ The AI API requires the following environment variables:
 
 | Variable | Description | Required |
 | :--- | :--- | :--- |
-| `LLM_PROVIDER` | The LLM provider to use (`gemini` or `groq`) | Yes |
-| `GEMINI_API_KEY` | API key for Google Gemini (if using Gemini) | Conditional |
-| `GROQ_API_KEY` | API key for Groq (if using Groq) | Conditional |
+| `OPENCODE_API_KEY` | Console API key for the inference API | Yes |
+| `OPENCODE_MODEL` | Model the provider asks for | Yes |
+| `OPENCODE_BASE_URL` | API root; defaults to `https://opencode.ai/inference/openai/v1` | No |
+| `OPENCODE_TIMEOUT` | Seconds per call; defaults to 120 | No |
+| `OPENCODE_MAX_TOKENS` | Answer budget per call; defaults to 8192 | No |
 | `SERPER_API_KEY` | API key for Serper (Google Search API) | Yes |
 | `SERPER_URL` | Serper API endpoint URL | Yes |
 

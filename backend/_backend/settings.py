@@ -38,16 +38,16 @@ SECRET_KEY = os.getenv(
 JWT_SECRET = SECRET_KEY 
 JWT_ALGORITHM = 'HS256'
 
-# Google API Key
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
-GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', None)
-
-# Groq API Key
-GROQ_API_KEY = os.getenv('GROQ_API_KEY', None)
-GROQ_MODEL_NAME = os.getenv('GROQ_MODEL_NAME', None)
-
-# LLM Provider Selection
-LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'gemini')
+# opencode inference API: the only LLM provider.
+# The key is created in the opencode Console and sent as a bearer token; the
+# model is configuration, not code, so swapping engines is an .env change.
+OPENCODE_API_KEY = os.getenv('OPENCODE_API_KEY', None)
+OPENCODE_MODEL = os.getenv('OPENCODE_MODEL', None)
+OPENCODE_BASE_URL = os.getenv(
+    'OPENCODE_BASE_URL', 'https://opencode.ai/inference/openai/v1'
+)
+OPENCODE_TIMEOUT = int(os.getenv('OPENCODE_TIMEOUT', '120'))
+OPENCODE_MAX_TOKENS = int(os.getenv('OPENCODE_MAX_TOKENS', '8192'))
 
 # LLM Batch Processing
 # Number of stamps to process per LLM call when batch processing is needed

@@ -1,13 +1,13 @@
 # Active Context
 
 ## Current Task
-- **AI API A0 + A1 done (2026-11-25)**: the source probe ran (report in
-  `memory-bank/ai-sources-spike.md`) and the extraction contract is now
-  evidence-based: `SourceObservation` stores every price with its source, URL,
-  kind, condition and date, and the response carries `sources`, `observations`,
-  `valuation`, `gaps` and `description_source` while the old `market_value_*` stay
-  null. Spike validated by the user, A0 and A1 closed in the plan's step table;
-  **next step is A1b** (opencode replaces Gemini and Groq). Details in Notes below.
+- **AI API A0, A1 and A1b done (2026-11-25)**: the source probe ran (report in
+  `memory-bank/ai-sources-spike.md`), the extraction contract is evidence-based
+  (`SourceObservation` plus `sources` / `observations` / `valuation` / `gaps` /
+  `description_source`, with the old `market_value_*` always null), and **opencode
+  is the only LLM provider**: Gemini, Groq, their keys, their SDKs and their tests
+  are gone, and the API calls the Console inference endpoint over plain HTTP.
+  **Next step is A2** (source layer and the §1 fixes). Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -72,40 +72,45 @@
 
 ## Retomar aquí (guardado 2026-11-25)
 
-**A0 y A1 están cerrados. Lo siguiente es A1b.** A1 dejó el modelo de observaciones
-y el contrato; A2 prepara la capa HTTP que las llena y A6 empieza a llenarlas con
-Fesofi.
+**A0, A1 y A1b están cerrados y probados en real. Lo siguiente es A2.** El contrato
+pide evidencia, el proveedor es opencode y una extracción completa ya devuelve la
+forma acordada; A2 construye la capa HTTP que llena las observaciones y arregla lo
+que el primer uso dejó a la vista.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A1b — Proveedor opencode** (S): `OpenCodeProvider` contra
-  `https://opencode.ai/inference/openai/v1/chat/completions` con
-  `Authorization: Bearer oc_sk_…`; fuera `gemini_provider.py`, `groq_provider.py`,
-  sus tests, `GEMINI_*` / `GROQ_*` y las dos dependencias. Claves nuevas:
-  `OPENCODE_API_KEY` (mejor de service account), `OPENCODE_MODEL` y
-  `OPENCODE_BASE_URL` (opcional).
 - **A2 — Capa de fuentes** (M): `sources/base.py`, `http.py` con allowlist y
   timeouts, y los arreglos de §1 (SSRF, timeout de Serper, 404/422/500, una sola
-  fuente de configuración).
+  fuente de configuración). Lo que el primer uso real añadió a la lista está en la
+  ficha de A2 del plan: **scraping secuencial** (una petición por sello; 29 sellos
+  = 6,8 s) que pide pool con límite por dominio y caché, **`SearchService` que se
+  traga el fallo** y lo convierte en un 404 cuando `SERPER_*` está vacío, la **lectura
+  muerta** de `título serie` / `fecha de emisión` en la vista (el limpiador devuelve
+  `issue_name` / `issue_date`) y la falta de **`elapsed_ms`** por llamada.
 - **A6 — Fesofi** (L): el puente de identidad; es lo primero que llena
   `observations` y `description_source`.
 - **Bloqueado**: A3 (Colnect) hasta que exista la clave CAPI; se pide en
   `colnect.com/en/capi/use_request` y el procedimiento está en el plan §A3. No
-  bloquea A1b, A2 ni A6.
-- **Sin decidir**: el modelo concreto (los gratuitos del Console dan 403 desde
-  fuera, así que será de pago) y dónde se dispara la investigación (DataDesk, app
-  Flet o comando), que condiciona A8.
-- **Estado del árbol de trabajo**: `backend/ai_api/probe.py`, el comando
-  `ai_sources_probe`, `ai_api/models.py`, los serializers nuevos, los prompts, la
-  vista, los tests (`test_probe.py`, `test_observations.py`, `test_contract.py`) y
-  los documentos de memoria están **sin commitear**. También hay cambios previos
-  sin commitear que no son de este trabajo (`AGENTS.md`,
-  `user-collections-plan.md` y los tres mockups de colecciones): no se tocan.
-  `ai_api/migrations/` está gitignoreado; CI construye el esquema desde los modelos.
-- **Verificación rápida**: `python -m pytest ai_api -q` → **148 verdes**; la suite
-  completa, **1.655**. `manage.py spectacular` genera el esquema sin avisos y la
-  migración aplica y revierte.
+  bloquea A2 ni A6.
+- **Sin decidir**: el valor de `OPENCODE_MODEL` (los gratuitos del Console dan 403
+  desde fuera, así que será de pago) y dónde se dispara la investigación (DataDesk,
+  app Flet o comando), que condiciona A8.
+- **A1b verificado en real** (2026-11-25) con `OPENCODE_MODEL=glm-5.3-flash`: una
+  extracción desde Swagger devolvió la forma de A1, con los precios a `null`. El
+  `.env` de cada entorno ya no lleva `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER` y sí
+  `OPENCODE_API_KEY` y `OPENCODE_MODEL`.
+- **Palanca pendiente y gratis**: `LLM_BATCH_SIZE=15`. Las llamadas al modelo son
+  `1 + ceil(n / LLM_BATCH_SIZE)` y van en serie: con el lote en 5, la serie de 6
+  sellos hace 3 llamadas y la de 57 haría 13.
+- **Estado del árbol de trabajo**: el trabajo de A1 está mergeado; el de A1b toca
+  `settings.py`, `.env.example`, `pytest.ini`, `requirements.base.txt`,
+  `messages.py`, la factoría, la base del proveedor, la vista, el README y los
+  tests, con dos archivos nuevos (`opencode_provider.py`,
+  `test_opencode_provider.py`) y seis borrados. Sigue **sin commitear**.
+- **Verificación rápida**: `python -m pytest ai_api -q` → **121 verdes**; la suite
+  completa, **1.628**. `manage.py check` y `manage.py spectacular` limpios. Y la
+  prueba de verdad: una extracción real que devuelve la forma de A1.
 
 ## Notes
 - **AI API A0 done (2026-11-25)**: the source probe ran and its report is
@@ -157,6 +162,32 @@ Fesofi.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A1b verificado en real y fin de jornada. Con `glm-5.3-flash`, una
+  extracción desde Swagger pasó la tubería entera y devolvió la forma de A1: precios a
+  `null`, `valuation: null`, `description_source: "llm"` y una descripción sin
+  cifras. Al usarlo se vio que tarda, y medido con el código del repo el scraping no
+  es el culpable (6 sellos 1,7 s; 29 sellos 7,0 s): lo son las llamadas al modelo,
+  `1 + ceil(n / LLM_BATCH_SIZE)` y en serie (6 sellos → 3; 57 → 13). Palanca gratis
+  pendiente: subir el lote a 15. Para A2 quedan anotados cuatro hallazgos del primer
+  uso: el scraping secuencial pide pool con límite por dominio y caché,
+  `SearchService` se traga el fallo de Serper y lo cuenta como un 404, la vista lee
+  `título serie` / `fecha de emisión` cuando el limpiador devuelve `issue_name` /
+  `issue_date`, y falta `elapsed_ms` por llamada para dejar de adivinar.
+- [Today] AI API A1b: opencode es ya el único proveedor y Gemini y Groq han salido
+  del código. `opencode_provider.py` hace `POST /chat/completions` contra la API de
+  inferencia del Console con `Bearer`, el modelo en el cuerpo, `response_format` JSON
+  y timeout y `max_tokens` por configuración; en un error registra el código y el
+  principio del cuerpo —que es lo que distingue una clave mala de un modelo no
+  disponible de un límite— y en cada llamada el `usage` con su coste. De paso,
+  `series_extract` subió a `BaseLLMProvider`: estaba duplicado palabra por palabra en
+  los dos proveedores y habría sido la tercera copia. La factoría queda con una sola
+  entrada y sin `LLM_PROVIDER`, porque con un único proveedor una variable que sólo
+  admite un valor es una forma de romper un despliegue con un valor viejo. Fuera
+  `gemini_provider.py`, `groq_provider.py`, sus tests, `test_batch_processing.py`
+  (sus cinco tests del troceado ya estaban en `test_base_llm_provider.py`), el script
+  de validación multi-proveedor y las dependencias `google-genai` y `groq`. 33 tests
+  en tres archivos, 1.628 verdes. Queda pendiente la llamada real: no hay
+  `OPENCODE_API_KEY` en el `.env`.
 - [Today] AI API A1: el contrato deja de ser una promesa y pasa a ser evidencia.
   `SourceObservation` (source, external_id, url, issue/stamp, kind, price, currency,
   condition, observed_at, raw, raw_hash) guarda cada precio con la página que lo
