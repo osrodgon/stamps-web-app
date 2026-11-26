@@ -315,7 +315,7 @@ adds the other two screens. Every step leaves the app running.
 | A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (mergeado, PR #477) |
 | A4 | `CollectionCard` | A3 | M | **hecho 2026-11-26** |
 | A5 | Screen, dialog and states | A4 | M | **hecho 2026-11-26** |
-| A6 | Phase A close-out | A5 | S | pendiente |
+| A6 | Phase A close-out | A5 | S | **hecho 2026-11-26** |
 
 **A1 — Ownership and JWT (backend) — HECHO 2026-11-26.**
 The `CurrentUser` class (`common/core/current_user.py`); the four collection and item views scoped to the token's
@@ -383,7 +383,7 @@ the window — found on first use, pinned by a test. 23 tests (dialogs, construc
 render on a mocked page); frontend suite **698**, checked by hand for the paths a page
 cannot test.
 
-**A6 — Phase A close-out.**
+**A6 — Phase A close-out — HECHO 2026-11-26. Phase A is closed.**
 Two real users in the browser; empty state, create, rename, delete, reload and expired
 token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 
@@ -531,5 +531,13 @@ network error.
 and its 14 tests, plus the `zero` argument of `fmt_number`. Frontend suite **675**.
 
 **A5 is done (2026-11-26).** The overview is a usable screen: grid, empty/loading/error,
-create/rename/delete and the 403 → login path, with 22 tests and the frontend suite at
-**697**. **Next action: A6** — the phase A close-out.
+create/rename/delete and the 403 → login path.
+
+**A6 is done (2026-11-26) and phase A is closed.** The browser pass covered the list,
+create, delete, rename and the expired-token path; the locale files are complete and
+equal; suites at **1.781** backend / **707** frontend. Two things could not be checked
+headlessly and are named above: the painted covers (the renderer here does not paint
+Flutter images) and the empty state (no account without collections on hand).
+
+**Next action: B1** — the series of a collection (backend, mirroring `/issues/`), after
+this is merged.

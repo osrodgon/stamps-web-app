@@ -100,21 +100,13 @@ class CollectionCard(ft.Container):
         sources = self._existing_covers()
 
         if not sources:
-            collage: ft.Control = ft.Row(
-                controls=[
-                    self._image(NO_STAMP, self.SINGLE_THUMBNAIL_HEIGHT, faded=True)
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
+            collage: ft.Control = self._image(
+                NO_STAMP, self.SINGLE_THUMBNAIL_HEIGHT, faded=True
             )
         elif len(sources) == 1:
             year, code = sources[0]
-            collage = ft.Row(
-                controls=[
-                    self._image(
-                        self._source(year, code), self.SINGLE_THUMBNAIL_HEIGHT
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
+            collage = self._image(
+                self._source(year, code), self.SINGLE_THUMBNAIL_HEIGHT
             )
         else:
             rows = []
@@ -162,8 +154,12 @@ class CollectionCard(ft.Container):
 
     def _image(self, src: str, height: int, faded: bool = False) -> ft.Image:
         """One picture of the collage, remembered for the tests."""
+        # Square cells: the mosaic lines up whatever the stamp's aspect ratio,
+        # and `fit=CONTAIN` keeps the piece itself undistorted. The admin's cards
+        # also set both sides.
         image = ft.Image(
             src=src,
+            width=height,
             height=height,
             fit=ft.BoxFit.CONTAIN,
             opacity=0.55 if faded else 1,

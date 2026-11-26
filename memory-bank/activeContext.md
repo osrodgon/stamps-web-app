@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (A1–A5 done 2026-11-26, A6 next)**: the three reading screens are
+- **Normal-user collections (phase A closed 2026-11-26, B1 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -170,14 +170,26 @@ afirmar nada que las fuentes no sostengan.
   `covers` in exactly five queries (pinned), with a fixture that makes the three figures
   differ. **A3 is done too**: `CollectionService(token)` with the four calls and the JWT
   header, and the URLs in `URLs.Backend` (frontend suite 660), **mergeado en la PR #477**.
-  **A4 is done too**: `CollectionCard` with the collage, summary, bar and percentage.
-  **A5 is done too**: the overview screen (grid, states, dialogs, 403 → login) and the
-  card's menu, frontend suite **697**. Suite total 1.781 backend / 697 frontend. **A6 is
-  next** (close-out of phase A), después de mergear A5. Decisions still standing: the series order **mirrors
+  **A4, A5 and A6 are done too**: the card, the overview screen and the close-out. **Phase A
+  is closed**: suites at 1.781 backend / 707 frontend, 22 locale keys per language, and a
+  browser pass over create, delete, rename and the expired-token path. **Next: B1** (the
+  series of a collection), después de mergear A6. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones A6 y **cierre de la fase A**. Pasada en navegador real (Playwright
+  contra una instancia de Flet con el mock login): la lista pinta las colecciones y el
+  contador, **crear** deja la tarjeta y el contador en 3, **borrar** confirma con nombre y
+  resumen y lo deja en 2, **renombrar** abre con el nombre actual, y un token invalidado
+  desde el formulario lleva a `/login`. Sin errores de consola. Los dos ficheros de idioma
+  tienen las mismas 22 claves y ninguna vacía. Dos límites del entorno, dichos y no
+  escondidos: el Chromium headless de aquí **no pinta imágenes de Flutter** (una app mínima
+  con `ft.Image` tampoco), así que portadas y placeholder quedan probados por tests y no en
+  pantalla; y el estado vacío no se vio porque el usuario de prueba tiene dos colecciones.
+  Las imágenes del collage pasaron a celdas cuadradas (`width=height`) para que el mosaico
+  cuadre. Suites: **1.781** backend / **707** frontend. **Fase A cerrada**; lo siguiente es
+  B1 (series de una colección), después de mergear.
 - [Today] Mock login: **no lo había deshabilitado yo; el mock ya no existía**. La migración
   de NiceGUI a Flet (`1fc0b61`) borró `LoginPage.mock_login()` y la rama de `main` que lo
   llamaba, y dejó `MOCK_LOGIN`, `MOCK_USER` y `MOCK_PASSWORD` en `settings.py` y
