@@ -633,7 +633,7 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0–A2, A6–A9 done; Colnect out; A10 next)
+### AI API — real sources (A0–A2, A6–A10 done; the plan is closed)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
@@ -642,10 +642,15 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, `filatelia.online` for asking prices, an allowed-sites search for
 the rest — and keeps it as a normaliser. Colnect, Delcampe and Iberphil are out.
 
-**Next: A10 (close-out).** The model can no longer write a code, a date or a number
-the sources do not carry: `check_support()` drops it and says so. What is left is
-documentation, the schema and the close of the plan. Resume at `ai-api-plan.md`
-§3–§4 and "Retomar aquí" in `activeContext.md`.
+**The plan is closed.** The module identifies a series in Fesofi, reads its facts
+from the API, prices its stamps with a shop and an allowed-site search (condition read
+from the listing), values them with a trimmed mean, refuses to answer beyond a budget
+and drops any fact the sources do not support. The README describes it as it is.
+
+What is left is outside this plan: the engine (`OPENCODE_MODEL`, paid) and the caller
+— DataDesk and the Flet app do not call the endpoint yet, and `ai_prices_backfill`
+is there for the catalogue. Resume at `ai-api-plan.md` §5 and "Retomar aquí" in
+`activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -763,8 +768,21 @@ documentation, the schema and the close of the plan. Resume at `ai-api-plan.md`
       campo propio en el catálogo). Las descripciones sobreviven marcadas `llm`; el
       validador no escribe precios, sólo quita afirmaciones. Huecos en `gaps`, con
       tope de 20. 17 tests, 1.827 verdes.
-- **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
-  `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
+- [x] **A10 — Cierre** (2026-11-26): el cierre encontró tres promesas sin cumplir y
+      las arregló en vez de documentarlas. **`sources` se llena de verdad** con
+      `ok` / `empty` / `error` / `skipped` (un fallo deja de disfrazarse de respuesta
+      vacía); **`SourceObservation.Source`** se alinea con lo que el pipeline escribe
+      (`filatelia`, `search`; fuera `colnect` y `ebay`); y se va el código muerto:
+      `sources/registry.py`, el ABC `SourceAdapter` (7 tests), el `issues_extraction`
+      que nadie usaba y el extra `httpx[http2]`, que sólo existía para Colnect.
+      README del módulo reescrito (recorrido, fuentes, contrato, ajustes, backfill,
+      errores, lo que no hace) y sección en el README del repo; el esquema muestra
+      `partial` y `subject_code` sin avisos y el `summary` describe el pipeline real.
+      `valuation` de serie sigue `null` por decisión (una serie no es la suma de sus
+      sellos). 3 tests nuevos; 1.823 verdes.
+- **Dependencies (final)**: `httpx==0.28.1` without the `http2` extra — it only
+  existed for Colnect's CAPI, which is out; the A0 probe reports the missing `h2`
+  instead of pretending. Fesofi is the first identity source. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi
   3196 ↔ Edifil 3188, while the series' minimum Edifil is 3164), so matching is
   stamp by stamp.

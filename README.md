@@ -181,6 +181,37 @@ docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
 The frontend translations (`frontend/assets/locales/*.json`) belong to the public
 app and are never touched by DataDesk.
 
+### AI API (series research)
+
+`POST /stamps-backend/api/v1/issues/extraction/` researches one series: it finds it in
+the **Fesofi** catalogue, reads its facts from the catalogue API (codes, face value,
+print run, colour, perforation), prices its stamps in **filatelia.online** and in an
+allowed-site search (opening the TodoColeccion listing when the snippet has no
+condition), and has the LLM write the text from those facts. The LLM is a normaliser,
+never a source.
+
+Every price travels with the page that supports it (`observations`), and the value of
+a stamp is a **trimmed mean** per condition with a minimum of three prices, in euros
+only. What no source supports is `null` and appears in `gaps`; `partial: true` means
+the request ran out of its budget and asking again is cheap.
+
+It needs `OPENCODE_API_KEY` and `OPENCODE_MODEL` (paid Console models: the free ones
+only work from inside opencode), plus `SERPER_API_KEY` for the price search. Every
+outbound call goes through one allowlist and cache (`AI_SOURCE_*`), and one request is
+capped by `AI_BUDGET_SECONDS`.
+
+The endpoint prices one series. To fill the database:
+
+```bash
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.dev.yml \
+  exec stamps-backend python manage.py ai_prices_backfill --limit 10 --dry-run
+```
+
+It stores `SourceObservation` rows attached to the real stamp, deduplicated by
+`raw_hash`, so running it twice does not duplicate the evidence. Module documentation:
+`backend/ai_api/README.md`; the decisions and what each source answered:
+`memory-bank/ai-api-plan.md` and `memory-bank/ai-sources-spike.md`.
+
 ## 📋 Project Structure
 
 ```
@@ -200,7 +231,7 @@ stamps-web-app/
 │   ├── print_types_api/       # Print type reference data
 │   ├── locations_api/         # Storage location management
 │   ├── condition_types_api/   # Condition type reference data
-|   ├── ai_api/                # AI-based stamp recognition
+|   ├── ai_api/                # AI series research (catalogue + prices)
 |   ├── artists_api/           # Artists references (engravers)
 |   ├── printers_api/          # Printers references (publishers)
 |   ├── paper_types_api/       # Paper type reference data

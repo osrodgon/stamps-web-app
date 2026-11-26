@@ -139,7 +139,7 @@ class TestDefaults:
 
     def test_condition_defaults_to_unknown(self, stamp: Stamp):
         row = SourceObservation(
-            source=SourceObservation.Source.COLNECT,
+            source=SourceObservation.Source.FILATELIA,
             kind=SourceObservation.Kind.SOLD,
             price=Decimal("10.00"),
             stamp=stamp,

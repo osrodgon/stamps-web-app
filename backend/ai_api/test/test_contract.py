@@ -74,7 +74,7 @@ FULL_PAYLOAD = {
             "status": "ok",
             "url": "https://catalogodesellos.fesofi.es/producto/0001/",
         },
-        {"source": "colnect", "status": "skipped"},
+        {"source": "filatelia", "status": "skipped"},
     ],
     "observations": [
         {
@@ -224,7 +224,14 @@ class TestEndpointNeverInventsPrices(AbstractApiUnitTest):
         assert data["stamps"][0]["market_value_mnh"] is None
         assert data["stamps"][0]["market_value_used"] is None
         assert data["observations"] == []
-        assert data["sources"] == []
+        # Every source that was consulted says so; the ones nobody asked are
+        # skipped, which is not the same as "asked and had nothing".
+        report = {row["source"]: row["status"] for row in data["sources"]}
+        assert report == {
+            "fesofi": "empty",
+            "filatelia": "skipped",
+            "search": "skipped",
+        }
         assert data["valuation"] is None
         # The catalogue did not identify it, the search rescued it, the shop had
         # no price and the model wrote fields the scraped facts do not carry: the
