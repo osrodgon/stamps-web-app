@@ -3,13 +3,14 @@
 The row is what `/collections/<id>` repeats: the cover, when the series is, how much of
 it the user owns and what it cost, next to what the catalogue says it is worth.
 
-It is deliberately not a link yet: the series screen is B4, and a row that looks
-clickable and does nothing is worse than one that does not.
+It is a link when the page gives it `on_open`: a row that looks clickable and does
+nothing is worse than one that does not.
 """
 
 from __future__ import annotations
 
 import os
+from typing import Callable, Optional
 
 import flet as ft
 
@@ -41,6 +42,8 @@ class IssueProgressCard(ft.Container):
             `stamp_type`, `cover`, `total_stamps`, `owned_stamps`, `paid`,
             `catalogue_mnh`).
         lang: the active language, for the numbers and the date.
+        on_open: called with the series' id when the row is clicked; when it is
+            None the row is not clickable.
     """
 
     THUMBNAIL_SIZE: int = 64
@@ -49,10 +52,16 @@ class IssueProgressCard(ft.Container):
     FIGURES_SPACING: int = 24
     CHEVRON_SIZE: int = 20
 
-    def __init__(self, data: dict, lang: str) -> None:
+    def __init__(
+        self,
+        data: dict,
+        lang: str,
+        on_open: Optional[Callable[[int], None]] = None,
+    ) -> None:
         super().__init__()
         self._data: dict = data
         self._lang: str = lang
+        self._on_open: Optional[Callable[[int], None]] = on_open
 
         # Exposed to the tests: what the row painted and what it says.
         self._image: ft.Image = self.__image()
@@ -80,6 +89,13 @@ class IssueProgressCard(ft.Container):
         )
         self.bgcolor = ft.Colors.WHITE
         self.border = ft.Border(bottom=ft.BorderSide(1, ROW_BORDER))
+        if on_open is not None:
+            self.on_click = self._handle_open
+
+    def _handle_open(self, event: ft.ControlEvent) -> None:
+        """Open the series."""
+        if self._on_open is not None:
+            self._on_open(int(self._data.get("id") or 0))
 
     # ------------------------------------------------------------------
     # Cover

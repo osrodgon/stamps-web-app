@@ -13,12 +13,18 @@ from typing import Optional
 import flet as ft
 
 from core.urls import URLs
+from pages.collection.collection_issue_page import CollectionIssuePage
 from pages.collection.collection_series_page import CollectionSeriesPage
 
 
 class RouteResolver:
     """Turns a path with an id into the view that renders it."""
 
+    #: `/collections/<id>/issues/<issue_id>` — one series and its copies.
+    DETAIL = re.compile(
+        rf"{re.escape(URLs.Frontend.collections)}/(?P<collection_id>\d+)"
+        rf"/issues/(?P<issue_id>\d+)"
+    )
     #: `/collections/<id>` — the series of one collection.
     SERIES = re.compile(
         rf"{re.escape(URLs.Frontend.collections)}/(?P<collection_id>\d+)"
@@ -35,6 +41,14 @@ class RouteResolver:
         Returns:
             The view, or None when the path has no ids this class knows.
         """
+        detail = cls.DETAIL.fullmatch(route)
+        if detail is not None:
+            return CollectionIssuePage(
+                page,
+                int(detail.group("collection_id")),
+                int(detail.group("issue_id")),
+            )
+
         series = cls.SERIES.fullmatch(route)
         if series is not None:
             return CollectionSeriesPage(page, int(series.group("collection_id")))

@@ -394,7 +394,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 | B1 | Series of a collection (backend) | A6 | M | **hecho 2026-11-26** |
 | B2 | Series detail and item writes (backend) | B1 | M | **hecho 2026-11-26** |
 | B3 | `CollectionSeriesPage` | B2 | L | **hecho 2026-11-26** |
-| B4 | `CollectionIssuePage` | B3 | L | pendiente |
+| B4 | `CollectionIssuePage` | B3 | L | **hecho 2026-11-26** |
 | B5 | Close-out | B4 | S | pendiente |
 
 **B1 — Series of a collection — HECHO 2026-11-26.**
@@ -435,12 +435,24 @@ and adding it would be a backend change; the per-series paid is in each row. 37 
 more; frontend suite **744**. No browser pass: the running backend image predates B1/B2,
 so the rows cannot load until it is rebuilt.
 
-**B4 — `CollectionIssuePage`.**
+**B4 — `CollectionIssuePage` — HECHO 2026-11-26.**
 Read-only series header (`hide_action_icons=True`) with the catalogue badge, then one
 `CollectionStampCard` per stamp: picture, codes, face value, colours, catalogue values,
 and "Your copy" with the six fields, save/cancel/remove and `Add my copy` for the ones
 the user does not own. Refreshes the summary without a reload. Tests: service writes,
 card in read and edit mode, stamp without an item.
+
+*Done:* `CollectionIssuePage` with the breadcrumb, the admin's header and specs grid
+(`hide_action_icons=True`), the read-only badge and the summary recomputed from the
+cards after each write (no request, no flicker). `CollectionStampCard` shows the copy or
+`Add my copy`, edits the six fields in place (disabled selects with a hint when the
+reference lists fail), validates quantity and price, and asks once before removing. The
+detail's stamps carry no year, so the page injects `issue_year` from the series for the
+picture path. `RouteResolver` adds the detail route and the series rows become links.
+`CollectionItemService` gains `get_issue`, `add_item`, `update_item`, `delete_item`,
+`get_condition_types` and `get_locations`. 31 tests more; frontend suite **775**. No
+browser pass: the backend image in use still predates B1/B2, and headless Chromium does
+not paint Flutter images.
 
 **B5 — Close-out.**
 Loading, error and empty states on both screens, the i18n pass with the phase B keys,
@@ -563,5 +575,6 @@ three figures and the cover in two queries; 21 tests, suite **1.802**.
 **B2 is done (2026-11-26).** The detail with every stamp and its copy, and adding one
 (201/404/409), are in; 16 tests, suite **1.818**.
 
-**B3 is done (2026-11-26).** The second screen, the resolver and the clickable cards;
-frontend suite **744**. Next action: **B4** — the series detail and "Your copy".
+**B3 is done (2026-11-26).** The second screen, the resolver and the clickable cards.
+**B4 is done (2026-11-26) too.** The series detail with "Your copy"; frontend suite
+**775**. Next action: **B5** — the close-out of phase B.
