@@ -633,7 +633,7 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0–A2, A6, A7, A7b and A8 done; Colnect out; A9 next)
+### AI API — real sources (A0–A2, A6–A9 done; Colnect out; A10 next)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
@@ -642,10 +642,10 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, `filatelia.online` for asking prices, an allowed-sites search for
 the rest — and keeps it as a normaliser. Colnect, Delcampe and Iberphil are out.
 
-**Next: A9 (the LLM reduced and the source validator).** A request now has a budget
-and a `partial` answer, and the backfill stores observations without duplicating
-them. What is left is the model: stop it writing facts no source supports. Resume at
-`ai-api-plan.md` §3–§4 and "Retomar aquí" in `activeContext.md`.
+**Next: A10 (close-out).** The model can no longer write a code, a date or a number
+the sources do not carry: `check_support()` drops it and says so. What is left is
+documentation, the schema and the close of the plan. Resume at `ai-api-plan.md`
+§3–§4 and "Retomar aquí" in `activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -754,6 +754,15 @@ them. What is left is the model: stop it writing facts no source supports. Resum
       una serie desde DataDesk/Flet, comando para llenar la base; sin cola ni Celery.
       Lo que no se promete: interrumpir una llamada ya bloqueada (el límite es por
       llamada y por fase). 19 tests, 1.804 verdes.
+- [x] **A9 — El modelo sólo dice lo que las fuentes sostienen** (2026-11-26):
+      `ai_api/validation.py` con `check_support(data, facts)`, que compara contra los
+      hechos de la petición normalizando texto, números (separadores) y fechas (ISO
+      contra «16 noviembre 1986»). Un **código inventado se anula**, igual que una
+      fecha, un facial o una tirada que no están en la fuente; `paper_type` y
+      `stamp_type` se aceptan sólo si el texto de las fuentes los menciona (no tienen
+      campo propio en el catálogo). Las descripciones sobreviven marcadas `llm`; el
+      validador no escribe precios, sólo quita afirmaciones. Huecos en `gaps`, con
+      tope de 20. 17 tests, 1.827 verdes.
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi

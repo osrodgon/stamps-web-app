@@ -226,7 +226,10 @@ class TestEndpointNeverInventsPrices(AbstractApiUnitTest):
         assert data["observations"] == []
         assert data["sources"] == []
         assert data["valuation"] is None
-        # The catalogue did not identify it, the search rescued it and the shop
-        # had no price: the response says both things instead of pretending.
-        assert [gap["field"] for gap in data["gaps"]] == ["identity", "market_value"]
+        # The catalogue did not identify it, the search rescued it, the shop had
+        # no price and the model wrote fields the scraped facts do not carry: the
+        # response says all of it instead of pretending.
+        fields = [gap["field"] for gap in data["gaps"]]
+        assert fields[0] == "identity"
+        assert {"market_value", "printer"} <= set(fields)
         assert data["description_source"] == "llm"
