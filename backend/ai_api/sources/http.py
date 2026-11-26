@@ -60,9 +60,18 @@ class HttpClient(Logger):
         self.cache_ttl = cache_ttl
         self.user_agent = user_agent
 
+        # A minimal set of browser-like preferences: with only a User-Agent, some
+        # shops answer Cloudflare's challenge instead of the page (TodoColeccion
+        # does), and the User-Agent still identifies us.
         self._client = httpx.Client(
             timeout=httpx.Timeout(timeout, connect=connect_timeout),
-            headers={"User-Agent": user_agent},
+            headers={
+                "User-Agent": user_agent,
+                "Accept": (
+                    "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8"
+                ),
+                "Accept-Language": "es,en;q=0.8",
+            },
             follow_redirects=True,
             transport=transport,
         )

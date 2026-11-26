@@ -6,14 +6,14 @@ a listing's snippet, with the condition guessed from its wording. That is why ev
 observation it produces says `kind: "ask"`, keeps the URL, and is only used when
 the same condition has three of them.
 
-No page is fetched here: the snippet carries the price often enough, and reading
-arbitrary marketplaces is its own step. A result without a price is skipped, never
-counted as zero.
+The snippet carries the price but rarely the condition, and a price without a
+condition cannot be averaged. So when the snippet is not enough, the listing page is
+opened — only for hosts with a parser, only a few per query. A result without a price
+is skipped, never counted as zero.
 """
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional
@@ -27,17 +27,17 @@ from ai_api.sources.errors import (
     SourceUnavailable,
 )
 from ai_api.sources.http import HttpClient, get_client
-from ai_api.text import condition_of
+from ai_api.sources.listings import parse as parse_listing, parser_for
+from ai_api.text import condition_of, price_in as text_price_in
 from common.log.logger import Logger
 
 
-# A price in a snippet, before the currency ("12,50 €") or after it ("EUR 12,50").
-# Kept deliberately narrow: a wrong match is worse than a missed one.
-PRICE_AFTER = re.compile(r"(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:€|eur\b)", re.IGNORECASE)
-PRICE_BEFORE = re.compile(r"(?:€|eur)\s*(\d{1,4}(?:[.,]\d{1,2})?)", re.IGNORECASE)
-
 # Results walked per query: the first ones are the ones Google considered relevant.
 MAX_RESULTS = 8
+
+# Listing pages opened per query, and only for results the snippet could not
+# finish: each one is a request of a few hundred KB.
+MAX_PAGES = 3
 
 
 class SearchPrices(Logger):
@@ -101,42 +101,74 @@ class SearchPrices(Logger):
             raise SourceError("The search backend did not answer JSON.") from error
 
         observations = []
+        pages = 0
+
         for item in (results.get("organic") or [])[:MAX_RESULTS]:
-            observation = self._observation(item, code)
-            if observation is not None:
-                observations.append(observation)
+            link = item.get("link") or ""
+            if not self.client.is_allowed(link):
+                continue
+
+            text = f"{item.get('title') or ''} {item.get('snippet') or ''}"
+            price = self.price_in(text)
+            condition = condition_of(text)
+            sold = False
+
+            # The snippet gives a price and rarely a condition; the page gives
+            # both. Only opened when the snippet is not enough, and only a few.
+            if (price is None or condition == "unknown") and pages < MAX_PAGES:
+                pages += 1
+                listing = self._listing(link)
+                if listing is not None:
+                    price = listing.price if listing.price is not None else price
+                    if listing.condition != "unknown":
+                        condition = listing.condition
+                    sold = listing.sold
+
+            if price is None:
+                continue
+
+            observations.append(
+                Observation(
+                    source=self.name,
+                    price=price,
+                    kind="sold" if sold else "ask",
+                    currency="EUR",
+                    condition=condition,
+                    url=link,
+                    subject_code=code,
+                    observed_at=datetime.now(timezone.utc),
+                    raw={
+                        "title": item.get("title"),
+                        "snippet": item.get("snippet"),
+                    },
+                )
+            )
 
         self.log.debug(f"{self.name}: {len(observations)} price(s) for {code}")
         return observations
 
-    def _observation(self, item: dict, code: str) -> Optional[Observation]:
-        """Turn one search result into an observation, if it is usable."""
-        link = item.get("link") or ""
-        if not self.client.is_allowed(link):
+    def _listing(self, url: str):
+        """Open a listing page and read it, or None when it cannot be read."""
+        if parser_for(url) is None:
             return None
 
-        text = f"{item.get('title') or ''} {item.get('snippet') or ''}"
-        price = self.price_in(text)
-        if price is None:
+        try:
+            response = self.client.get(url)
+        except SourceError as error:
+            self.log.warning(f"{self.name}: could not open {url}: {error}")
             return None
 
-        return Observation(
-            source=self.name,
-            price=price,
-            kind="ask",
-            currency="EUR",
-            condition=condition_of(text),
-            url=link,
-            subject_code=code,
-            observed_at=datetime.now(timezone.utc),
-            raw={"title": item.get("title"), "snippet": item.get("snippet")},
-        )
+        if response.status_code >= 400:
+            self.log.warning(f"{self.name}: {url} answered {response.status_code}")
+            return None
+
+        try:
+            return parse_listing(url, response.text)
+        except Exception as error:  # a broken page is a gap, not a crash
+            self.log.warning(f"{self.name}: could not parse {url}: {error}")
+            return None
 
     @staticmethod
     def price_in(text: str) -> Optional[Decimal]:
         """Return the first price written in the text, or None."""
-        text = text or ""
-        match = PRICE_AFTER.search(text) or PRICE_BEFORE.search(text)
-        if match is None:
-            return None
-        return Decimal(match.group(1).replace(",", ".")).quantize(Decimal("0.01"))
+        return text_price_in(text)

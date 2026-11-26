@@ -9,11 +9,11 @@
   client** (allowlist, retries, per-host limit, cache: a 29-stamp series went from
   7.0 s to 0.9 s) and **the series is identified in the Fesofi catalogue** — by
   partial name, with the facts read from its attributes and a scored matcher that
-  reports a tie as a gap. **A7 is done too**: the valuation is a trimmed mean over
-  the observations the sources return, `n ≥ 3` per condition, euros only.
-  **Next is A7b**: the shop has one price per code and the search returns prices
-  without a condition, so almost everything is a gap until the listing page is
-  read. Details in Notes below.
+  reports a tie as a gap. **A7 and A7b are done too**: the valuation is a trimmed
+  mean over observations (`n ≥ 3` per condition, euros only), and the condition comes
+  from the listing page — TodoColeccion yes, eBay blocks the server with a 403.
+  `navidad 1986` and `castillos 2007` now return estimates. **Next is A8**
+  (execution: budget and backfill). Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -78,18 +78,18 @@
 
 ## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1, A1b, A2, A6 y A7 cerrados. Lo siguiente es A7b.** El contrato pide
+**A0, A1, A1b, A2, A6, A7 y A7b cerrados. Lo siguiente es A8.** El contrato pide
 evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y
 caché, la identidad la resuelve el catálogo de Fesofi y el valor sale de una media
-recortada sobre las observaciones, con `n ≥ 3` y sólo euros.
+recortada sobre observaciones con condición leída de la ficha del anuncio.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A7b — lo siguiente**: abrir la ficha de la oferta (TodoColeccion, eBay) para
-  leer el **estado** además del precio. Hoy la tienda da un precio por código y la
-  búsqueda da ofertas sin condición, así que casi todo es `gap`. Un parser por sitio,
-  con `HttpClient`, y lo que no se pueda leer es un gap, no un cero.
+- **A8 — lo siguiente**: ejecución con presupuesto y comando de backfill. Con la
+  ficha del anuncio ya se lee la condición, así que `navidad 1986` y `castillos 2007`
+  devuelven estimados; falta que eso aguante el catálogo entero sin una request de
+  dos minutos.
 - **Ya no hay nada bloqueado**: Colnect queda fuera (2026-11-26), así que ni A3 ni
   la clave CAPI existen en el plan. Lo único abierto son dos decisiones que no
   frenan código: el modelo y dónde se dispara la investigación.
@@ -165,6 +165,22 @@ recortada sobre las observaciones, con `n ≥ 3` y sólo euros.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A7b: **la condición estaba en la ficha**. Antes de escribir el
+  parser, sondeo: la ficha de TodoColeccion es `/<sección>/<slug>~x<id>` (ruta que su
+  `robots.txt` permite) y responde **403 con sólo un User-Agent** (Cloudflare) pero
+  **200 con `Accept` y `Accept-Language`** manteniendo nuestro User-Agent; por eso el
+  `HttpClient` manda ahora esas dos cabeceras. La condición está en el **título**
+  (`h1#lote-page-h1`: «NUEVO MNH** sin fijasello», «Usado») y el precio en
+  `span.lote-precio`; «Estado del lote» describe desgaste y no se usa. Las fichas de
+  **vendidos** («Vendido el …») dan precio de venta real, el primero que tenemos, y
+  se marcan `kind: sold`. **eBay no**: responde 403 con una página de error, así que
+  no se escribe un parser que no se puede probar. `sources/listings.py` con `Listing`
+  y un parser por sitio; `SearchPrices` abre hasta 3 fichas por consulta cuando la
+  snippet no trae precio o condición, y la ficha manda sobre la snippet.
+  `text.price_in()` entiende el separador de miles («1.250,00 €» son 1250,00, no
+  1,25). Medido: el Edifil 4350 pasa de 0 condiciones conocidas a **4 MNH** y de
+  ningún estimado a **4,45 €** (n = 4); el 2867 tiene una oferta real de 0,03 € y con
+  n = 1 es un `gap`. 19 tests nuevos, 1.788 verdes.
 - [Today] AI API A7: la valoración, y el dato que la hace honesta. `ai_api/valuation.py`
   hace una **media recortada** (mínimo y máximo fuera con n ≥ 4), exige `n ≥ 3` por
   condición, devuelve rango, `sample_size`, `sources`, `method` y `as_of`, y **sólo

@@ -157,3 +157,45 @@ Cualquier emparejamiento va **sello a sello**, nunca `min → min` de la serie.
 - A7: la valoración empieza con Colnect (`/market_prices`, `/item_sales`);
   Iberphil entra después, si entra, a nivel de lote.
 - A9: el LLM pierde también el papel de «catálogo» cuando Fesofi responde.
+
+---
+
+## A7b — La ficha del anuncio (2026-11-26)
+
+Sondeo hecho antes de escribir el parser, porque la URL del anuncio no era obvia.
+
+### TodoColeccion
+
+- **La URL del anuncio** es `https://www.todocoleccion.net/<sección>/<slug>~x<id>`.
+  Ese `~x<id>` es el identificador. `robots.txt` prohíbe `/lote.cfm?*` y
+  `/lotes/show?*`, que **no** son esta forma: la ficha se sirve por una ruta
+  permitida.
+- **Con sólo un User-Agent, la página responde 403** (Cloudflare, «Just a
+  moment…»). Con `Accept: text/html` y `Accept-Language: es` responde **200** con
+  nuestro User-Agent propio, sin disfrazarse de navegador. El `HttpClient` manda
+  ahora esas dos cabeceras por defecto.
+- Lo que trae la ficha (selectores reales):
+  - `h1#lote-page-h1` → título, y **ahí está la condición**: «ESPAÑA 2007. EDIFIL
+    4349-4350. CASTILLOS. NUEVO MNH** sin fijasello», «… Navidad ‘86 - Usado».
+  - `span.lote-precio` → el precio («6,00 €», «0,03 €»). Aparece **dos veces** en la
+    página (maqueta móvil y escritorio), el mismo número.
+  - «Estado del lote: Muy Bueno (nuevo o como nuevo, sin señales de uso)» → esto es
+    **desgaste**, no nuevo/usado, así que no se usa como condición.
+- **Las fichas de lotes vendidos son la guía de precios**: la misma forma de URL
+  sirve una página que dice «Vendido el 03/09/2026» y, en ese caso, el precio no
+  está en `lote-precio`. Es precio de **venta real**, el primero que tenemos, y se
+  marca `kind: sold`; si no hay precio, no hay observación.
+
+### eBay
+
+- `https://www.ebay.es/itm/<id>` responde **403** con una página de error («Error
+  Page | eBay»), no un desafío: para un cliente que no es un navegador no hay ficha.
+  **No se escribe parser de eBay**: no hay página con la que probarlo, y adivinarlo
+  es cómo se meten precios equivocados.
+
+### Medido con el código nuevo
+
+- Edifil 4350: cuatro ofertas de TodoColeccion, las cuatro **MNH** tras leer la
+  ficha (antes, todas `unknown`), 2,90 · 55,64 · 6,00 · 2,90 € → media recortada
+  **4,45 €** con n = 4.
+- Edifil 2867: una oferta, 0,03 € (usado). El precio es real: la ficha lo dice.

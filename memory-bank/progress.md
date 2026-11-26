@@ -633,7 +633,7 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0, A1, A1b, A2, A6 and A7 done; Colnect out; A7b next)
+### AI API — real sources (A0–A2, A6, A7 and A7b done; Colnect out; A8 next)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
@@ -642,10 +642,10 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, `filatelia.online` for asking prices, an allowed-sites search for
 the rest — and keeps it as a normaliser. Colnect, Delcampe and Iberphil are out.
 
-**Next: A7b (open the listing to read the condition).** The valuation is done, but
-the shop has one price per code and the search's prices arrive without a condition,
-so almost everything is a gap. Resume at `ai-api-plan.md` §3–§4 and the "Retomar
-aquí" block in `activeContext.md`.
+**Next: A8 (execution and backfill).** The valuation now has a condition to work
+with — the listing page is read — so `navidad 1986` and `castillos 2007` return
+estimates. What is left is making that survive a whole catalogue: budget, backfill
+command. Resume at `ai-api-plan.md` §3–§4 and "Retomar aquí" in `activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -733,11 +733,16 @@ aquí" block in `activeContext.md`.
       Oficial 100» está a 10 €, no a 1.000 €. Cobertura real baja: un precio por
       código en la tienda, ofertas sin condición en la búsqueda → casi todo `gap`,
       que es la respuesta honesta y el motivo de A7b. 47 tests, 1.769 verdes.
-- [ ] **A7b — Abrir la ficha de la oferta** (siguiente, en el plan §4 como A7b):
-      leer el estado (y el precio, si la snippet no lo trae) en la página del anuncio
-      de TodoColeccion y eBay, con `HttpClient` y un parser por sitio. Sin condición
-      no hay estimado, y la snippet no la dice. Antes del parser, sondeo de la forma
-      real de la URL y de su `robots.txt`.
+- [x] **A7b — La condición en la ficha del anuncio** (2026-11-26): sondeo primero,
+      y cambió el alcance. **TodoColeccion sí**: la ficha es
+      `/<sección>/<slug>~x<id>`, responde 200 con `Accept` + `Accept-Language` (con
+      sólo el User-Agent, 403 de Cloudflare) y trae el título con la condición y
+      `span.lote-precio`; las fichas de **vendidos** dan precio de venta
+      (`kind: sold`). **eBay no**: 403 con página de error, y no se escribe un parser
+      que no se puede probar. `sources/listings.py` con `Listing` y un parser por
+      sitio; `SearchPrices` abre hasta 3 fichas cuando la snippet no basta y la ficha
+      manda; `text.price_in()` entiende el separador de miles. Medido: el 4350 pasa a
+      4 observaciones MNH y **4,45 €** (n = 4). 19 tests, 1.788 verdes.
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi

@@ -96,6 +96,124 @@ class TestPrices:
         assert len(search(results).prices("2867")) == 8
 
 
+class TestListingPages:
+    """When the snippet is not enough, the page is opened — and only then."""
+
+    PAGE = """
+    <html><body>
+      <h1 id="lote-page-h1">EDIFIL 4350. CASTILLOS. NUEVO MNH** sin fijasello</h1>
+      <span class="lote-precio">6,00 &euro;</span>
+    </body></html>
+    """
+
+    def source(self, results, page_html=None, page_status=200):
+        """A source whose search answers with results and whose pages are fixed."""
+        pages = []
+        page_html = page_html if page_html is not None else self.PAGE
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.method == "POST":
+                return httpx.Response(200, json={"organic": results})
+            pages.append(str(request.url))
+            return httpx.Response(page_status, text=page_html)
+
+        client = HttpClient(
+            allowed_hosts=["todocoleccion.net", "ebay.es", "google.serper.dev"],
+            transport=httpx.MockTransport(handler),
+            cache_ttl=0,
+        )
+        return (
+            SearchPrices(client=client, url="https://google.serper.dev/search", key="k"),
+            pages,
+        )
+
+    def test_the_page_gives_the_condition_the_snippet_lacked(self):
+        source, pages = self.source(
+            [result("https://todocoleccion.net/x~x1", "", "Sello 4350", "2,90 €")]
+        )
+
+        prices = source.prices("4350")
+
+        assert len(pages) == 1
+        assert prices[0].condition == "mnh"
+        # The page is the listing itself, so its price beats the snippet's.
+        assert prices[0].price == Decimal("6.00")
+
+    def test_a_page_without_a_condition_leaves_it_unknown(self):
+        """A price whose condition nobody states is not an estimate."""
+        page = (
+            '<html><body><h1 id="lote-page-h1">Edifil 4350 Castillo</h1>'
+            '<span class="lote-precio">6,00 &euro;</span></body></html>'
+        )
+        source, _ = self.source(
+            [result("https://todocoleccion.net/x~x1", "", "consultar")],
+            page_html=page,
+        )
+
+        prices = source.prices("4350")
+
+        assert prices[0].price == Decimal("6.00")
+        assert prices[0].condition == "unknown"
+
+    def test_the_page_gives_a_price_when_the_snippet_had_none(self):
+        source, _ = self.source(
+            [result("https://todocoleccion.net/x~x1", "", "Sello", "consultar")]
+        )
+
+        prices = source.prices("4350")
+
+        assert prices[0].price == Decimal("6.00")
+
+    def test_a_page_that_fails_leaves_the_snippet(self):
+        source, pages = self.source(
+            [result("https://todocoleccion.net/x~x1", "", "usado", "2,90 €")],
+            page_status=403,
+        )
+
+        prices = source.prices("4350")
+
+        assert len(pages) == 0  # the snippet already had a condition: no page
+        assert prices[0].price == Decimal("2.90")
+
+    def test_a_page_that_fails_without_a_price_leaves_nothing(self):
+        source, pages = self.source(
+            [result("https://todocoleccion.net/x~x1", "", "consultar")],
+            page_status=403,
+        )
+
+        assert source.prices("4350") == []
+        assert len(pages) == 1
+
+    def test_only_three_pages_are_opened(self):
+        results = [
+            result(f"https://todocoleccion.net/x~x{index}", "", "Sello", "10,00 €")
+            for index in range(6)
+        ]
+        source, pages = self.source(results)
+
+        source.prices("4350")
+
+        assert len(pages) == 3
+
+    def test_a_host_without_a_parser_is_not_opened(self):
+        source, pages = self.source(
+            [result("https://ebay.es/itm/1", "", "Sello", "10,00 €")]
+        )
+
+        prices = source.prices("4350")
+
+        assert pages == []
+        assert prices[0].condition == "unknown"
+
+    def test_a_host_outside_the_allowlist_is_never_fetched(self):
+        source, pages = self.source(
+            [result("https://example.test/x", "", "Sello", "10,00 €")]
+        )
+
+        assert source.prices("4350") == []
+        assert pages == []
+
+
 class TestPriceParsing:
     """The narrow formats it understands, and the ones it refuses."""
 

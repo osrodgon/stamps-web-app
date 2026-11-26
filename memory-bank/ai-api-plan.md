@@ -126,8 +126,8 @@ opencode) ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por dec
 | A5 | Adaptador Iberphil | M | — | **fuera de la 1.ª versión** |
 | A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **hecho 2026-11-26** |
 | A7 | Valuación (media recortada) | M | A6 | **hecho 2026-11-26** |
-| A7b | Estado y precio en la ficha del anuncio | M | A7 | **siguiente** |
-| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | pendiente |
+| A7b | Estado y precio en la ficha del anuncio | M | A7 | **hecho 2026-11-26** |
+| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | siguiente |
 | A9 | LLM reducido y validador de fuentes | S | A7 | pendiente |
 | A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | pendiente |
 
@@ -659,7 +659,7 @@ fuentes y su tipo.
   1.000 € — el precio viene en unidades menores.
 
 
-### A7b — Estado y precio en la ficha del anuncio (M) — **siguiente**
+### A7b — Estado y precio en la ficha del anuncio (M) — **HECHO 2026-11-26**
 
 La valuación está hecha y no sirve de mucho todavía: la tienda tiene un precio por
 código (o ninguno) y la búsqueda devuelve ofertas **sin condición**, así que con
@@ -686,6 +686,35 @@ Aceptación: dos fichas guardadas (una de cada sitio) se parsean a precio y cond
 una ficha sin estado deja la observación en `unknown`; una ficha que falla no crea
 observación; el estimado de una serie con tres ofertas del mismo estado sale; ningún
 test toca la red.
+
+**Hecho el 2026-11-26.** Sondeo primero, y el sondeo cambió el alcance:
+
+- **TodoColeccion sí** y **eBay no**. La ficha de TodoColeccion es
+  `/<sección>/<slug>~x<id>` (una ruta que su `robots.txt` permite) y responde 200
+  con nuestro User-Agent propio más `Accept` y `Accept-Language`; con sólo el
+  User-Agent devolvía el desafío de Cloudflare. eBay responde **403 con una página de
+  error**, así que no hay parser: no hay página con la que probarlo.
+- `ai_api/sources/listings.py`: `Listing` (precio, condición, título, `sold`) y un
+  parser por sitio, con `parser_for(url)` y `parse(url, html)`. El de TodoColeccion
+  lee `h1#lote-page-h1` (donde el vendedor escribe «NUEVO MNH** sin fijasello» o
+  «Usado») y `span.lote-precio`. **No** usa «Estado del lote» (Muy Bueno, Normal),
+  que describe desgaste y no nuevo/usado.
+- `SearchPrices` da el segundo paso: si la snippet no trae precio o no trae
+  condición, abre hasta **3** fichas por consulta, sólo de hosts con parser y sólo
+  del allowlist. La ficha manda sobre la snippet: es el anuncio.
+- `ai_api/text.py` gana `price_in()` (con separador de miles: «1.250,00 €» son
+  1250,00, no 1,25) y la regla `mnh`; `condition_of` pasa a incluir «sin fijasello».
+- El `HttpClient` manda `Accept` y `Accept-Language` por defecto; sin ellas algunas
+  tiendas contestan el desafío en vez de la página, y el User-Agent sigue siendo el
+  nuestro.
+- **Las fichas de lotes vendidos** («Vendido el 03/09/2026») son la guía de precios
+  del sitio: la misma forma de URL, precio de **venta real** y `kind: sold`. Si la
+  página no trae precio, no hay observación.
+- Medido: el Edifil 4350 pasa de 0 condiciones conocidas a **4 MNH** y de ningún
+  estimado a **4,45 €** con n = 4. El 2867 tiene una oferta real de 0,03 € (usado),
+  y con n = 1 es un `gap`.
+- 19 tests nuevos (11 del parser y su enrutado, 8 del segundo paso y los topes);
+  **1.788 verdes**.
 
 ### A8 — Ejecución (M)
 
@@ -1027,3 +1056,20 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   sello y un sondeo previo de la forma real de la URL y del `robots.txt` de
   TodoColeccion (prohíbe `/lote.cfm?*` y `/lotes/show?*`, así que hay que confirmar
   cuál es la URL canónica del anuncio).
+
+### 2026-11-26 — A7b hecho: la condición estaba en la ficha
+
+- Sondeo antes del parser: la URL del anuncio de TodoColeccion es
+  `/<sección>/<slug>~x<id>` (permitida), responde 200 con `Accept` +
+  `Accept-Language` (con sólo el User-Agent, 403 de Cloudflare) y trae el título con
+  la condición (`h1#lote-page-h1`) y el precio (`span.lote-precio`). eBay responde
+  403 con una página de error: **no hay parser de eBay**, no hay con qué probarlo.
+- `sources/listings.py` con `Listing`, un parser por sitio y enrutado por host;
+  `SearchPrices` abre hasta 3 fichas cuando la snippet no basta, y la ficha manda
+  sobre la snippet. `text.price_in()` entiende el separador de miles, y el
+  `HttpClient` manda `Accept` y `Accept-Language`.
+- Las fichas de lotes **vendidos** dan precio de venta (`kind: sold`), el primero que
+  tenemos.
+- Medido: el 4350 pasa a 4 observaciones MNH y a **4,45 €** (n = 4); el 2867 tiene
+  una oferta real de 0,03 € y con n = 1 es un `gap`. 19 tests nuevos; **1.788
+  verdes**.
