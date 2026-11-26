@@ -46,31 +46,41 @@ class StoreCatalogue(Logger):
         """Take the shared HTTP client, or the one a test injects."""
         super().__init__()
         self.client = client or get_client()
+        # Optional ceiling for every call this catalogue makes, set by a caller
+        # with a budget (A8).
+        self.timeout: Optional[float] = None
 
     # ------------------------------------------------------------------
     # Requests
     # ------------------------------------------------------------------
 
-    def _terms(self, attribute: int, word: str) -> List[dict]:
+    def _terms(self, attribute: int, word: str, timeout: Optional[float] = None) -> List[dict]:
         """Return the terms of one attribute whose name contains `word`."""
         return self._list(
             f"{self.root}/products/attributes/{attribute}/terms",
             {"search": word, "per_page": 100},
+            timeout,
         )
 
-    def _term_id(self, attribute: int, text: str) -> Optional[int]:
+    def _term_id(
+        self, attribute: int, text: str, timeout: Optional[float] = None
+    ) -> Optional[int]:
         """Return the term id whose name is exactly `text`, or None."""
         wanted = self._normalise(text)
         for term in self._list(
             f"{self.root}/products/attributes/{attribute}/terms",
             {"search": text, "per_page": 10},
+            timeout,
         ):
             if self._normalise(term.get("name", "")) == wanted:
                 return int(term["id"])
         return None
 
     def _products(
-        self, term: dict, filters: Optional[List[tuple]] = None
+        self,
+        term: dict,
+        filters: Optional[List[tuple]] = None,
+        timeout: Optional[float] = None,
     ) -> List[dict]:
         """Return the products of one term, plus any attribute filters.
 
@@ -87,11 +97,18 @@ class StoreCatalogue(Logger):
             params[f"attributes[{index}][attribute]"] = taxonomy
             params[f"attributes[{index}][term_id]"] = str(term_id)
 
-        return self._list(f"{self.root}/products", params)
+        return self._list(f"{self.root}/products", params, timeout)
 
-    def _list(self, url: str, params: Dict[str, str]) -> List[dict]:
+    def _list(
+        self, url: str, params: Dict[str, str], timeout: Optional[float] = None
+    ) -> List[dict]:
         """GET a Store API list, or say what went wrong."""
-        response = self.client.get(url, params=params)
+        request_kwargs: Dict[str, Any] = {"params": params}
+        limit = timeout if timeout is not None else self.timeout
+        if limit is not None:
+            request_kwargs["timeout"] = limit
+
+        response = self.client.get(url, **request_kwargs)
 
         if response.status_code >= 400:
             raise SourceUnavailable(

@@ -12,8 +12,10 @@
   reports a tie as a gap. **A7 and A7b are done too**: the valuation is a trimmed
   mean over observations (`n ≥ 3` per condition, euros only), and the condition comes
   from the listing page — TodoColeccion yes, eBay blocks the server with a 403.
-  `navidad 1986` and `castillos 2007` now return estimates. **Next is A8**
-  (execution: budget and backfill). Details in Notes below.
+  `navidad 1986` and `castillos 2007` now return estimates. **A8 is done too**: a
+  request has a budget and answers `partial`, and `ai_prices_backfill` stores
+  observations without duplicating them. **Next is A9** (the LLM reduced and the
+  source validator). Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -78,18 +80,18 @@
 
 ## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1, A1b, A2, A6, A7 y A7b cerrados. Lo siguiente es A8.** El contrato pide
+**A0, A1, A1b, A2, A6, A7, A7b y A8 cerrados. Lo siguiente es A9.** El contrato pide
 evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y
-caché, la identidad la resuelve el catálogo de Fesofi y el valor sale de una media
-recortada sobre observaciones con condición leída de la ficha del anuncio.
+caché, la identidad la resuelve el catálogo de Fesofi, el valor sale de una media
+recortada con condición leída de la ficha y una request tiene presupuesto con
+respuesta parcial.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A8 — lo siguiente**: ejecución con presupuesto y comando de backfill. Con la
-  ficha del anuncio ya se lee la condición, así que `navidad 1986` y `castillos 2007`
-  devuelven estimados; falta que eso aguante el catálogo entero sin una request de
-  dos minutos.
+- **A9 — lo siguiente**: dejar al modelo sin nada que inventar. El validador anula
+  cualquier campo factual que no venga de una observación, y los prompts se quedan
+  en normalizar y redactar sobre lo que las fuentes sostienen.
 - **Ya no hay nada bloqueado**: Colnect queda fuera (2026-11-26), así que ni A3 ni
   la clave CAPI existen en el plan. Lo único abierto son dos decisiones que no
   frenan código: el modelo y dónde se dispara la investigación.
@@ -165,6 +167,19 @@ recortada sobre observaciones con condición leída de la ficha del anuncio.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A8: **una request con reloj y un comando para el catálogo**.
+  `ai_api/budget.py` es un reloj (`total`, `per_call`, `remaining`, `timeout_for`) y
+  la vista corta el bucle de precios cuando se agota: responde con lo que tiene,
+  `partial: true` y un `gap` de `budget` que dice que la caché acabará en la
+  siguiente llamada. El catálogo recibe el tope en cada llamada. Lo que **no** se
+  promete: interrumpir una llamada ya bloqueada; el límite es por llamada y por
+  fase, y la suma de la fase del catálogo puede llegar a n × per_call. `manage.py
+  ai_prices_backfill` con `--limit`, `--source`, `--only`, `--stamps` y `--dry-run`
+  recorre las series, pide precios y guarda `SourceObservation` colgado del `Stamp`
+  real —lo que el endpoint no puede, porque no tiene sujeto— con `raw_hash` como
+  identidad, así que una segunda pasada no duplica la evidencia. Y con esto queda
+  decidido **dónde se investiga**: DataDesk y Flet piden una serie al endpoint, el
+  comando llena la base, sin cola ni Celery. 19 tests nuevos, 1.804 verdes.
 - [Today] AI API A7b: **la condición estaba en la ficha**. Antes de escribir el
   parser, sondeo: la ficha de TodoColeccion es `/<sección>/<slug>~x<id>` (ruta que su
   `robots.txt` permite) y responde **403 con sólo un User-Agent** (Cloudflare) pero

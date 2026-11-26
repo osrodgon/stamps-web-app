@@ -16,6 +16,7 @@ from common.test.ai_api_test_data import (
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 from ai_api.services.llm_service import LLMService
 from ai_api.sources.errors import SourceConfigurationError, SourceUnavailable
+from ai_api.budget import BudgetExpired
 from ai_api.sources.base import Observation
 from ai_api.sources.fesofi import Match
 
@@ -469,7 +470,7 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
         catalogue.facts.return_value = facts
 
-        def prices(code, year=""):
+        def prices(code, year="", timeout=None):
             return [
                 Observation(source="filatelia", price=10, condition="used"),
                 Observation(source="filatelia", price=11, condition="used"),
@@ -566,6 +567,96 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
             "filatelia",
             "search",
         ]
+
+    def test_running_out_of_budget_answers_with_what_it_has(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """A partial answer with its reason beats a request that never returns."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        exhausted = Mock()
+        exhausted.total = 25
+        exhausted.expired = True
+        exhausted.timeout_for.side_effect = BudgetExpired("no time")
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.Budget', return_value=exhausted
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue'
+        ) as shop_class, patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert data["partial"] is True
+        assert "budget" in [gap["field"] for gap in data["gaps"]]
+        shop_class.return_value.prices.assert_not_called()
+
+    def test_a_complete_answer_is_not_partial(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        shop = Mock()
+        shop.prices.return_value = [
+            Observation(source="filatelia", price=11, condition="mnh"),
+            Observation(source="filatelia", price=12, condition="mnh"),
+            Observation(source="filatelia", price=13, condition="mnh"),
+        ]
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        data = response.json()["data"]
+
+        assert data["partial"] is False
+        assert data["stamps"][0]["market_value_mnh"] == 12.0
 
     def test_no_price_is_a_gap_not_a_zero(
         self,

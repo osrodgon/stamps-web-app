@@ -110,6 +110,11 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
         help_text="Estimate built from the observations, or null when there "
                   "are not enough."
     )
+    partial = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="True when the request ran out of budget and returned what it had."
+    )
     gaps = GapSerializer(
         many=True,
         required=False,
@@ -160,6 +165,7 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
             'sources',
             'observations',
             'valuation',
+            'partial',
             'gaps',
             'stamps'
         ]

@@ -20,6 +20,7 @@ from ai_api.sources.errors import (
     SourceNotFound,
     SourceUnavailable,
 )
+from ai_api.budget import Budget, BudgetExpired
 from ai_api.sources.base import Observation
 from ai_api.sources.fesofi import FesofiCatalogue
 from ai_api.sources.filatelia import FilateliaCatalogue
@@ -122,9 +123,22 @@ class SeriesExtractionView(Logger, APIView):
         date = payload.validated_data.get('date')
         
         try:
+            # The clock for this request: when it runs out, the answer is partial.
+            budget = Budget(
+                total=settings.AI_BUDGET_SECONDS,
+                per_call=settings.AI_BUDGET_PER_CALL,
+            )
+
             # Initialize the catalogue, the search, the scraper and the model
             self.log.debug(f"Starting AI research for name: {name} ({date})")
             catalogue = FesofiCatalogue()
+            # The catalogue has its own chain of calls; each one gets what the
+            # budget allows, so a slow shop cannot hold the request forever.
+            try:
+                catalogue.timeout = budget.timeout_for(settings.AI_SOURCE_TIMEOUT)
+            except BudgetExpired:
+                catalogue.timeout = 0.5
+
             search_service = SearchService()
             scraping_service = ScrapingService()
             llm_service = LLMService()
@@ -201,7 +215,7 @@ class SeriesExtractionView(Logger, APIView):
 
             # Every value comes from an observation: whatever the provider wrote
             # is overwritten with what the sources support, or with null.
-            observations = self._prices(clean_data)
+            observations, unfinished = self._prices(clean_data, budget)
             by_code = self._by_code(observations)
 
             for stamp in validated.get("stamps") or []:
@@ -222,6 +236,16 @@ class SeriesExtractionView(Logger, APIView):
             gaps = list(validated.get("gaps") or [])
             if identity_gap:
                 gaps.append({"field": "identity", "reason": identity_gap})
+            if unfinished:
+                gaps.append(
+                    {
+                        "field": "budget",
+                        "reason": (
+                            f"The {budget.total:g}s budget ran out before pricing "
+                            f"every stamp; ask again and the cache finishes it."
+                        ),
+                    }
+                )
             if not observations:
                 gaps.append(
                     {
@@ -230,6 +254,7 @@ class SeriesExtractionView(Logger, APIView):
                     }
                 )
             validated["gaps"] = gaps
+            validated["partial"] = bool(unfinished)
 
             self.log.debug(f"AI series extraction completed successfully for series: {name}")
             return Response(
@@ -293,13 +318,18 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def _prices(self, clean_data: dict) -> List[Observation]:
+    def _prices(
+        self, clean_data: dict, budget: Budget
+    ) -> tuple[List[Observation], bool]:
         """Ask the sources for the price of the first stamps of the series.
 
         The shop answers with stock and a written condition; the search answers
         with asking prices and a condition guessed from the listing. The search is
         only asked when the shop did not give enough prices to estimate, because
         every stamp costs one query.
+
+        Returns:
+            The observations found, and whether the budget cut the work short.
         """
         shop = FilateliaCatalogue()
         search = SearchPrices()
@@ -311,15 +341,23 @@ class SeriesExtractionView(Logger, APIView):
 
         observations: List[Observation] = []
         seen = set()
+        unfinished = False
 
         for stamp in stamps:
             code = str(stamp.get("edifil_code") or "").strip()
             if not code:
                 continue
 
-            found = self._ask(shop.prices, code, year)
+            try:
+                timeout = budget.timeout_for(settings.AI_SOURCE_TIMEOUT)
+            except BudgetExpired:
+                self.log.warning("Budget exhausted while pricing; answering what we have")
+                unfinished = True
+                break
+
+            found = self._ask(shop.prices, code, year, timeout)
             if len(found) < MINIMUM_SAMPLE:
-                found += self._ask(search.prices, code, label, year)
+                found += self._ask(search.prices, code, label, year, timeout)
 
             for observation in found:
                 key = (observation.source, observation.url, observation.price)
@@ -335,7 +373,7 @@ class SeriesExtractionView(Logger, APIView):
                 )
 
         self.log.debug(f"{len(observations)} observation(s) for the series")
-        return observations
+        return observations, unfinished
 
     def _ask(self, prices, *args) -> List[Observation]:
         """Call a price source, turning its failure into a log line."""
