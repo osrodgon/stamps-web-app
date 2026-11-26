@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (A1 and A2 done 2026-11-26, A3 next)**: the three reading screens are
+- **Normal-user collections (A1–A3 done 2026-11-26, A4 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -168,12 +168,21 @@ afirmar nada que las fuentes no sostengan.
   `CustomAPIKeyAuthentication` has none) — the plan and issue said 401 and are corrected.
   **A2 is done too**: `GET /collections/` returns `series`, `stamps`, `total` and up to 12
   `covers` in exactly five queries (pinned), with a fixture that makes the three figures
-  differ. Suite 1.781. **Next: A3** — `CollectionService`, Flet-free, token in the
-  constructor. Decisions still standing: the series order **mirrors
+  differ. **A3 is done too**: `CollectionService(token)` with the four calls and the JWT
+  header, and the URLs in `URLs.Backend` (frontend suite 660), **in the branch 476 and
+  still uncommitted**. Suite total 1.781 backend / 660 frontend. **A4 waits for A3 to be
+  committed, PR'd and merged**, as agreed. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones A3: **el servicio habla con el JWT del usuario**. `CollectionService`
+  (Flet-free, `BaseService`) recibe el token en el constructor y ofrece listar, crear,
+  renombrar (`PUT`, sin barra final porque la ruta del backend es `collections/<pk>`) y
+  borrar; el token lo lee la página de `SharedPreferences` y se lo pasa, así que la capa
+  sigue siendo testeable sin Flet. Añadidas `URLs.Backend.collections` y
+  `collection_items`. 9 tests con `_make_request` mockeado (URL, método, cabecera, payload,
+  `None` en error de red) y la suite del frontend en **660**.
 - [Today] Colecciones A2: **la tarjeta ya tiene sus números, y cuestan cinco consultas**.
   `CollectionOverviewService` calcula `series` (issues distintas), `stamps` (sellos
   distintos; `quantity` no infla) y `total` (sellos de esas series, el denominador de la

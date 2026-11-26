@@ -45,6 +45,8 @@ class URLs:
         colors =                f"{BACKEND_URL}/colors/"
         config =                f"{BACKEND_URL}/config/"
         issues_collections =    f"{BACKEND_URL}/issues/collections/"
+        collections =           f"{BACKEND_URL}/collections/"
+        collection_items =      f"{BACKEND_URL}/collection_items/"
         
     class Frontend:
         """Frontend route paths.

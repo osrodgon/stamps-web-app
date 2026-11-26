@@ -311,7 +311,7 @@ adds the other two screens. Every step leaves the app running.
 |---|---|---|---|---|
 | A1 | Ownership and JWT | — | M | **hecho 2026-11-26** |
 | A2 | Overview list: counters and covers | A1 | S | **hecho 2026-11-26** |
-| A3 | `CollectionService` | A2 | S | pendiente |
+| A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (rama 476, pendiente de PR) |
 | A4 | `CollectionCard` | A3 | M | pendiente |
 | A5 | Screen, dialog and states | A4 | M | pendiente |
 | A6 | Phase A close-out | A5 | S | pendiente |
@@ -342,13 +342,16 @@ an empty collection, the query count.
 numbers in the test data; the covers keep only stamps with a `fesofi_code`, are stable
 and are capped at 12. 14 tests new, suite at 1.781.
 
-**A3 — `CollectionService` (frontend).**
+**A3 — `CollectionService` (frontend) — HECHO 2026-11-26, pendiente de commit y PR.**
 `services/collection_service.py` with `get_collections`, `create_collection`,
 `update_collection` (PUT) and `delete_collection`; `URLs.Backend.collections` and
 `collection_items`; the service takes the token and sends `Authorization: JWT`. Tests
 with a mocked `_make_request`: URL, header, payload, status handling, `None` on network
 error.
 *Leaves working:* the service is testable and the page can call it.
+*Done:* `CollectionService` with the token in the constructor and the four calls;
+`URLs.Backend.collections` and `collection_items`; 9 tests with `_make_request`
+mocked, and the frontend suite at 660.
 
 **A4 — `CollectionCard`.**
 `components/collection/collection_card.py`: collage of up to six stamps (one big,
@@ -503,4 +506,9 @@ this feature.
 counts as one stamp, a stamp without a `fesofi_code` is not a cover, and a collection
 without an owner is not listed. 14 tests new; suite **1.781**.
 
-**Next action: A3 of §6** — `CollectionService`, Flet-free, token in the constructor.
+**A3 is implemented (2026-11-26) and not merged yet.** It lives in the branch
+`476-chore-collections-service-and-backend-routes`, uncommitted. `CollectionService(token)`
+sends `Authorization: JWT` and
+offers the four calls; the URLs live in `URLs.Backend`; 9 tests mock `_make_request`
+and assert URL, method, header and payload, plus the `None` on a network error. Frontend
+suite **660**. **Next action: A4** — the `CollectionCard`.
