@@ -876,7 +876,11 @@ when A is merged into `development`.
       stamps owned over 2 series, 4 stamps in those series), a `quantity` of 2 counts as one
       stamp, a stamp without `fesofi_code` is not a cover, covers are stable and capped at
       12, and a collection with `user=None` is not listed. 14 tests; suite 1.781.
-- [ ] A3 — `CollectionService` (S): Flet-free, token in the constructor, PUT to rename
+- [x] A3 — **`CollectionService`** (2026-11-26, S; rama 476, **pendiente de PR**): Flet-free and with the token in the
+      constructor; `get_collections`, `create_collection`, `update_collection` (PUT) and
+      `delete_collection`; `URLs.Backend.collections` and `collection_items` added. The
+      service returns the raw response (a 403 is the page's business) and `None` on a
+      network error. 9 tests with `_make_request` mocked; frontend suite 660.
 - [ ] A4 — `CollectionCard` (M): collage of six, summary, bar and percentage
 - [ ] A5 — `CollectionsPage` (M): header without separator, grid, empty/loading/error,
       create/rename/delete dialog, 403 → login
