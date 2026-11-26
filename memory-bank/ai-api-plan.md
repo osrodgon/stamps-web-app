@@ -62,39 +62,58 @@ Aviso práctico: desde el devcontainer, Colnect e Iberphil dieron **timeout** en
 no con un fetch simple; eso no dice nada sobre su disponibilidad real.
 
 > **Lo que A0 midió de verdad (2026-11-25)** está en `ai-sources-spike.md` y
-> resumido en §7. De esta tabla, dos cosas cambian: Delcampe queda **fuera del
-> plan** (`robots.txt` prohíbe su búsqueda) e Iberphil **fuera de la primera
-> versión** (martillo sólo en algunas subastas y sin código de catálogo). Y entra
-> una cuarta fuente que no estaba: **Fesofi**, con Store API pública y exacta por
-> `sku`. La tabla se deja como se escribió, como registro de la investigación
-> previa.
+> resumido en §7. De esta tabla, tres cosas cambian: Delcampe queda **fuera del
+> plan** (`robots.txt` prohíbe su búsqueda), Iberphil **fuera de la primera
+> versión** (martillo sólo en algunas subastas y sin código de catálogo) y
+> **Colnect fuera por decisión del usuario (2026-11-26)**: era la fuente de precio
+> de mercado y con ella se va la API; los precios pasan a salir de la búsqueda en
+> sitios permitidos (A7). Y entra una cuarta fuente que no estaba: **Fesofi**, con
+> Store API pública y exacta por `sku`. La tabla se deja como se escribió, como
+> registro de la investigación previa.
+>
+> **Tres sitios más, mirados el 2026-11-26 al quedarse sin Colnect:**
+>
+> - **`filatelia.online` → dentro.** Tienda WooCommerce con la misma Store API que
+>   Fesofi, pero con atributos de sello: `Nº Edifil` (`pa_sello-numeracion`, id 45),
+>   `Estado` (12), `Año` (2), `Color`, `Dentado`, `Tirada`, `País`. El buscador de
+>   términos es exacto por código: `attributes/45/terms?search=100` → término 429, y
+>   sus productos traen precio y condición (la «Prueba Oficial 100 – Navidad – Año
+>   2009» está a 1.000 €, «Nuevo (sin circular), Sin charnela»). Precio de **oferta**
+>   a nivel de sello y por catálogo, que es justo lo que la búsqueda genérica no da.
+>   Cobertura = su stock (clásicos y pruebas sobre todo; `2867` no lo tienen), así
+>   que `n ≥ 3` fallará a menudo y eso será un `gap`.
+> - **`circulomadrid.com` → descartado.** Vende y expertiza, y muestra P.V.P. y
+>   «precio de catálogo» por artículo, pero es un CGI antiguo (`cirmar.dll`) con una
+>   página por sello, sin búsqueda explotable y con catálogo cargado de extranjero.
+>   Rasparlo es trabajo a medida para poco.
+> - **`stampworld.com` → descartado por ahora.** Catálogo mundial con valores y
+>   `robots.txt` que permite el uso de referencia (`use=reference`), pero responde
+>   **403 de Cloudflare** («Just a moment») a cualquier cliente que no sea un
+>   navegador. Sin navegador headless no hay nada que hacer, y no se mete uno en
+>   producción por esto.
 
 ---
 
 ## 3. Decisiones abiertas (bloquean pasos)
 
-1. **Clave CAPI de Colnect**: el procedimiento está en A3
-   (`colnect.com/en/capi/use_request`). El usuario aún no la ha pedido. Bloquea A3,
-   no A1, A2 ni A6.
-2. **Dónde se dispara la investigación**: DataDesk, app Flet, o solo un comando.
+1. **Dónde se dispara la investigación**: DataDesk, app Flet, o solo un comando.
    Condiciona A8 (y si hace falta cola).
-3. **Qué motor usa opencode**: el **proveedor** está decidido y hecho —opencode,
+2. **Qué motor usa opencode**: el **proveedor** está decidido y hecho —opencode,
    con Gemini y Groq ya fuera del código—, y el **modelo** se elige en
    `OPENCODE_MODEL`, sin tocar código. No bloquea ningún paso; el valor se decide
    cuando haya una tubería que ejecutar.
 
-Cerradas en A0 (2026-11-25): Delcampe, Iberphil, Fesofi sí, media recortada y
-lista de sitios permitidos. Detalle en §7. **Serper se queda de momento**, y se
-quitará si la búsqueda de precios no lo necesita.
+Cerradas: Delcampe, Iberphil y **Colnect fuera** (2026-11-26, §7); Fesofi sí;
+media recortada; lista de sitios permitidos. **Serper deja de ser provisional**:
+sin Colnect es la puerta a los precios, así que se queda.
 
 ---
 
 ## 4. Pasos
 
 Dependencias: A0 → A1 → A2 → A6 → A7 → A8 → A9 → A10. A1b (proveedor opencode)
-ya está hecho. A3 (Colnect) entra en cuanto exista la clave CAPI, en paralelo a A6.
-A4 y A5 están fuera del plan (decidido 2026-11-25: Delcampe por `robots.txt`,
-Iberphil por fuente débil).
+ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por decisión
+(2026-11-26), Delcampe por `robots.txt` e Iberphil por fuente débil.
 
 | Paso | Qué | Tamaño | Depende de | Estado |
 |---|---|---|---|---|
@@ -102,11 +121,11 @@ Iberphil por fuente débil).
 | A1 | Contrato y modelo de observaciones | M | A0 | **hecho 2026-11-25** |
 | A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | **hecho 2026-11-25** |
 | A2 | Capa de fuentes + arreglos de seguridad | M | A1 | **hecho 2026-11-26** |
-| A3 | Adaptador Colnect | L | A2, clave CAPI | pendiente, bloqueado por la clave |
+| A3 | Adaptador Colnect | L | — | **fuera del plan** (2026-11-26) |
 | A4 | Adaptador Delcampe | M | — | **fuera del plan** |
 | A5 | Adaptador Iberphil | M | — | **fuera de la 1.ª versión** |
-| A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **en curso**: nombre parcial hecho 2026-11-26 |
-| A7 | Valuación (media recortada) | S | A6 | pendiente |
+| A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **hecho 2026-11-26** |
+| A7 | Valuación (media recortada) | M | A6 | pendiente |
 | A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7 | pendiente |
 | A9 | LLM reducido y validador de fuentes | S | A7 | pendiente |
 | A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | pendiente |
@@ -234,7 +253,7 @@ el reparto bueno/barato se hará entre modelos de pago.
 **Aviso que conviene no perder**: cambiar de proveedor no cambia la epistemología.
 El modelo, por esta vía, es una completación sin herramientas: puede inventar igual
 que Gemini. La diferencia llega cuando el que investiga es un agente con acceso a
-Fesofi, Colnect y la búsqueda — eso es A2/A3/A6, no A1b.
+Fesofi y la búsqueda — eso es A2/A6, no A1b.
 
 Aceptación: `ProviderFactory.create_provider()` devuelve el proveedor de opencode;
 no queda ninguna referencia a Gemini ni Groq en código, settings, `.env.example` ni
@@ -306,12 +325,14 @@ timeouts, reintentos con jitter, límite por dominio, caché y User-Agent
 identificable, y `registry.py`.
 
 Aquí se cierran además los defectos 3, 4, 5, 6, 8 y 9 de §1: allowlist
-(`catalogodesellos.fesofi.es`, `api.colnect.net`, y los sitios de precio permitidos:
-`todocoleccion.net`, `ebay.es` / `ebay.com`), timeouts en Serper —que sigue vivo
-hasta que se decida—, 404/422/500 con significados distintos, y una sola fuente de
-configuración.
+(`catalogodesellos.fesofi.es`, `filatelia.online`, y los sitios de precio
+permitidos: `todocoleccion.net`, `ebay.es` / `ebay.com`), timeouts en Serper —que
+sigue vivo—, 404/422/500 con significados distintos, y una sola fuente de
+configuración. **`filatelia.online` entra en la allowlist al implementar A7**; hoy
+la lista no lo lleva porque nada lo llama todavía.
 
-Dependencia nueva: `httpx` (HTTP/2; `requests` no lo hace y CAPI lo exige).
+Dependencia nueva: `httpx` (un solo cliente para todos los hosts; `requests` no da
+límite por host ni transporte falso para los tests).
 
 Aceptación: tests de `http.py` con un servidor falso (allowlist, timeout, reintento,
 límite); ningún test toca la red.
@@ -341,7 +362,7 @@ límite); ningún test toca la red.
   singleton de proceso para que la caché y los límites sirvan de algo), `errors.py`
   (`SourceError` y sus cuatro hijos, uno por significado), `base.py`
   (`SourceAdapter` con `supports`/`fetch`, devolviendo observaciones sin guardar) y
-  `registry.py` (nombre → adaptador; hoy vacío, A3 y A6 registran).
+  `registry.py` (nombre → adaptador; hoy vacío, A6 registra el suyo).
 - `SearchService`: pasa por el cliente. **Sin `SERPER_URL`/`SERPER_API_KEY` lanza
   `SourceConfigurationError`**; si el backend contesta 401/403, igual; si contesta
   4xx/5xx, `SourceUnavailable`; `None` queda para «funcionó y no hay página».
@@ -362,17 +383,19 @@ límite); ningún test toca la red.
   `USER_VIEWS`**. Sigue siendo master-key only: el pipeline no está paginado por
   usuario y dejar que cualquier JWT lo dispare es dejar que gaste dinero. Los dos
   tests de 403 que ya existían lo fijan.
-- Dependencia: `httpx[http2]==0.28.1` (el extra lo necesita A3; A2 no usa HTTP/2).
+- Dependencia: `httpx[http2]==0.28.1`. El extra ya no hace falta al descartarse
+  Colnect: se puede dejar en `httpx==0.28.1` (o mantenerlo, inofensivo).
   Los loggers de `httpx`/`httpcore` bajados a WARNING en `log_setup`, porque a DEBUG
   escriben una línea por cada byte del protocolo.
 - Tests: 35 nuevos (`test_source_http.py` 22, `test_source_registry.py` 7,
   `test_scraping_service.py` 6) más los de la vista (400 host no permitido, 502
   fuente caída, 500 configuración, 422 scrape vacío). **1.664 verdes**, ningún test
   toca la red (todo va por `httpx.MockTransport`).
-- **Lo que NO trae**: los adaptadores de verdad (A3 y A6), la valoración (A7) y
-  sustituir Serper. Sigue vivo, con timeout y errores que significan algo.
+- **Lo que NO trae**: el adaptador de verdad (A6), la valoración (A7) y sustituir
+  Serper. Sigue vivo, con timeout y errores que significan algo — y sin Colnect
+  (2026-11-26) es la puerta a los precios.
 
-### A3 — Colnect (L)
+### A3 — Colnect (L) — **descartado por decisión (2026-11-26)**
 
 Adaptador con firma HMAC, `/item` por código Edifil (hasta 50 ids por llamada),
 `/market_prices` y `/item_sales`; lectura de `/request_count` antes de gastar
@@ -384,6 +407,9 @@ que devuelve el `Número EDIFIL` en 2.733 de esos 2.761.
 
 Aceptación: tests con JSON grabado; una llamada real documentada en el spike.
 
+> **Ya no aplica**: Colnect queda fuera (2026-11-26). Se deja como registro de lo
+> que costaba entrar.
+>
 > **Cómo se pide la clave (comprobado 2026-11-25).** El sitio vivo es
 > **`https://colnect.com/en/capi/use_request`**, con la sesión de Colnect abierta.
 > El formulario antiguo de LimeSurvey (`survey.colnect.info/…sid=167713`) sigue
@@ -447,7 +473,7 @@ umbral conservador. Sin match claro no hay observación.
 Aceptación: tests con una subasta grabada; una serie sin lote comparable produce
 `gaps`, no una observación falsa.
 
-### A6 — Identidad y emparejamiento (L) — **en curso (primera rebanada hecha)**
+### A6 — Identidad y emparejamiento (L) — **HECHO 2026-11-26**
 
 Orden: código Edifil normalizado → año + facial + color + nombre de serie
 (solapamiento de tokens) → nada. Cada candidato se guarda con `score` y URL; por
@@ -462,6 +488,11 @@ humana en DataDesk.
 > son el mismo sello (emparejar **sello a sello**), y 1 de las 5 series probadas no
 > está indexada por `sku`.
 >
+> **Con Colnect fuera (2026-11-26), Fesofi no es «el primer escalón»: es la
+> espina.** Ya no hay una API de catálogo detrás a la que entregar el código, así
+> que el hueco de Edifil (2.761 sellos, 696 series) deja de ser un bloqueo de
+> identidad: sólo afecta a nuestras fichas y a las búsquedas por código.
+>
 > **Decisión del usuario (2026-11-25): Fesofi es la primera fuente de identidad.**
 > Además del título y los códigos, trae `Motivo Sello`, `Facial`, `Color`,
 > `Dentado`, `Impresión`, `Imprenta`, `Tirada`, `Tipo De Correo` y `Valores De La
@@ -470,6 +501,42 @@ humana en DataDesk.
 
 Aceptación: juego de pares conocidos (aciertos y errores deliberados); ningún falso
 positivo por debajo del umbral llega a la valuación.
+
+**Segunda rebanada hecha el 2026-11-26: los hechos y el matcher.**
+
+- **`identify()`** devuelve un `Match` con `products`, `term`, `score` (la parte de
+  palabras que cubre el nombre de la serie, 1.0 = todas), `candidates` y `gap`. El
+  orden es: más palabras cubiertas, nombre **exacto** por delante de uno que sólo
+  las contiene, serie por delante de motivo, y nombre más corto. **Un empate en
+  cobertura, exactitud y atributo es un `gap`** con los dos nombres, no una
+  elección por suerte.
+- **`facts(products)`** construye `serie_info` y `stamps` con **las mismas claves
+  que `clean_scraped_data`**, así que el modelo recibe la misma forma venga de la
+  API o de una página raspada: `issue_name`, `year`, `issue_date`, `printer`,
+  `print_type`, `engraver`, `print_run`, `perforation`, `series_values` y, por
+  sello, `edifil_code`, `fesofi_code`, `motive`, `face_value`, `color`,
+  `perforation`, `total_print_run`, `format` y `desc_snippet`.
+- **El emparejamiento va sello a sello** por sus propios códigos, y una coincidencia
+  por **motivo** se ensancha a la serie que el propio producto declara en su
+  `Título Serie`: «la sagrada familia» da el sello 2883 y el informe sale con los
+  dos de «Navidad 1986».
+- La vista **prefiere el catálogo** y deja la búsqueda y el raspado como respaldo; si
+  el respaldo rescata la petición, la respuesta lleva un `gap` de `identity` con el
+  motivo, porque la identidad no está verificada.
+- Cuatro cosas que sólo se ven probándolo contra el catálogo real: `Fecha De
+  Emisión` lleva la D mayúscula y `Año de Emisión` no, así que las claves se
+  comparan **sin acentos ni mayúsculas**; `Formato` es el **tamaño** (40,9 x 28,8
+  mm), no el tipo, así que `stamp_type` **no se inventa** y lo infiere el modelo; un
+  término de serie y uno de motivo con el mismo nombre («Isabel II») **no son un
+  empate** porque el atributo desempata; y el ensanche de motivo a serie necesita la
+  taxonomía del término, que `_terms` no devuelve y hay que poner.
+- Comprobado en real: `navidad 1986` → Edifil 2867/2868 con fecha; `castillos 2007`
+  → 4349/4350; `isabel ii 1850` → 1 a 5; `la sagrada familia 1986` → los dos de
+  Navidad; `quijote 1998` → encontrado por motivo y ensanchado a la serie de 26
+  sellos; `zzzz` → `gap`.
+- 12 tests nuevos del catálogo (matcher y hechos) y 3 de la vista; **1.707 verdes**,
+  ninguno toca la red.
+
 
 **Primera rebanada hecha el 2026-11-26: encontrar la serie por nombre parcial.**
 
@@ -513,14 +580,47 @@ salga cuando su nombre **contiene** las palabras, no cuando coincide exacto.
   falta comprobar que sea el sello y no la hoja del primer día.
 
 
-### A7 — Valuación (S)
+### A7 — Valuación (M, sube de tamaño al quedarse sin Colnect)
 
-`valuation.py`: filtra por condición, convierte divisa con tasa y fecha guardadas,
-calcula **mediana e IQR** y exige `n ≥ 3` por condición; si no llega, `null` y un
-gap. Sin factor −25%. La regla "la serie no puede valer más que la suma" queda, si
-se conserva, como aviso, nunca como modificador.
+**De dónde salen los precios ahora.** Sin Colnect no hay API de mercado, así que hay
+dos fuentes, en este orden:
 
-Aceptación: tests de mediana con muestras pequeñas, divisas mezcladas y `n < 3`.
+1. **`filatelia.online`**, primera y estructurada. Es una tienda WooCommerce: la
+   misma Store API que Fesofi, con `Nº Edifil` (`pa_sello-numeracion`, id 45),
+   `Estado` (12), `Año` (2), `Color`, `Dentado` y `Tirada`. Se resuelve el código a
+   término (`/products/attributes/45/terms?search=<edifil>`) y se piden sus
+   productos, que traen precio y condición: precio de **oferta**, a nivel de sello
+   y con la condición puesta. El adaptador es casi gratis si `FesofiCatalogue` se
+   generaliza a un `StoreCatalogue` con URL base y atributos.
+2. **La búsqueda en los sitios permitidos** (`todocoleccion.net`, `ebay.es` /
+   `ebay.com`), como red ancha: se aceptan sólo enlaces de hosts permitidos, el
+   precio sale de la **snippet** cuando lo trae (Google suele enseñarlo) y si no se
+   abre la ficha con `HttpClient`.
+
+Cada precio es una `SourceObservation` con `kind` (`ask`, y `sold` cuando el sitio
+lo diga), `condition`, `url`, `observed_at` y el `raw` de la ficha. La cobertura de
+la tienda es su stock —clásicos y pruebas sobre todo—, así que `n ≥ 3` fallará a
+menudo: eso es un `gap`, no una cifra.
+
+**Descartados al mirarlos (2026-11-26)**: `circulomadrid.com` (CGI antiguo, una
+página por sello, catálogo cargado de extranjero) y `stampworld.com` (catálogo con
+valores, pero 403 de Cloudflare a cualquier cliente que no sea un navegador).
+**Iberphil** queda como opcional y a nivel de lote, si se decide (ver A5).
+
+`valuation.py` filtra por condición, convierte divisa con tasa y fecha guardadas,
+calcula la **media recortada** (decisión del 2026-11-25, no la mediana del plan
+original) con `min`, `max`, `sample_size` y `sources`, y exige `n ≥ 3`; si no
+llega, `null` y un `gap`. Sin factor −25% ni descuento de conjunto: el valor de la
+serie sólo se rellena si hay una observación de la serie completa.
+
+**Lo que hay que aceptar**: casi todo lo que se encuentre serán **precios de
+oferta**, no ventas. La estimación lo dice en `kind` y en `method`, y no se
+presenta como «valor de mercado». Es más débil que lo que habría dado Colnect y es
+lo que hay.
+
+Aceptación: tests de media recortada con muestras pequeñas, divisas mezcladas y
+`n < 3`; una ficha sin precio no inventa una observación; el estimado viaja con sus
+fuentes y su tipo.
 
 ### A8 — Ejecución (M)
 
@@ -627,10 +727,9 @@ Hallazgos que cambian el plan:
   Delcampe (fuera). **Colnect no se busca: sólo API**, porque su `robots.txt` dice
   que el acceso automatizado sin consentimiento escrito está prohibido.
 
-Quedan tres decisiones abiertas: **la clave de la CAPI de Colnect** (el
-procedimiento está en A3; bloquea A3, no A1, A2 ni A6), **el motor que opencode
-use por dentro** (ver la entrada siguiente; no bloquea nada) y **dónde se dispara
-la investigación** (condiciona A8).
+Quedan dos decisiones abiertas, ninguna de ellas bloqueante: **el motor que
+opencode use por dentro** (ver la entrada siguiente) y **dónde se dispara la
+investigación** (condiciona A8).
 
 Dos cifras que salen de esta decisión y conviene tener a mano: de los 9.557 sellos,
 **2.761 no tienen Edifil y 2.733 de ellos sí tienen Fesofi**, así que Fesofi
@@ -778,3 +877,56 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   son ~17k tokens, y a los precios del modelo elegido son menos de un céntimo. Lo
   que se ganaba era perder justo el material con el que se escribe la ficha.
 - 4 tests nuevos; **1.693 verdes**.
+
+### 2026-11-26 — Colnect fuera del plan
+
+- **Decisión del usuario**: no se usa Colnect. Se cae A3 entero y también la clave
+  CAPI, que era la única decisión que bloqueaba un paso.
+- Qué se pierde: la **única** fuente de precio de mercado por API (`/market_prices`,
+  `/item_sales`) y el catálogo que servía para verificar códigos. Los precios pasan
+  a salir de la búsqueda en sitios permitidos —`todocoleccion.net`, `ebay.es` /
+  `ebay.com`—, leyendo el precio de la snippet o de la ficha con `HttpClient`.
+- Qué cambia en el plan: **A7 sube de S a M** y se reescribe (media recortada sobre
+  ofertas, `kind` explícito, `n ≥ 3`); **A6 cambia de papel** (Fesofi deja de ser
+  «el primer escalón» y pasa a ser la espina de la identidad: el hueco de Edifil ya
+  no bloquea nada); **Serper deja de ser provisional** (sin Colnect es la puerta a
+  los precios); y el extra `httpx[http2]` se queda sin motivo, aunque es inofensivo.
+- Qué no cambia: la forma de la respuesta (`observations` / `valuation` / `gaps`),
+  que ya estaba pensada para no depender de una fuente concreta, y la regla de que
+  sin observación no hay cifra.
+
+### 2026-11-26 — Colnect fuera: dónde se busca el precio
+
+- **`filatelia.online` entra** como primera fuente de precio de A7: tienda
+  WooCommerce con la misma Store API que Fesofi, y con `Nº Edifil` como atributo
+  (`pa_sello-numeracion`, id 45) además de `Estado` y `Año`. Precio de oferta a
+  nivel de sello y con condición, que es lo que la búsqueda genérica no da. Su
+  cobertura es su stock (clásicos y pruebas sobre todo), así que `n ≥ 3` fallará a
+  menudo y será un `gap`.
+- **`circulomadrid.com` descartado**: vende y expertiza y muestra P.V.P. y precio
+  de catálogo, pero es un CGI (`cirmar.dll`) con una página por sello, sin búsqueda
+  explotable y con catálogo cargado de extranjero.
+- **`stampworld.com` descartado por ahora**: catálogo con valores y `robots.txt`
+  que permite el uso de referencia, pero **403 de Cloudflare** a cualquier cliente
+  que no sea un navegador.
+- **Iberphil** sigue opcional y a nivel de lote, si se decide (A5).
+- La allowlist de A2 tiene que sumar `filatelia.online` al implementar A7.
+
+### 2026-11-26 — A6 hecho: los hechos vienen del catálogo
+
+- `FesofiCatalogue.identify()` devuelve un `Match` con `products`, `term`, `score`,
+  `candidates` y `gap`; el orden es cobertura, exactitud, serie antes que motivo y
+  nombre más corto, y un empate es un `gap` con los nombres, no una elección al azar.
+- `facts()` produce `serie_info` + `stamps` con las claves de `clean_scraped_data`,
+  leídas de los atributos (códigos, facial, color, dentado, tirada, fecha, motivo y
+  la descripción del catálogo sin HTML).
+- El emparejamiento es sello a sello y un acierto por motivo se ensancha a la serie
+  que el producto declara. La vista prefiere el catálogo y deja búsqueda + raspado de
+  respaldo, con un `gap` de `identity` cuando el respaldo es quien rescata.
+- Cuatro defectos que sólo se ven con datos reales: claves de atributo con
+  mayúsculas distintas (`Fecha De Emisión`), `Formato` es el tamaño y no el tipo,
+  serie y motivo con el mismo nombre no empatan, y el ensanche necesita la taxonomía
+  del término.
+- Real: `navidad 1986` → 2867/2868; `castillos 2007` → 4349/4350; `isabel ii 1850` →
+  1–5; `la sagrada familia 1986` → los dos; `quijote 1998` → por motivo y ensanchado;
+  `zzzz` → `gap`. 15 tests nuevos; **1.707 verdes**.

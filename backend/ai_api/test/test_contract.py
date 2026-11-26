@@ -8,6 +8,8 @@ invented number when there is nothing to back it.
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
+import pytest
+
 from rest_framework import status
 
 from _backend.settings import AI_ISSUES_EXTRACTION_URL_V1
@@ -21,6 +23,23 @@ from common.test.ai_api_test_data import (
     series_extraction_request_payload_ok,
     series_extraction_response_data,
 )
+
+
+@pytest.fixture(autouse=True)
+def no_catalogue_match():
+    """Keep the catalogue off the network: this file tests the response shape."""
+    from unittest.mock import Mock as _Mock
+
+    from ai_api.sources.fesofi import Match
+
+    stub = _Mock()
+    stub.identify.return_value = Match(gap="not in the catalogue")
+    stub.facts.return_value = {}
+
+    with patch(
+        "ai_api.api.views.series_extraction_view.FesofiCatalogue", return_value=stub
+    ):
+        yield stub
 
 
 FULL_PAYLOAD = {
@@ -196,5 +215,7 @@ class TestEndpointNeverInventsPrices(AbstractApiUnitTest):
         assert data["observations"] == []
         assert data["sources"] == []
         assert data["valuation"] is None
-        assert data["gaps"] == []
+        # The catalogue did not identify it and the search rescued it: the
+        # response says so instead of pretending the identity is certain.
+        assert [gap["field"] for gap in data["gaps"]] == ["identity"]
         assert data["description_source"] == "llm"

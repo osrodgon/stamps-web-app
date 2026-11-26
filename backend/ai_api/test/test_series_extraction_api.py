@@ -1,3 +1,4 @@
+import pytest
 from rest_framework import status
 from unittest.mock import Mock, patch
 
@@ -15,10 +16,27 @@ from common.test.ai_api_test_data import (
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 from ai_api.services.llm_service import LLMService
 from ai_api.sources.errors import SourceConfigurationError, SourceUnavailable
+from ai_api.sources.fesofi import Match
 
 
 class TestSeriesExtractionAPI(AbstractApiUnitTest):
     """Test class for AI Manager API endpoints (No Database)."""
+
+    @pytest.fixture(autouse=True)
+    def no_catalogue_match(self):
+        """By default the catalogue knows nothing: these tests are the fallback.
+
+        The tests that care about the catalogue path patch it themselves.
+        """
+        stub = Mock()
+        stub.identify.return_value = Match(gap="not in the catalogue")
+        stub.facts.return_value = {}
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=stub,
+        ):
+            yield stub
     
     def test_post_series_extraction_returns_200_ok(
         self, 
@@ -302,6 +320,125 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
             clean_data=str(series_extraction_cleaned_data)
         )
         
+    def test_the_catalogue_facts_are_used_without_scraping(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """When the catalogue identifies the series, its facts go to the model."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Navidad", "issue_date": "16 noviembre 1986"},
+            "stamps": [{"edifil_code": "2867", "face_value": "19 pta"}],
+        }
+
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(
+            products=[{"name": "2883"}],
+            term={"name": "Navidad"},
+            score=1.0,
+        )
+        catalogue.facts.return_value = facts
+
+        scraping = Mock()
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.ScrapingService',
+            return_value=scraping,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchService',
+        ) as search_class, patch(
+            'ai_api.api.views.series_extraction_view.LLMService',
+            return_value=llm,
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        scraping.extract_links.assert_not_called()
+        search_class.return_value.find_series_url.assert_not_called()
+        llm.series_extract.assert_called_once_with(
+            name="Navidad", date="16 noviembre 1986", clean_data=str(facts)
+        )
+
+    def test_a_fallback_says_the_catalogue_did_not_identify_it(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+        series_extraction_cleaned_data,
+    ):
+        """If the search rescues it, the response still records the identity gap."""
+        self.permission(granted=True)
+
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(gap="Ambiguous: Navidad, Navidad 2004.")
+
+        search = Mock()
+        search.find_series_url.return_value = "https://catalogodesellos.fesofi.es/producto/0199/"
+
+        scraping = Mock()
+        scraping.extract_links.return_value = ["https://catalogodesellos.fesofi.es/producto/0199/"]
+        scraping.scrape_content.return_value = "content"
+        scraping.clean_scraped_data.return_value = series_extraction_cleaned_data
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchService', return_value=search
+        ), patch(
+            'ai_api.api.views.series_extraction_view.ScrapingService', return_value=scraping
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        gaps = response.json()["data"]["gaps"]
+        assert gaps[0]["field"] == "identity"
+        assert "Ambiguous" in gaps[0]["reason"]
+
+    def test_both_doors_failing_says_why(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+    ):
+        """A 404 carries the catalogue's reason instead of only "nothing found"."""
+        self.permission(granted=True)
+
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(gap="No series contains navidad.")
+
+        search = Mock()
+        search.find_series_url.return_value = None
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchService', return_value=search
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "No series contains navidad" in response.json()["errors"][0]["message"]
+
     def test_post_series_extraction_refuses_a_host_outside_the_allowlist(
         self,
         api_client,
