@@ -193,8 +193,9 @@ class Command(BaseCommand):
         """Ask the CAPI over HTTP/2, the only protocol it accepts.
 
         ``requests`` cannot negotiate HTTP/2, so the 426 the probe records above
-        is about the client, not about the source. ``httpx`` is used here only
-        for this check and is not a declared dependency yet (A2 adds it).
+        is about the client, not about the source. ``httpx`` is a declared
+        dependency, but its ``h2`` extra is not: without it this check reports the
+        ImportError instead of a protocol, which is the honest answer.
         """
         try:
             import httpx

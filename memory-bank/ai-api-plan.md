@@ -129,7 +129,7 @@ opencode) ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por dec
 | A7b | Estado y precio en la ficha del anuncio | M | A7 | **hecho 2026-11-26** |
 | A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | **hecho 2026-11-26** |
 | A9 | LLM reducido y validador de fuentes | S | A7 | **hecho 2026-11-26** |
-| A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | siguiente |
+| A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | **hecho 2026-11-26** |
 
 ### A0 — Prueba de fuentes (S) — **HECHO 2026-11-25**
 
@@ -794,23 +794,76 @@ que muta la respuesta y devuelve los huecos:
 - **Lo que no hace**: no valida la prosa contra las fuentes —eso exigiría leerla— ni
   toca los prompts, que ya se recortaron en A1.
 
-### A10 — Cierre (S)
+### A10 — Cierre (S) — **HECHO 2026-11-26**
 
 README reescrito (fuentes, cuotas, ToS, códigos de error, qué no se puede obtener),
 esquema actualizado en drf-spectacular, tests de contrato por fuente con respuestas
 grabadas, y `activeContext.md` / `progress.md` al día.
 
+**Hecho el 2026-11-26.** El cierre encontró tres cosas que el contrato prometía y el
+código no cumplía; se arreglaron en vez de documentarlas:
+
+- **`sources` llegaba siempre vacío.** Ahora la vista informa de cada fuente de
+  precios con `ok` / `empty` / `error` / `skipped`, que no son lo mismo: «no tiene
+  stock», «está caída» y «no llegamos a preguntar» se distinguen. Un fallo de una
+  fuente deja de disfrazarse de respuesta vacía (`_ask` devolvía `[]` para todo).
+- **Las fuentes no cuadraban con el modelo.** `SourceObservation.Source` ofrecía
+  `colnect` y `ebay` (fuera del plan) y no ofrecía `filatelia` ni `search`, que es lo
+  que el pipeline escribe. Alineado: `fesofi`, `filatelia`, `search`,
+  `todocoleccion` y `manual`. `description_source` pierde `colnect`.
+- **Código muerto.** `sources/registry.py` y el ABC `SourceAdapter` que nadie
+  implementaba (8 tests incluidos) se van; `base.py` queda como lo que es, el
+  `Observation` que hablan las fuentes. También fuera el `issues_extraction` que
+  nadie usaba en `frontend/core/urls.py` y el extra `httpx[http2]`, que sólo existía
+  para la CAPI de Colnect (el sondeo de A0 sigue funcionando: sin `h2` informa del
+  `ImportError` en vez de fingir un protocolo).
+- **README del módulo** reescrito (antes describía el pipeline de Serper + scraping +
+  Gemini/Groq): el recorrido de una petición, la tabla de fuentes, el contrato de
+  respuesta con lo que significa cada número, los ajustes, el comando de backfill,
+  los errores y lo que el módulo no hace. Sección corta en el README del repo.
+- **Esquema**: `partial`, `subject_code`, `valuation` y los códigos de catálogo
+  aparecen, sin avisos de drf-spectacular; el `summary` de la operación deja de decir
+  «using AI» y describre el pipeline real.
+- **`valuation` de serie sigue a `null` por decisión**: una serie no es la suma de sus
+  sellos y ninguna fuente vende el conjunto como una pieza. Está escrito en el
+  README, no escondido.
+- 3 tests nuevos del informe de fuentes (`ok`, `empty`, `error`, `skipped`) y 7 que
+  se van con el registro muerto; **1.823 verdes**.
+
 ---
 
 ## 5. Lo que el plan no promete
 
-- Que Colnect tenga el sello buscado: su catálogo español está bien, pero no es
-  Edifil completo.
-- Que Delcampe se deje leer.
-- Que Iberphil tenga un lote comparable para cada serie moderna.
+Lo que **entrega**, y con qué límites:
 
-El plan está construido para que esas ausencias salgan como `gaps` explícitos y no
-como números inventados.
+- Identidad por el catálogo de Fesofi, parcial y sin acentos, con empate = `gap`.
+- Hechos de catálogo leídos de la API, no de una página raspada, y validados contra
+  la fuente (`check_support`); lo que la fuente no dice, se anula y se declara.
+- Precio de sello con **condición leída de la ficha** y media recortada, mínimo tres
+  observaciones por condición, sólo euros. Sin conversión de divisa y sin el −25 %
+  que aplicaba el prompt viejo.
+- Una request con presupuesto (`partial: true`) y un comando que llena la base sin
+  duplicar evidencia.
+- `sources` dice qué contestó cada fuente de precios: `ok`, `empty`, `error` o
+  `skipped`.
+
+Lo que **no** promete, y por qué:
+
+- **`valuation` de serie**: no hay fuente que venda el conjunto como una pieza, y
+  sumar sus sellos sería inventar. Queda `null` hasta que exista una observación del
+  conjunto.
+- **Cobertura**: el stock de la tienda es pequeño y la búsqueda no siempre trae
+  condición; muchos sellos acabarán en `gap`. Es la respuesta correcta, no un fallo.
+- **Colnect** (fuera por decisión, 2026-11-26), **Delcampe** (`robots.txt` prohíbe su
+  búsqueda) e **Iberphil** (sólo martillo por lote y sin código de catálogo, fuera de
+  la primera versión). **eBay** responde 403: no hay parser.
+- **La prosa no se valida**: la descripción va marcada `llm`; comprobarla exigiría
+  leerla contra la fuente, y eso no lo hace ninguna máquina de este repo.
+- **El motor de opencode** sigue sin elegirse: viaja en `OPENCODE_MODEL` y es una
+  decisión de despliegue.
+- **Dónde se investiga** ya está decidido (endpoint para una serie, comando para el
+  catálogo), pero **no hay panel en DataDesk ni pantalla en Flet** que lo llamen: eso
+  es trabajo de esas apps.
 
 ---
 
@@ -1150,3 +1203,17 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
 - Las descripciones sobreviven y siguen marcadas `llm`; el validador no escribe
   precios, sólo quita afirmaciones.
 - 17 tests nuevos; **1.827 verdes**.
+
+### 2026-11-26 — A10 hecho: el cierre encontró tres promesas sin cumplir
+
+- `sources` se llena de verdad: `ok` / `empty` / `error` / `skipped` por fuente de
+  precios, y un fallo deja de contarse como respuesta vacía.
+- `SourceObservation.Source` se alinea con lo que el pipeline escribe (`filatelia`,
+  `search`); fuera `colnect` y `ebay`, que estaban en el modelo y no en el código.
+- Fuera `sources/registry.py` y el ABC `SourceAdapter` (nadie los implementaba), el
+  `issues_extraction` muerto del frontend y el extra `httpx[http2]`.
+- README del módulo reescrito y sección en el README del repo; el esquema muestra
+  `partial`, `subject_code` y `valuation` sin avisos.
+- Lo que queda fuera está escrito y con su motivo: valuación de serie (sin
+  observación del conjunto), cobertura, Iberphil, eBay y la prosa.
+- 3 tests nuevos y 7 fuera con el registro muerto; **1.823 verdes**.

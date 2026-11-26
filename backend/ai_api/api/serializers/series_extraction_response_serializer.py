@@ -27,7 +27,7 @@ class SeriesExtractionResponseSerializer(serializers.Serializer):
         help_text="Historical description or 'n/a'"
     )
     description_source = serializers.ChoiceField(
-        choices=["llm", "fesofi", "colnect", "manual"],
+        choices=["llm", "fesofi", "manual"],
         required=False,
         default="llm",
         help_text="Where the description text comes from. 'llm' means the model "

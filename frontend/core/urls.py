@@ -44,7 +44,6 @@ class URLs:
         years =                 f"{BACKEND_URL}/years/"
         colors =                f"{BACKEND_URL}/colors/"
         config =                f"{BACKEND_URL}/config/"
-        issues_extraction =     f"{BACKEND_URL}/issues/extraction/"
         issues_collections =    f"{BACKEND_URL}/issues/collections/"
         
     class Frontend:

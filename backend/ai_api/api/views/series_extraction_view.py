@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
@@ -47,9 +48,12 @@ class SeriesExtractionView(Logger, APIView):
     @extend_schema(
         operation_id="series_extraction_post",
         tags=['AI Services'],
-        summary="Extract Information for Series using AI",
-        description="Performs AI-powered extraction of series information with the LLM provider. "
-                    "Requires a name (either series name or the motive of one of the stamps in the serie) and publication date.",
+        summary="Research a series from its name and date",
+        description="Identifies the series in the Fesofi catalogue, reads its facts from "
+                    "the catalogue API, prices its stamps with a shop and an allowed-site "
+                    "search, and has the LLM write the text from those facts. Prices travel "
+                    "with the page that supports them; a value nobody can back is null and "
+                    "reported in `gaps`. `partial` is true when the request ran out of budget.",
         request=SeriesExtractionRequestSerializer,
         responses={
             status.HTTP_200_OK: standardized_response(
@@ -146,6 +150,7 @@ class SeriesExtractionView(Logger, APIView):
 
             match = None
             identity_gap = None
+            report: List[Dict[str, Any]] = []
 
             # A URL plus date "0" skips every lookup, but only for a host the
             # client may fetch: accepting any URL here made the endpoint an
@@ -156,11 +161,15 @@ class SeriesExtractionView(Logger, APIView):
                         f"{urlparse(name).hostname or name} is not an allowed host."
                     )
                 self.log.debug(f"Using provided URL directly: {name}")
+                report.append(self._source_row("fesofi", "skipped"))
                 clean_data = self._scraped(scraping_service, name)
             else:
                 # The catalogue answers with the facts themselves; the search and
                 # the scraper are what is left when it does not.
                 match = catalogue.identify(name, date)
+                report.append(
+                    self._source_row("fesofi", "ok" if match.found else "empty")
+                )
                 if match.found:
                     term = (match.term or {}).get("name", "")
                     self.log.debug(
@@ -220,7 +229,8 @@ class SeriesExtractionView(Logger, APIView):
 
             # Every value comes from an observation: whatever the provider wrote
             # is overwritten with what the sources support, or with null.
-            observations, unfinished = self._prices(clean_data, budget)
+            observations, unfinished, price_report = self._prices(clean_data, budget)
+            report.extend(price_report)
             by_code = self._by_code(observations)
 
             for stamp in validated.get("stamps") or []:
@@ -236,6 +246,7 @@ class SeriesExtractionView(Logger, APIView):
             # inventing it.
             validated["market_value_mnh"] = None
             validated["market_value_used"] = None
+            validated["sources"] = report
             validated["observations"] = [self._observation_row(item) for item in observations]
 
             gaps = list(validated.get("gaps") or [])
@@ -326,16 +337,17 @@ class SeriesExtractionView(Logger, APIView):
     
     def _prices(
         self, clean_data: dict, budget: Budget
-    ) -> tuple[List[Observation], bool]:
+    ) -> tuple[List[Observation], bool, List[Dict[str, Any]]]:
         """Ask the sources for the price of the first stamps of the series.
 
         The shop answers with stock and a written condition; the search answers
-        with asking prices and a condition guessed from the listing. The search is
+        with asking prices and a condition read from the listing. The search is
         only asked when the shop did not give enough prices to estimate, because
         every stamp costs one query.
 
         Returns:
-            The observations found, and whether the budget cut the work short.
+            The observations found, whether the budget cut the work short, and
+            what each price source answered.
         """
         shop = FilateliaCatalogue()
         search = SearchPrices()
@@ -348,6 +360,9 @@ class SeriesExtractionView(Logger, APIView):
         observations: List[Observation] = []
         seen = set()
         unfinished = False
+        asked: Dict[str, int] = {}
+        answered: Dict[str, int] = {}
+        failed: set = set()
 
         for stamp in stamps:
             code = str(stamp.get("edifil_code") or "").strip()
@@ -361,9 +376,21 @@ class SeriesExtractionView(Logger, APIView):
                 unfinished = True
                 break
 
-            found = self._ask(shop.prices, code, year, timeout)
+            found = self._asked(
+                "filatelia", shop.prices, asked, answered, failed, code, year, timeout
+            )
             if len(found) < MINIMUM_SAMPLE:
-                found += self._ask(search.prices, code, label, year, timeout)
+                found += self._asked(
+                    "search",
+                    search.prices,
+                    asked,
+                    answered,
+                    failed,
+                    code,
+                    label,
+                    year,
+                    timeout,
+                )
 
             for observation in found:
                 key = (observation.source, observation.url, observation.price)
@@ -379,15 +406,72 @@ class SeriesExtractionView(Logger, APIView):
                 )
 
         self.log.debug(f"{len(observations)} observation(s) for the series")
-        return observations, unfinished
+        return observations, unfinished, self._price_report(asked, answered, failed)
 
-    def _ask(self, prices, *args) -> List[Observation]:
-        """Call a price source, turning its failure into a log line."""
+    def _asked(
+        self,
+        name: str,
+        prices,
+        asked: Dict[str, int],
+        answered: Dict[str, int],
+        failed: set,
+        *args,
+    ) -> List[Observation]:
+        """Ask one source for one stamp, remembering how it answered.
+
+        A failure is not an empty answer: "the shop is down" and "the shop has no
+        stock" are different things to a client, and the report keeps them apart.
+        """
+        asked[name] = asked.get(name, 0) + 1
         try:
-            return list(prices(*args))
+            found = list(prices(*args))
         except SourceError as error:
-            self.log.warning(f"Could not price {args[0]}: {error}")
+            failed.add(name)
+            self.log.warning(f"Could not price {args[0]} with {name}: {error}")
             return []
+        if found:
+            answered[name] = answered.get(name, 0) + 1
+        return found
+
+    @staticmethod
+    def _price_report(
+        asked: Dict[str, int],
+        answered: Dict[str, int],
+        failed: set,
+    ) -> List[Dict[str, Any]]:
+        """Say what each price source answered, in a stable order.
+
+        A source nobody asked is `skipped`, which is not the same as one that was
+        asked and had nothing (`empty`), nor as one that broke (`error`): a client
+        can tell "no stock" from "we stopped before asking" from "try later".
+        """
+        report = []
+        for name in ("filatelia", "search"):
+            if name not in asked:
+                status = "skipped"
+            elif name in failed and not answered.get(name):
+                status = "error"
+            else:
+                status = "ok" if answered.get(name) else "empty"
+            report.append(
+                {
+                    "source": name,
+                    "status": status,
+                    "url": "",
+                    "fetched_at": timezone.now(),
+                }
+            )
+        return report
+
+    @staticmethod
+    def _source_row(name: str, status: str) -> Dict[str, Any]:
+        """One source report entry for a source that has no prices to show."""
+        return {
+            "source": name,
+            "status": status,
+            "url": "",
+            "fetched_at": timezone.now(),
+        }
 
     @staticmethod
     def _by_code(observations: List[Observation]) -> Dict[str, List[Observation]]:

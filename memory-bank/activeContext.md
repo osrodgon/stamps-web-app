@@ -16,8 +16,10 @@
   request has a budget and answers `partial`, and `ai_prices_backfill` stores
   observations without duplicating them. **A9 is done too**: the model can no longer
   write a code, a date or a number the sources do not carry — `check_support()` drops
-  it and reports it. **Next is A10** (close-out: docs, schema, plan). Details in
-  Notes below.
+  it and reports it. **A10 is done too, so the AI API plan is closed**: the README
+  describes the module as it is, `sources` really reports what each source answered,
+  the dead registry and the Colnect leftovers are gone, and the schema carries
+  `partial` and `subject_code`. Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -82,44 +84,31 @@
 
 ## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1, A1b, A2, A6, A7, A7b, A8 y A9 cerrados. Lo siguiente es A10.** El contrato
-pide evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y
-caché, la identidad la resuelve el catálogo de Fesofi, el valor sale de una media
-recortada con condición leída de la ficha, una request tiene presupuesto y el modelo
-no puede afirmar nada que las fuentes no sostengan.
+**El plan de la AI API está cerrado: A0–A2, A6–A10 hechos.** El contrato pide
+evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y caché,
+la identidad la resuelve el catálogo de Fesofi, el valor sale de una media recortada
+con condición leída de la ficha, una request tiene presupuesto y el modelo no puede
+afirmar nada que las fuentes no sostengan.
 
-- **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
-  (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
+- **Leer primero**: `backend/ai_api/README.md` (el módulo tal y como es) y
+  `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7 (registro). Lo que
+  contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A10 — lo siguiente**: el cierre. Esquema OpenAPI al día, README del módulo
-  reescrito (hoy sigue describiendo el pipeline viejo), y repaso de lo que el plan
-  prometió y de lo que quedó fuera (Iberphil opcional, observaciones persistidas sólo
-  por el comando).
-- **Ya no hay nada bloqueado**: Colnect queda fuera (2026-11-26), así que ni A3 ni
-  la clave CAPI existen en el plan. Lo único abierto son dos decisiones que no
-  frenan código: el modelo y dónde se dispara la investigación.
-- **Sin decidir**: el valor de `OPENCODE_MODEL` (los gratuitos del Console dan 403
-  desde fuera, así que será de pago) y dónde se dispara la investigación (DataDesk,
-  app Flet o comando), que condiciona A8.
-- **A1b verificado en real** (2026-11-25) con `OPENCODE_MODEL=glm-5.3-flash`: una
-  extracción desde Swagger devolvió la forma de A1, con los precios a `null`. El
-  `.env` de cada entorno ya no lleva `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER` y sí
-  `OPENCODE_API_KEY` y `OPENCODE_MODEL`.
-- **Pendiente de A2**: nada. Lo que queda es de otros pasos: los adaptadores de
-  verdad (A7).
+- **Lo que queda fuera, con su motivo**: valuación de serie (ninguna fuente vende el
+  conjunto como una pieza), Iberphil (sólo martillo por lote), eBay (403), conversión
+  de divisa, y validar la prosa (va marcada `llm`).
+- **Dos decisiones de despliegue, no de código**: el valor de `OPENCODE_MODEL` (los
+  gratuitos del Console dan 403 desde fuera, así que será de pago) y quién llama al
+  endpoint. **Dónde se investiga ya está decidido**: DataDesk y Flet piden una serie
+  al endpoint, `ai_prices_backfill` llena la base; pero **ninguna de las dos apps lo
+  llama todavía** — ese es el siguiente trabajo si se quiere usar, y vive en sus
+  propios planes, no aquí.
 - **Palanca pendiente y gratis**: `LLM_BATCH_SIZE=15`. Las llamadas al modelo son
   `1 + ceil(n / LLM_BATCH_SIZE)` y van en serie: con el lote en 5, la serie de 6
   sellos hace 3 llamadas y la de 57 haría 13.
-- **Estado del árbol de trabajo**: A1 y A1b están commiteados; **A2 y la primera
-  rebanada de A6 están sin commitear** en la rama actual: el paquete nuevo
-  `ai_api/sources/` (con `fesofi.py`), sus cinco archivos de tests, `settings.py`
-  (`AI_SOURCE_*`), `.env.example`, `requirements.base.txt` (`httpx[http2]`),
-  `log_setup.py`, `search_service.py`, `scraping_service.py`, el proveedor, la
-  vista y el fixture de `common/test/ai_api_test_data.py`.
-- **Verificación rápida**: `python -m pytest ai_api -q` → **186 verdes**; la suite
-  completa, **1.693**. `manage.py check` y `manage.py spectacular` limpios. Y la
-  prueba de verdad: `navidad 1986` resuelve a 2884/2883 y el scrape da la serie
-  entera; 29 sellos en 0,9 s (antes 7,0 s).
+- **Verificación rápida**: `python -m pytest ai_api -q` → **316 verdes**; la suite
+  completa, **1.823**. `manage.py check` y `manage.py spectacular` limpios. Y la
+  prueba de verdad: `navidad 1986` resuelve a 2884/2883; 29 sellos en 0,9 s.
 
 ## Notes
 - **AI API A0 done (2026-11-25)**: the source probe ran and its report is
@@ -170,6 +159,20 @@ no puede afirmar nada que las fuentes no sostengan.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A10 y cierre del plan: **el cierre encontró tres promesas sin
+  cumplir y las arregló**. `sources` llegaba siempre vacío —ahora la vista informa de
+  cada fuente de precios con `ok` / `empty` / `error` / `skipped`, y un fallo deja de
+  disfrazarse de «respuesta vacía»—; `SourceObservation.Source` ofrecía `colnect` y
+  `ebay` (fuera del plan) y no ofrecía `filatelia` ni `search`, que es lo que el
+  pipeline escribe; y sobraba código: `sources/registry.py` con su ABC
+  `SourceAdapter` (7 tests), el `issues_extraction` que nadie usaba en el frontend y
+  el extra `httpx[http2]`, que sólo existía para la CAPI de Colnect (el sondeo de A0
+  sin `h2` informa del `ImportError`, que es la verdad). El README del módulo está
+  reescrito entero —recorrido de una petición, fuentes, contrato, ajustes, backfill,
+  errores y lo que no hace— y el del repo tiene su sección. El esquema muestra
+  `partial`, `subject_code` y `valuation` sin avisos. `valuation` de serie sigue
+  `null` por decisión: una serie no es la suma de sus sellos. 3 tests nuevos, 1.823
+  verdes.
 - [Today] AI API A9: **lo que las fuentes no sostienen, no sale**. `ai_api/validation.py`
   con `check_support(data, facts)` compara la respuesta del modelo contra los hechos de
   la petición: texto sin mayúsculas, acentos ni espacios; números sin separadores

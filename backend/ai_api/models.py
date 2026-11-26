@@ -21,12 +21,18 @@ class SourceObservation(models.Model):
     """One price seen in one external source, with the evidence behind it."""
 
     class Source(models.TextChoices):
-        """Where the observation came from."""
+        """Where the observation came from.
+
+        The catalogue, the shop and the search are what the pipeline can produce;
+        TodoColeccion and manual are what a stored observation may name when it was
+        read from a listing or typed in. Colnect and eBay are out of the plan
+        (2026-11-26) and no code produces them.
+        """
 
         FESOFI = "fesofi", "Fesofi"
-        COLNECT = "colnect", "Colnect"
+        FILATELIA = "filatelia", "Filatelia.online"
+        SEARCH = "search", "Allowed-site search"
         TODOCOLECCION = "todocoleccion", "TodoColeccion"
-        EBAY = "ebay", "eBay"
         MANUAL = "manual", "Manual"
 
     class Kind(models.TextChoices):

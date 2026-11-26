@@ -15,7 +15,11 @@ from common.test.ai_api_test_data import (
 
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 from ai_api.services.llm_service import LLMService
-from ai_api.sources.errors import SourceConfigurationError, SourceUnavailable
+from ai_api.sources.errors import (
+    SourceConfigurationError,
+    SourceError,
+    SourceUnavailable,
+)
 from ai_api.budget import BudgetExpired
 from ai_api.sources.base import Observation
 from ai_api.sources.fesofi import Match
@@ -657,6 +661,148 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
 
         assert data["partial"] is False
         assert data["stamps"][0]["market_value_mnh"] == 12.0
+
+    def test_every_source_says_what_it_answered(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """The response names the sources, and an empty answer is not a skip."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        shop = Mock()
+        shop.prices.return_value = []
+        search_prices = Mock()
+        search_prices.prices.return_value = []
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchPrices',
+            return_value=search_prices,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        report = {
+            row["source"]: row["status"]
+            for row in response.json()["data"]["sources"]
+        }
+
+        assert report == {"fesofi": "ok", "filatelia": "empty", "search": "empty"}
+
+    def test_a_broken_shop_is_an_error_not_an_empty_answer(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """A source that fails says so; the other one still answers."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        shop = Mock()
+        shop.prices.side_effect = SourceError("the shop is down")
+        search_prices = Mock()
+        search_prices.prices.return_value = [
+            Observation(source="search", price=10, condition="mnh")
+        ]
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchPrices',
+            return_value=search_prices,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        report = {
+            row["source"]: row["status"]
+            for row in response.json()["data"]["sources"]
+        }
+
+        assert report == {"fesofi": "ok", "filatelia": "error", "search": "ok"}
+
+    def test_a_series_without_codes_asks_no_price_source(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """Nothing to price is said as skipped, not as an empty answer."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": ""}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue'
+        ) as shop_class, patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        report = {
+            row["source"]: row["status"]
+            for row in response.json()["data"]["sources"]
+        }
+
+        assert report == {
+            "fesofi": "ok",
+            "filatelia": "skipped",
+            "search": "skipped",
+        }
+        shop_class.return_value.prices.assert_not_called()
 
     def test_a_fact_the_sources_do_not_support_is_dropped(
         self,
