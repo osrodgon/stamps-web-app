@@ -10,12 +10,12 @@ import pytest
 from rest_framework import status
 
 from _backend.settings import COLLECTIONS_URL_V1
-from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.models import Collection
 from common.api.messages import Messages
 from common.core.jwt_token import JwtToken
 from common.test.abstract_api_unit_test import AbstractApiUnitTest
 from common.test.api_client import api_client  # noqa: F401  (fixture)
+from common.test.collection_overview_test_data import overview_catalogue  # noqa: F401  (fixture)
 from common.test.collections_api_test_data import (
     collections_table,
     collection_post_payload_ok,
@@ -60,15 +60,42 @@ class TestListCollections(AbstractApiUnitTest):
     def test_it_returns_only_my_collections(self, api_client, collections_table, users_table, owner):
         response = api_client.get(Api.url(), **owner)
 
-        expected = collections_table[0:1] + collections_table[2:3]
-        original = CollectionResponseSerializer(
-            sorted(expected, key=lambda collection: collection.name), many=True
-        )
+        mine = {collections_table[0].id, collections_table[2].id}
+        data = response.json()["data"]
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["success"] is True
-        assert response.json()["data"] == original.data
-        assert len(response.json()["data"]) == 2
+        assert {row["id"] for row in data} == mine
+        assert len(data) == 2
+        assert all(
+            set(row) == {"id", "name", "series", "stamps", "total", "covers"}
+            for row in data
+        )
+
+    def test_the_list_is_ordered_by_name(self, api_client, owner):
+        response = api_client.get(Api.url(), **owner)
+
+        names = [row["name"] for row in response.json()["data"]]
+
+        assert names == sorted(names)
+
+    def test_a_card_carries_its_counters_and_covers(
+        self, api_client, overview_catalogue, owner
+    ):
+        response = api_client.get(Api.url(), **owner)
+
+        row = next(
+            row
+            for row in response.json()["data"]
+            if row["id"] == overview_catalogue["collection"].pk
+        )
+
+        assert row["series"] == 2
+        assert row["stamps"] == 2
+        assert row["total"] == 4
+        assert row["covers"] == [
+            {"year": overview_catalogue["year"], "code": "F-OWNED"}
+        ]
 
     def test_another_users_collection_is_not_listed(self, api_client, collections_table, users_table, owner):
         response = api_client.get(Api.url(), **owner)

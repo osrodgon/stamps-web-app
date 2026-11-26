@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (A1 done 2026-11-26, A2 next)**: the three reading screens are
+- **Normal-user collections (A1 and A2 done 2026-11-26, A3 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -166,12 +166,23 @@ afirmar nada que las fuentes no sostengan.
   `POST /collections/` takes the owner from the token and `?username=` is gone. **Measured**:
   a missing header is **403** (DRF only makes it 401 with a challenge header, and
   `CustomAPIKeyAuthentication` has none) — the plan and issue said 401 and are corrected.
-  Suite 1.767 (51 new tests with real tokens; the old auth permutations went). **Next: A2**
-  — the overview counters and covers. Decisions still standing: the series order **mirrors
+  **A2 is done too**: `GET /collections/` returns `series`, `stamps`, `total` and up to 12
+  `covers` in exactly five queries (pinned), with a fixture that makes the three figures
+  differ. Suite 1.781. **Next: A3** — `CollectionService`, Flet-free, token in the
+  constructor. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones A2: **la tarjeta ya tiene sus números, y cuestan cinco consultas**.
+  `CollectionOverviewService` calcula `series` (issues distintas), `stamps` (sellos
+  distintos; `quantity` no infla) y `total` (sellos de esas series, el denominador de la
+  barra), más hasta 12 `covers` `{year, code}` de sellos con `fesofi_code`, en un orden
+  estable. La página entera son **5 consultas** con cualquier número de tarjetas, fijado
+  con `django_assert_num_queries`; el fixture hace que los tres números sean distintos
+  (2 sellos en 2 series, 4 sellos en esas series). `CollectionOverviewSerializer` sustituye
+  al serializador con usuario anidado **solo en la lista**; `GET /collections/<pk>/` no
+  cambia. Una colección con `user=None` no se lista. 14 tests nuevos, suite **1.781**.
 - [Today] Colecciones A1: **la propiedad sale del token**. `common/core/current_user.py`
   convierte el `Authorization: JWT` en el `UserCollection` y las cuatro vistas de
   colecciones e items se acotan con él: lista, lectura, renombrado y borrado, con **404**

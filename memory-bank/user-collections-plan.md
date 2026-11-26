@@ -310,7 +310,7 @@ adds the other two screens. Every step leaves the app running.
 | # | Step | Depends on | Size | Status |
 |---|---|---|---|---|
 | A1 | Ownership and JWT | — | M | **hecho 2026-11-26** |
-| A2 | Overview list: counters and covers | A1 | S | pendiente |
+| A2 | Overview list: counters and covers | A1 | S | **hecho 2026-11-26** |
 | A3 | `CollectionService` | A2 | S | pendiente |
 | A4 | `CollectionCard` | A3 | M | pendiente |
 | A5 | Screen, dialog and states | A4 | M | pendiente |
@@ -331,12 +331,16 @@ the token.
 parser), the whole suite at 1.767, and a measured correction — a missing header is 403,
 not 401 (see §9).
 
-**A2 — Overview list (backend).**
+**A2 — Overview list (backend) — HECHO 2026-11-26.**
 `CollectionOverviewSerializer` and the counting function behind `GET /collections/`:
 `series`, `stamps`, `total` and up to 12 `covers`, in at most five queries. Ordered by
 name, no pagination. Tests: two users, a `quantity` of 2, a cover without `fesofi_code`,
 an empty collection, the query count.
 *Leaves working:* `curl` returns the cards complete.
+*Done:* `CollectionOverviewService` (five queries, pinned by a test) and
+`CollectionOverviewSerializer`; `series`, `stamps` and `total` are three different
+numbers in the test data; the covers keep only stamps with a `fesofi_code`, are stable
+and are capped at 12. 14 tests new, suite at 1.781.
 
 **A3 — `CollectionService` (frontend).**
 `services/collection_service.py` with `get_collections`, `create_collection`,
@@ -492,5 +496,11 @@ description said 401; the code is what the framework does. A true 401 would need
 `authenticate_header()` and 75 test expectations across the suite, so it is left out of
 this feature.
 
-**Next action: A2 of §6** — the overview list with `series`, `stamps`, `total` and
-`covers` in at most five queries.
+**A2 is done (2026-11-26).** `GET /collections/` returns the caller's collections with
+`series`, `stamps`, `total` and up to 12 covers, in exactly **five queries** (pinned by
+`django_assert_num_queries`). The fixture makes the three figures different on purpose
+(two stamps owned across two series, four in those series), a `quantity` of 2 still
+counts as one stamp, a stamp without a `fesofi_code` is not a cover, and a collection
+without an owner is not listed. 14 tests new; suite **1.781**.
+
+**Next action: A3 of §6** — `CollectionService`, Flet-free, token in the constructor.
