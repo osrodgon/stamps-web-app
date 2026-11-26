@@ -18,11 +18,21 @@ Integration:
     - Part of the ai_api.services module
     - Works with SearchService to find URLs and LLMService to process data
 """
-import requests
-from bs4 import BeautifulSoup
-from typing import List
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional
 
+from bs4 import BeautifulSoup
+
+from ai_api.sources.errors import SourceError
+from ai_api.sources.http import HttpClient, get_client
 from common.log.logger import Logger
+
+
+# The description is the best material the model has to write the stamp card, and
+# with today's prices cutting it saves a fraction of a cent. The cap stays as a
+# guard against a pathological page, not as a token diet: it truncates only when
+# the text is longer than this, and says so when it does.
+DESCRIPTION_LIMIT = 2000
 
 
 class ScrapingService(Logger):
@@ -35,12 +45,12 @@ class ScrapingService(Logger):
     2. Scraping detailed content from multiple stamp pages
     3. Cleaning and structuring the scraped data for AI processing
     
-    The service includes anti-bot protection measures and robust error handling
-    to ensure reliable data extraction.
+    All the fetching goes through the shared `HttpClient` (allowlist, timeouts,
+    per-host limit and cache), and the pages of a series are fetched in parallel
+    up to that limit: a 57-stamp series is 57 sequential requests otherwise.
     
     Attributes:
-        headers (dict): HTTP headers to mimic browser requests
-        timeout (int): Request timeout in seconds
+        client (HttpClient): the shared client, or the one a test injects
         
     Usage:
         scraping_service = ScrapingService()
@@ -49,21 +59,17 @@ class ScrapingService(Logger):
         cleaned_data = scraping_service.clean_scraped_data(data)
     """
 
-    def __init__(self):
+    def __init__(self, client: Optional[HttpClient] = None) -> None:
+        """Take the shared HTTP client, or the one a test injects."""
         super().__init__()
-        # Headers to mimic a browser and avoid being blocked by basic anti-bot protections
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        self.timeout = 10
+        self.client = client or get_client()
 
     def _fetch_url(self, url: str) -> str:
         """
         Private helper method to perform HTTP GET requests with error handling.
         
-        This method fetches the HTML content from a given URL using configured
-        headers and timeout settings. It includes robust error handling for
-        network issues and HTTP errors.
+        This method fetches the HTML content through the shared client, so the
+        allowlist, the timeout and the retries apply here too.
         
         Args:
             url (str): The URL to fetch content from.
@@ -71,20 +77,25 @@ class ScrapingService(Logger):
         Returns:
             str: The HTML content of the page if successful, empty string otherwise.
             
-        Raises:
-            requests.RequestException: If the HTTP request fails for any reason.
+        Note:
+            Failures are logged and turned into an empty string: a missing page
+            must not abort the rest of the series.
             
         Note:
             This is a private method used internally by other methods in the class.
             It logs errors using the inherited Logger functionality.
         """
         try:
-            response = requests.get(url, headers=self.headers, timeout=self.timeout)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException as e:
+            response = self.client.get(url)
+        except SourceError as e:
             self.log.error(f"Error fetching URL {url}: {str(e)}")
             return ""
+
+        if response.status_code >= 400:
+            self.log.error(f"Error fetching URL {url}: HTTP {response.status_code}")
+            return ""
+
+        return response.text
 
     def extract_links(self, url: str) -> List[str]:
         """
@@ -177,49 +188,75 @@ class ScrapingService(Logger):
             it will be skipped and the method will continue processing the remaining URLs.
             This ensures that partial failures don't break the entire scraping process.
         """
+        unique_urls = list(dict.fromkeys(urls))
+        pages = self._fetch_many(unique_urls)
+
         extracted_data = []
-
-        for url in urls:
-            try:
-                response = requests.get(url, headers=self.headers, timeout=10)
-                response.raise_for_status()
-                # Use 'lxml' or 'html.parser'
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Initialize the dictionary for this stamp
-                stamp_data = {"url": url}
-                
-                # Get Title
-                title = soup.find('h1', class_='product_title')
-                stamp_data['titulo'] = title.get_text(strip=True) if title else None
-
-                # Get Description (from paneldescription)
-                desc_panel = soup.find('div', id='paneldescription')
-                if desc_panel:
-                    stamp_data['descripcion'] = desc_panel.get_text(strip=True)
-
-                # Get Technical Data (from paneladditional_information)
-                tech_panel = soup.find('div', id='paneladditional_information')
-                if tech_panel:
-                    table = tech_panel.find('table')
-                    if table:
-                        for row in table.find_all('tr'):
-                            label = row.find('th')
-                            value = row.find('td')
-                            if label and value:
-                                # Standardize key names (lowercase, no colons)
-                                key = label.get_text(strip=True).replace(':', '').lower()
-                                stamp_data[key] = value.get_text(strip=True)
-
-                extracted_data.append(stamp_data)
-                    
-            except Exception as e:
-                self.log.error(f"Error scraping data from {url}: {e}")
-                # We skip the failing URL but keep the rest of the list processing
+        for url in unique_urls:
+            html = pages.get(url) or ""
+            if not html:
                 continue
-                
+            stamp_data = self._parse_stamp(url, html)
+            if stamp_data is not None:
+                extracted_data.append(stamp_data)
+
         return extracted_data
+
+    def _fetch_many(self, urls: List[str]) -> Dict[str, str]:
+        """Fetch the pages of a series in parallel, bounded by the per-host limit."""
+        if not urls:
+            return {}
+
+        workers = max(1, min(len(urls), self.client.per_host_limit))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            bodies = list(pool.map(self._fetch_url, urls))
+
+        return dict(zip(urls, bodies))
+
+    def _parse_stamp(self, url: str, html: str) -> Optional[dict]:
+        """Read one product page; None when the HTML does not parse."""
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+
+            stamp_data = {"url": url}
+
+            title = soup.find('h1', class_='product_title')
+            stamp_data['titulo'] = title.get_text(strip=True) if title else None
+
+            desc_panel = soup.find('div', id='paneldescription')
+            if desc_panel:
+                stamp_data['descripcion'] = desc_panel.get_text(strip=True)
+
+            tech_panel = soup.find('div', id='paneladditional_information')
+            if tech_panel:
+                table = tech_panel.find('table')
+                if table:
+                    for row in table.find_all('tr'):
+                        label = row.find('th')
+                        value = row.find('td')
+                        if label and value:
+                            key = label.get_text(strip=True).replace(':', '').lower()
+                            stamp_data[key] = value.get_text(strip=True)
+
+            return stamp_data
+
+        except Exception as e:
+            self.log.error(f"Error scraping data from {url}: {e}")
+            return None
     
+    @staticmethod
+    def _snippet(text: str) -> str:
+        """Return the description, cut only when it is longer than the limit.
+
+        The ellipsis is the model's only clue that the text is not complete, so
+        it must not appear on a description that was not cut.
+        """
+        if not text:
+            return "N/A"
+        if len(text) <= DESCRIPTION_LIMIT:
+            return text
+        return text[:DESCRIPTION_LIMIT] + "…"
+
     def clean_scraped_data(self, scraped_data: List[dict]) -> dict:
         """
         Cleans and structures scraped stamp data for efficient AI processing.
@@ -248,7 +285,8 @@ class ScrapingService(Logger):
                                 - color: Stamp color
                                 - dentado: Perforation type
                                 - formato: Format/size
-                                - desc_snippet: Truncated description (180 chars + "...")
+                                - desc_snippet: The description, cut at DESCRIPTION_LIMIT characters
+                            with an ellipsis only when it does not fit
 
         Example:
             >>> service = ScrapingService()
@@ -260,7 +298,8 @@ class ScrapingService(Logger):
         Note:
             This method includes several optimization techniques:
             - Identifies and extracts common fields to avoid repetition
-            - Truncates long descriptions to save ~70% of tokens
+            - Caps very long descriptions (see DESCRIPTION_LIMIT) instead of
+              trimming every one of them
             - Standardizes field names for consistency
             - Handles missing data gracefully with default values
         """
@@ -314,8 +353,7 @@ class ScrapingService(Logger):
                 "perforation": s.get("dentado"),
                 "total_print_run": s.get("tirada"),
                 "format": s.get("formato"),
-                # Truncate description to save ~70% of tokens
-                "desc_snippet": (s.get("descripcion", "")[:180] + "...") if s.get("descripcion") else "N/A"
+                "desc_snippet": self._snippet(s.get("descripcion", "")),
             }
             unique_stamps.append(stamp_entry)
 

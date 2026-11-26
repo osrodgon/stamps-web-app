@@ -1,13 +1,16 @@
 # Active Context
 
 ## Current Task
-- **AI API A0, A1 and A1b done (2026-11-25)**: the source probe ran (report in
+- **AI API A0, A1, A1b and A2 done (2026-11-25/26)**: the source probe ran (report in
   `memory-bank/ai-sources-spike.md`), the extraction contract is evidence-based
   (`SourceObservation` plus `sources` / `observations` / `valuation` / `gaps` /
-  `description_source`, with the old `market_value_*` always null), and **opencode
-  is the only LLM provider**: Gemini, Groq, their keys, their SDKs and their tests
-  are gone, and the API calls the Console inference endpoint over plain HTTP.
-  **Next step is A2** (source layer and the §1 fixes). Details in Notes below.
+  `description_source`, with the old `market_value_*` always null), **opencode is
+  the only LLM provider**, and since A2 **every outbound call goes through one
+  HTTP client** with an allowlist, retries, a per-host limit and a cache — which
+  took a 29-stamp series from 7.0 s to 0.9 s. **A6 is in progress**: the series is
+  now found by partial name in the Fesofi catalogue (attributes, not Serper), so
+  `navidad 1986` resolves to the 1986 Christmas stamps. A3 waits for the Colnect
+  key. Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -70,26 +73,24 @@
 - **Review status (2026-11-18)**: closed — §2 schema (opción A, no `Stamp` columns), S3 auth, S7+S8 workbench/querysets, S12 write core (two endpoints), S14 client buffer, S19 lookup merge, S21 revert. Still to skim: S1, S2, S4, S5, S6, S9–S11, S13, S15–S18, S20, S22.
 - Full plan: `memory-bank/datadesk-app-plan.md`. **Implementation started 2026-11-18 — S1 done** (app mounted at `/datadesk/` behind `DATADESK_ENABLED`, provisional `DashboardView`, 3 mount tests). Next step: **S2** (vendored HTMX/Alpine/Tabulator + `base.html`).
 
-## Retomar aquí (guardado 2026-11-25)
+## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1 y A1b están cerrados y probados en real. Lo siguiente es A2.** El contrato
-pide evidencia, el proveedor es opencode y una extracción completa ya devuelve la
-forma acordada; A2 construye la capa HTTP que llena las observaciones y arregla lo
-que el primer uso dejó a la vista.
+**A0, A1, A1b y A2 cerrados; A6 en curso.** El contrato pide evidencia, el proveedor
+es opencode, la red pasa por un cliente con allowlist y caché, y la serie se
+encuentra ya **por nombre parcial** en el catálogo de Fesofi (atributos, sin
+buscador web). Lo que queda de A6 es leer los hechos del producto de la Store API
+en vez del HTML, el matcher con `score` y los `gaps`.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A2 — Capa de fuentes** (M): `sources/base.py`, `http.py` con allowlist y
-  timeouts, y los arreglos de §1 (SSRF, timeout de Serper, 404/422/500, una sola
-  fuente de configuración). Lo que el primer uso real añadió a la lista está en la
-  ficha de A2 del plan: **scraping secuencial** (una petición por sello; 29 sellos
-  = 6,8 s) que pide pool con límite por dominio y caché, **`SearchService` que se
-  traga el fallo** y lo convierte en un 404 cuando `SERPER_*` está vacío, la **lectura
-  muerta** de `título serie` / `fecha de emisión` en la vista (el limpiador devuelve
-  `issue_name` / `issue_date`) y la falta de **`elapsed_ms`** por llamada.
-- **A6 — Fesofi** (L): el puente de identidad; es lo primero que llena
-  `observations` y `description_source`.
+- **A6 — Fesofi, lo que falta** (L, en curso): ya resuelve la serie por nombre
+  parcial, buscando en `Título Serie` y en `Motivo Sello`; queda leer los hechos del
+  producto de la Store API (en vez de scrapear el HTML) y el matcher con `score` y
+  `gaps`. Registra su adaptador en `ai_api/sources/registry.py`.
+- **A7 — Valoración** (S): media recortada sobre las observaciones de la misma
+  condición, con `sample_size`, `method`, `sources` y `as_of`; por debajo del mínimo,
+  `null` y un `gap`.
 - **Bloqueado**: A3 (Colnect) hasta que exista la clave CAPI; se pide en
   `colnect.com/en/capi/use_request` y el procedimiento está en el plan §A3. No
   bloquea A2 ni A6.
@@ -100,17 +101,21 @@ que el primer uso dejó a la vista.
   extracción desde Swagger devolvió la forma de A1, con los precios a `null`. El
   `.env` de cada entorno ya no lleva `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER` y sí
   `OPENCODE_API_KEY` y `OPENCODE_MODEL`.
+- **Pendiente de A2**: nada. Lo que queda es de otros pasos: los adaptadores de
+  verdad (A3, A6) y la valoración (A7).
 - **Palanca pendiente y gratis**: `LLM_BATCH_SIZE=15`. Las llamadas al modelo son
   `1 + ceil(n / LLM_BATCH_SIZE)` y van en serie: con el lote en 5, la serie de 6
   sellos hace 3 llamadas y la de 57 haría 13.
-- **Estado del árbol de trabajo**: el trabajo de A1 está mergeado; el de A1b toca
-  `settings.py`, `.env.example`, `pytest.ini`, `requirements.base.txt`,
-  `messages.py`, la factoría, la base del proveedor, la vista, el README y los
-  tests, con dos archivos nuevos (`opencode_provider.py`,
-  `test_opencode_provider.py`) y seis borrados. Sigue **sin commitear**.
-- **Verificación rápida**: `python -m pytest ai_api -q` → **121 verdes**; la suite
-  completa, **1.628**. `manage.py check` y `manage.py spectacular` limpios. Y la
-  prueba de verdad: una extracción real que devuelve la forma de A1.
+- **Estado del árbol de trabajo**: A1 y A1b están commiteados; **A2 y la primera
+  rebanada de A6 están sin commitear** en la rama actual: el paquete nuevo
+  `ai_api/sources/` (con `fesofi.py`), sus cinco archivos de tests, `settings.py`
+  (`AI_SOURCE_*`), `.env.example`, `requirements.base.txt` (`httpx[http2]`),
+  `log_setup.py`, `search_service.py`, `scraping_service.py`, el proveedor, la
+  vista y el fixture de `common/test/ai_api_test_data.py`.
+- **Verificación rápida**: `python -m pytest ai_api -q` → **186 verdes**; la suite
+  completa, **1.693**. `manage.py check` y `manage.py spectacular` limpios. Y la
+  prueba de verdad: `navidad 1986` resuelve a 2884/2883 y el scrape da la serie
+  entera; 29 sellos en 0,9 s (antes 7,0 s).
 
 ## Notes
 - **AI API A0 done (2026-11-25)**: the source probe ran and its report is
@@ -162,6 +167,52 @@ que el primer uso dejó a la vista.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A6, primera rebanada: la serie se encuentra por **nombre parcial**.
+  El fallo era de diseño: `site:… "navidad" "1986"` pedía dos frases literales y no
+  encontraba nada aunque Google devuelva el enlace. Ahora `FesofiCatalogue`
+  (`ai_api/sources/fesofi.py`) pregunta a la Store API por **atributo** —`Título
+  Serie` (id 5) y `Año de Emisión` (id 22)—, cuyo buscador de términos es parcial y
+  no distingue mayúsculas. El nombre se parte en palabras sin acentos ni stopwords,
+  el año de cuatro cifras se separa como filtro, y los candidatos se prueban en
+  orden de cobertura **hasta que uno tenga productos**: por eso `castillos de
+  españa 2007` acaba en el término «Castillos», que es donde vive la serie de 2007.
+  `SearchService` pasa a ser un localizador: catálogo primero, Serper de respaldo, y
+  un fallo del catálogo se registra en vez de tumbar la búsqueda. Comprobado en
+  real: `navidad 1986` → 2884/2883 (Edifil 2867 y 2868) y el scrape de 2884 da la
+  serie entera (`Navidad`, 16 noviembre 1986, 2 sellos con códigos); `expo 92` →
+  2960; `isabel ii 1850` → 5 páginas; `quijote 1998` → 3601 (por motivo, falta
+  comprobar que sea el sello y no la hoja). **Bug propio encontrado al probarlo**:
+  la caché de `HttpClient` (A2) indexaba por URL sin la query, así que todas las
+  consultas a `/products` compartían entrada y «castillos» devolvía los sellos de
+  Navidad; la query entra ya en la clave, con test. Y el nombre puede ser el
+  **motivo** de un sello suelto, así que la búsqueda cubre también `Motivo Sello`
+  (id 6): `la sagrada familia 1986` resuelve a 2883 por «La Sagrada Familia.
+  Valladolid» y el scrape da «Navidad 1986» con Edifil 2867 y 2868. Cada candidato
+  recuerda de qué atributo salió, y la consulta de productos filtra por ese mismo
+  atributo. Y se arregló el corte de las descripciones: `desc_snippet` hacía
+  `[:180] + "..."` siempre —también en textos cortos—, así que el modelo las leía
+  como truncadas y escribía «(texto truncado en la fuente)». Ahora el tope es 2.000
+  y el `…` sólo aparece cuando de verdad no cabe; las fichas reales llegan enteras
+  (1.223 y 728 caracteres). 29 tests nuevos, 1.693 verdes. A6 sigue abierta: leer
+  los hechos del producto de la Store API, el matcher con `score` y los `gaps`.
+- [Today] AI API A2: una sola puerta a la red. `ai_api/sources/` trae `HttpClient`
+  (allowlist por host con subdominios, timeouts de conexión y lectura, reintentos con
+  jitter sólo para 5xx/429, semáforo por host, caché TTL de los 200, User-Agent
+  propio y un singleton de proceso para que la caché y los límites sirvan de algo),
+  `errors.py` con un error por significado, `base.py` con el contrato de adaptador y
+  `registry.py`. `SearchService` y `ScrapingService` pasan por él, y el scraping va
+  **en paralelo**: la serie de 29 sellos baja de 7,0 s a **0,9 s** (0,31 s la segunda
+  vez, con caché); la de 6, de 1,7 a 1,2 s. Con eso caen los defectos de §1 que
+  quedaban: el SSRF (el atajo de URL ahora exige allowlist y un host no permitido da
+  400), el timeout de Serper, el 422 muerto (los `ValueError` dejan de envolverse), el
+  scrape vacío que reventaba como 500 (ahora 422 con motivo), una sola fuente de
+  configuración y la lectura muerta de `serie_info` (`issue_name`/`issue_date`). Los
+  errores se separan: 400 host no permitido, 404 «no hay nada», 422 contrato, 500
+  configuración, 502 fuente caída. El defecto 9 se cierra **por decisión**: la vista
+  sigue siendo master-key only. De paso, `elapsed_ms` en el log del proveedor,
+  `httpx[http2]==0.28.1` en `requirements.base.txt` y `httpx`/`httpcore` a WARNING en
+  `log_setup` (a DEBUG escriben cada byte del protocolo). 35 tests nuevos, todos por
+  `httpx.MockTransport`, 1.664 verdes.
 - [Today] AI API A1b verificado en real y fin de jornada. Con `glm-5.3-flash`, una
   extracción desde Swagger pasó la tubería entera y devolvió la forma de A1: precios a
   `null`, `valuation: null`, `description_source: "llm"` y una descripción sin

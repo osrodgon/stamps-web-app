@@ -91,7 +91,8 @@ class TestLLMServiceSeriesExtract:
             "Name", "Date", "CleanData"
         )
 
-    def test_a_validation_error_becomes_a_service_error(self, mocker):
+    def test_a_validation_error_keeps_its_type(self, mocker):
+        """A ValueError stays a ValueError so the view can answer 422, not 500."""
         mock_provider = Mock()
         mock_provider.series_extract.side_effect = ValueError(
             Messages.AI.missing_input_data()
@@ -100,7 +101,7 @@ class TestLLMServiceSeriesExtract:
 
         service = LLMService()
 
-        with pytest.raises(Exception, match="Extraction service error"):
+        with pytest.raises(ValueError, match=Messages.AI.missing_input_data()):
             service.series_extract("Test", "1992", "")
 
     def test_a_generic_error_becomes_a_service_error(self, mocker):

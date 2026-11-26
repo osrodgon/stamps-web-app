@@ -101,11 +101,11 @@ Iberphil por fuente débil).
 | A0 | Prueba de fuentes | S | — | **hecho 2026-11-25** |
 | A1 | Contrato y modelo de observaciones | M | A0 | **hecho 2026-11-25** |
 | A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | **hecho 2026-11-25** |
-| A2 | Capa de fuentes + arreglos de seguridad | M | A1 | siguiente |
+| A2 | Capa de fuentes + arreglos de seguridad | M | A1 | **hecho 2026-11-26** |
 | A3 | Adaptador Colnect | L | A2, clave CAPI | pendiente, bloqueado por la clave |
 | A4 | Adaptador Delcampe | M | — | **fuera del plan** |
 | A5 | Adaptador Iberphil | M | — | **fuera de la 1.ª versión** |
-| A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | pendiente |
+| A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **en curso**: nombre parcial hecho 2026-11-26 |
 | A7 | Valuación (media recortada) | S | A6 | pendiente |
 | A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7 | pendiente |
 | A9 | LLM reducido y validador de fuentes | S | A7 | pendiente |
@@ -298,7 +298,7 @@ adivinar. Dos hallazgos más del uso: `SearchService` se traga el fallo cuando
 vista lee `título serie` / `fecha de emisión` de `serie_info` cuando el limpiador
 devuelve `issue_name` / `issue_date`, así que el nombre llega al log como `None`.
 
-### A2 — Capa de fuentes (M)
+### A2 — Capa de fuentes (M) — **HECHO 2026-11-26**
 
 `ai_api/sources/base.py` con `SourceAdapter` (`name`, `supports(subject)`,
 `fetch(subject) -> list[Observation]`), `http.py` con allowlist de dominios,
@@ -332,6 +332,45 @@ límite); ningún test toca la red.
   proveedor es una línea y convierte «tarda bastante» en un número.
 - **El lote del modelo** es `1 + ceil(n / LLM_BATCH_SIZE)` llamadas en serie. Subirlo
   a 15 es configuración, no código, y es la palanca más barata mientras A2 llega.
+
+**Hecho el 2026-11-26.** Qué hay, y lo que se decidió al implementarlo:
+
+- `backend/ai_api/sources/` con cuatro piezas: `http.py` (el `HttpClient`: allowlist
+  por host, timeouts de conexión y lectura, reintentos con jitter sólo para 5xx/429,
+  límite por host con semáforo, caché TTL de los 200, User-Agent propio y un
+  singleton de proceso para que la caché y los límites sirvan de algo), `errors.py`
+  (`SourceError` y sus cuatro hijos, uno por significado), `base.py`
+  (`SourceAdapter` con `supports`/`fetch`, devolviendo observaciones sin guardar) y
+  `registry.py` (nombre → adaptador; hoy vacío, A3 y A6 registran).
+- `SearchService`: pasa por el cliente. **Sin `SERPER_URL`/`SERPER_API_KEY` lanza
+  `SourceConfigurationError`**; si el backend contesta 401/403, igual; si contesta
+  4xx/5xx, `SourceUnavailable`; `None` queda para «funcionó y no hay página».
+- `ScrapingService`: pasa por el cliente y **descarga en paralelo** con un pool
+  acotado por el límite por host; el parseo se queda fuera del hilo. Medido con la
+  serie de 29 sellos: **7,0 s → 0,9 s** (y 0,31 s la segunda vez, con caché); la de
+  6 sellos, 1,7 s → 1,2 s.
+- El proveedor registra **`elapsed_ms`** junto al `usage`, así que «tarda» ya es un
+  número. `BaseLLMProvider` y `LLMService` dejan de envolver `ValueError`, y el 422
+  de la vista vuelve a existir: un JSON que no parsea o una respuesta vacía ya no
+  acaban en 500.
+- La vista: **el atajo de la URL exige allowlist** (antes cualquier host, SSRF) y un
+  host no permitido da 400; `serie_info` se lee con `issue_name`/`issue_date`; un
+  scrape vacío es 422 con motivo, no un 500 escondido; y los errores se separan —
+  400 host no permitido, 404 «no hay nada», 422 contrato, 500 configuración, 502
+  fuente caída.
+- **Defecto 9 (§1) cerrado por decisión**: `SeriesExtractionView` **no entra en
+  `USER_VIEWS`**. Sigue siendo master-key only: el pipeline no está paginado por
+  usuario y dejar que cualquier JWT lo dispare es dejar que gaste dinero. Los dos
+  tests de 403 que ya existían lo fijan.
+- Dependencia: `httpx[http2]==0.28.1` (el extra lo necesita A3; A2 no usa HTTP/2).
+  Los loggers de `httpx`/`httpcore` bajados a WARNING en `log_setup`, porque a DEBUG
+  escriben una línea por cada byte del protocolo.
+- Tests: 35 nuevos (`test_source_http.py` 22, `test_source_registry.py` 7,
+  `test_scraping_service.py` 6) más los de la vista (400 host no permitido, 502
+  fuente caída, 500 configuración, 422 scrape vacío). **1.664 verdes**, ningún test
+  toca la red (todo va por `httpx.MockTransport`).
+- **Lo que NO trae**: los adaptadores de verdad (A3 y A6), la valoración (A7) y
+  sustituir Serper. Sigue vivo, con timeout y errores que significan algo.
 
 ### A3 — Colnect (L)
 
@@ -408,7 +447,7 @@ umbral conservador. Sin match claro no hay observación.
 Aceptación: tests con una subasta grabada; una serie sin lote comparable produce
 `gaps`, no una observación falsa.
 
-### A6 — Identidad y emparejamiento (L)
+### A6 — Identidad y emparejamiento (L) — **en curso (primera rebanada hecha)**
 
 Orden: código Edifil normalizado → año + facial + color + nombre de serie
 (solapamiento de tokens) → nada. Cada candidato se guarda con `score` y URL; por
@@ -431,6 +470,48 @@ humana en DataDesk.
 
 Aceptación: juego de pares conocidos (aciertos y errores deliberados); ningún falso
 positivo por debajo del umbral llega a la valuación.
+
+**Primera rebanada hecha el 2026-11-26: encontrar la serie por nombre parcial.**
+
+El problema que la disparó: la búsqueda de Serper pedía `site:… "navidad" "1986"`,
+dos frases literales, y con eso «no encontraba nada» aunque Google devuelva el
+enlace en el primer resultado. Lo que se quería —y ahora se hace— es que la serie
+salga cuando su nombre **contiene** las palabras, no cuando coincide exacto.
+
+- `ai_api/sources/fesofi.py` (`FesofiCatalogue`) pregunta a la Store API por
+  **atributos**: `Título Serie` (`pa_titulo-serie`, id 5) **y `Motivo Sello`**
+  (`pa_motivo-sello`, id 6), más `Año de Emisión` (`pa_ano-de-emision`, id 22) como
+  filtro. El buscador de términos es **parcial** y no distingue mayúsculas, que es
+  justo lo que hacía falta. El motivo entra porque `name` puede ser el de un sello
+  suelto: «la sagrada familia» es el motivo del sello de 1986, cuya serie se llama
+  «Navidad 1986».
+- El nombre se parte en palabras (sin acentos, sin mayúsculas, sin stopwords como
+  «de»), los años de cuatro cifras se separan como año y no cuentan como palabra, y
+  se piden los términos de cada palabra. Los candidatos se ordenan por **cuántas
+  palabras cubren** y luego por nombre más corto; se prueban **todos**, no sólo el
+  mejor, porque el primer candidato puede no tener productos en ese año.
+- Comprobado contra el catálogo real: `navidad 1986` → 2884 y 2883 (Edifil 2867 y
+  2868); `la sagrada familia 1986` → 2883 por el **motivo** («La Sagrada Familia.
+  Valladolid»), y el scrape da la serie entera («Navidad 1986», 2867 y 2868);
+  `castillos de españa 2007` → 4605 (la serie de 2007 está bajo el término
+  «Castillos», no «Castillos de España»); `expo 92` → 2960; `isabel ii 1850` →
+  0005-2… (5 páginas); `quijote 1998` → 3601.
+- `SearchService.find_series_url` pasa a ser un **localizador**: primero el
+  catálogo, y si no hay nada, Serper. Un fallo del catálogo se registra y se cae al
+  fallback en vez de tumbar la búsqueda.
+- **Bug encontrado al probarlo**: la caché de `HttpClient` indexaba por URL sin la
+  query, así que `/products?term=1` y `/products?term=2` compartían entrada y
+  «castillos» devolvía los sellos de Navidad. La query entra ahora en la clave, con
+  su test.
+- El candidato guarda **de qué atributo** salió, y la consulta de productos filtra
+  por ese atributo: un motivo se busca como motivo, no como título de serie. Se
+  prueban como mucho 10 candidatos (cada uno es una petición) y el orden es
+  cobertura, serie antes que motivo, nombre más corto y `id`.
+- Lo que **falta de A6**: leer los hechos del producto desde la Store API en vez de
+  scrapear el HTML, el matcher con `score` y los `gaps`, y decidir cuándo el
+  catálogo gana a la heurística. `quijote 1998` ya devuelve algo (3601, por motivo);
+  falta comprobar que sea el sello y no la hoja del primer día.
+
 
 ### A7 — Valuación (S)
 
@@ -643,3 +724,57 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   llamadas al modelo en serie, scraping secuencial, el 404 de Serper vacío, la
   lectura muerta de `serie_info` y la falta de tiempos por llamada.
 
+
+### 2026-11-26 — A2 hecho (capa de fuentes y arreglos)
+
+- `ai_api/sources/`: `http.py` (allowlist, timeouts, reintentos con jitter para
+  5xx/429, límite por host, caché TTL, User-Agent, singleton), `errors.py`
+  (`SourceError` + `NotAllowed` / `Unavailable` / `NotFound` / `ConfigurationError`),
+  `base.py` (`SourceAdapter`) y `registry.py`.
+- `SearchService` y `ScrapingService` pasan por el cliente; el scraping va **en
+  paralelo** con el límite por host. Medido: la serie de 29 sellos baja de 7,0 s a
+  **0,9 s** (0,31 s con caché); la de 6, de 1,7 a 1,2 s.
+- El proveedor registra `elapsed_ms` y el `usage`; `ValueError` deja de envolverse,
+  así que el 422 de la vista vuelve a existir.
+- La vista: allowlist en el atajo de URL (400 si no), `issue_name`/`issue_date`,
+  scrape vacío → 422, y 400/404/422/500/502 con significados distintos.
+- Defecto 9 cerrado por decisión: la vista sigue siendo master-key only.
+- `httpx[http2]==0.28.1` en `requirements.base.txt`; `httpx`/`httpcore` a WARNING en
+  `log_setup`; `AI_SOURCE_*` documentadas en `.env.example`.
+- 35 tests nuevos; **1.664 verdes**; esquema OpenAPI sin avisos.
+
+### 2026-11-26 — A6 (primera rebanada): encontrar la serie por nombre parcial
+
+- `ai_api/sources/fesofi.py`: `FesofiCatalogue` busca por atributo (`Título Serie`
+  y `Año de Emisión`) en la Store API, sin buscador web. Palabras sin acentos ni
+  stopwords, el año separado, candidatos probados en orden de cobertura hasta que
+  uno tenga productos.
+- `SearchService.find_series_url` es ahora un localizador: catálogo primero, Serper
+  de respaldo; un fallo del catálogo se registra y se cae al fallback.
+- Real: `navidad 1986` → 2884/2883 (Edifil 2867 y 2868), y el scrape de 2884 da la
+  serie completa (`Navidad`, 16 noviembre 1986, 2 sellos con sus códigos).
+  `castillos de españa 2007` → 4605 (el término de 2007 es «Castillos»).
+- **Bug de la caché de A2, encontrado aquí**: la clave era la URL sin la query, así
+  que todas las consultas a `/products` compartían entrada. Corregido con test.
+- 25 tests nuevos (`test_fesofi.py` 17, `test_search_service.py` 7, uno de caché);
+  **1.689 verdes**.
+- A6 sigue **abierta**: leer los hechos del producto de la Store API (en vez del
+  HTML), el matcher con `score` y los `gaps`. `quijote 1998` ya resuelve (3601) por
+  motivo; falta comprobar que es el sello y no una hoja.
+- 25 tests de Fesofi y del localizador (`test_fesofi.py` 17, `test_search_service.py`
+  7, uno de caché); **1.689 verdes**.
+
+### 2026-11-26 — La descripción deja de cortarse a 180 caracteres
+
+- Visto al usar el endpoint: las descripciones de los sellos salían con
+  «…(texto truncado en la fuente)». No era el modelo: `clean_scraped_data` hacía
+  `descripcion[:180] + "..."` «para ahorrar ~70 % de tokens», y el `"..."` se añadía
+  **siempre**, incluso a textos cortos, así que el modelo creía que todo estaba
+  cortado.
+- Ahora `DESCRIPTION_LIMIT = 2000` y `_snippet()` corta **sólo** cuando el texto no
+  cabe, y entonces lo marca con `…`. Con el catálogo real, las dos fichas de
+  Navidad 1986 llegan enteras: 1.223 y 728 caracteres.
+- El ahorro que se pierde es una fracción de céntimo: 57 sellos × ~300 tokens extra
+  son ~17k tokens, y a los precios del modelo elegido son menos de un céntimo. Lo
+  que se ganaba era perder justo el material con el que se escribe la ficha.
+- 4 tests nuevos; **1.693 verdes**.
