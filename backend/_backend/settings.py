@@ -80,6 +80,11 @@ AI_SOURCE_CACHE_TTL = int(os.getenv('AI_SOURCE_CACHE_TTL', '3600'))
 # lookup plus a product list, and a 57-stamp series would pay for all of them.
 AI_PRICE_STAMPS = int(os.getenv('AI_PRICE_STAMPS', '5'))
 
+# Execution budget for one extraction: the whole request, and the most one call
+# may take of it. A partial answer beats a request that never returns (A8).
+AI_BUDGET_SECONDS = float(os.getenv('AI_BUDGET_SECONDS', '25'))
+AI_BUDGET_PER_CALL = float(os.getenv('AI_BUDGET_PER_CALL', '8'))
+
 AI_SOURCE_USER_AGENT = os.getenv(
     'AI_SOURCE_USER_AGENT',
     'stamps-web-app/0.1 (+https://github.com/osrodgon/stamps-web-app)',

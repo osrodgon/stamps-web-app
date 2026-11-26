@@ -127,8 +127,8 @@ opencode) ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por dec
 | A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **hecho 2026-11-26** |
 | A7 | Valuación (media recortada) | M | A6 | **hecho 2026-11-26** |
 | A7b | Estado y precio en la ficha del anuncio | M | A7 | **hecho 2026-11-26** |
-| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | siguiente |
-| A9 | LLM reducido y validador de fuentes | S | A7 | pendiente |
+| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | **hecho 2026-11-26** |
+| A9 | LLM reducido y validador de fuentes | S | A7 | siguiente |
 | A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | pendiente |
 
 ### A0 — Prueba de fuentes (S) — **HECHO 2026-11-25**
@@ -716,7 +716,7 @@ test toca la red.
 - 19 tests nuevos (11 del parser y su enrutado, 8 del segundo paso y los topes);
   **1.788 verdes**.
 
-### A8 — Ejecución (M)
+### A8 — Ejecución (M) — **HECHO 2026-11-26**
 
 Una request no hace 3 scrapes + LLM. Primero **síncrono con presupuesto**: 5–8 s
 por fuente, 25 s total, `partial: true` con las fuentes pendientes, y caché para que
@@ -727,6 +727,34 @@ meten para esto todavía).
 
 Aceptación: una fuente caída no tumba la respuesta; el presupuesto se respeta; el
 comando de backfill no repite observaciones (`raw_hash`).
+
+**Hecho el 2026-11-26.** Lo que hay, y hasta dónde llega:
+
+- `ai_api/budget.py`: un `Budget` con reloj (`total`, `per_call`), `remaining`,
+  `expired` y `timeout_for()` —que devuelve el menor de los tres y lanza
+  `BudgetExpired` cuando no queda nada—. Es un reloj, no un contador: una página
+  lenta y una rápida cuestan lo mismo en cuenta y muy distinto en segundos.
+- La vista crea el presupuesto al entrar, se lo pasa al catálogo (cada llamada con
+  su tope) y **corta el bucle de precios** cuando se agota: responde con lo que
+  tiene, `partial: true` y un `gap` de `budget` que dice que la caché terminará el
+  trabajo en la siguiente llamada. `AI_BUDGET_SECONDS` (25) y `AI_BUDGET_PER_CALL`
+  (8) en `settings`.
+- **El límite es por llamada y por fase, no un aborto del proceso**: una llamada
+  bloqueada no se puede interrumpir más que con su timeout, así que lo que se
+  garantiza es que no se *empieza* otra con el presupuesto agotado y que ninguna
+  pasa del tope por llamada. La suma de la fase del catálogo puede llegar a
+  `n × per_call` en el peor caso; está dicho aquí para no prometer lo que no es.
+- `manage.py ai_prices_backfill` con `--limit`, `--source filatelia|search`,
+  `--only <id>`, `--stamps N` y `--dry-run`. Recorre las series de la base, pide el
+  precio de cada sello con código y **guarda `SourceObservation`** colgado del
+  `Stamp` real —lo que el endpoint no puede hacer, porque no tiene sujeto—, con
+  `raw_hash` como identidad: una segunda pasada no duplica la evidencia. Una fuente
+  caída se registra y el recorrido sigue.
+- La respuesta gana `partial` (por defecto `false`).
+- **Dónde se dispara la investigación, decidido**: DataDesk y Flet piden una serie
+  al endpoint; el comando llena la base. Sin cola ni Celery ni Redis.
+- 19 tests nuevos (6 del presupuesto, 2 de la vista con presupuesto agotado y 8 del
+  comando, con la base de datos de test); **1.804 verdes**.
 
 ### A9 — LLM reducido (S)
 
@@ -1073,3 +1101,15 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
 - Medido: el 4350 pasa a 4 observaciones MNH y a **4,45 €** (n = 4); el 2867 tiene
   una oferta real de 0,03 € y con n = 1 es un `gap`. 19 tests nuevos; **1.788
   verdes**.
+
+### 2026-11-26 — A8 hecho: presupuesto y backfill
+
+- `ai_api/budget.py` (reloj, tope por llamada, `BudgetExpired`); la vista corta el
+  bucle de precios y responde `partial: true` con un `gap` de `budget`; el catálogo
+  recibe el tope en cada llamada. Lo que no se promete: interrumpir una llamada
+  bloqueada; el límite es por llamada y por fase.
+- `manage.py ai_prices_backfill` con `--limit`, `--source`, `--only`, `--stamps` y
+  `--dry-run`: recorre las series, pide precios y guarda `SourceObservation` con
+  `raw_hash`, así que repetir no duplica; una fuente caída no corta el recorrido.
+- Decidido: DataDesk/Flet → endpoint para una serie; comando → la base. Sin cola.
+- 19 tests nuevos; **1.804 verdes**.

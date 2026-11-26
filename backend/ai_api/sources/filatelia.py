@@ -33,12 +33,15 @@ class FilateliaCatalogue(StoreCatalogue):
     name = "filatelia"
     root = "https://filatelia.online/wp-json/wc/store/v1"
 
-    def prices(self, edifil: str, year: str = "") -> List[Observation]:
+    def prices(
+        self, edifil: str, year: str = "", timeout: Optional[float] = None
+    ) -> List[Observation]:
         """Return the prices the shop asks for one Edifil code.
 
         Args:
             edifil: the catalogue code, e.g. "2867". Empty or unknown is no answer.
             year: the emission year, used as a filter when the code was reused.
+            timeout: seconds this call may take, when the caller has a budget.
 
         Returns:
             One observation per product with a price. An empty list means the shop
@@ -48,14 +51,14 @@ class FilateliaCatalogue(StoreCatalogue):
         if not code:
             return []
 
-        term_id = self._term_id(EDIFIL_ATTRIBUTE, code)
+        term_id = self._term_id(EDIFIL_ATTRIBUTE, code, timeout)
         if term_id is None:
             self.log.debug(f"{self.name}: no term for edifil {code}")
             return []
 
         filters = []
         if year:
-            year_term = self._term_id(YEAR_ATTRIBUTE, year)
+            year_term = self._term_id(YEAR_ATTRIBUTE, year, timeout)
             if year_term is not None:
                 filters.append((YEAR_TAXONOMY, year_term))
 
@@ -65,7 +68,7 @@ class FilateliaCatalogue(StoreCatalogue):
             "taxonomy": EDIFIL_TAXONOMY,
             "attribute": EDIFIL_ATTRIBUTE,
         }
-        products = self._products(term, filters or None)
+        products = self._products(term, filters or None, timeout)
 
         observations = []
         for product in products:

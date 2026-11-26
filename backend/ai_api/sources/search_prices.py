@@ -58,7 +58,11 @@ class SearchPrices(Logger):
         self.key = key if key is not None else settings.SERPER_API_KEY
 
     def prices(
-        self, code: str, label: str = "", year: str = ""
+        self,
+        code: str,
+        label: str = "",
+        year: str = "",
+        timeout: Optional[float] = None,
     ) -> List[Observation]:
         """Return the asking prices the search shows for one code.
 
@@ -66,6 +70,7 @@ class SearchPrices(Logger):
             code: the catalogue code, e.g. "2867".
             label: the series or stamp name, to narrow the query.
             year: the emission year, when it is known.
+            timeout: seconds this call may take, when the caller has a budget.
 
         Returns:
             One observation per result that carries a price. An empty list means
@@ -80,10 +85,15 @@ class SearchPrices(Logger):
         query = " ".join(part for part in (code, label, year, "sello") if part)
         self.log.debug(f"{self.name}: searching {query!r}")
 
+        request_kwargs = {}
+        if timeout is not None:
+            request_kwargs["timeout"] = timeout
+
         response = self.client.post(
             self.url,
             json={"q": query, "gl": "es"},
             headers={"X-API-KEY": self.key},
+            **request_kwargs,
         )
 
         if response.status_code in (401, 403):
@@ -117,7 +127,7 @@ class SearchPrices(Logger):
             # both. Only opened when the snippet is not enough, and only a few.
             if (price is None or condition == "unknown") and pages < MAX_PAGES:
                 pages += 1
-                listing = self._listing(link)
+                listing = self._listing(link, timeout)
                 if listing is not None:
                     price = listing.price if listing.price is not None else price
                     if listing.condition != "unknown":
@@ -147,13 +157,14 @@ class SearchPrices(Logger):
         self.log.debug(f"{self.name}: {len(observations)} price(s) for {code}")
         return observations
 
-    def _listing(self, url: str):
+    def _listing(self, url: str, timeout: Optional[float] = None):
         """Open a listing page and read it, or None when it cannot be read."""
         if parser_for(url) is None:
             return None
 
+        request_kwargs = {} if timeout is None else {"timeout": timeout}
         try:
-            response = self.client.get(url)
+            response = self.client.get(url, **request_kwargs)
         except SourceError as error:
             self.log.warning(f"{self.name}: could not open {url}: {error}")
             return None
