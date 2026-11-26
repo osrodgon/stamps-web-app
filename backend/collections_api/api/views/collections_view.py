@@ -9,8 +9,9 @@ from common.api.serializers.generic_response import GenericResponseSerializer, G
 from common.log.logger import Logger
 from common.core.current_user import CurrentUser
 from common.core.schemas import standardized_response
-from collections_api.models import Collection
+from collections_api.services.collection_overview_service import CollectionOverviewService
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
+from collections_api.api.serializers.collection_overview_serializer import CollectionOverviewSerializer
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
 
 
@@ -28,10 +29,10 @@ class CollectionsView(Logger, APIView):
         operation_id="list_collections",
         tags=['Collection Management'],
         summary="List My Collections",
-        description="Retrieves the collections that belong to the user of the JWT. Another user's collections are never returned.",
+        description="Retrieves the collections that belong to the user of the JWT, with their counters (series, stamps, total) and up to twelve cover candidates. Another user's collections are never returned.",
         responses={
             status.HTTP_200_OK: standardized_response(
-                CollectionResponseSerializer, 
+                CollectionOverviewSerializer, 
                 name="CollectionsRetrieved",
                 description="A list of collections was successfully retrieved.",
                 many=True
@@ -51,15 +52,15 @@ class CollectionsView(Logger, APIView):
             request (Request): The incoming HTTP request, with the user's JWT.
 
         Returns:
-            Response: A DRF Response object containing a list of serialized
-                collections, ordered by name.
+            Response: A DRF Response object with one overview row per
+                collection (counters and covers), ordered by name.
         """
         self.log.debug(Messages.Get.retrieve_all("collections"))
         user = CurrentUser(request).get()
 
-        collections = Collection.objects.filter(user=user).order_by("name")
-        self.log.debug(Messages.Get.retrieved_all("collections", len(collections)))
-        response = CollectionResponseSerializer(collections, many=True)
+        overview = CollectionOverviewService().for_user(user)
+        self.log.debug(Messages.Get.retrieved_all("collections", len(overview)))
+        response = CollectionOverviewSerializer(overview, many=True)
         
         return Response(
             data=response.data, 

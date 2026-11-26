@@ -869,8 +869,13 @@ when A is merged into `development`.
       `CustomAPIKeyAuthentication` has none; the plan and the issue said 401 and this is
       the correction. A true 401 would need `authenticate_header()` and 75 expectations
       across the suite, so it stays out.
-- [ ] A2 — Overview list (S): `series`, `stamps`, `total` and up to 12 `covers`, in ≤ 5
-      queries, ordered by name
+- [x] A2 — **Overview list** (2026-11-26, S): `CollectionOverviewService` +
+      `CollectionOverviewSerializer`; `GET /collections/` returns `series`, `stamps`, `total`
+      and up to 12 `covers`, ordered by name, in exactly **five queries** (pinned by
+      `django_assert_num_queries`). The test fixture makes the three figures differ (2
+      stamps owned over 2 series, 4 stamps in those series), a `quantity` of 2 counts as one
+      stamp, a stamp without `fesofi_code` is not a cover, covers are stable and capped at
+      12, and a collection with `user=None` is not listed. 14 tests; suite 1.781.
 - [ ] A3 — `CollectionService` (S): Flet-free, token in the constructor, PUT to rename
 - [ ] A4 — `CollectionCard` (M): collage of six, summary, bar and percentage
 - [ ] A5 — `CollectionsPage` (M): header without separator, grid, empty/loading/error,
