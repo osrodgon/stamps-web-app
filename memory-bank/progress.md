@@ -895,7 +895,13 @@ when A is merged into `development`.
       the create dialog at full height — the `TextField` expands by default and stretched
       the dialog's column; now `expand=False`, pinned by a test. 23 tests with a mocked
       page (dialogs, construction, render); frontend suite 698.
-- [ ] A6 — Phase A close-out (S)
+- [x] A6 — **Phase A close-out** (2026-11-26, S): browser pass (Playwright + mock login)
+      over list, create (3 cards), delete (back to 2), rename prefilled and the expired
+      token → login; 22 locale keys per language, same set, none empty; no console errors.
+      Two limits written down: headless Chromium here paints no Flutter images (a minimal
+      `ft.Image` app neither), so covers were confirmed by tests only, and the empty state
+      was not seen (no account without collections). Collage images are square cells.
+      Suites 1.781 backend / 707 frontend. **Phase A closed.**
 - [ ] B1 — Series of a collection (M): mirrors `/issues/`, plus cover and sums
 - [ ] B2 — Series detail and item writes (M): each stamp with its `item`, add copy (409 on
       duplicate), PUT/DELETE with names

@@ -72,6 +72,12 @@ class TestCover:
         assert card._images[0].height == CollectionCard.SINGLE_THUMBNAIL_HEIGHT
         assert card._images[0].src.endswith("C0.webp")
 
+    def test_every_picture_is_a_square_cell(self):
+        """The collage cells are square, so the mosaic lines up."""
+        card = Cards.build(Cards.data(covers=6))
+
+        assert all(image.width == image.height for image in card._images)
+
     def test_the_source_is_relative_to_the_assets_folder(self):
         card = Cards.build(Cards.data(covers=1))
 

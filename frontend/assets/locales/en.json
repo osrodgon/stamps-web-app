@@ -127,7 +127,27 @@
     },
     "collections": {
         "title": "Collections",
-        "no_issues_found": "No issues found with the provided criteria."
+        "no_issues_found": "No issues found with the provided criteria.",
+        "your_collections": "Your collections",
+        "count": "Collections: {count}",
+        "summary": "Series: {series} · Stamps: {stamps}",
+        "new": "New collection",
+        "empty_title": "You have no collections yet.",
+        "empty_hint": "Create one and add the stamps you own.",
+        "new_title": "New collection",
+        "rename_title": "Rename collection",
+        "rename": "Rename",
+        "name_label": "Name",
+        "create": "Create",
+        "cancel": "Cancel",
+        "delete_title": "Delete collection",
+        "delete_message": "Delete \"{name}\"? Its copies leave your collection. The catalogue is not affected.",
+        "delete_confirm": "Delete",
+        "name_required": "Give the collection a name.",
+        "session_expired": "Your session has expired. Please sign in again.",
+        "load_failed": "Could not load your collections.",
+        "save_failed": "Could not save the collection.",
+        "delete_failed": "Could not delete the collection."
     },
     "pagination": {
         "rows_per_page": "Issues per page",
