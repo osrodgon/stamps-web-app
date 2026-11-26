@@ -113,6 +113,7 @@ API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 USER_VIEWS = [
     "CollectionsView",
     "CollectionsByIdView",
+    "CollectionIssuesView",
     "CollectionItemsView",
     "CollectionItemsByIdView",
     "ConditionTypesView",
