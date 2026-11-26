@@ -2,7 +2,7 @@
 LLM service for AI-powered stamp series extraction.
 
 This module provides a unified interface for AI-powered research and extraction
-of stamp series information using multiple LLM providers (Google Gemini, Groq, etc.).
+of stamp series information with the LLM provider (opencode).
 
 The service acts as a facade that delegates to the appropriate LLM provider based
 on configuration, providing a consistent interface regardless of the underlying

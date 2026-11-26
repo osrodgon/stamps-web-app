@@ -1,117 +1,79 @@
 """
-Tests for ProviderFactory.
+Tests for the LLM provider factory (plan step A1b).
 
-This module tests the factory pattern implementation for creating LLM providers.
-Tests verify proper provider selection based on environment configuration,
-error handling for unsupported providers, and utility methods.
+With a single provider the factory is thin, and these tests keep it that way:
+it builds opencode, it does not read `LLM_PROVIDER` any more, and a failure to
+build says why.
 """
+
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
 
+from ai_api.services.opencode_provider import OpenCodeProvider
 from ai_api.services.provider_factory import ProviderFactory
-from ai_api.services.base_llm_provider import BaseLLMProvider
-from ai_api.services.gemini_provider import GeminiProvider
-from ai_api.services.groq_provider import GroqProvider
+from common.api.messages import Messages
 
 
-class TestProviderFactory:
-    """Test class for ProviderFactory."""
-    
-    def test_init(self):
-        """Test ProviderFactory initialization."""
-        factory = ProviderFactory()
-        assert factory is not None
-    
-    def test_create_gemini_provider(self, mocker):
-        """Test creating Gemini provider when LLM_PROVIDER is set to gemini."""
-        # Mock environment and settings
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'gemini'})
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-api-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        # Mock the genai.Client to avoid actual API calls
-        mock_client = Mock()
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
-        factory = ProviderFactory()
-        provider = factory.create_provider()
-        
-        assert isinstance(provider, GeminiProvider)
-    
-    def test_create_groq_provider(self, mocker):
-        """Test creating Groq provider when LLM_PROVIDER is set to groq."""
-        # Mock environment
-        mocker.patch.dict('os.environ', {
-            'LLM_PROVIDER': 'groq',
-            'GROQ_API_KEY': 'test-api-key',
-            'GROQ_MODEL_NAME': 'test-model'
-        })
-        
-        # Mock the Groq client to avoid actual API calls
-        mock_client = Mock()
-        mocker.patch('ai_api.services.groq_provider.Groq', return_value=mock_client)
-        
-        factory = ProviderFactory()
-        provider = factory.create_provider()
-        
-        assert isinstance(provider, GroqProvider)
-    
-    def test_default_provider_is_gemini(self, mocker):
-        """Test that Gemini is the default provider when LLM_PROVIDER is not set."""
-        # Mock environment without LLM_PROVIDER
-        mocker.patch.dict('os.environ', {}, clear=True)
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-api-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        # Mock the genai.Client
-        mock_client = Mock()
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
-        factory = ProviderFactory()
-        provider = factory.create_provider()
-        
-        assert isinstance(provider, GeminiProvider)
-    
-    def test_unsupported_provider_raises_error(self, mocker):
-        """Test that unsupported provider type raises ValueError."""
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'unsupported'})
-        
-        factory = ProviderFactory()
-        
-        with pytest.raises(ValueError, match="Unsupported LLM provider type"):
-            factory.create_provider()
-    
-    def test_provider_initialization_failure_raises_error(self, mocker):
-        """Test that provider initialization failure raises Exception."""
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'gemini'})
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', None)
-        
-        factory = ProviderFactory()
-        
-        with pytest.raises(Exception, match="Provider initialization failed"):
-            factory.create_provider()
-    
-    def test_get_available_providers(self):
-        """Test getting list of available provider types."""
-        providers = ProviderFactory.get_available_providers()
-        
-        assert 'gemini' in providers
-        assert 'groq' in providers
-        assert len(providers) == 2
-    
-    def test_is_provider_available_gemini(self):
-        """Test checking if Gemini provider is available."""
-        assert ProviderFactory.is_provider_available('gemini') is True
-        assert ProviderFactory.is_provider_available('GEMINI') is True  # Case insensitive
-        assert ProviderFactory.is_provider_available('Gemini') is True
-    
-    def test_is_provider_available_groq(self):
-        """Test checking if Groq provider is available."""
-        assert ProviderFactory.is_provider_available('groq') is True
-        assert ProviderFactory.is_provider_available('GROQ') is True  # Case insensitive
-    
-    def test_is_provider_available_unsupported(self):
-        """Test checking if unsupported provider is available."""
-        assert ProviderFactory.is_provider_available('openai') is False
-        assert ProviderFactory.is_provider_available('anthropic') is False
-        assert ProviderFactory.is_provider_available('') is False
+class TestCreateProvider:
+    """What the factory builds."""
+
+    def test_it_builds_the_opencode_provider(self, settings):
+        settings.OPENCODE_API_KEY = "oc_sk_test"
+        settings.OPENCODE_MODEL = "test-model"
+
+        provider = ProviderFactory().create_provider()
+
+        assert isinstance(provider, OpenCodeProvider)
+
+    def test_a_stale_llm_provider_variable_is_ignored(self, settings, monkeypatch):
+        settings.OPENCODE_API_KEY = "oc_sk_test"
+        settings.OPENCODE_MODEL = "test-model"
+        monkeypatch.setenv("LLM_PROVIDER", "gemini")
+
+        provider = ProviderFactory().create_provider()
+
+        assert isinstance(provider, OpenCodeProvider)
+
+    def test_a_missing_key_surfaces_as_an_initialization_error(self, settings):
+        settings.OPENCODE_API_KEY = None
+        settings.OPENCODE_MODEL = "test-model"
+
+        with pytest.raises(Exception) as error:
+            ProviderFactory().create_provider()
+
+        assert "Provider initialization failed" in str(error.value)
+        assert Messages.AI.missing_api_key() in str(error.value)
+
+    def test_a_missing_model_surfaces_too(self, settings):
+        settings.OPENCODE_API_KEY = "oc_sk_test"
+        settings.OPENCODE_MODEL = None
+
+        with pytest.raises(Exception) as error:
+            ProviderFactory().create_provider()
+
+        assert Messages.AI.missing_model_name() in str(error.value)
+
+    def test_it_reports_a_failed_construction(self, mocker):
+        broken = Mock(side_effect=RuntimeError("boom"))
+        mocker.patch.dict(ProviderFactory.PROVIDER_TYPES, {"opencode": broken})
+
+        with pytest.raises(Exception) as error:
+            ProviderFactory().create_provider()
+
+        assert "boom" in str(error.value)
+
+
+class TestAvailableProviders:
+    """The class-level helpers, which now answer for one provider."""
+
+    def test_the_list_has_only_opencode(self):
+        assert ProviderFactory.get_available_providers() == ["opencode"]
+
+    def test_opencode_is_available(self):
+        assert ProviderFactory.is_provider_available("opencode") is True
+        assert ProviderFactory.is_provider_available("OPENCODE") is True
+
+    def test_gemini_and_groq_are_not(self):
+        assert ProviderFactory.is_provider_available("gemini") is False
+        assert ProviderFactory.is_provider_available("groq") is False

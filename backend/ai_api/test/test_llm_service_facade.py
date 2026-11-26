@@ -1,230 +1,133 @@
 """
-Tests for LLMService (Facade Pattern).
+Tests for LLMService (facade pattern).
 
-This module tests the LLMService facade class that delegates to provider-specific
-implementations. Tests verify proper delegation, error handling, and initialization.
+The service is a thin door to whichever provider the factory builds; with one
+provider that is opencode. These tests check the delegation and the error
+wrapping, not the transport (that is `test_opencode_provider.py`).
 """
+
+from unittest.mock import Mock
+
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
 
 from ai_api.services.llm_service import LLMService
+from ai_api.services.opencode_provider import OpenCodeProvider
 from ai_api.services.provider_factory import ProviderFactory
-from ai_api.services.gemini_provider import GeminiProvider
-from ai_api.services.groq_provider import GroqProvider
 from common.api.messages import Messages
 
 
+def use_provider(mocker, provider):
+    """Make every LLMService built in this test use `provider`."""
+    mocker.patch.object(ProviderFactory, "create_provider", return_value=provider)
+    return provider
+
+
 class TestLLMServiceInit:
-    """Test LLMService initialization."""
-    
+    """What the service builds when it starts."""
+
     def test_init_creates_provider_factory(self, mocker):
-        """Test that LLMService creates a ProviderFactory."""
         mock_provider = Mock()
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
+        use_provider(mocker, mock_provider)
+
         service = LLMService()
-        
+
         assert service.provider_factory is not None
         assert service.provider == mock_provider
-    
-    def test_init_uses_default_provider(self, mocker):
-        """Test that LLMService uses GeminiProvider by default."""
-        mocker.patch.dict('os.environ', {}, clear=True)
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-api-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        mock_client = Mock()
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
+    def test_init_uses_the_opencode_provider(self, settings):
+        settings.OPENCODE_API_KEY = "oc_sk_test"
+        settings.OPENCODE_MODEL = "test-model"
+
         service = LLMService()
-        
-        assert isinstance(service.provider, GeminiProvider)
-    
-    def test_init_uses_gemini_provider(self, mocker):
-        """Test that LLMService uses GeminiProvider when configured."""
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'gemini'})
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-api-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        mock_client = Mock()
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
-        
+
+        assert isinstance(service.provider, OpenCodeProvider)
+
+    def test_a_stale_llm_provider_variable_is_ignored(self, settings, monkeypatch):
+        settings.OPENCODE_API_KEY = "oc_sk_test"
+        settings.OPENCODE_MODEL = "test-model"
+        monkeypatch.setenv("LLM_PROVIDER", "groq")
+
         service = LLMService()
-        
-        assert isinstance(service.provider, GeminiProvider)
-    
-    def test_init_uses_groq_provider(self, mocker):
-        """Test that LLMService uses GroqProvider when configured."""
-        mocker.patch.dict('os.environ', {
-            'LLM_PROVIDER': 'groq',
-            'GROQ_API_KEY': 'test-api-key',
-            'GROQ_MODEL_NAME': 'test-model'
-        })
-        
-        mock_client = Mock()
-        mocker.patch('ai_api.services.groq_provider.Groq', return_value=mock_client)
-        
-        service = LLMService()
-        
-        assert isinstance(service.provider, GroqProvider)
+
+        assert isinstance(service.provider, OpenCodeProvider)
+
+    def test_a_missing_key_stops_the_service(self, settings):
+        settings.OPENCODE_API_KEY = None
+        settings.OPENCODE_MODEL = "test-model"
+
+        with pytest.raises(Exception, match="Provider initialization failed"):
+            LLMService()
 
 
 class TestLLMServiceSeriesExtract:
-    """Test series_extract method delegation."""
-    
+    """The service's only job: hand the call to the provider and wrap failures."""
+
     def test_series_extract_delegates_to_provider(self, mocker):
-        """Test that series_extract delegates to the provider."""
         mock_provider = Mock()
         mock_provider.series_extract.return_value = {
             "issue_name": "Test Series",
             "description": "Test description",
-            "stamps": []
+            "stamps": [],
         }
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
+        use_provider(mocker, mock_provider)
+
         service = LLMService()
         result = service.series_extract("Test Series", "1992", '{"data": "test"}')
-        
-        mock_provider.series_extract.assert_called_once_with("Test Series", "1992", '{"data": "test"}')
+
+        mock_provider.series_extract.assert_called_once_with(
+            "Test Series", "1992", '{"data": "test"}'
+        )
         assert result["issue_name"] == "Test Series"
-    
+
     def test_series_extract_passes_all_arguments(self, mocker):
-        """Test that all arguments are passed to the provider."""
         mock_provider = Mock()
         mock_provider.series_extract.return_value = {"result": "success"}
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
+        use_provider(mocker, mock_provider)
+
         service = LLMService()
         service.series_extract("Name", "Date", "CleanData")
-        
-        mock_provider.series_extract.assert_called_once_with("Name", "Date", "CleanData")
-    
-    def test_series_extract_propagates_validation_error(self, mocker):
-        """Test that validation errors from provider are wrapped in service error."""
+
+        mock_provider.series_extract.assert_called_once_with(
+            "Name", "Date", "CleanData"
+        )
+
+    def test_a_validation_error_becomes_a_service_error(self, mocker):
         mock_provider = Mock()
-        mock_provider.series_extract.side_effect = ValueError(Messages.AI.missing_input_data())
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
+        mock_provider.series_extract.side_effect = ValueError(
+            Messages.AI.missing_input_data()
+        )
+        use_provider(mocker, mock_provider)
+
         service = LLMService()
-        
-        # LLMService wraps all exceptions in a service error message
+
         with pytest.raises(Exception, match="Extraction service error"):
             service.series_extract("Test", "1992", "")
-    
-    def test_series_extract_wraps_generic_error(self, mocker):
-        """Test that generic errors are wrapped in service error message."""
+
+    def test_a_generic_error_becomes_a_service_error(self, mocker):
         mock_provider = Mock()
         mock_provider.series_extract.side_effect = Exception("API connection failed")
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
+        use_provider(mocker, mock_provider)
+
         service = LLMService()
-        
+
         with pytest.raises(Exception, match="Extraction service error"):
             service.series_extract("Test", "1992", "data")
 
 
-class TestLLMServiceFacadeBehavior:
-    """Test facade pattern behavior."""
-    
-    def test_facade_hides_provider_complexity(self, mocker):
-        """Test that LLMService hides provider complexity."""
-        # Setup Gemini provider with all its complexity
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'gemini'})
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-api-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        mock_client = Mock()
-        mock_response = Mock()
-        mock_response.text = json.dumps({"issue_name": "Test", "stamps": []})
-        mock_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
-        mock_client.models.generate_content.return_value = mock_response
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_client)
+class TestLLMServiceFacade:
+    """The caller does not need to know what is behind the door."""
 
-        # User only interacts with simple LLMService interface
-        service = LLMService()
-        result = service.series_extract("Test", "1992", '{"serie_info": {}, "stamps": []}')
-        
-        # Verify result without knowing internal provider details
-        assert "issue_name" in result
-    
-    def test_facade_switches_provider_transparently(self, mocker):
-        """Test that switching providers is transparent to the user."""
-        # First with Gemini
-        mocker.patch.dict('os.environ', {'LLM_PROVIDER': 'gemini'})
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_API_KEY', 'test-key')
-        mocker.patch('ai_api.services.gemini_provider.GEMINI_MODEL_NAME', 'test-model')
-        
-        mock_gemini_client = Mock()
-        mock_gemini_response = Mock()
-        mock_gemini_response.text = json.dumps({"issue_name": "Gemini Result", "stamps": []})
-        mock_gemini_response.candidates = [Mock(finish_reason='STOP', safety_ratings=[])]
-        mock_gemini_client.models.generate_content.return_value = mock_gemini_response
-        mocker.patch('ai_api.services.gemini_provider.genai.Client', return_value=mock_gemini_client)
-        
-        service_gemini = LLMService()
-        result_gemini = service_gemini.series_extract("Test", "1992", '{"serie_info": {}, "stamps": []}')
-        
-        # Same interface works with Groq
-        mocker.patch.dict('os.environ', {
-            'LLM_PROVIDER': 'groq',
-            'GROQ_API_KEY': 'test-key'
-        })
-        
-        mock_groq_client = Mock()
-        mock_groq_response = Mock()
-        mock_groq_response.choices = [Mock()]
-        mock_groq_response.choices[0].message = Mock()
-        mock_groq_response.choices[0].message.content = json.dumps({"issue_name": "Groq Result", "stamps": []})
-        mock_groq_client.chat.completions.create.return_value = mock_groq_response
-        mocker.patch('ai_api.services.groq_provider.Groq', return_value=mock_groq_client)
-        
-        service_groq = LLMService()
-        result_groq = service_groq.series_extract("Test", "1992", '{"serie_info": {}, "stamps": []}')
-        
-        # Both return same structure, different internal implementation
-        assert "issue_name" in result_gemini
-        assert "issue_name" in result_groq
-        assert result_gemini["issue_name"] == "Gemini Result"
-        assert result_groq["issue_name"] == "Groq Result"
+    def test_the_service_returns_what_the_provider_returns(self, mocker):
+        mock_provider = Mock()
+        mock_provider.series_extract.return_value = {
+            "issue_name": "Castillos",
+            "description_source": "llm",
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        use_provider(mocker, mock_provider)
 
+        service = LLMService()
+        result = service.series_extract("Castillos", "2007", '{"serie_info": {}}')
 
-class TestLLMServiceLogging:
-    """Test logging behavior."""
-    
-    def test_logs_provider_initialization(self, mocker):
-        """Test that provider initialization is logged."""
-        mock_provider = Mock()
-        mock_provider.__class__.__name__ = 'TestProvider'
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
-        service = LLMService()
-        
-        # Service should have logged the provider type
-        assert service.log is not None
-    
-    def test_logs_extraction_start(self, mocker):
-        """Test that extraction start is logged."""
-        mock_provider = Mock()
-        mock_provider.series_extract.return_value = {"result": "success"}
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
-        service = LLMService()
-        service.series_extract("Test", "1992", "data")
-        
-        # Service has a logger
-        assert service.log is not None
-    
-    def test_logs_extraction_error(self, mocker):
-        """Test that extraction errors are logged."""
-        mock_provider = Mock()
-        mock_provider.series_extract.side_effect = Exception("Test error")
-        mocker.patch.object(ProviderFactory, 'create_provider', return_value=mock_provider)
-        
-        service = LLMService()
-        
-        with pytest.raises(Exception):
-            service.series_extract("Test", "1992", "data")
-        
-        # Error should have been logged (verified by the error being raised)
-        assert service.log is not None
+        assert result["stamps"][0]["edifil_code"] == "4349"
+        assert result["description_source"] == "llm"

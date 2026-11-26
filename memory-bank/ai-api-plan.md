@@ -78,11 +78,10 @@ no con un fetch simple; eso no dice nada sobre su disponibilidad real.
    no A1, A2 ni A6.
 2. **Dónde se dispara la investigación**: DataDesk, app Flet, o solo un comando.
    Condiciona A8 (y si hace falta cola).
-3. **Qué motor usa opencode**: el **proveedor** está decidido —opencode, y Gemini y
-   Groq se retiran del código en A1b—, pero el **modelo** que opencode usa por
-   dentro se elige más adelante y entra por configuración. Condiciona A1b sólo en el
-   nombre; el reparto de trabajo entre un motor bueno y uno barato se decide cuando
-   haya algo que ejecutar.
+3. **Qué motor usa opencode**: el **proveedor** está decidido y hecho —opencode,
+   con Gemini y Groq ya fuera del código—, y el **modelo** se elige en
+   `OPENCODE_MODEL`, sin tocar código. No bloquea ningún paso; el valor se decide
+   cuando haya una tubería que ejecutar.
 
 Cerradas en A0 (2026-11-25): Delcampe, Iberphil, Fesofi sí, media recortada y
 lista de sitios permitidos. Detalle en §7. **Serper se queda de momento**, y se
@@ -93,16 +92,16 @@ quitará si la búsqueda de precios no lo necesita.
 ## 4. Pasos
 
 Dependencias: A0 → A1 → A2 → A6 → A7 → A8 → A9 → A10. A1b (proveedor opencode)
-no depende de nada y puede ir cuando convenga. A3 (Colnect) entra en cuanto exista
-la clave CAPI, en paralelo a A6. A4 y A5 están fuera del plan (decidido
-2026-11-25: Delcampe por `robots.txt`, Iberphil por fuente débil).
+ya está hecho. A3 (Colnect) entra en cuanto exista la clave CAPI, en paralelo a A6.
+A4 y A5 están fuera del plan (decidido 2026-11-25: Delcampe por `robots.txt`,
+Iberphil por fuente débil).
 
 | Paso | Qué | Tamaño | Depende de | Estado |
 |---|---|---|---|---|
 | A0 | Prueba de fuentes | S | — | **hecho 2026-11-25** |
 | A1 | Contrato y modelo de observaciones | M | A0 | **hecho 2026-11-25** |
-| A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | siguiente |
-| A2 | Capa de fuentes + arreglos de seguridad | M | A1 | pendiente |
+| A1b | Proveedor opencode (fuera Gemini y Groq) | S | — | **hecho 2026-11-25** |
+| A2 | Capa de fuentes + arreglos de seguridad | M | A1 | siguiente |
 | A3 | Adaptador Colnect | L | A2, clave CAPI | pendiente, bloqueado por la clave |
 | A4 | Adaptador Delcampe | M | — | **fuera del plan** |
 | A5 | Adaptador Iberphil | M | — | **fuera de la 1.ª versión** |
@@ -190,7 +189,7 @@ implementarlo:
   avisos.
 
 
-### A1b — Proveedor opencode (S) — **decidido 2026-11-25**
+### A1b — Proveedor opencode (S) — **HECHO 2026-11-25**
 
 La API deja de hablar con Gemini y Groq y pasa a hablar con **opencode**, que es el
 único proveedor. El **motor** (el modelo concreto) se decide más adelante y no vive
@@ -207,10 +206,12 @@ autenticar clientes de `serve` (eso es `OPENCODE_PASSWORD` o emparejamiento).
   misma firma `series_extract(name, date, clean_data)`; el troceado, el parseo del
   JSON y los reintentos siguen en `BaseLLMProvider`.
 - Se usa **una sola familia de API** para no tener tres caminos: la de *OpenAI chat
-  completions* (`/inference/openai/v1/chat/completions`), que sirve a `glm-5.3`,
-  `kimi-k3`, `minimax-m3` y los modelos abiertos. Los GPT van por *Responses*, los
-  Claude/Qwen por *Messages* y los Gemini por *generateContent*: si algún día se
-  elige uno de esos, el adaptador necesita su rama.
+  completions* (`/inference/openai/v1/chat/completions`). La tabla del Console
+  lista el endpoint **nativo** de cada modelo —GPT por *Responses*, Claude/Qwen por
+  *Messages*, Gemini por *generateContent*— pero la documentación dice que
+  **Console traduce todo modelo de texto a las demás APIs**, así que también se
+  puede elegir uno de esos desde el mismo adaptador. (Corregido el 2026-11-25: la
+  primera lectura decía que hacía falta una rama por familia.)
 - Configuración nueva: `OPENCODE_API_KEY` (mejor una clave de **service account**
   que una personal: no depende de una persona y tiene su propio presupuesto),
   `OPENCODE_MODEL` y, opcional, `OPENCODE_BASE_URL`.
@@ -241,6 +242,62 @@ tests; la suite sigue verde con un transporte falso (sin red); y una llamada rea
 documentada contra `/inference/openai/v1/chat/completions` con el modelo elegido por
 configuración.
 
+**Hecho el 2026-11-25.** Lo que hay, y las decisiones que se tomaron al
+implementarlo:
+
+- `ai_api/services/opencode_provider.py`: lee `settings` (no `os.getenv`, que era el
+  defecto 9 de §1), hace `POST` a `{OPENCODE_BASE_URL}/chat/completions` con
+  `Authorization: Bearer`, el modelo en el cuerpo, `temperature: 0`,
+  `response_format: {"type": "json_object"}` y `max_tokens` de
+  `OPENCODE_MAX_TOKENS`. En un error registra **el código y el principio del
+  cuerpo**, que es lo que distingue una clave mala (401) de un modelo no disponible
+  para esa cuenta (403) de un límite (429); en cada llamada registra el `usage`, que
+  en el Console trae el coste.
+- **`series_extract` se movió a `BaseLLMProvider`.** Estaba duplicado palabra por
+  palabra en los dos proveedores y habría sido la tercera copia: ahora el flujo
+  (una llamada para series pequeñas, cabecera + lotes para grandes, fusión) vive una
+  vez y el proveedor implementa sólo los tres ganchos. `Messages` se importa allí.
+- `provider_factory.py`: una sola entrada y **sin `LLM_PROVIDER`**. Con un único
+  proveedor, una variable de entorno que sólo admite un valor válido es una forma
+  de romper un despliegue con un valor viejo; ahora un `LLM_PROVIDER=gemini`
+  olvidado en un `.env` no hace nada (hay dos tests que lo fijan a propósito).
+- `settings.py`: entran `OPENCODE_API_KEY`, `OPENCODE_MODEL`, `OPENCODE_BASE_URL`,
+  `OPENCODE_TIMEOUT` (120 s) y `OPENCODE_MAX_TOKENS` (8192); salen `GEMINI_*`,
+  `GROQ_*` y `LLM_PROVIDER`. `LLM_BATCH_SIZE` se queda.
+- **Borrados**: `gemini_provider.py`, `groq_provider.py`, `test_gemini_provider.py`,
+  `test_groq_provider.py`, `test_batch_processing.py` (sus cinco tests del troceado
+  ya estaban en `test_base_llm_provider.py`) y
+  `validate_multi_provider_implementation.py`; y las dependencias `google-genai` y
+  `groq` de `requirements.base.txt`.
+- `messages.py`: `missing_api_key()` / `missing_model_name()` ya no dicen
+  `GEMINI_*`; hablan de `OPENCODE_API_KEY` / `OPENCODE_MODEL`. README y docstrings
+  del módulo, de la vista y de `LLMService` actualizados.
+- Tests: 33 en los tres archivos (16 del proveedor —configuración, petición,
+  respuesta, fallos y flujo con lotes—, 8 de la factoría y 9 de la fachada). La
+  suite completa queda en **1.628** (antes 1.655: se borraron 60 tests de los cinco
+  archivos viejos y se añadieron 33).
+
+**Verificado en real el 2026-11-25**: con `OPENCODE_API_KEY` y
+`OPENCODE_MODEL=glm-5.3-flash` en el `.env`, una extracción desde Swagger pasó la
+tubería entera y devolvió la forma de A1 —`description_source: "llm"`, `sources` y
+`observations` vacíos, `valuation: null`, los `market_value_*` a `null` y una
+descripción sin precios—. La aceptación del paso queda cumplida. El `.env` de cada
+entorno necesita el cambio: fuera `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER`, dentro
+`OPENCODE_API_KEY` y `OPENCODE_MODEL`.
+
+**Lo que se vio al usarlo (para A2)**: tarda. Medido con el código del repo, el
+scraping no es el culpable —6 sellos son 1,7 s (0,3 de índice + 1,4 de las seis
+fichas); 29 sellos, 7,0 s—, sino las **llamadas al modelo**, que son
+`1 + ceil(n / LLM_BATCH_SIZE)` y todas en serie: con el lote en 5, una serie de 6
+sella hace 3 llamadas y la de 57 haría 13. Palanca inmediata: `LLM_BATCH_SIZE=15`
+(6 sellos → 1 llamada, 57 → 5), que es sólo configuración y sale más barato porque
+el contexto de la serie se repite menos. Lo demás es de A2: paralelizar el scraping
+con límite por dominio, cachear, y registrar `elapsed_ms` por llamada para dejar de
+adivinar. Dos hallazgos más del uso: `SearchService` se traga el fallo cuando
+`SERPER_*` está vacío y la vista lo cuenta como «no se encontró nada» (404), y la
+vista lee `título serie` / `fecha de emisión` de `serie_info` cuando el limpiador
+devuelve `issue_name` / `issue_date`, así que el nombre llega al log como `None`.
+
 ### A2 — Capa de fuentes (M)
 
 `ai_api/sources/base.py` con `SourceAdapter` (`name`, `supports(subject)`,
@@ -258,6 +315,23 @@ Dependencia nueva: `httpx` (HTTP/2; `requests` no lo hace y CAPI lo exige).
 
 Aceptación: tests de `http.py` con un servidor falso (allowlist, timeout, reintento,
 límite); ningún test toca la red.
+
+**Lo que dejó el primer uso real (2026-11-25), para este paso:**
+
+- **El scraping es secuencial**: una petición por sello, una detrás de otra. Medido:
+  6 sellos 1,4 s, 29 sellos 6,8 s (~0,23 s por ficha). `http.py` debería traer un
+  pool pequeño con **límite por dominio** y caché, no sólo timeouts.
+- **`SearchService` se traga el fallo**: con `SERPER_*` vacío pide `None`, registra
+  «Invalid URL 'None'» y devuelve `None`; la vista lo cuenta como
+  «no se encontró nada» (404). Un error de configuración no puede parecer un dato
+  que no existe: es el defecto 3 de §1 y aquí tiene su caso concreto.
+- **Lectura muerta en la vista**: saca `name` / `date` de `serie_info` con las claves
+  `título serie` / `fecha de emisión`, pero `clean_scraped_data` devuelve
+  `issue_name` / `issue_date`. Hoy sólo ensucia el log (`series: None`).
+- **Falta saber cuánto tarda cada llamada al modelo**: añadir `elapsed_ms` al log del
+  proveedor es una línea y convierte «tarda bastante» en un número.
+- **El lote del modelo** es `1 + ceil(n / LLM_BATCH_SIZE)` llamadas en serie. Subirlo
+  a 15 es configuración, no código, y es la palanca más barata mientras A2 llega.
 
 ### A3 — Colnect (L)
 
@@ -538,4 +612,34 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   con lo que trae la entrada y `notes` queda vacío si no hay nada que decir.
 - 22 tests nuevos (15 de modelo, 7 de contrato), 1.655 verdes, esquema OpenAPI sin
   avisos, migración aplicada y revertida. El detalle está en la ficha del paso, §4.
+
+### 2026-11-25 — A1b hecho (proveedor opencode)
+
+- `ai_api/services/opencode_provider.py`: HTTP contra la API de inferencia del
+  Console (`/chat/completions`, `Bearer`), configuración desde `settings`, errores
+  con código y cuerpo, `usage` (coste) en el log. Una sola familia de API, la de
+  OpenAI.
+- `series_extract` **subió a `BaseLLMProvider`**: estaba duplicado en los dos
+  proveedores y ahora el flujo vive una vez; el proveedor implementa sólo
+  `_single_extract`, `_extract_header` y `_extract_batch`.
+- `provider_factory.py` con una sola entrada y **sin `LLM_PROVIDER`**: un valor
+  viejo en un `.env` ya no rompe nada (dos tests lo fijan).
+- `settings.py`: `OPENCODE_API_KEY`, `OPENCODE_MODEL`, `OPENCODE_BASE_URL`,
+  `OPENCODE_TIMEOUT`, `OPENCODE_MAX_TOKENS`; fuera `GEMINI_*`, `GROQ_*` y
+  `LLM_PROVIDER`; `LLM_BATCH_SIZE` se queda.
+- Borrados los dos proveedores, sus dos tests, `test_batch_processing.py` (sus tests
+  del troceado ya estaban en `test_base_llm_provider.py`) y
+  `validate_multi_provider_implementation.py`; fuera `google-genai` y `groq` de
+  `requirements.base.txt`. `messages.py` ya no nombra `GEMINI_*`, y README y
+  docstrings hablan del proveedor único.
+- 33 tests en los tres archivos (16 + 8 + 9); **1.628 verdes** (1.655 − 60 tests
+  viejos + 33 nuevos), esquema OpenAPI sin avisos.
+- **Verificado en real el 2026-11-25**: con `OPENCODE_API_KEY` y
+  `OPENCODE_MODEL=glm-5.3-flash`, una extracción desde Swagger pasó la tubería
+  entera y devolvió la forma de A1. El paso queda cerrado. El `.env` de cada
+  entorno necesita el cambio: fuera `GEMINI_*` / `GROQ_*` / `LLM_PROVIDER`, dentro
+  `OPENCODE_API_KEY` y `OPENCODE_MODEL`.
+- Lo que se vio al usarlo (tarda, y por qué) está anotado en la ficha de A2 (§4):
+  llamadas al modelo en serie, scraping secuencial, el 404 de Serper vacío, la
+  lectura muerta de `serie_info` y la falta de tiempos por llamada.
 

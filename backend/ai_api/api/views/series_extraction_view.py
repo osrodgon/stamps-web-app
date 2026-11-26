@@ -21,7 +21,7 @@ class SeriesExtractionView(Logger, APIView):
     """
     API view for AI-powered series extraction.
 
-    This view handles POST requests to extract information for series using Google Gemini AI.
+    This view handles POST requests to extract information for series with the LLM provider.
     It validates input data, calls the AI service, and returns structured research results.
     """
     serializer_class = SeriesExtractionResponseSerializer
@@ -30,7 +30,7 @@ class SeriesExtractionView(Logger, APIView):
         operation_id="series_extraction_post",
         tags=['AI Services'],
         summary="Extract Information for Series using AI",
-        description="Performs AI-powered extraction of series information using Google Gemini. "
+        description="Performs AI-powered extraction of series information with the LLM provider. "
                     "Requires a name (either series name or the motive of one of the stamps in the serie) and publication date.",
         request=SeriesExtractionRequestSerializer,
         responses={
