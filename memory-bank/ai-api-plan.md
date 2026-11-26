@@ -111,8 +111,8 @@ sin Colnect es la puerta a los precios, así que se queda.
 
 ## 4. Pasos
 
-Dependencias: A0 → A1 → A2 → A6 → A7 → A8 → A9 → A10. A1b (proveedor opencode)
-ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por decisión
+Dependencias: A0 → A1 → A2 → A6 → A7 → A7b → A8 → A9 → A10. A1b (proveedor
+opencode) ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por decisión
 (2026-11-26), Delcampe por `robots.txt` e Iberphil por fuente débil.
 
 | Paso | Qué | Tamaño | Depende de | Estado |
@@ -125,8 +125,9 @@ ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por decisión
 | A4 | Adaptador Delcampe | M | — | **fuera del plan** |
 | A5 | Adaptador Iberphil | M | — | **fuera de la 1.ª versión** |
 | A6 | Identidad y emparejamiento (Fesofi primero) | L | A2 | **hecho 2026-11-26** |
-| A7 | Valuación (media recortada) | M | A6 | pendiente |
-| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7 | pendiente |
+| A7 | Valuación (media recortada) | M | A6 | **hecho 2026-11-26** |
+| A7b | Estado y precio en la ficha del anuncio | M | A7 | **siguiente** |
+| A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | pendiente |
 | A9 | LLM reducido y validador de fuentes | S | A7 | pendiente |
 | A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | pendiente |
 
@@ -580,7 +581,7 @@ salga cuando su nombre **contiene** las palabras, no cuando coincide exacto.
   falta comprobar que sea el sello y no la hoja del primer día.
 
 
-### A7 — Valuación (M, sube de tamaño al quedarse sin Colnect)
+### A7 — Valuación (M) — **HECHO 2026-11-26**
 
 **De dónde salen los precios ahora.** Sin Colnect no hay API de mercado, así que hay
 dos fuentes, en este orden:
@@ -621,6 +622,70 @@ lo que hay.
 Aceptación: tests de media recortada con muestras pequeñas, divisas mezcladas y
 `n < 3`; una ficha sin precio no inventa una observación; el estimado viaja con sus
 fuentes y su tipo.
+
+**Hecho el 2026-11-26.** Lo que hay:
+
+- `ai_api/text.py` gana `condition_of()` (las reglas de «sin charnela» → `mnh`,
+  «usado» → `used`, etc.) y `snippet()`/`strip_html()`, compartidos por el raspador,
+  el catálogo y las tiendas.
+- `ai_api/sources/store.py`: `StoreCatalogue`, la parte común de WooCommerce (term
+  search, productos con filtros, atributos sin mayúsculas ni acentos, **precios en
+  unidades menores**: `"price": "1000"` con `currency_minor_unit: 2` son 10,00 €, no
+  1.000 €). De ahí heredan `FesofiCatalogue` y `FilateliaCatalogue`.
+- `ai_api/sources/filatelia.py`: precios por `Nº Edifil` (atributo 45), con `Estado`
+  (12) mapeado a condición y `Año` (2) como filtro. Ofertas, nunca ventas.
+- `ai_api/sources/search_prices.py`: la segunda fuente. Una consulta por sello,
+  sólo enlaces de hosts permitidos, el precio de la **snippet** («12,50 €», «EUR 9»)
+  y la condición deducida del texto. Sin precio, no hay observación; sin condición,
+  la observación se guarda como `unknown` y no entra en ningún estimado.
+- `ai_api/valuation.py`: **media recortada** (se tiran el mínimo y el máximo cuando
+  hay 4 o más), `n ≥ 3` por condición, `min`/`max`/`sample_size`/`sources`/`method`/
+  `as_of`, y **sólo euros**: otra divisa no se convierte, se dice.
+- La respuesta gana `subject_code` en cada observación (el código que ese precio
+  mira), los valores por sello se rellenan **sólo** desde sus observaciones y de su
+  condición, y la serie se queda en `null` porque no hay observación del conjunto.
+- 47 tests nuevos; **1.769 verdes**; ningún test toca la red.
+
+**Lo que la primera pasada real enseñó** (medido, no supuesto):
+
+- La tienda tiene **muy poco stock**: los códigos 100, 1 y 10 devuelven **un** precio
+  cada uno (10 €, 28 €, 50 €, todos «prueba oficial», mint) y el 286 ninguno. Con
+  `n ≥ 3` eso es un `gap`, que es la respuesta correcta.
+- La búsqueda sí devuelve ofertas (2,90 € y 6,10 € para el 4350 en TodoColeccion),
+  pero **sin condición**: la snippet dice el precio y no el estado, así que la
+  observación entra como `unknown` y no se usa. Para que sirva hay que **abrir la
+  ficha** y leer el estado, que es el paso siguiente (A7b).
+- Corrección de un dato del spike: la «Prueba Oficial 100» está a **10,00 €**, no a
+  1.000 € — el precio viene en unidades menores.
+
+
+### A7b — Estado y precio en la ficha del anuncio (M) — **siguiente**
+
+La valuación está hecha y no sirve de mucho todavía: la tienda tiene un precio por
+código (o ninguno) y la búsqueda devuelve ofertas **sin condición**, así que con
+`n ≥ 3` por condición casi todo acaba en `gap`. Medido: el Edifil 4350 devuelve dos
+ofertas (2,90 € y 6,10 €) en TodoColeccion y las dos entran como `unknown`.
+
+Lo que falta es leer la ficha del anuncio. El plan de implementación:
+
+- `ai_api/sources/listings.py` con un parser por sitio y una interfaz común
+  (`parse(html) -> {price, condition, title}`): **TodoColeccion** (bloque de
+  conservación y precio) y **eBay** (`/itm/…`, tabla de características del artículo).
+  Un sitio nuevo es un parser nuevo, no una rama dentro de otro.
+- `SearchPrices` gana un segundo paso: cuando la snippet trae precio pero no
+  condición, **abre el enlace** (ya está en el allowlist y el `HttpClient` cachea) y
+  lee el estado; si la ficha lo trae mejor, también el precio.
+- Topes: como mucho 3 fichas por sello, y sólo para enlaces del allowlist. Una ficha
+  que no se puede leer deja la observación como estaba, no la inventa.
+- **Primero, un sondeo de la ficha**: la forma real de la URL de un lote de
+  TodoColeccion y de un `/itm/` de eBay, qué HTML traen y qué dice su `robots.txt` de
+  esas rutas (`/lote.cfm?*` y `/lotes/show?*` están prohibidos; hay que comprobar cuál
+  es la URL canónica del anuncio). Sin eso, el parser se escribe a ciegas.
+
+Aceptación: dos fichas guardadas (una de cada sitio) se parsean a precio y condición;
+una ficha sin estado deja la observación en `unknown`; una ficha que falla no crea
+observación; el estimado de una serie con tres ofertas del mismo estado sale; ningún
+test toca la red.
 
 ### A8 — Ejecución (M)
 
@@ -930,3 +995,35 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
 - Real: `navidad 1986` → 2867/2868; `castillos 2007` → 4349/4350; `isabel ii 1850` →
   1–5; `la sagrada familia 1986` → los dos; `quijote 1998` → por motivo y ensanchado;
   `zzzz` → `gap`. 15 tests nuevos; **1.707 verdes**.
+
+### 2026-11-26 — A7 hecho: la valuación, y lo que la tienda no da
+
+- `ai_api/valuation.py`: media recortada (mínimo y máximo fuera con n ≥ 4), `n ≥ 3`
+  por condición, rango, `sample_size`, `sources`, `method`, `as_of`; sólo euros, otra
+  divisa se queda fuera con su motivo.
+- `sources/store.py` (base WooCommerce), `sources/filatelia.py` (precios por
+  `Nº Edifil` con `Estado` y `Año`) y `sources/search_prices.py` (precio de la
+  snippet, condición del texto, sólo hosts permitidos). `FesofiCatalogue` pasa a
+  heredar de `StoreCatalogue`.
+- La respuesta gana `subject_code` por observación; los valores por sello salen sólo
+  de sus observaciones y de su condición, y la serie se queda en `null` sin una
+  observación del conjunto.
+- **Unidades menores**: `"price": "1000"` con `currency_minor_unit: 2` son 10,00 €.
+  La «Prueba Oficial 100» está a 10 €, no a 1.000 € como decía el spike.
+- **Cobertura real**: la tienda da un precio por código (o ninguno) en los que se
+  probaron; la búsqueda da ofertas sin condición. Con `n ≥ 3` y condición conocida,
+  casi todo es `gap`. Eso es honesto y es el motivo de A7b: abrir la ficha de la
+  oferta para leer el estado.
+- 47 tests nuevos; **1.769 verdes**.
+
+### 2026-11-26 — A7b abierto en el plan
+
+- A7 quedó hecho pero sin condiciones: la tienda da un precio por código y la
+  búsqueda devuelve ofertas sin estado, así que el estimado casi nunca se puede
+  calcular. A7b es leer la ficha del anuncio (TodoColeccion, eBay) para sacar la
+  condición, y el precio si la snippet no lo trae.
+- Se añade a la tabla de pasos entre A7 y A8, con su sección: `sources/listings.py`
+  con un parser por sitio, el segundo paso de `SearchPrices`, topes de 3 fichas por
+  sello y un sondeo previo de la forma real de la URL y del `robots.txt` de
+  TodoColeccion (prohíbe `/lote.cfm?*` y `/lotes/show?*`, así que hay que confirmar
+  cuál es la URL canónica del anuncio).

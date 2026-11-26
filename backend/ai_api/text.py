@@ -31,3 +31,28 @@ def strip_html(text: str) -> str:
     """Turn a fragment of HTML into readable text, whitespace collapsed."""
     without_tags = re.sub(r"<[^>]+>", " ", text or "")
     return " ".join(without_tags.split())
+
+
+# How a seller describes a condition, longest match first. "sin circular" means
+# mint, so it has to be checked before the plain "circular".
+CONDITION_RULES = (
+    ("sin circular", "mnh"),
+    ("sin charnela", "mnh"),
+    ("sin fijasellos", "mnh"),
+    ("sin usar", "mnh"),
+    ("charnela", "mh"),
+    ("fijasellos", "mh"),
+    ("usado", "used"),
+    ("matasellad", "used"),
+    ("circular", "used"),
+    ("cto", "cto"),
+)
+
+
+def condition_of(text: str) -> str:
+    """Map a listing's wording to the conditions the API speaks."""
+    lowered = (text or "").lower()
+    for needle, condition in CONDITION_RULES:
+        if needle in lowered:
+            return condition
+    return "unknown"

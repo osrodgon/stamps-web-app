@@ -50,6 +50,12 @@ class ObservationSerializer(serializers.Serializer):
         default=None,
         help_text="Stamp the observation refers to, when it is a stamp price.",
     )
+    subject_code = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        default="",
+        help_text="Catalogue code the price refers to, so a price says which stamp.",
+    )
     kind = serializers.ChoiceField(
         choices=SourceObservation.Kind.choices,
         help_text="Catalogue value, asking price, sale or auction hammer.",

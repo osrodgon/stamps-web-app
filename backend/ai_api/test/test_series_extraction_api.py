@@ -16,6 +16,7 @@ from common.test.ai_api_test_data import (
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 from ai_api.services.llm_service import LLMService
 from ai_api.sources.errors import SourceConfigurationError, SourceUnavailable
+from ai_api.sources.base import Observation
 from ai_api.sources.fesofi import Match
 
 
@@ -32,9 +33,21 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         stub.identify.return_value = Match(gap="not in the catalogue")
         stub.facts.return_value = {}
 
+        shop = Mock()
+        shop.prices.return_value = []
+
+        search = Mock()
+        search.prices.return_value = []
+
         with patch(
             'ai_api.api.views.series_extraction_view.FesofiCatalogue',
             return_value=stub,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchPrices',
+            return_value=search,
         ):
             yield stub
     
@@ -438,6 +451,157 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "No series contains navidad" in response.json()["errors"][0]["message"]
+
+    def test_a_stamp_is_valued_from_the_prices_the_shop_has(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """The value comes from the observations, and says which code it prices."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349", "face_value": "2,49"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        def prices(code, year=""):
+            return [
+                Observation(source="filatelia", price=10, condition="used"),
+                Observation(source="filatelia", price=11, condition="used"),
+                Observation(source="filatelia", price=12, condition="used"),
+                Observation(source="filatelia", price=500, condition="used"),
+                Observation(source="filatelia", price=99, condition="mnh"),
+            ]
+
+        shop = Mock()
+        shop.prices.side_effect = prices
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        # 10 and 500 go; 11 and 12 stay.
+        assert data["stamps"][0]["market_value_used"] == 11.5
+        # One mint price is not an estimate.
+        assert data["stamps"][0]["market_value_mnh"] is None
+        # The series is not the sum of its stamps.
+        assert data["market_value_used"] is None
+
+        assert len(data["observations"]) == 5
+        assert data["observations"][0]["subject_code"] == "4349"
+        assert data["observations"][0]["kind"] == "ask"
+
+    def test_the_search_fills_in_when_the_shop_has_one_price(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """One shop price is not an estimate, so the search is asked too."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "year": "2007"},
+            "stamps": [{"edifil_code": "4349"}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        shop = Mock()
+        shop.prices.return_value = [
+            Observation(source="filatelia", price=10, condition="used")
+        ]
+
+        search = Mock()
+        search.prices.return_value = [
+            Observation(source="search", price=12, condition="used"),
+            Observation(source="search", price=14, condition="used"),
+        ]
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.FilateliaCatalogue',
+            return_value=shop,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.SearchPrices',
+            return_value=search,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        data = response.json()["data"]
+
+        search.prices.assert_called_once()
+        assert data["stamps"][0]["market_value_used"] == 12.0  # 10, 12, 14
+        assert sorted({row["source"] for row in data["observations"]}) == [
+            "filatelia",
+            "search",
+        ]
+
+    def test_no_price_is_a_gap_not_a_zero(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+        series_extraction_cleaned_data,
+    ):
+        self.permission(granted=True)
+
+        search = Mock()
+        search.find_series_url.return_value = "https://catalogodesellos.fesofi.es/producto/0199/"
+        scraping = Mock()
+        scraping.extract_links.return_value = ["https://catalogodesellos.fesofi.es/producto/0199/"]
+        scraping.scrape_content.return_value = "content"
+        scraping.clean_scraped_data.return_value = series_extraction_cleaned_data
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.SearchService', return_value=search
+        ), patch(
+            'ai_api.api.views.series_extraction_view.ScrapingService', return_value=scraping
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        data = response.json()["data"]
+        fields = [gap["field"] for gap in data["gaps"]]
+
+        assert "market_value" in fields
+        assert data["stamps"][0]["market_value_used"] is None
+        assert data["observations"] == []
 
     def test_post_series_extraction_refuses_a_host_outside_the_allowlist(
         self,
