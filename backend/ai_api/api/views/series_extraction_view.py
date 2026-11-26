@@ -1,8 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from dataclasses import replace
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
+from django.conf import settings
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
@@ -12,12 +15,17 @@ from common.log.logger import Logger
 from common.core.schemas import standardized_response
 from ai_api.sources.errors import (
     SourceConfigurationError,
+    SourceError,
     SourceNotAllowed,
     SourceNotFound,
     SourceUnavailable,
 )
+from ai_api.sources.base import Observation
 from ai_api.sources.fesofi import FesofiCatalogue
+from ai_api.sources.filatelia import FilateliaCatalogue
 from ai_api.sources.http import get_client
+from ai_api.sources.search_prices import SearchPrices
+from ai_api.valuation import MINIMUM_SAMPLE, value
 from ai_api.services.search_service import SearchService
 from ai_api.services.scraping_service import ScrapingService
 from ai_api.services.llm_service import LLMService
@@ -139,9 +147,9 @@ class SeriesExtractionView(Logger, APIView):
                 # the scraper are what is left when it does not.
                 match = catalogue.identify(name, date)
                 if match.found:
+                    term = (match.term or {}).get("name", "")
                     self.log.debug(
-                        f"Catalogue match: '{match.term.get('name')}' "
-                        f"(score {match.score})"
+                        f"Catalogue match: '{term}' (score {match.score})"
                     )
                     clean_data = catalogue.facts(match.products)
                 else:
@@ -189,25 +197,39 @@ class SeriesExtractionView(Logger, APIView):
                     status=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
 
-            # No observation backs a price yet, so the price fields stay empty
-            # even if the provider wrote something. A7 fills them from the
-            # observations and A9 adds the validator that enforces this for every
-            # factual field; until then, a number here would be unauditable.
             validated = response_serializer.validated_data
+
+            # Every value comes from an observation: whatever the provider wrote
+            # is overwritten with what the sources support, or with null.
+            observations = self._prices(clean_data)
+            by_code = self._by_code(observations)
+
+            for stamp in validated.get("stamps") or []:
+                if not isinstance(stamp, dict):
+                    continue
+                code = str(stamp.get("edifil_code") or "").strip()
+                found = by_code.get(code, [])
+                stamp["market_value_mnh"] = self._number(value(found, condition="mnh"))
+                stamp["market_value_used"] = self._number(value(found, condition="used"))
+
+            # A series is not the sum of its stamps: without an observation of the
+            # complete set there is no series value, and adding one up would be
+            # inventing it.
             validated["market_value_mnh"] = None
             validated["market_value_used"] = None
-            for stamp in validated.get("stamps") or []:
-                if isinstance(stamp, dict):
-                    stamp["market_value_mnh"] = None
-                    stamp["market_value_used"] = None
+            validated["observations"] = [self._observation_row(item) for item in observations]
 
-            # If the catalogue could not identify the series and the search had to
-            # rescue it, say so: the next reader deserves to know which door was
-            # used, and DataDesk can look at it.
+            gaps = list(validated.get("gaps") or [])
             if identity_gap:
-                validated["gaps"] = list(validated.get("gaps") or []) + [
-                    {"field": "identity", "reason": identity_gap}
-                ]
+                gaps.append({"field": "identity", "reason": identity_gap})
+            if not observations:
+                gaps.append(
+                    {
+                        "field": "market_value",
+                        "reason": "No price was found for any of the stamps.",
+                    }
+                )
+            validated["gaps"] = gaps
 
             self.log.debug(f"AI series extraction completed successfully for series: {name}")
             return Response(
@@ -271,6 +293,88 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    def _prices(self, clean_data: dict) -> List[Observation]:
+        """Ask the sources for the price of the first stamps of the series.
+
+        The shop answers with stock and a written condition; the search answers
+        with asking prices and a condition guessed from the listing. The search is
+        only asked when the shop did not give enough prices to estimate, because
+        every stamp costs one query.
+        """
+        shop = FilateliaCatalogue()
+        search = SearchPrices()
+
+        stamps = (clean_data.get("stamps") or [])[: settings.AI_PRICE_STAMPS]
+        serie = clean_data.get("serie_info") or {}
+        year = str(serie.get("year") or "")
+        label = str(serie.get("issue_name") or "")
+
+        observations: List[Observation] = []
+        seen = set()
+
+        for stamp in stamps:
+            code = str(stamp.get("edifil_code") or "").strip()
+            if not code:
+                continue
+
+            found = self._ask(shop.prices, code, year)
+            if len(found) < MINIMUM_SAMPLE:
+                found += self._ask(search.prices, code, label, year)
+
+            for observation in found:
+                key = (observation.source, observation.url, observation.price)
+                if key in seen:
+                    continue
+                seen.add(key)
+                # The code we asked for is the link between a price and a stamp,
+                # so it is set here even if a source forgets to carry it.
+                observations.append(
+                    observation
+                    if observation.subject_code
+                    else replace(observation, subject_code=code)
+                )
+
+        self.log.debug(f"{len(observations)} observation(s) for the series")
+        return observations
+
+    def _ask(self, prices, *args) -> List[Observation]:
+        """Call a price source, turning its failure into a log line."""
+        try:
+            return list(prices(*args))
+        except SourceError as error:
+            self.log.warning(f"Could not price {args[0]}: {error}")
+            return []
+
+    @staticmethod
+    def _by_code(observations: List[Observation]) -> Dict[str, List[Observation]]:
+        """Group the observations by the catalogue code they price."""
+        grouped: Dict[str, List[Observation]] = {}
+        for observation in observations:
+            grouped.setdefault(observation.subject_code, []).append(observation)
+        return grouped
+
+    @staticmethod
+    def _number(estimate) -> float | None:
+        """Return the estimate as a JSON number, or None when there is none."""
+        if estimate.estimate is None:
+            return None
+        return float(estimate.estimate)
+
+    @staticmethod
+    def _observation_row(observation: Observation) -> Dict[str, Any]:
+        """Shape one observation the way the response contract speaks."""
+        return {
+            "source": observation.source,
+            "external_id": observation.external_id,
+            "url": observation.url,
+            "kind": observation.kind,
+            "price": observation.price,
+            "currency": observation.currency,
+            "condition": observation.condition,
+            "observed_at": observation.observed_at,
+            "subject_code": observation.subject_code,
+        }
+
     def _scraped(self, scraping_service: ScrapingService, url: str) -> dict:
         """Fetch a series page and clean it, or fail with a reason (422)."""
         series_urls = scraping_service.extract_links(url)

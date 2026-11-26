@@ -9,9 +9,11 @@
   client** (allowlist, retries, per-host limit, cache: a 29-stamp series went from
   7.0 s to 0.9 s) and **the series is identified in the Fesofi catalogue** — by
   partial name, with the facts read from its attributes and a scored matcher that
-  reports a tie as a gap. **Next is A7** (valuation): prices come from
-  `filatelia.online` and the allowed-site search; Colnect is out. Details in Notes
-  below.
+  reports a tie as a gap. **A7 is done too**: the valuation is a trimmed mean over
+  the observations the sources return, `n ≥ 3` per condition, euros only.
+  **Next is A7b**: the shop has one price per code and the search returns prices
+  without a condition, so almost everything is a gap until the listing page is
+  read. Details in Notes below.
 - **Proveedor de IA (2026-11-25)**: la API usará **opencode** como único proveedor y
   **Gemini y Groq se retiran del código** (paso **A1b**, anunciado en el plan con la
   superficie exacta a borrar). Se llama por la **API de inferencia del Console**
@@ -76,21 +78,18 @@
 
 ## Retomar aquí (guardado 2026-11-26)
 
-**A0, A1, A1b, A2 y A6 cerrados. Lo siguiente es A7 (valoración).** El contrato pide
+**A0, A1, A1b, A2, A6 y A7 cerrados. Lo siguiente es A7b.** El contrato pide
 evidencia, el proveedor es opencode, la red pasa por un cliente con allowlist y
-caché, y la identidad la resuelve el catálogo de Fesofi por nombre parcial, con los
-hechos leídos de sus atributos y un matcher que declara los empates.
+caché, la identidad la resuelve el catálogo de Fesofi y el valor sale de una media
+recortada sobre las observaciones, con `n ≥ 3` y sólo euros.
 
 - **Leer primero**: `memory-bank/ai-api-plan.md` §3 (decisiones), §4 (pasos) y §7
   (registro). Lo que contestó cada fuente, con los códigos HTTP reales, está en
   `memory-bank/ai-sources-spike.md`; la evidencia cruda, en `ai-sources-spike.json`.
-- **A7 — lo siguiente** (M, sube al quedarse sin Colnect): dos fuentes de precio en
-  orden —**`filatelia.online`** primero (WooCommerce, `Nº Edifil` como atributo,
-  precio de oferta por sello con su `Estado`) y la **búsqueda en sitios permitidos**
-  después (snippet o ficha)—, cada precio una observación con su `kind`; media
-  recortada sobre la misma condición con `sample_size`, `method`, `sources` y
-  `as_of`; por debajo del mínimo, `null` y un `gap`. Descartados al mirarlos:
-  `circulomadrid.com` y `stampworld.com` (403 de Cloudflare).
+- **A7b — lo siguiente**: abrir la ficha de la oferta (TodoColeccion, eBay) para
+  leer el **estado** además del precio. Hoy la tienda da un precio por código y la
+  búsqueda da ofertas sin condición, así que casi todo es `gap`. Un parser por sitio,
+  con `HttpClient`, y lo que no se pueda leer es un gap, no un cero.
 - **Ya no hay nada bloqueado**: Colnect queda fuera (2026-11-26), así que ni A3 ni
   la clave CAPI existen en el plan. Lo único abierto son dos decisiones que no
   frenan código: el modelo y dónde se dispara la investigación.
@@ -166,6 +165,23 @@ hechos leídos de sus atributos y un matcher que declara los empates.
 - **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
 
 ## Session Log
+- [Today] AI API A7: la valoración, y el dato que la hace honesta. `ai_api/valuation.py`
+  hace una **media recortada** (mínimo y máximo fuera con n ≥ 4), exige `n ≥ 3` por
+  condición, devuelve rango, `sample_size`, `sources`, `method` y `as_of`, y **sólo
+  euros**: otra divisa no se convierte, se dice. `sources/store.py` saca la parte
+  común de WooCommerce, `sources/filatelia.py` lee precios por `Nº Edifil` con su
+  `Estado` y su `Año`, y `sources/search_prices.py` lee el precio de la snippet y
+  deduce la condición del texto (sólo hosts permitidos, sin precio no hay
+  observación). La respuesta gana `subject_code` por observación; los valores por
+  sello salen sólo de sus observaciones y de su condición, y la serie se queda en
+  `null` porque no hay observación del conjunto. **Dos correcciones de datos**: el
+  precio de la Store API viene en **unidades menores** (la «Prueba Oficial 100» son
+  10 €, no 1.000 €) y la tienda tiene mucho menos stock de lo que parecía: 100, 1 y
+  10 dan **un** precio cada uno y el 286 ninguno. La búsqueda sí encuentra ofertas
+  (2,90 € y 6,10 € para el 4350) pero **sin condición**, así que no entran en el
+  estimado. De ahí que A7 quede hecho y **A7b** sea abrir la ficha del anuncio para
+  leer el estado: sin condición no hay valor, y el `gap` es la respuesta correcta.
+  47 tests nuevos, 1.769 verdes.
 - [Today] AI API A6, segunda rebanada: **los hechos vienen del catálogo**. `identify()`
   devuelve un `Match` con `products`, `term`, `score`, `candidates` y `gap`; el orden
   es cobertura de palabras, nombre exacto antes que parcial, serie antes que motivo y

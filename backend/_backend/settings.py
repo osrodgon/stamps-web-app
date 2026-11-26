@@ -64,7 +64,7 @@ AI_SOURCE_ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
         'AI_SOURCE_ALLOWED_HOSTS',
-        'catalogodesellos.fesofi.es,api.colnect.net,'
+        'catalogodesellos.fesofi.es,filatelia.online,www.filatelia.online,'
         'todocoleccion.net,www.todocoleccion.net,'
         'ebay.es,www.ebay.es,ebay.com,www.ebay.com,'
         'google.serper.dev',
@@ -76,6 +76,10 @@ AI_SOURCE_CONNECT_TIMEOUT = float(os.getenv('AI_SOURCE_CONNECT_TIMEOUT', '5'))
 AI_SOURCE_RETRIES = int(os.getenv('AI_SOURCE_RETRIES', '2'))
 AI_SOURCE_MAX_PER_HOST = int(os.getenv('AI_SOURCE_MAX_PER_HOST', '4'))
 AI_SOURCE_CACHE_TTL = int(os.getenv('AI_SOURCE_CACHE_TTL', '3600'))
+# How many stamps of a series are priced in one request: each one is a term
+# lookup plus a product list, and a 57-stamp series would pay for all of them.
+AI_PRICE_STAMPS = int(os.getenv('AI_PRICE_STAMPS', '5'))
+
 AI_SOURCE_USER_AGENT = os.getenv(
     'AI_SOURCE_USER_AGENT',
     'stamps-web-app/0.1 (+https://github.com/osrodgon/stamps-web-app)',

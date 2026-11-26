@@ -9,7 +9,10 @@ seam so they do not each invent their own HTTP calls.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Union
+from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ai_api.models import SourceObservation
@@ -17,6 +20,27 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from stamps_api.models import Stamp
 
     Subject = Union[Issue, Stamp]
+
+
+@dataclass(frozen=True)
+class Observation:
+    """One price seen in one place, with the page behind it.
+
+    It is the same information `SourceObservation` stores, kept free of Django so
+    it can be produced, priced and tested without a database. The model is what
+    persists it once there is a `Stamp` or an `Issue` to attach it to.
+    """
+
+    source: str
+    price: Decimal
+    kind: str = "ask"
+    currency: str = "EUR"
+    condition: str = "unknown"
+    url: str = ""
+    external_id: str = ""
+    subject_code: str = ""
+    observed_at: Optional[datetime] = None
+    raw: Dict[str, Any] = field(default_factory=dict)
 
 
 class SourceAdapter(ABC):

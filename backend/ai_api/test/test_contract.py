@@ -36,8 +36,19 @@ def no_catalogue_match():
     stub.identify.return_value = Match(gap="not in the catalogue")
     stub.facts.return_value = {}
 
+    shop = _Mock()
+    shop.prices.return_value = []
+
+    search = _Mock()
+    search.prices.return_value = []
+
     with patch(
         "ai_api.api.views.series_extraction_view.FesofiCatalogue", return_value=stub
+    ), patch(
+        "ai_api.api.views.series_extraction_view.FilateliaCatalogue",
+        return_value=shop,
+    ), patch(
+        "ai_api.api.views.series_extraction_view.SearchPrices", return_value=search
     ):
         yield stub
 
@@ -215,7 +226,7 @@ class TestEndpointNeverInventsPrices(AbstractApiUnitTest):
         assert data["observations"] == []
         assert data["sources"] == []
         assert data["valuation"] is None
-        # The catalogue did not identify it and the search rescued it: the
-        # response says so instead of pretending the identity is certain.
-        assert [gap["field"] for gap in data["gaps"]] == ["identity"]
+        # The catalogue did not identify it, the search rescued it and the shop
+        # had no price: the response says both things instead of pretending.
+        assert [gap["field"] for gap in data["gaps"]] == ["identity", "market_value"]
         assert data["description_source"] == "llm"
