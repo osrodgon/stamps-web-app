@@ -61,6 +61,11 @@ class TestFmtNumber:
     def test_english_format_zero(self) -> None:
         assert fmt_number(0, "en") == "-"
 
+    def test_zero_can_be_written_as_zero(self) -> None:
+        """A counter that is legitimately zero says 0, not the table's dash."""
+        assert fmt_number(0, "en", zero="0") == "0"
+        assert fmt_number(None, "es", zero="0") == "0"
+
     def test_english_format_none(self) -> None:
         assert fmt_number(None, "en") == "-"
 

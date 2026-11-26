@@ -311,8 +311,8 @@ adds the other two screens. Every step leaves the app running.
 |---|---|---|---|---|
 | A1 | Ownership and JWT | — | M | **hecho 2026-11-26** |
 | A2 | Overview list: counters and covers | A1 | S | **hecho 2026-11-26** |
-| A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (rama 476, pendiente de PR) |
-| A4 | `CollectionCard` | A3 | M | pendiente |
+| A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (mergeado, PR #477) |
+| A4 | `CollectionCard` | A3 | M | **hecho 2026-11-26** |
 | A5 | Screen, dialog and states | A4 | M | pendiente |
 | A6 | Phase A close-out | A5 | S | pendiente |
 
@@ -342,7 +342,7 @@ an empty collection, the query count.
 numbers in the test data; the covers keep only stamps with a `fesofi_code`, are stable
 and are capped at 12. 14 tests new, suite at 1.781.
 
-**A3 — `CollectionService` (frontend) — HECHO 2026-11-26, pendiente de commit y PR.**
+**A3 — `CollectionService` (frontend) — HECHO 2026-11-26 (mergeado, PR #477).**
 `services/collection_service.py` with `get_collections`, `create_collection`,
 `update_collection` (PUT) and `delete_collection`; `URLs.Backend.collections` and
 `collection_items`; the service takes the token and sends `Authorization: JWT`. Tests
@@ -353,12 +353,17 @@ error.
 `URLs.Backend.collections` and `collection_items`; 9 tests with `_make_request`
 mocked, and the frontend suite at 660.
 
-**A4 — `CollectionCard`.**
+**A4 — `CollectionCard` — HECHO 2026-11-26.**
 `components/collection/collection_card.py`: collage of up to six stamps (one big,
 2–6 in three columns, `no_stamp.webp` when none), name, summary, bar and percentage.
 It takes no click handler yet: B3 adds it when the route exists. Tests: 0/1/6 covers,
 missing file, `total = 0`.
 *Leaves working:* the card renders on its own, with any data dict.
+*Done:* `CollectionCard` paints the first six covers whose file exists (one big, or a
+three-column mosaic), the placeholder when none does, the summary through
+`collections.summary`, and the bar with its percentage (`—` when the collection is
+empty). It is not clickable until B3. `fmt_number` gained a `zero` argument so a counter
+that is zero reads `0` while the tables keep their dash. 14 tests; frontend suite 675.
 
 **A5 — Screen, dialog and states.**
 `CollectionsPage`: header without separator, toolbar with the count and
@@ -506,9 +511,14 @@ this feature.
 counts as one stamp, a stamp without a `fesofi_code` is not a cover, and a collection
 without an owner is not listed. 14 tests new; suite **1.781**.
 
-**A3 is implemented (2026-11-26) and not merged yet.** It lives in the branch
-`476-chore-collections-service-and-backend-routes`, uncommitted. `CollectionService(token)`
-sends `Authorization: JWT` and
-offers the four calls; the URLs live in `URLs.Backend`; 9 tests mock `_make_request`
-and assert URL, method, header and payload, plus the `None` on a network error. Frontend
-suite **660**. **Next action: A4** — the `CollectionCard`.
+**A3 is done and merged (2026-11-26, PR #477).** `CollectionService(token)` sends
+`Authorization: JWT` and offers the four calls; the URLs live in `URLs.Backend`; 9 tests
+mock `_make_request` and assert URL, method, header and payload, plus the `None` on a
+network error.
+
+**A4 is implemented (2026-11-26) and not merged yet.** It lives in the branch
+`478-feature-collections-overview-card`, uncommitted: `components/collection/collection_card.py`
+and its 14 tests, plus the `zero` argument of `fmt_number`. Frontend suite **675**.
+
+**Next action: A5** — the `CollectionsPage` (grid, empty/loading/error, the
+create/rename/delete dialog and the 403 → login path), after A4 is merged.
