@@ -109,3 +109,88 @@ class TestGetSeries(ServiceTest):
             service, "_make_request", new_callable=AsyncMock, return_value=None
         ):
             assert await service.get_series(7) is None
+
+
+class TestIssueDetail(ServiceTest):
+    """The detail lives under the series of the collection."""
+
+    async def test_it_calls_the_detail_url(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            result = await service.get_issue(7, 3)
+
+        call = self.call(mock_request)
+        assert result is response
+        assert call["request_type"] == service.GET
+        assert call["url"] == f"{URLs.Backend.collections}7/issues/3/"
+        assert call["headers"] == {"Authorization": f"JWT {TOKEN}"}
+
+
+class TestAddItem(ServiceTest):
+    """Adding a copy posts the stamp to the collection's items endpoint."""
+
+    async def test_it_posts_the_stamp(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            await service.add_item(7, 9569)
+
+        call = self.call(mock_request)
+        assert call["request_type"] == service.POST
+        assert call["url"] == f"{URLs.Backend.collections}7/items/"
+        assert call["payload"] == {"stamp": 9569}
+
+
+class TestUpdateItem(ServiceTest):
+    """Editing a copy is a PUT of the six fields, without a trailing slash."""
+
+    async def test_it_puts_the_payload(self, service, response):
+        payload = {"quantity": 2, "price_paid": "10.00", "note": "x"}
+
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            await service.update_item(4, payload)
+
+        call = self.call(mock_request)
+        assert call["request_type"] == service.PUT
+        assert call["url"] == f"{URLs.Backend.collection_items}4"
+        assert call["payload"] == payload
+
+
+class TestDeleteItem(ServiceTest):
+    """Removing a copy is a DELETE of its item."""
+
+    async def test_it_deletes_the_item(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            await service.delete_item(4)
+
+        call = self.call(mock_request)
+        assert call["request_type"] == service.DELETE
+        assert call["url"] == f"{URLs.Backend.collection_items}4"
+        assert "payload" not in call
+
+
+class TestReferences(ServiceTest):
+    """The two selects load their lists with the same token."""
+
+    async def test_the_condition_types(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            await service.get_condition_types()
+
+        call = self.call(mock_request)
+        assert call["url"] == URLs.Backend.condition_types
+        assert call["headers"] == {"Authorization": f"JWT {TOKEN}"}
+
+    async def test_the_locations(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            await service.get_locations()
+
+        assert self.call(mock_request)["url"] == URLs.Backend.locations

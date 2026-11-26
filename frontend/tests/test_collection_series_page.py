@@ -111,6 +111,7 @@ class TestRender(PageTest):
         assert len(view._rows_column.controls) == 2
         assert view._rows_box.visible is True
         assert view._empty_text.visible is False
+        assert view._rows_column.controls[0].on_click is not None
 
     def test_an_empty_page_shows_the_empty_state(self, view):
         view._pagination.update_state = MagicMock()
@@ -148,3 +149,12 @@ class TestCollectionLoading(PageTest):
         await view._load_collection()
 
         view.main_page.push_route.assert_awaited_once_with("/collections")
+
+
+class TestOpenSeries(PageTest):
+    """A row is a door to the series detail (B4)."""
+
+    async def test_it_pushes_the_series_route(self, view, page):
+        await view._push_issue(3)
+
+        page.push_route.assert_awaited_once_with("/collections/7/issues/3")

@@ -924,7 +924,13 @@ when A is merged into `development`.
       own label; `IssueProgressCard` paints each row. The header shows series and stamps,
       **not** the collection's paid total (the overview row does not carry it). Frontend
       suite 744. No browser pass: the running backend image predates B1/B2.
-- [ ] B4 — `CollectionIssuePage` (L): read-only series header + stamp cards with "Your copy"
+- [x] B4 — **`CollectionIssuePage`** (2026-11-26, L): read-only series header (the admin's
+      components with `hide_action_icons=True`) and `CollectionStampCard` per stamp with
+      "Your copy": six fields, save/cancel/remove, `Add my copy`, quantity and price
+      validation and a disabled reference select with a hint when the lists fail. The
+      summary is recomputed from the cards (no request). `RouteResolver` adds the detail
+      route and the series rows become links; `CollectionItemService` gains the six calls.
+      31 tests; frontend suite 775. No browser pass: the backend image predates B1/B2.
 - [ ] B5 — Close-out (S): states, i18n, paginator, browser pass
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 

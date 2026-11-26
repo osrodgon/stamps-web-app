@@ -47,6 +47,8 @@ class URLs:
         issues_collections =    f"{BACKEND_URL}/issues/collections/"
         collections =           f"{BACKEND_URL}/collections/"
         collection_items =      f"{BACKEND_URL}/collection_items/"
+        condition_types =       f"{BACKEND_URL}/condition_types/"
+        locations =             f"{BACKEND_URL}/locations/"
         
     class Frontend:
         """Frontend route paths.

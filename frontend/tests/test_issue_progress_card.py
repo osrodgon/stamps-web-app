@@ -127,9 +127,17 @@ class TestFigures:
 
 
 class TestLink:
-    """The row is not a link until the series screen exists."""
+    """The row is a link when the page gives it a handler."""
 
-    def test_it_is_not_clickable(self):
+    def test_it_is_not_clickable_without_a_handler(self):
         row = Rows.build(Rows.data())
 
         assert row.on_click is None
+
+    def test_it_opens_the_series(self):
+        opened = []
+
+        row = IssueProgressCard(Rows.data(), "en", on_open=opened.append)
+        row.on_click(None)
+
+        assert opened == [1]

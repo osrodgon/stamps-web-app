@@ -403,7 +403,8 @@ class CollectionSeriesPage(StandardPage):
         """Paint the rows, the empty state and the paginator."""
         self._lang = get_language()
         self._rows_column.controls = [
-            IssueProgressCard(row, self._lang) for row in rows
+            IssueProgressCard(row, self._lang, on_open=self._open_issue)
+            for row in rows
         ]
         self._rows_box.visible = bool(rows)
         self._empty_text.visible = not rows
@@ -471,6 +472,16 @@ class CollectionSeriesPage(StandardPage):
         self._page_size = page_size or self.PAGE_SIZE
         self._page_number = 1
         await self.load_series()
+
+    def _open_issue(self, issue_id: int) -> None:
+        """Open one series of this collection."""
+        self.main_page.run_task(self._push_issue, issue_id)
+
+    async def _push_issue(self, issue_id: int) -> None:
+        """Navigate to the series' detail."""
+        await self.main_page.push_route(
+            f"{URLs.Frontend.collections}/{self._collection_id}/issues/{issue_id}"
+        )
 
     def _retry(self, event: ft.ControlEvent) -> None:
         """Load the screen again after an error."""
