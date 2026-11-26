@@ -6,6 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from _backend.settings import USER_VIEWS
 from common.api.messages import Messages
 from common.log.logger import Logger
+from common.core.authorization import Authorization
 from common.core.jwt_token import JwtToken
 
 class HasSpecificKeyName(Logger, HasAPIKey):
@@ -43,24 +44,18 @@ class HasSpecificKeyName(Logger, HasAPIKey):
         
     def has_permission(self, request, view):
         self.log.debug("Trying to authenticate user...")
-        try:
-            auth_type, key = request.META.get("HTTP_AUTHORIZATION").split(" ")
-        except ValueError:
-            self.log.error("Header has an invalid format.")
-            raise PermissionDenied(
-                Messages.Auth.invalid_format()
-            )
-        
-        match auth_type.upper():
+        authorization = Authorization.from_request(request)
+
+        match authorization.scheme:
             case "API-KEY":
-                self.__check_api_key_is_valid(key)        
+                self.__check_api_key_is_valid(authorization.credentials)
             case "JWT":
-                self.__check_jwt_is_valid(key)
+                self.__check_jwt_is_valid(authorization.credentials)
             case _:
                 self.log.error("Invalid authentication type.")
                 raise PermissionDenied(
                     Messages.Auth.not_supported()
                 )
-                
-        return self.__apply_permissions(view, key)
+
+        return self.__apply_permissions(view, authorization.credentials)
         

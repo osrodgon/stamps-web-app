@@ -156,9 +156,55 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (plan closed 2026-11-23, implementation NOT started)**: the three reading screens are designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection (its series, paginated server-side, 15 per page), one series (catalogue read-only + one card per stamp with the «Your copy» block). Mockups: `memory-bank/mockups/collections-overview.html`, `collection-series.html`, `collection-series-detail.html` (real pictures from `frontend/assets/stamps/`). **All decisions closed** (D0 the user comes from the **JWT** the login returns and the collection views are already in `USER_VIEWS`; D1/D2 the user creates, renames and deletes their collections and adds/removes only *their copy* — the catalogue is admin-only; D3 the six item fields; D4 the collection card is a collage of up to six stamps, twelve candidates from the API and `no_stamp` when none; D5 the series card shows progress, paid and catalogue; D6 15 per page; D7 year → date → catalogue code with a sort selector; D8 stamps you do not own appear dimmed with `Add my copy`; D9 name + year filters). **Step 1 is announced and waiting for the go-ahead**, with two questions open to the user: whether the `PATCH` whitelist closes now or in step 5, and whether the existing tests switch to a real `Authorization: JWT` header. Ten steps in plan §6; the catalogue browser with «Select All in Series» is a later phase.
+- **Normal-user collections (A1 done 2026-11-26, A2 next)**: the three reading screens are
+  designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
+  (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
+  card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
+  done**: the `CurrentUser` class reads the JWT, the four collection and item views
+  are scoped by it (foreign row → 404), the item update is a six-field serializer that
+  refuses `collection`/`stamp`, `POST /collection_items/` refuses a foreign collection,
+  `POST /collections/` takes the owner from the token and `?username=` is gone. **Measured**:
+  a missing header is **403** (DRF only makes it 401 with a challenge header, and
+  `CustomAPIKeyAuthentication` has none) — the plan and issue said 401 and are corrected.
+  Suite 1.767 (51 new tests with real tokens; the old auth permutations went). **Next: A2**
+  — the overview counters and covers. Decisions still standing: the series order **mirrors
+  `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
+  and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones A1: **la propiedad sale del token**. `common/core/current_user.py`
+  convierte el `Authorization: JWT` en el `UserCollection` y las cuatro vistas de
+  colecciones e items se acotan con él: lista, lectura, renombrado y borrado, con **404**
+  para la fila de otro usuario. El `PUT` de items estrena `CollectionItemsUpdateSerializer`
+  con los seis campos de «Tu copia» y rechaza `collection`/`stamp` (el `GenericSerializer`
+  convierte el whitelist en un 400 real), y `POST /collection_items/` rechaza una colección
+  ajena. `POST /collections/` deja de buscar el usuario en `X-API-KEY` — se va el `# TODO` y
+  el método — y `?username=` desaparece del esquema. 45 tests con **tokens de verdad**
+  (`JwtToken().create()` en fixtures): solo lo mío, 404 ajeno, 403 sin cabecera, token malo
+  y master key. **La sorpresa**: sin cabecera es **403**, no 401 — DRF solo convierte
+  `AuthenticationFailed` en 401 si la clase de autenticación declara un challenge header, y
+  `CustomAPIKeyAuthentication` no lo hace; el plan y el issue decían 401 y se corrigieron.
+  Un 401 real exigiría `authenticate_header()` y 75 expectativas en la suite, así que queda
+  fuera. La suite baja de 1.823 a **1.761** porque las permutaciones de auth (el mismo
+  `PermissionDenied` mockeado por método) se sustituyen por un caso por comportamiento, ya
+  cubierto en `common/test/test_permissions.py`. Después, siguiendo la regla nueva de que
+  **el código vive en clases**, `current_user` pasó a `CurrentUser(request).get()` y los
+  helpers de los tests a métodos estáticos (`Api.url`, `Api.headers`, `Requests.with_header`);
+  la regla quedó escrita en `opencode_rules.md`. Y, por la regla de **reutilizar antes de
+  escribir**, el parseo del header se movió a `common/core/authorization.py`, que ahora usan
+  el permiso y `CurrentUser` (antes cada uno partía la cadena a su manera): 6 tests nuevos.
+  Verde: **51 tests** de la zona y la suite en **1.767**.
+- [Today] Colecciones de usuario: **mockups y plan revisados antes de escribir código**.
+  Los tres mockups pierden el nombre de usuario de la derecha del header (ya está en el
+  drawer) y el separador que solo existía para él. El plan se contrastó con el código y
+  salieron cinco correcciones: sin cabecera son **401**, no 403; el **paso A1 incluye las
+  vistas de items y el whitelist del update** (si no, un item se puede mover a la colección
+  de otro); el orden de series **copia `/issues/`** (`sortBy=date`, empate por `id`) y no
+  toca DataDesk; los servicios siguen **Flet-free** y reciben el token de la página; y los
+  contadores usan **etiquetas neutras** porque el sistema de locales no tiene plurales.
+  Renombrar y editar un item van por **`PUT`**, que ya existe. El plan queda en dos fases
+  (A1–A6 overview, B1–B5 las otras dos pantallas), con contrato, ficheros y tests por paso.
+  Nada de código tocado: lo siguiente es A1.
 - [Today] AI API A10 y cierre del plan: **el cierre encontró tres promesas sin
   cumplir y las arregló**. `sources` llegaba siempre vacío —ahora la vista informa de
   cada fuente de precios con `ok` / `empty` / `error` / `skipped`, y un fallo deja de

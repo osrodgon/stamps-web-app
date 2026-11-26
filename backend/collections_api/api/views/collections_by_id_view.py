@@ -1,19 +1,18 @@
-from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema
 
-from common import api
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
+from common.core.current_user import CurrentUser
 from common.core.schemas import standardized_response
 from collections_api.models import Collection
 from collections_api.api.serializers.collection_response_serializer import CollectionResponseSerializer
 from collections_api.api.serializers.collection_request_serializer import CollectionRequestSerializer
+from users_api.models import UserCollection
 
 class CollectionsByIdView(Logger, APIView):
     """Manages API operations for a single Collection instance.
@@ -24,18 +23,23 @@ class CollectionsByIdView(Logger, APIView):
     """
     serializer_class = CollectionResponseSerializer
 
-    def __get_object(self, pk: int) -> Collection:
-        """Retrieves a Collection instance by its primary key.
+    def __get_object(self, pk: int, user: UserCollection) -> Collection:
+        """Return the caller's collection with that id, or None.
+
+        A collection of another user is reported as missing on purpose: whether it
+        exists is none of the caller's business.
 
         Args:
             pk (int): The primary key of the collection to retrieve.
+            user (UserCollection): The user the JWT belongs to.
 
         Returns:
-            Collection: The found collection instance, or None if it does not exist.
+            Collection: The found collection instance, or None if it does not
+                exist or belongs to somebody else.
         """
         try:
             self.log.debug(Messages.Database.querying("collection", pk))
-            return Collection.objects.get(pk=pk)
+            return Collection.objects.get(pk=pk, user=user)
         except Collection.DoesNotExist:
             self.log.warning(Messages.Database.not_found("collection", pk))
             return None
@@ -78,7 +82,7 @@ class CollectionsByIdView(Logger, APIView):
                         data and 200 OK status, or a 404 Not Found response.
         """
         self.log.debug(Messages.Get.retrieve_one("collection", pk))
-        collection = self.__get_object(pk)
+        collection = self.__get_object(pk, CurrentUser(request).get())
         
         if collection is None:
             message = Messages.Get.not_found("collection", pk)
@@ -136,7 +140,7 @@ class CollectionsByIdView(Logger, APIView):
                         a 404 if not found, or a 400 on validation error.
         """
         self.log.debug(Messages.Put.update_one("collection", pk, request.data))
-        collection = self.__get_object(pk)
+        collection = self.__get_object(pk, CurrentUser(request).get())
         if collection is None:
             message = Messages.Put.not_found("collection", pk)
             self.log.warning(message)
@@ -199,7 +203,7 @@ class CollectionsByIdView(Logger, APIView):
                         or a 404 Not Found response if the item does not exist.
         """
         self.log.debug(Messages.Delete.delete_one("collection", pk))
-        collection = self.__get_object(pk)
+        collection = self.__get_object(pk, CurrentUser(request).get())
         if collection is None:
             message = Messages.Delete.not_found("collection", pk)
             self.log.warning(message)

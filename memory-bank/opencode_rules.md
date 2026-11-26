@@ -7,6 +7,19 @@
 4. Update memory-bank/ after EVERY task
 5. Follow file structure: backend/{module}_api/api/views/, serializers/
 
+## Classes are mandatory (2026-11-26)
+- **Backend and frontend code lives in classes.** A module is a folder of classes,
+  not a bag of loose functions. A helper is a class with a method:
+  `CurrentUser(request).get()`, **not** `current_user(request)`.
+- **A standalone function is the exception** and needs a reason a class cannot
+  serve: a pytest fixture (`@pytest.fixture` requires a function), a framework
+  callback that must be a function, a module-level constant, or code that has to run
+  before a class can exist. "It is shorter" is not a reason.
+- Applies to tests too: helpers are static methods of a small class, and test
+  functions live inside a class. Fixtures are the only module-level functions.
+- Views, serializers, services, models, pages and components were already classes;
+  this rule is about the small helpers that were slipping through as functions.
+
 ## Tech Stack
 - Backend: Django 6.0 + DRF 3.16.1, PostgreSQL
 - Frontend: Flet 0.84.0, Python-native UI framework
@@ -21,6 +34,22 @@
 - Service layer for API calls
 - Django: models.py → services.py → views.py
 - verbose_name + db_index on FKs
+
+## Reuse before writing (2026-11-26)
+- **Look for what already exists before adding a class.** The frontend's
+  `components/` folder is a library: cards, tables, dialogs, buttons, layout pieces
+  and the `BaseUI` / `StandardPage` / `BaseService` bases are there to be extended,
+  not copied. Two components that look alike are one component with a parameter.
+- **Extend the existing abstract/base classes** instead of re-implementing their
+  behaviour: pages on `StandardPage`, services on `BaseService`, components on
+  `ft.Container`, dialogs on the existing builders, views on the module's view base,
+  and the shared mixins (`GenericSerializer`, `Logger`).
+- **One implementation per concern.** If two classes parse the same header, format
+  the same money or build the same URL, put it in one class both use (backend
+  example: `common/core/authorization.py`, shared by the permission and
+  `CurrentUser`). Duplicating it is how the two copies start to disagree.
+- Reuse is not "the same file": a component reused in three screens is still one
+  component; a helper copied into two services is a bug waiting to happen.
 
 ## Frontend Standards (Flet)
 - Use ft.Container(), ft.Column(), ft.Row()
