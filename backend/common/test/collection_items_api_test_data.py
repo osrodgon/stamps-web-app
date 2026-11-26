@@ -34,10 +34,11 @@ def collection_items_table(db, collections_table, stamps_table, locations_table,
 def collection_item_post_payload_ok(collections_table, stamps_table, locations_table, condition_types_table):
     """
     Provides a valid payload for creating a new collection item.
-    Uses the second collection and the third stamp to avoid unique constraint conflicts.
+    Uses the first collection (the one the token user owns) and a stamp it does
+    not hold yet, so the pair is free.
     """
     return {
-        "collection": collections_table[1].id, 
+        "collection": collections_table[0].id,
         "stamp": stamps_table[1].id, 
         "location": locations_table[0].id,
         "condition_type": condition_types_table[0].id,

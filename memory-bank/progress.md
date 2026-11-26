@@ -836,31 +836,53 @@ collections and adds/removes *their copy* of a stamp; the catalogue is admin-onl
 Closed also: **D4** (the collection card is a collage of up to six stamps — the API
 sends twelve candidates, the frontend paints the first six whose file exists, and
 `no_stamp.webp` when there are none; the six are stable, not random per load).
-Closed also: **D5** (series card: progress, paid and catalogue), **D7** (year → date →
-catalogue code, with a sort selector) and **D8** (stamps you do not own appear dimmed
-with `Add my copy`). **Every decision is closed; the plan is ready to implement.** Implementation has not
-started: resume at **step 1** (plan §9 says exactly where it stopped and which two
-questions are waiting for the user).
-Mockups that go with it:
-`memory-bank/mockups/collections-overview.html`, `collection-series.html` and
-`collection-series-detail.html` (self-contained, real stamp pictures).
+Closed also: **D5** (series card: progress, paid and catalogue), **D6** (15 per page) and
+**D8** (stamps you do not own appear dimmed with `Add my copy`).
 
-- [ ] Step 1 — **JWT + ownership** on the collection endpoints: the token the login
-      returns is sent as `Authorization: JWT` (no token or a bad one → 403, which is
-      today's behaviour), `current_user(request)` resolves the user, the four views
-      stop returning `all()`, and the new views join `USER_VIEWS`; another user's
-      row → 404, tests per endpoint
-- [ ] Step 2 — Collections read: counts and cover
-- [ ] Step 3 — `GET /collections/<pk>/issues/` paginated, with name and year filters
-- [ ] Step 4 — `GET /collections/<pk>/issues/<issue_pk>/` with each stamp and its
-      `item` or `null`, plus the owned/total/paid summary
-- [ ] Step 5 — Item write: `PATCH` (six whitelisted fields), add a copy, remove a copy
-- [ ] Step 6 — `CollectionService` + `CollectionItemService` (Flet-free) + tests
-- [ ] Step 7 — `CollectionsPage` with cards, empty state, create/rename/delete dialog
-- [ ] Step 8 — `CollectionSeriesPage` (paginated rows) + the route resolver in `main.py`
-- [ ] Step 9 — `CollectionIssuePage`: series header read-only + stamp cards with
-      "Your copy"
-- [ ] Step 10 — Close-out: loading/error/empty states, i18n pass, component tests
+**Plan revised 2026-11-26** after checking it against the code. Corrections: a missing
+header is **401** (not 403); **A1 includes the item views and the update whitelist**, or an
+item can be moved into another user's collection; the series order **mirrors `/issues/`**
+(`sortBy=date`, ties by `id`) — no catalogue-code tiebreak and **nothing from DataDesk**;
+services stay **Flet-free** and receive the token; counts use **neutral labels** because the
+locale system has no plurals; rename and item edits use **`PUT`** (the existing methods).
+The frontend reaches the database only through the API. Mockups:
+`memory-bank/mockups/collections-overview.html`, `collection-series.html` and
+`collection-series-detail.html` (self-contained, real stamp pictures; the username and the
+separator were removed from the header on 2026-11-26).
+
+Two phases in plan §6. **Phase A** ships the overview end to end; **phase B** starts only
+when A is merged into `development`.
+
+- [x] A1 — **Ownership and JWT** (2026-11-26, M): the `CurrentUser` class
+      (`common/core/current_user.py`, used as `CurrentUser(request).get()`) turns the JWT
+      into a `UserCollection`; the four collection and item views are scoped by it
+      (list, get, rename, delete; foreign row → 404); the item update has its own
+      six-field serializer and refuses `collection` and `stamp`; `POST /collection_items/`
+      refuses a foreign collection; `POST /collections/` takes the owner from the token
+      (the `X-API-KEY` lookup and the `# TODO` are gone) and `?username=` is out of the
+      schema. The `Authorization` header is parsed once in `common/core/authorization.py`,
+      shared by the permission and `CurrentUser`. Tests rewritten with **real tokens**: 51
+      across `test_authorization.py`, `test_current_user.py`, `test_collections_api.py` and
+      `test_collection_items_api.py`; the suite went from 1.823 to **1.767** because the old auth permutations (the same `PermissionDenied`
+      mocked per method) were replaced by one case per behaviour. **Measured**: a missing
+      header is **403**, not 401 — DRF only makes it 401 with a challenge header and
+      `CustomAPIKeyAuthentication` has none; the plan and the issue said 401 and this is
+      the correction. A true 401 would need `authenticate_header()` and 75 expectations
+      across the suite, so it stays out.
+- [ ] A2 — Overview list (S): `series`, `stamps`, `total` and up to 12 `covers`, in ≤ 5
+      queries, ordered by name
+- [ ] A3 — `CollectionService` (S): Flet-free, token in the constructor, PUT to rename
+- [ ] A4 — `CollectionCard` (M): collage of six, summary, bar and percentage
+- [ ] A5 — `CollectionsPage` (M): header without separator, grid, empty/loading/error,
+      create/rename/delete dialog, 403 → login
+- [ ] A6 — Phase A close-out (S)
+- [ ] B1 — Series of a collection (M): mirrors `/issues/`, plus cover and sums
+- [ ] B2 — Series detail and item writes (M): each stamp with its `item`, add copy (409 on
+      duplicate), PUT/DELETE with names
+- [ ] B3 — `CollectionSeriesPage` (L): route resolver, filters, `TablePagination` with
+      15/30/50
+- [ ] B4 — `CollectionIssuePage` (L): read-only series header + stamp cards with "Your copy"
+- [ ] B5 — Close-out (S): states, i18n, paginator, browser pass
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)
