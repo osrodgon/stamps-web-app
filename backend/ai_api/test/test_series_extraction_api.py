@@ -658,6 +658,82 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         assert data["partial"] is False
         assert data["stamps"][0]["market_value_mnh"] == 12.0
 
+    def test_a_fact_the_sources_do_not_support_is_dropped(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """An invented date and an invented code never reach the client."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "issue_date": "10 septiembre 2007"},
+            "stamps": [{"edifil_code": "4349", "face_value": "2,49", "desc_snippet": "Papel estucado."}],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        invented = dict(series_extraction_response_data)
+        invented["issue_date"] = "1999-01-01"
+        invented["stamps"] = [dict(series_extraction_response_data["stamps"][0], edifil_code="9999")]
+
+        llm = Mock()
+        llm.series_extract.return_value = invented
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert data["issue_date"] is None
+        assert data["stamps"][0]["edifil_code"] is None
+        fields = [gap["field"] for gap in data["gaps"]]
+        assert {"issue_date", "stamp.edifil_code"} <= set(fields)
+
+    def test_a_supported_date_written_another_way_survives(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+        series_extraction_response_data,
+    ):
+        """`2007-09-10` and `10 septiembre 2007` are the same day."""
+        self.permission(granted=True)
+
+        facts = {
+            "serie_info": {"issue_name": "Castillos", "issue_date": "10 septiembre 2007"},
+            "stamps": [],
+        }
+        catalogue = Mock()
+        catalogue.identify.return_value = Match(products=[{"name": "4604"}], score=1.0)
+        catalogue.facts.return_value = facts
+
+        llm = Mock()
+        llm.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.FesofiCatalogue',
+            return_value=catalogue,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService', return_value=llm
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        data = response.json()["data"]
+
+        assert data["issue_date"] == "2007-09-10"
+
     def test_no_price_is_a_gap_not_a_zero(
         self,
         api_client,

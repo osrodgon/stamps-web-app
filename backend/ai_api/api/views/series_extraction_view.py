@@ -26,6 +26,7 @@ from ai_api.sources.fesofi import FesofiCatalogue
 from ai_api.sources.filatelia import FilateliaCatalogue
 from ai_api.sources.http import get_client
 from ai_api.sources.search_prices import SearchPrices
+from ai_api.validation import check_support
 from ai_api.valuation import MINIMUM_SAMPLE, value
 from ai_api.services.search_service import SearchService
 from ai_api.services.scraping_service import ScrapingService
@@ -213,6 +214,10 @@ class SeriesExtractionView(Logger, APIView):
 
             validated = response_serializer.validated_data
 
+            # A field the sources do not support is dropped and said (A9): an
+            # invented code looks exactly like a real one.
+            unsupported = check_support(validated, clean_data)
+
             # Every value comes from an observation: whatever the provider wrote
             # is overwritten with what the sources support, or with null.
             observations, unfinished = self._prices(clean_data, budget)
@@ -236,6 +241,7 @@ class SeriesExtractionView(Logger, APIView):
             gaps = list(validated.get("gaps") or [])
             if identity_gap:
                 gaps.append({"field": "identity", "reason": identity_gap})
+            gaps.extend(unsupported)
             if unfinished:
                 gaps.append(
                     {

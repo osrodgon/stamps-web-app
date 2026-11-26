@@ -128,8 +128,8 @@ opencode) ya está hecho. **A3, A4 y A5 están fuera del plan**: Colnect por dec
 | A7 | Valuación (media recortada) | M | A6 | **hecho 2026-11-26** |
 | A7b | Estado y precio en la ficha del anuncio | M | A7 | **hecho 2026-11-26** |
 | A8 | Ejecución (síncrona con presupuesto + backfill) | M | A7b | **hecho 2026-11-26** |
-| A9 | LLM reducido y validador de fuentes | S | A7 | siguiente |
-| A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | pendiente |
+| A9 | LLM reducido y validador de fuentes | S | A7 | **hecho 2026-11-26** |
+| A10 | Cierre: docs, esquema, tests, memory-bank | S | todo | siguiente |
 
 ### A0 — Prueba de fuentes (S) — **HECHO 2026-11-25**
 
@@ -756,7 +756,7 @@ comando de backfill no repite observaciones (`raw_hash`).
 - 19 tests nuevos (6 del presupuesto, 2 de la vista con presupuesto agotado y 8 del
   comando, con la base de datos de test); **1.804 verdes**.
 
-### A9 — LLM reducido (S)
+### A9 — LLM reducido (S) — **HECHO 2026-11-26**
 
 Normalizar texto y desambiguar candidatos, nada más. Un validador rechaza cualquier
 campo factual de la respuesta cuyo valor no venga de una observación con fuente.
@@ -767,6 +767,32 @@ sostienen.
 
 Aceptación: un test alimenta un resultado del LLM con un `market_value` sin
 observación y el validador lo anula.
+
+**Hecho el 2026-11-26.** `ai_api/validation.py` con `check_support(data, facts)`,
+que muta la respuesta y devuelve los huecos:
+
+- **Series**: `issue_name`, `issue_date`, `artist` (contra `engraver`), `printer`,
+  `print_type`, `perforation` y `total_printed` (contra `print_run`) se quedan sólo
+  si el hecho coincide. La comparación normaliza mayúsculas, acentos, espacios, la
+  **coma y el punto de los números** (`4.000.000` = `4000000`) y las **fechas**
+  (`1986-11-16` = `16 noviembre 1986`, con tabla de meses en español).
+- `paper_type` y `stamp_type` no tienen campo propio en el catálogo (el «Formato» de
+  la tienda es el tamaño), así que **no se tiran por sistema**: se aceptan si el
+  texto de las fuentes los menciona en algún sitio («estucado», «hoja bloque» en una
+  descripción). Si no aparece, se anulan.
+- **Sellos**: se emparejan por su `edifil_code` o su `fesofi_code` con los hechos y se
+  comprueban `face_value`, `motive`, `color`, `perforation`, `total_print_run` y
+  `amount_printed`. Un **código que no está en las fuentes se anula**, que es el
+  error que más se parece a un dato.
+- Las **descripciones sobreviven** (son texto, y siguen marcadas
+  `description_source: "llm"`); el validador no escribe precios, sólo quita
+  afirmaciones. Los huecos van en `gaps` con el nombre del campo, con tope de 20
+  para no inundar la respuesta.
+- La vista lo ejecuta entre el modelo y la respuesta. **17 tests** (15 unitarios con
+  hechos fijos y 2 de la vista: una fecha y un código inventados desaparecen, y
+  `2007-09-10` sobrevive a `10 septiembre 2007`). **1.827 verdes**.
+- **Lo que no hace**: no valida la prosa contra las fuentes —eso exigiría leerla— ni
+  toca los prompts, que ya se recortaron en A1.
 
 ### A10 — Cierre (S)
 
@@ -1113,3 +1139,14 @@ sin auditoría), que es exactamente lo que A7 tiene que sustituir o marcar.
   `raw_hash`, así que repetir no duplica; una fuente caída no corta el recorrido.
 - Decidido: DataDesk/Flet → endpoint para una serie; comando → la base. Sin cola.
 - 19 tests nuevos; **1.804 verdes**.
+
+### 2026-11-26 — A9 hecho: lo que las fuentes no sostienen, no sale
+
+- `ai_api/validation.py`: `check_support()` contra los hechos de la petición, con
+  comparación normalizada de texto, números (separadores) y fechas (ISO contra
+  «16 noviembre 1986»). Los códigos inventados se anulan; `paper_type` y `stamp_type`
+  se aceptan si el texto de las fuentes los menciona y se anulan si no (no tienen
+  campo propio en el catálogo). Huecos en `gaps`, con tope de 20.
+- Las descripciones sobreviven y siguen marcadas `llm`; el validador no escribe
+  precios, sólo quita afirmaciones.
+- 17 tests nuevos; **1.827 verdes**.
