@@ -392,7 +392,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 | # | Step | Depends on | Size | Status |
 |---|---|---|---|---|
 | B1 | Series of a collection (backend) | A6 | M | **hecho 2026-11-26** |
-| B2 | Series detail and item writes (backend) | B1 | M | pendiente |
+| B2 | Series detail and item writes (backend) | B1 | M | **hecho 2026-11-26** |
 | B3 | `CollectionSeriesPage` | B2 | L | pendiente |
 | B4 | `CollectionIssuePage` | B3 | L | pendiente |
 | B5 | Close-out | B4 | S | pendiente |
@@ -404,12 +404,20 @@ same `pagination` block, plus `cover`, `total_stamps`, `owned_stamps`, `paid` an
 `USER_VIEWS`. Tests: pagination, filters, order with repeated dates, sums, foreign
 collection 404, query count.
 
-**B2 — Series detail and item writes.**
+**B2 — Series detail and item writes — HECHO 2026-11-26.**
 `GET /collections/<pk>/issues/<issue_pk>/` with every stamp and its `item` or `null`, and
 the `summary`; `POST /collections/<pk>/items/` (409 when the stamp is already there);
 `PUT`/`DELETE` already scoped from A1, now answering with the names of condition and
 location. Tests: unowned stamp has `item: null`, adding, duplicate 409, removing,
 foreign 404.
+
+*Done:* `CollectionIssueDetailService` (the issue, its stamps, their colours and the
+caller's items: **four** queries, not three — the colours are a prefetch) and
+`CollectionIssueDetailSerializer`, which reuses `StampResponseSerializer` and adds
+`item` flat. `POST /collections/<pk>/items/` answers 201, 404 for a foreign collection or
+an unknown stamp, and 409 for a duplicate without touching the existing copy. 16 tests;
+suite **1.818**. The figures serializer was renamed `CollectionIssueFiguresSerializer`:
+two components called `CollectionIssueSummary` made drf-spectacular warn.
 
 **B3 — `CollectionSeriesPage`.**
 `main.py` grows the parameter resolver; the overview card becomes clickable. The page
@@ -542,5 +550,8 @@ Flutter images) and the empty state (no account without collections on hand).
 **B1 is done (2026-11-26).** `GET /collections/<pk>/issues/` returns the page with the
 three figures and the cover in two queries; 21 tests, suite **1.802**.
 
-**Next action: B2** — the series detail with each stamp and its `item`, and the item
-writes (add a copy, 409 on duplicate, remove).
+**B2 is done (2026-11-26).** The detail with every stamp and its copy, and adding one
+(201/404/409), are in; 16 tests, suite **1.818**.
+
+**Next action: B3** — the `CollectionSeriesPage` (the second screen), with the route
+resolver and the filters.

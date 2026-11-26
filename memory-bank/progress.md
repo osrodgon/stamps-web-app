@@ -909,8 +909,14 @@ when A is merged into `development`.
       queries**, pinned. Decimals as strings, `cover: null` without a `fesofi_code`,
       `paid: null` without prices. `CollectionIssuesService`,
       `CollectionIssuePageSerializer`, view in `USER_VIEWS`. 21 tests; suite 1.802.
-- [ ] B2 — Series detail and item writes (M): each stamp with its `item`, add copy (409 on
-      duplicate), PUT/DELETE with names
+- [x] B2 — **Series detail and item writes** (2026-11-26, M): `GET
+      /collections/<pk>/issues/<issue_pk>/` returns the series read-only, every stamp with
+      its `item` or `null` and the summary; `POST /collections/<pk>/items/` adds a copy
+      (201, 404 foreign/unknown stamp, 409 duplicate without overwriting).
+      `CollectionIssueDetailService` costs **four** queries (the colours prefetch is the
+      fourth). `PUT`/`DELETE` already scoped return condition and location with names.
+      16 tests; suite 1.818. Serializer renamed `CollectionIssueFiguresSerializer` to stop
+      a drf-spectacular name clash.
 - [ ] B3 — `CollectionSeriesPage` (L): route resolver, filters, `TablePagination` with
       15/30/50
 - [ ] B4 — `CollectionIssuePage` (L): read-only series header + stamp cards with "Your copy"

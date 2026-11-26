@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (phase A closed, B1 done 2026-11-26, B2 next)**: the three reading screens are
+- **Normal-user collections (phase A closed, B1–B2 done 2026-11-26, B3 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -174,12 +174,24 @@ afirmar nada que las fuentes no sostengan.
   is closed**: suites at 1.781 backend / 707 frontend, 22 locale keys per language, and a
   browser pass over create, delete, rename and the expired-token path. **B1 is done too**:
   `GET /collections/<pk>/issues/` mirrors `/issues/` and adds the three figures and the
-  cover in **two queries**; suite 1.802. **Next: B2** (series detail and item writes),
-  después de mergear B1. Decisions still standing: the series order **mirrors
+  cover in **two queries**; suite 1.802. **B2 is done too**: the detail with every stamp
+  and its copy, plus adding one (201/404/409); suite **1.818**. **Next: B3** (the second
+  screen), después de mergear B2. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B2: **el detalle de la serie y la escritura del ejemplar**.
+  `GET /collections/<pk>/issues/<issue_pk>/` devuelve la serie como la tiene el catálogo
+  (reutilizando `IssueResponseSerializer` y `StampResponseSerializer`) con cada sello y su
+  `item` o `null`, más el resumen (`owned`, `total`, `paid`). Cuesta **cuatro** consultas:
+  la serie, sus sellos, sus colores (prefetch) y los ejemplares del usuario; el issue decía
+  tres y la cuarta es de los colores, queda dicho. `POST /collections/<pk>/items/` añade el
+  ejemplar: 201, **404** si la colección es ajena o el sello no existe, **409** si ya está
+  (no sobrescribe la copia existente). `PUT`/`DELETE`, ya acotados en A1, devuelven el
+  estado y la ubicación con sus nombres. 16 tests, suite **1.818**; el serializador de las
+  cifras se renombró `CollectionIssueFiguresSerializer` porque dos componentes con el mismo
+  nombre hacían avisar a drf-spectacular.
 - [Today] Colecciones B1: **las series de una colección, al estilo de `/issues/`**.
   `GET /collections/<pk>/issues/` con los mismos parámetros, valores por defecto y bloque
   `pagination` que `/issues/` (`sortBy=date`, empate por `id`), más `cover`,

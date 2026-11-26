@@ -1,0 +1,91 @@
+"""One series of a collection with its stamps and the caller's copies (plan step B2).
+
+The third screen shows the series as the catalogue has it, read-only, and under each
+stamp the user's copy when they own it. This service loads the three pieces — the
+issue, its stamps and the caller's items — and attaches each item to its stamp, so the
+serializer reads a flat row.
+
+Queries: the issue, its stamps, their colours (the serializer shows them) and the
+caller's items. Four, whatever the number of stamps.
+"""
+
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Optional
+
+from collection_items_api.models import CollectionItem
+from collections_api.models import Collection
+from issues_api.models import Issue
+from stamps_api.models import Stamp
+
+
+class CollectionIssueDetailService:
+    """Builds the detail of one series of one collection."""
+
+    def for_collection(
+        self, collection: Collection, issue_id: int
+    ) -> Optional[dict]:
+        """Return the issue, its stamps with the caller's items and the summary.
+
+        Args:
+            collection: the collection, already checked to belong to the caller.
+            issue_id: the series to read.
+
+        Returns:
+            `{"issue", "stamps", "summary"}`, or None when the series does not exist
+            or the collection holds nothing of it.
+        """
+        issue = (
+            Issue.objects.select_related(
+                "year",
+                "country",
+                "stamp_type",
+                "print_type",
+                "printer",
+                "artist",
+                "paper_type",
+            )
+            .filter(pk=issue_id)
+            .first()
+        )
+        if issue is None:
+            return None
+
+        items = {
+            item.stamp_id: item
+            for item in CollectionItem.objects.filter(
+                collection=collection, stamp__issue=issue
+            ).select_related("condition_type", "location")
+        }
+        if not items:
+            # A series the collection holds nothing of is not part of it.
+            return None
+
+        stamps = list(
+            Stamp.objects.filter(issue=issue)
+            .prefetch_related("colors")
+            .order_by("id")
+        )
+        for stamp in stamps:
+            stamp.item = items.get(stamp.id)
+
+        return {
+            "issue": issue,
+            "stamps": stamps,
+            "summary": self.__summary(stamps, items),
+        }
+
+    @staticmethod
+    def __summary(stamps: list, items: dict) -> dict:
+        """The three figures the header shows: owned, total and paid."""
+        prices = [
+            item.price_paid
+            for item in items.values()
+            if item.price_paid is not None
+        ]
+        return {
+            "owned": len(items),
+            "total": len(stamps),
+            "paid": sum(prices, Decimal("0")) if prices else None,
+        }
