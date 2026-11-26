@@ -39,12 +39,20 @@ class Cards:
         lang: str = "en",
         exists: bool = True,
         on_open=None,
+        on_rename=None,
+        on_delete=None,
     ) -> CollectionCard:
         """A card whose picture files are assumed to exist (or not)."""
         with patch(
             "components.collection.collection_card.os.path.exists", return_value=exists
         ):
-            return CollectionCard(data, lang, on_open=on_open)
+            return CollectionCard(
+                data,
+                lang,
+                on_open=on_open,
+                on_rename=on_rename,
+                on_delete=on_delete,
+            )
 
 
 class TestCover:
@@ -160,3 +168,36 @@ class TestClick:
         card = Cards.build(Cards.data(), on_open=open_collection)
 
         assert card._on_open is open_collection
+
+
+class TestActions:
+    """The card's menu exists only when the page gives it something to do."""
+
+    def test_no_handlers_means_no_menu(self):
+        card = Cards.build(Cards.data())
+
+        assert card._menu is None
+
+    def test_it_offers_rename_and_delete(self):
+        card = Cards.build(
+            Cards.data(),
+            on_rename=lambda collection: None,
+            on_delete=lambda collection: None,
+        )
+
+        assert card._menu is not None
+        assert len(card._menu.items) == 2
+
+    def test_each_item_calls_its_handler_with_the_row(self):
+        renamed = []
+        deleted = []
+        data = Cards.data()
+
+        card = Cards.build(data, on_rename=renamed.append, on_delete=deleted.append)
+        rename_item, delete_item = card._menu.items
+
+        rename_item.on_click(None)
+        delete_item.on_click(None)
+
+        assert renamed == [data]
+        assert deleted == [data]

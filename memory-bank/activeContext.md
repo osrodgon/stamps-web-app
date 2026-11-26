@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (A1–A4 done 2026-11-26, A5 next)**: the three reading screens are
+- **Normal-user collections (A1–A5 done 2026-11-26, A6 next)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -170,13 +170,36 @@ afirmar nada que las fuentes no sostengan.
   `covers` in exactly five queries (pinned), with a fixture that makes the three figures
   differ. **A3 is done too**: `CollectionService(token)` with the four calls and the JWT
   header, and the URLs in `URLs.Backend` (frontend suite 660), **mergeado en la PR #477**.
-  **A4 is done too**: `CollectionCard` with the collage, summary, bar and percentage
-  (frontend suite 675), en la rama **478** y pendiente de commit/PR. Suite total 1.781
-  backend / 675 frontend. **A5 is next** (the page itself), después de mergear A4. Decisions still standing: the series order **mirrors
+  **A4 is done too**: `CollectionCard` with the collage, summary, bar and percentage.
+  **A5 is done too**: the overview screen (grid, states, dialogs, 403 → login) and the
+  card's menu, frontend suite **697**. Suite total 1.781 backend / 697 frontend. **A6 is
+  next** (close-out of phase A), después de mergear A5. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Mock login: **no lo había deshabilitado yo; el mock ya no existía**. La migración
+  de NiceGUI a Flet (`1fc0b61`) borró `LoginPage.mock_login()` y la rama de `main` que lo
+  llamaba, y dejó `MOCK_LOGIN`, `MOCK_USER` y `MOCK_PASSWORD` en `settings.py` y
+  `.env.example` sin ningún consumidor: con `MOCK_LOGIN_ENABLED=true` no pasaba nada.
+  Restaurado como `core/mock_login.py` (`MockLogin(BaseUI)`): con el flag encendido entra
+  con las credenciales del entorno, guarda token y usuario, y devuelve la ruta (manager si
+  es admin, colecciones si no); `main()` lo llama antes de resolver la ruta inicial. Sólo
+  desarrollo: `run()` no hace nada si el flag está apagado o falta una credencial, y los
+  valores por defecto pasaron de `"none"` (truthy, se colaba en el guard) a `""`. 8 tests y
+  suite del frontend en **706**. La cuenta de `MOCK_LOGIN_USER` tiene que existir en la base.
+- [Today] Colecciones A5: **la pantalla**. `CollectionsPage` sustituye el esqueleto: cabecera
+  sin separador, barra con el contador y `+ New collection`, rejilla responsive de
+  `CollectionCard`, estados de carga/vacío/error y la salida al login cuando la API contesta
+  403. `CollectionForm` (crear y renombrar) y `CollectionDeleteDialog`, con el nombre y el
+  resumen de la tarjeta y sin plurales; tras escribir, se recarga la lista en vez de
+  optimizar en cliente. La tarjeta ganó un menú de renombrar/borrar que sólo aparece cuando
+  la página le pasa los handlers, así A4 sigue intacta. `PAGE_PADDING` entró en las
+  constantes. 22 tests con `ft.Page` mockeado (diálogos, construcción y `_render`), suite del
+  frontend **697** (después **698** con el arreglo del alto del diálogo); los caminos que
+  una `ft.View` no deja probar, a mano. Al usarlo se vio que el diálogo de crear salía a
+  todo el alto: el `TextField` expande por defecto y estiraba la columna del diálogo;
+  ahora se crea con `expand=False` y un test lo fija.
 - [Today] Colecciones A4: **la tarjeta del overview**. `CollectionCard` (`ft.Container`)
   pinta el collage con los **primeros seis `covers` cuyo archivo existe** —uno grande, o
   mosaico de tres columnas, o `no_stamp` atenuado—, el nombre, el resumen por

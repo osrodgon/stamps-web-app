@@ -69,8 +69,8 @@ NO_STAMP = "no_stamp.webp"
 
 # Mock login for development/testing
 MOCK_LOGIN = str(os.getenv("MOCK_LOGIN_ENABLED", "False")).lower() == 'true'
-MOCK_USER = os.getenv("MOCK_LOGIN_USER", "none")
-MOCK_PASSWORD = os.getenv("MOCK_LOGIN_PASSWORD", "none")
+MOCK_USER = os.getenv("MOCK_LOGIN_USER", "")
+MOCK_PASSWORD = os.getenv("MOCK_LOGIN_PASSWORD", "")
 
 
 # --- Backend API Configuration ---
