@@ -18,11 +18,12 @@ from pages.collection.collections_page import CollectionsPage
 from pages.admin.stamps_manager_page import StampsManagerPage
 from core.urls import URLs
 from core.log_setup import log_setup
+from core.mock_login import MockLogin
 from core.translations import init_language, get_language
 
 
 from settings import    APP_NAME, ASSETS_DIR, FONT_REGULAR, FONT_BOLD, FONT_BLACK, FRONTEND_PORT, \
-                        USER_JWT_TOKEN, USER_IS_ADMIN, FAV_ICON
+                        USER_JWT_TOKEN, USER_IS_ADMIN, FAV_ICON, MOCK_LOGIN
 
 from components.colors import SKY_BLUE
 from components.constants import BUTTON_BORDER_RADIUS
@@ -177,6 +178,13 @@ async def main(page: ft.Page):
     # Handle initial route directly
     route = URLs.Frontend.root
     prefs = ft.SharedPreferences()
+
+    # Development only: skip the login form and enter with the `MOCK_LOGIN_*`
+    # credentials. `MOCK_LOGIN` is false by default and in `.env.example`.
+    if MOCK_LOGIN:
+        mock_route = await MockLogin().run()
+        if mock_route is not None:
+            route = mock_route
 
     if route == URLs.Frontend.root:
         auth_token = await prefs.get(USER_JWT_TOKEN)

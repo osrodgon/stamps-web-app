@@ -39,6 +39,8 @@ class CollectionCard(ft.Container):
         on_open: reserved for the series screen; not used until B3, because the
             route does not exist yet and a card that looks clickable and does
             nothing is worse than one that does not.
+        on_rename: when given, the card shows a menu with "Rename".
+        on_delete: when given, the menu also offers "Delete".
     """
 
     #: The collage never paints more than this, however many covers the API sends.
@@ -57,17 +59,22 @@ class CollectionCard(ft.Container):
         data: dict,
         lang: str,
         on_open: Optional[Callable[[int], None]] = None,
+        on_rename: Optional[Callable[[dict], None]] = None,
+        on_delete: Optional[Callable[[dict], None]] = None,
     ) -> None:
         super().__init__()
         self._data: dict = data
         self._lang: str = lang
         self._on_open: Optional[Callable[[int], None]] = on_open
+        self._on_rename: Optional[Callable[[dict], None]] = on_rename
+        self._on_delete: Optional[Callable[[dict], None]] = on_delete
 
         # Exposed to the tests and to B3: what the card painted and what it says.
         self._images: List[ft.Image] = []
         self._summary: ft.Text = ft.Text("")
         self._percentage: ft.Text = ft.Text("")
         self._progress: ft.ProgressBar = ft.ProgressBar()
+        self._menu: Optional[ft.PopupMenuButton] = self._actions()
 
         self.content = ft.Column(
             controls=[self._cover(), self._body()],
@@ -204,16 +211,28 @@ class CollectionCard(ft.Container):
             expand=True,
         )
 
+        name = ft.Text(
+            self._data.get("name") or "",
+            size=FONT_SIZE_SMALL_HEADING,
+            weight=ft.FontWeight.BOLD,
+            max_lines=1,
+            overflow=ft.TextOverflow.ELLIPSIS,
+            expand=True,
+        )
+        title = (
+            ft.Row(
+                controls=[name, self._menu],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            )
+            if self._menu is not None
+            else name
+        )
+
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        self._data.get("name") or "",
-                        size=FONT_SIZE_SMALL_HEADING,
-                        weight=ft.FontWeight.BOLD,
-                        max_lines=1,
-                        overflow=ft.TextOverflow.ELLIPSIS,
-                    ),
+                    title,
                     self._summary,
                     ft.Row(
                         controls=[self._progress, self._percentage],
@@ -226,6 +245,33 @@ class CollectionCard(ft.Container):
             ),
             padding=CARD_PADDING,
         )
+
+    # ------------------------------------------------------------------
+    # Actions
+    # ------------------------------------------------------------------
+
+    def _actions(self) -> Optional[ft.PopupMenuButton]:
+        """The card's menu, when the page gives it something to do."""
+        items: List[ft.PopupMenuItem] = []
+        if self._on_rename is not None:
+            items.append(
+                ft.PopupMenuItem(
+                    content=ft.Text(_("collections.rename")),
+                    icon=ft.Icons.EDIT,
+                    on_click=lambda event: self._on_rename(self._data),
+                )
+            )
+        if self._on_delete is not None:
+            items.append(
+                ft.PopupMenuItem(
+                    content=ft.Text(_("collections.delete_title")),
+                    icon=ft.Icons.DELETE_OUTLINE,
+                    on_click=lambda event: self._on_delete(self._data),
+                )
+            )
+        if not items:
+            return None
+        return ft.PopupMenuButton(icon=ft.Icons.MORE_VERT, items=items)
 
     @staticmethod
     def _percentage_text(stamps: int, total: int) -> str:

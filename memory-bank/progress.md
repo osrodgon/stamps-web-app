@@ -887,8 +887,14 @@ when A is merged into `development`.
       base (no click until B3), colours and sizes from the shared constants.
       `fmt_number` gained a `zero` argument so a zero counter reads `0` while the tables
       keep their dash. 14 tests; frontend suite 675.
-- [ ] A5 — `CollectionsPage` (M): header without separator, grid, empty/loading/error,
-      create/rename/delete dialog, 403 → login
+- [x] A5 — **`CollectionsPage`** (2026-11-26, M): header without separator, toolbar with
+      the count and `+ New collection`, responsive grid of cards, empty/loading/error and
+      the 403 → login path; `CollectionForm` (create and rename) and
+      `CollectionDeleteDialog`; the card gained a menu with rename/delete shown only when
+      the page passes the handlers; `PAGE_PADDING` added to the constants. First use found
+      the create dialog at full height — the `TextField` expands by default and stretched
+      the dialog's column; now `expand=False`, pinned by a test. 23 tests with a mocked
+      page (dialogs, construction, render); frontend suite 698.
 - [ ] A6 — Phase A close-out (S)
 - [ ] B1 — Series of a collection (M): mirrors `/issues/`, plus cover and sums
 - [ ] B2 — Series detail and item writes (M): each stamp with its `item`, add copy (409 on
@@ -923,6 +929,23 @@ when A is merged into `development`.
 ---
 
 ## Completed
+
+### Mock login restored in Flet (2026-11-26)
+
+- [x] `MOCK_LOGIN_ENABLED=true` did nothing: the NiceGUI→Flet migration
+      (`1fc0b61`) removed `LoginPage.mock_login()` and the `main.py` branch that used
+      it, leaving `MOCK_LOGIN`, `MOCK_USER` and `MOCK_PASSWORD` in `settings.py` and
+      `.env.example` with no consumer.
+- [x] `core/mock_login.py` with `MockLogin(BaseUI)`: when the flag is on it logs in
+      with the environment's credentials, stores the token and user with
+      `_save_user()`, and returns the route (manager for an admin, collections
+      otherwise). `main()` calls it before resolving the initial route.
+- [x] Development only: `run()` does nothing unless the flag is on and both
+      credentials are non-empty. `settings.py` now defaults the user and password to
+      `""` instead of the literal `"none"`, which is truthy and would have got past
+      the guard.
+- [x] 8 tests with the service, the preferences and the flag mocked; frontend suite
+      706. The account in `MOCK_LOGIN_USER` still has to exist in the database.
 
 ### Devcontainer — docker without a nested engine (2026-11-19)
 

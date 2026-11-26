@@ -289,6 +289,7 @@ collections.delete_title
 collections.delete_message
 collections.delete_confirm
 collections.name_required
+collections.session_expired
 collections.load_failed
 collections.save_failed
 collections.delete_failed
@@ -313,7 +314,7 @@ adds the other two screens. Every step leaves the app running.
 | A2 | Overview list: counters and covers | A1 | S | **hecho 2026-11-26** |
 | A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (mergeado, PR #477) |
 | A4 | `CollectionCard` | A3 | M | **hecho 2026-11-26** |
-| A5 | Screen, dialog and states | A4 | M | pendiente |
+| A5 | Screen, dialog and states | A4 | M | **hecho 2026-11-26** |
 | A6 | Phase A close-out | A5 | S | pendiente |
 
 **A1 — Ownership and JWT (backend) — HECHO 2026-11-26.**
@@ -365,13 +366,22 @@ three-column mosaic), the placeholder when none does, the summary through
 empty). It is not clickable until B3. `fmt_number` gained a `zero` argument so a counter
 that is zero reads `0` while the tables keep their dash. 14 tests; frontend suite 675.
 
-**A5 — Screen, dialog and states.**
+**A5 — Screen, dialog and states — HECHO 2026-11-26.**
 `CollectionsPage`: header without separator, toolbar with the count and
 `+ New collection`, responsive grid, empty state, loading and error. `read_prefs` reads
 the JWT and builds the service; 403 sends the user to the login. `collection_form.py`:
 create/rename dialog and the delete confirmation with the card's counts. Tests for the
 static helpers; the page itself, by hand.
 *Leaves working:* phase A is usable end to end.
+*Done:* `CollectionsPage` with the header without separator, the toolbar (title, count and
+`+ New collection`), the responsive grid, the empty/loading/error states and the 403 →
+login path; `CollectionForm` and `CollectionDeleteDialog`; the card gained a menu with
+rename and delete, shown only when the page passes the handlers. `PAGE_PADDING` joined the
+constants. The name field is created with `expand=False`: a text field expands by
+default, and inside the dialog's column that stretched the dialog to the full height of
+the window — found on first use, pinned by a test. 23 tests (dialogs, construction and
+render on a mocked page); frontend suite **698**, checked by hand for the paths a page
+cannot test.
 
 **A6 — Phase A close-out.**
 Two real users in the browser; empty state, create, rename, delete, reload and expired
@@ -520,5 +530,6 @@ network error.
 `478-feature-collections-overview-card`, uncommitted: `components/collection/collection_card.py`
 and its 14 tests, plus the `zero` argument of `fmt_number`. Frontend suite **675**.
 
-**Next action: A5** — the `CollectionsPage` (grid, empty/loading/error, the
-create/rename/delete dialog and the 403 → login path), after A4 is merged.
+**A5 is done (2026-11-26).** The overview is a usable screen: grid, empty/loading/error,
+create/rename/delete and the 403 → login path, with 22 tests and the frontend suite at
+**697**. **Next action: A6** — the phase A close-out.
