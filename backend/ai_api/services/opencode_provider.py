@@ -30,6 +30,7 @@ Usage:
     result = provider.series_extract("Olimpiadas", "1992", "cleaned_data")
 """
 
+import time
 from typing import Any, Dict, List
 
 import requests
@@ -139,6 +140,7 @@ class OpenCodeProvider(BaseLLMProvider):
             f"({self.model_name})"
         )
 
+        started = time.perf_counter()
         try:
             response = requests.post(
                 f"{self.base_url}/chat/completions",
@@ -162,8 +164,11 @@ class OpenCodeProvider(BaseLLMProvider):
                 Messages.AI.service_error(f"HTTP {response.status_code}: {body}")
             )
 
+        elapsed = round((time.perf_counter() - started) * 1000)
         data = response.json()
-        self.log.debug(f"Usage for {label}: {data.get('usage')}")
+        self.log.debug(
+            f"{label} answered in {elapsed} ms | usage: {data.get('usage')}"
+        )
 
         content = self._content_of(data)
         if not content:

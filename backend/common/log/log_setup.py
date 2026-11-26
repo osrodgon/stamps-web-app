@@ -75,6 +75,17 @@ def log_setup():
                 'handlers': ['console'],
                 'level': 'WARNING',
                 'propagate': False,
+            },
+            # httpx/httpcore trace every request and connection at DEBUG
+            'httpx': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'httpcore': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
             }
         }
     }

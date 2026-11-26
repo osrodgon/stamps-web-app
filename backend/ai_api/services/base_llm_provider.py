@@ -112,6 +112,11 @@ class BaseLLMProvider(Logger, ABC):
             self.log.debug(f"Single extraction for {len(stamps)} stamps")
             return self._single_extract(clean_data)
             
+        except ValueError:
+            # A contract problem (empty answer, JSON that does not parse) keeps
+            # its type so the view can answer 422 instead of a generic 500.
+            self.log.error(f"Extraction returned something unusable for {name}")
+            raise
         except Exception as e:
             self.log.error(f"Extraction failed for series {name}: {str(e)}")
             raise Exception(Messages.AI.service_error(str(e)))

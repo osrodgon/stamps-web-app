@@ -633,7 +633,7 @@
       revert; keyboard polish; tests
 - [ ] Optional, documented only (plan §8): TOTP 2FA via `django-otp`
 
-### AI API — real sources (A0 and A1 done, A1b next)
+### AI API — real sources (A0, A1, A1b and A2 done; A6 in progress)
 
 Plan in `memory-bank/ai-api-plan.md` (2026-11-24). The LLM's Spanish philately
 knowledge is too thin and the current prompt asks it to search Colnect, Delcampe
@@ -642,8 +642,11 @@ plan replaces the model as a *source* with real ones — Fesofi for identity and
 catalogue facts, Colnect for the market, an allowed-sites search for an indicative
 price — and keeps it as a normaliser:
 
-**Next: A2 (source layer and the §1 fixes).** A0, A1 and A1b are done. Resume at
-`ai-api-plan.md` §3–§4 and the "Retomar aquí" block in `activeContext.md`.
+**Next: finish A6.** Its first slice — finding the series by partial name in the
+Fesofi catalogue — is done; what is left is reading the product facts from the
+Store API instead of the HTML, the scored matcher and the `gaps`. A3 waits for the
+Colnect key. Resume at `ai-api-plan.md` §3–§4 and the "Retomar aquí" block in
+`activeContext.md`.
 
 - [x] **A0 — Prueba de fuentes** (2026-11-25): `manage.py ai_sources_probe` sobre
       cinco series reales, con `ai_api/probe.py` (robots, desafíos de bot, parsers)
@@ -687,6 +690,35 @@ price — and keeps it as a normaliser:
       "llm"`). Al usarlo se vio que tarda; el desglose y las palancas están en la
       ficha de A2 del plan (llamadas al modelo en serie, scraping secuencial, el 404
       de Serper vacío, la lectura muerta de `serie_info`).
+- [x] **A2 — Capa de fuentes** (2026-11-26): `ai_api/sources/` con `http.py` (allowlist
+      por host, timeouts, reintentos con jitter para 5xx/429, límite por host, caché
+      TTL, User-Agent propio y un cliente por proceso), `errors.py` (un error por
+      significado: no permitido, caído, no encontrado, mal configurado), `base.py`
+      (`SourceAdapter`) y `registry.py`. `SearchService` y `ScrapingService` pasan
+      por el cliente, y el scraping va **en paralelo**: la serie de 29 sellos baja de
+      7,0 s a **0,9 s** (0,31 s con caché). El proveedor registra `elapsed_ms`; los
+      `ValueError` dejan de envolverse y el 422 vuelve a existir; la vista exige
+      allowlist en el atajo de URL (SSRF), lee `issue_name`/`issue_date`, convierte
+      un scrape vacío en 422 y separa 400/404/422/500/502. `SeriesExtractionView`
+      sigue siendo master-key only, por decisión. `httpx[http2]==0.28.1` entra en
+      `requirements.base.txt` y `httpx`/`httpcore` bajan a WARNING en el log. 35 tests
+      nuevos, 1.664 verdes.
+- [ ] **A6 — Identidad y emparejamiento** (en curso, 2026-11-26): primera rebanada
+      hecha. `ai_api/sources/fesofi.py` (`FesofiCatalogue`) busca la serie **por
+      atributo** en la Store API —`Título Serie` y `Año de Emisión`—, así que las
+      palabras del nombre se buscan de forma **parcial** y no exacta, que es lo que
+      fallaba. `SearchService` pasa a ser un localizador: catálogo primero, Serper
+      de respaldo. Comprobado en real: `navidad 1986` → 2884/2883 (Edifil 2867 y
+      2868) y el scrape de 2884 da la serie entera; `castillos de españa 2007` →
+      4605; `expo 92` → 2960; `la sagrada familia 1986` → 2883 porque `name` puede
+      ser el **motivo** de un sello, así que también se busca en `Motivo Sello`.
+      De paso se corrigió un bug de la caché de A2: la clave era la URL sin la
+      query, así que todas las consultas a `/products` compartían entrada. 25 tests
+      nuevos, 1.689 verdes. Además, la descripción de los sellos ya no se corta a
+      180 caracteres: `DESCRIPTION_LIMIT = 2000` y el `…` sólo aparece cuando de
+      verdad no cabe (antes se añadía siempre, y el modelo lo leía como truncado).
+      Falta: leer los hechos del producto en vez del HTML y el matcher con `score` y
+      `gaps`.
 - **New dependencies/decisions**: A2 must declare `httpx[http2]` (the container has
   `httpx` without `h2`); A6 gains Fesofi as its first step. Data warning:
   `min(edifil)` and `min(fesofi)` of a series are different stamps (Expo 92: Fesofi

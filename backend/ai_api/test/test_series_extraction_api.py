@@ -14,6 +14,7 @@ from common.test.ai_api_test_data import (
 
 from ai_api.api.serializers.series_extraction_response_serializer import SeriesExtractionResponseSerializer
 from ai_api.services.llm_service import LLMService
+from ai_api.sources.errors import SourceConfigurationError, SourceUnavailable
 
 
 class TestSeriesExtractionAPI(AbstractApiUnitTest):
@@ -269,9 +270,9 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         mock_service = Mock()
         mock_service.series_extract.return_value = series_extraction_response_data
         
-        # Test data with URL and zero date
+        # Test data with an allowlisted URL and zero date
         test_data = {
-            "name": "https://example.com/series/123",
+            "name": "https://catalogodesellos.fesofi.es/producto/0199/",
             "date": "0"
         }
         
@@ -290,7 +291,9 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
         mock_search_service.find_series_url.assert_not_called()
         
         # Verify scraping service was called with the direct URL
-        mock_scraping_service.extract_links.assert_called_once_with("https://example.com/series/123")
+        mock_scraping_service.extract_links.assert_called_once_with(
+            "https://catalogodesellos.fesofi.es/producto/0199/"
+        )
         
         # Verify service was called with correct parameters
         mock_service.series_extract.assert_called_once_with(
@@ -299,6 +302,36 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
             clean_data=str(series_extraction_cleaned_data)
         )
         
+    def test_post_series_extraction_refuses_a_host_outside_the_allowlist(
+        self,
+        api_client,
+        series_extraction_response_data,
+        series_extraction_cleaned_data
+    ):
+        """A URL plus date "0" only bypasses the search for an allowlisted host.
+
+        Before this, any URL was fetched: the endpoint worked as an authenticated
+        HTTP proxy (SSRF).
+        """
+        self.permission(granted=True)
+
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = "links"
+        mock_scraping_service.scrape_content.return_value = "content"
+        mock_scraping_service.clean_scraped_data.return_value = series_extraction_cleaned_data
+
+        mock_service = Mock()
+        mock_service.series_extract.return_value = series_extraction_response_data
+
+        test_data = {"name": "http://169.254.169.254/latest/meta-data/", "date": "0"}
+
+        with patch('ai_api.api.views.series_extraction_view.ScrapingService', return_value=mock_scraping_service), \
+            patch('ai_api.api.views.series_extraction_view.LLMService', return_value=mock_service):
+            response = api_client.post(self.__get_url(), test_data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        mock_scraping_service.extract_links.assert_not_called()
+
     def test_post_series_extraction_with_url_and_non_zero_date_uses_search(
         self, 
         api_client, 
@@ -351,6 +384,86 @@ class TestSeriesExtractionAPI(AbstractApiUnitTest):
             clean_data=str(series_extraction_cleaned_data)
         )
     
+    def test_post_series_extraction_returns_502_when_a_source_is_down(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+    ):
+        """A source that cannot be asked is not "not found": it is a 502."""
+        self.permission(granted=True)
+
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.side_effect = SourceUnavailable("down")
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.SearchService',
+            return_value=mock_search_service,
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+    def test_post_series_extraction_returns_500_when_a_source_is_not_configured(
+        self,
+        api_client,
+        series_extraction_request_payload_ok,
+    ):
+        """A missing URL or key is a deployment problem, not a 404."""
+        self.permission(granted=True)
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.SearchService',
+            side_effect=SourceConfigurationError("SERPER_URL is required"),
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert "SERPER_URL" in response.json()['message']
+        assert response.json()['data'] is None
+
+    def test_post_series_extraction_returns_422_when_nothing_is_scraped(
+        self,
+        api_client,
+        series_extraction_response_data,
+        series_extraction_request_payload_ok,
+    ):
+        """An empty scrape is a contract problem (422), not a crash behind a 500."""
+        self.permission(granted=True)
+
+        mock_search_service = Mock()
+        mock_search_service.find_series_url.return_value = (
+            "https://catalogodesellos.fesofi.es/producto/0001/"
+        )
+
+        mock_scraping_service = Mock()
+        mock_scraping_service.extract_links.return_value = []
+        mock_scraping_service.scrape_content.return_value = []
+        mock_scraping_service.clean_scraped_data.return_value = {}
+
+        mock_service = Mock()
+        mock_service.series_extract.return_value = series_extraction_response_data
+
+        with patch(
+            'ai_api.api.views.series_extraction_view.SearchService',
+            return_value=mock_search_service,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.ScrapingService',
+            return_value=mock_scraping_service,
+        ), patch(
+            'ai_api.api.views.series_extraction_view.LLMService',
+            return_value=mock_service,
+        ):
+            response = api_client.post(
+                self.__get_url(), series_extraction_request_payload_ok, format='json'
+            )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        mock_service.series_extract.assert_not_called()
+
     def __get_url(self):
         """Get the base URL for AI Manager API endpoints."""
         return f"/{AI_ISSUES_EXTRACTION_URL_V1}"

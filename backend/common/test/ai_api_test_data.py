@@ -59,11 +59,15 @@ def series_extraction_response_data() -> Dict[str, Any]:
     
 @pytest.fixture
 def series_extraction_cleaned_data() -> Dict[str, Any]:
-    """Mock scraper service cleaned data for testing."""
+    """Mock scraper service cleaned data for testing.
+
+    The keys are the ones `clean_scraped_data` actually produces: reading the old
+    `título serie` / `fecha de emisión` here is what hid a dead read in the view.
+    """
     return {
         "serie_info": {
-            "título serie": "Castillos",
-            "fecha de emisión": "2007-09-10"
+            "issue_name": "Castillos",
+            "issue_date": "2007-09-10"
         },
     }
     

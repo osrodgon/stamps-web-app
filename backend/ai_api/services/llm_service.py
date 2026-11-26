@@ -116,6 +116,10 @@ class LLMService(Logger):
             self.log.debug(f"AI extraction completed successfully for series: {name}")
             return result
             
+        except ValueError:
+            # Same reason as the provider: an unusable answer is a 422, not a 500.
+            self.log.error(f"AI extraction returned something unusable for {name}")
+            raise
         except Exception as e:
             self.log.error(f"AI extraction failed for series {name}: {str(e)}")
             raise Exception(Messages.AI.service_error(str(e)))

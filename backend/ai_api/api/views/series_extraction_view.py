@@ -1,15 +1,22 @@
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from urllib.parse import urlparse
+
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
-import re
 
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponseSerializer, GenericResponse
 from common.log.logger import Logger
 from common.core.schemas import standardized_response
-from common.api.messages import Messages
+from ai_api.sources.errors import (
+    SourceConfigurationError,
+    SourceNotAllowed,
+    SourceNotFound,
+    SourceUnavailable,
+)
+from ai_api.sources.http import get_client
 from ai_api.services.search_service import SearchService
 from ai_api.services.scraping_service import ScrapingService
 from ai_api.services.llm_service import LLMService
@@ -112,8 +119,14 @@ class SeriesExtractionView(Logger, APIView):
             scraping_service = ScrapingService()
             llm_service = LLMService()
             
-            # Check if name is already a URL and date is 0 - skip search service
-            if self._is_valid_url(name) and self._is_zero_date(date):
+            # A URL plus date "0" skips the search, but only for a host the
+            # client may fetch: accepting any URL here made the endpoint an
+            # authenticated HTTP proxy (SSRF, §1 #3).
+            if self._is_url(name) and self._is_zero_date(date):
+                if not self._is_source_url(name):
+                    raise SourceNotAllowed(
+                        f"{urlparse(name).hostname or name} is not an allowed host."
+                    )
                 self.log.debug(f"Using provided URL directly: {name}")
                 url = name
             else:
@@ -133,14 +146,23 @@ class SeriesExtractionView(Logger, APIView):
             
             # Get all URLs that have information about the series
             series_urls = scraping_service.extract_links(url)
-            
+
             # Scrap and clean all information from URLs
             content = scraping_service.scrape_content(series_urls)
             clean_data = scraping_service.clean_scraped_data(content)
-            
+
+            serie_info = clean_data.get("serie_info") or {}
+            if not serie_info or not content:
+                # Nothing was scraped: that is a contract problem (422), not a
+                # missing series (404) and not a crash behind a 500.
+                self.log.warning(f"Nothing could be scraped from {url}")
+                raise ValueError(
+                    f"No catalogue data could be read from {url}."
+                )
+
             # Send cleaned scraped data to LLM
-            name = clean_data.get("serie_info").get("título serie")
-            date = clean_data.get("serie_info").get("fecha de emisión")
+            name = serie_info.get("issue_name")
+            date = serie_info.get("issue_date")
             llm_result = llm_service.series_extract(
                 name=name,
                 date=date,
@@ -178,6 +200,43 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_200_OK
             )
         
+        except SourceConfigurationError as e:
+            # A missing URL or key is a deployment problem: it is not "not found".
+            self.log.error(f"AI series extraction is not configured: {str(e)}")
+            return Response(
+                data=GenericResponseSerializer(GenericResponse({
+                    "error": Messages.AI.error(),
+                    "message": str(e)
+                })).data,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except SourceNotAllowed as e:
+            self.log.error(f"AI series extraction refused a host: {str(e)}")
+            return Response(
+                data=GenericResponseSerializer(GenericResponse({
+                    "error": Messages.AI.validation_error(),
+                    "message": str(e)
+                })).data,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except SourceNotFound as e:
+            self.log.warning(f"AI series extraction found nothing: {str(e)}")
+            return Response(
+                data=GenericResponseSerializer(GenericResponse({
+                    "error": None,
+                    "message": str(e) or Messages.AI.error()
+                })).data,
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except SourceUnavailable as e:
+            self.log.error(f"AI series extraction source unavailable: {str(e)}")
+            return Response(
+                data=GenericResponseSerializer(GenericResponse({
+                    "error": Messages.AI.unavailable(),
+                    "message": str(e)
+                })).data,
+                status=status.HTTP_502_BAD_GATEWAY
+            )
         except ValueError as e:
             self.log.error(f"AI series extraction validation error: {str(e)}")
             return Response(
@@ -197,31 +256,32 @@ class SeriesExtractionView(Logger, APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def _is_valid_url(self, name: str) -> bool:
+    @staticmethod
+    def _is_url(name: str) -> bool:
+        """Return True when the value carries an http(s) scheme."""
+        if not name or not isinstance(name, str):
+            return False
+
+        return urlparse(name.strip()).scheme in ("http", "https")
+
+    def _is_source_url(self, name: str) -> bool:
         """
-        Check if the provided name is a valid URL.
-        
+        Check whether the name is a URL the source client may fetch.
+
+        The allowlist decides, not a regex: before this, any host was accepted and
+        the endpoint worked as an authenticated HTTP proxy.
+
         Args:
-            name (str): The name to check for URL validity
-            
+            name (str): The value received in the `name` field.
+
         Returns:
-            bool: True if the name is a valid URL, False otherwise
+            bool: True when it is an http(s) URL of an allowlisted host.
         """
         if not name or not isinstance(name, str):
             return False
-        
-        # Basic URL pattern matching (supports http, https, www)
-        url_pattern = re.compile(
-            r'^(https?:\/\/)?'  # Optional protocol
-            r'([www]\.)?'        # Optional www
-            r'([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}'  # Domain
-            r'([\/\w\.-]*)*'     # Path
-            r'(\?[^\s]*)?'       # Optional query parameters
-            r'$', re.IGNORECASE
-        )
-        
-        return bool(url_pattern.match(name.strip()))
-    
+
+        return get_client().is_allowed(name.strip())
+
     def _is_zero_date(self, date: str) -> bool:
         """
         Check if the provided date represents zero or empty value.

@@ -57,6 +57,30 @@ LLM_BATCH_SIZE = int(os.getenv('LLM_BATCH_SIZE', '5'))
 SERPER_API_KEY = os.getenv('SERPER_API_KEY', None)
 SERPER_URL = os.getenv('SERPER_URL', None)
 
+# Outbound HTTP for the AI API: one client, one allowlist.
+# Every host the pipeline may reach is listed here; anything else is refused
+# before the request leaves the process (see ai_api/sources/http.py).
+AI_SOURCE_ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'AI_SOURCE_ALLOWED_HOSTS',
+        'catalogodesellos.fesofi.es,api.colnect.net,'
+        'todocoleccion.net,www.todocoleccion.net,'
+        'ebay.es,www.ebay.es,ebay.com,www.ebay.com,'
+        'google.serper.dev',
+    ).split(',')
+    if host.strip()
+]
+AI_SOURCE_TIMEOUT = float(os.getenv('AI_SOURCE_TIMEOUT', '20'))
+AI_SOURCE_CONNECT_TIMEOUT = float(os.getenv('AI_SOURCE_CONNECT_TIMEOUT', '5'))
+AI_SOURCE_RETRIES = int(os.getenv('AI_SOURCE_RETRIES', '2'))
+AI_SOURCE_MAX_PER_HOST = int(os.getenv('AI_SOURCE_MAX_PER_HOST', '4'))
+AI_SOURCE_CACHE_TTL = int(os.getenv('AI_SOURCE_CACHE_TTL', '3600'))
+AI_SOURCE_USER_AGENT = os.getenv(
+    'AI_SOURCE_USER_AGENT',
+    'stamps-web-app/0.1 (+https://github.com/osrodgon/stamps-web-app)',
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
