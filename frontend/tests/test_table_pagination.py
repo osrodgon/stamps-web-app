@@ -161,3 +161,39 @@ class TestSetButtonState:
         pagination._set_button_state(btn, False)
 
         assert btn.disabled is False
+
+
+class TestOptionsAndLabel:
+    """The selector's sizes and the label can be given by the caller."""
+
+    def test_the_default_sizes_are_the_same_as_before(self) -> None:
+        pagination = TablePagination(page=1, page_size=15, total=65)
+
+        assert [option.key for option in pagination._dropdown.options] == [
+            "1",
+            "10",
+            "15",
+            "20",
+            "50",
+            "100",
+        ]
+
+    def test_the_caller_can_choose_the_sizes(self) -> None:
+        pagination = TablePagination(
+            page=1, page_size=15, total=65, page_size_options=[15, 30, 50]
+        )
+
+        assert [option.key for option in pagination._dropdown.options] == [
+            "15",
+            "30",
+            "50",
+        ]
+
+    def test_the_caller_can_choose_the_label(self) -> None:
+        pagination = TablePagination(
+            page=1, page_size=15, total=65, label="Series per page"
+        )
+
+        assert pagination.content.controls[0].controls[0].value == (
+            "Series per page:"
+        )

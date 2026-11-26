@@ -36,9 +36,9 @@ class CollectionCard(ft.Container):
     Args:
         data: the overview row (`id`, `name`, `series`, `stamps`, `total`, `covers`).
         lang: the active language, for the numbers.
-        on_open: reserved for the series screen; not used until B3, because the
-            route does not exist yet and a card that looks clickable and does
-            nothing is worse than one that does not.
+        on_open: called with the collection's id when the card is clicked. When
+            it is None the card is not clickable, which is what the earlier steps
+            needed.
         on_rename: when given, the card shows a menu with "Rename".
         on_delete: when given, the menu also offers "Delete".
     """
@@ -90,6 +90,13 @@ class CollectionCard(ft.Container):
             color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK),
             offset=ft.Offset(0, 2),
         )
+        if on_open is not None:
+            self.on_click = self._handle_open
+
+    def _handle_open(self, event: ft.ControlEvent) -> None:
+        """Open the series of this collection."""
+        if self._on_open is not None:
+            self._on_open(int(self._data.get("id") or 0))
 
     # ------------------------------------------------------------------
     # Cover

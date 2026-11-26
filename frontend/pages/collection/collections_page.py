@@ -248,6 +248,7 @@ class CollectionsPage(StandardPage):
         card = CollectionCard(
             collection,
             self._lang,
+            on_open=self._open_collection,
             on_rename=self._handle_rename,
             on_delete=self._handle_delete,
         )
@@ -297,6 +298,16 @@ class CollectionsPage(StandardPage):
             on_deleted=self._reload,
             on_forbidden=self._session_expired,
         ).show()
+
+    def _open_collection(self, collection_id: int) -> None:
+        """Open the series of one collection."""
+        self.main_page.run_task(self._push_collection, collection_id)
+
+    async def _push_collection(self, collection_id: int) -> None:
+        """Navigate to the collection's series."""
+        await self.main_page.push_route(
+            f"{URLs.Frontend.collections}/{collection_id}"
+        )
 
     def _reload(self) -> None:
         """Ask again, after a write."""

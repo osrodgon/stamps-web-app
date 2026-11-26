@@ -5,7 +5,7 @@ documented), so what can be tested here is tested: the label the page composes a
 the contract it keeps with the base class. The screen itself is checked by hand.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import flet as ft
 import pytest
@@ -46,6 +46,7 @@ class PageTest:
         page.overlay = []
         page.run_task = MagicMock()
         page.update = MagicMock()
+        page.push_route = AsyncMock()
         return page
 
     @pytest.fixture
@@ -111,3 +112,26 @@ class TestRender(PageTest):
         assert view._grid.visible is False
         assert view._empty.visible is True
         assert view._grid.controls == []
+
+
+class TestOpenCollection(PageTest):
+    """A card is a door to the collection's series (B3)."""
+
+    def test_the_cards_receive_the_open_handler(self, view, mocker):
+        mocker.patch(
+            "pages.collection.collections_page._",
+            side_effect=lambda key, **values: key,
+        )
+        view._collections = [self.row()]
+
+        with patch(
+            "components.collection.collection_card.os.path.exists", return_value=True
+        ):
+            view._render()
+
+        assert view._grid.controls[0].on_click is not None
+
+    async def test_it_pushes_the_collection_route(self, view, page):
+        await view._push_collection(5)
+
+        page.push_route.assert_awaited_once_with("/collections/5")

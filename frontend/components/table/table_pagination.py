@@ -29,6 +29,8 @@ class TablePagination(ft.Container):
         on_page_size_change: Optional[Callable[[int], None]] = None,
         font_size: int = FONT_SIZE_DEFAULT,
         font_family: str = "Roboto-Bold",
+        page_size_options: Optional[list[int]] = None,
+        label: str = "",
     ) -> None:
         """Initialize pagination controls with current state and callbacks.
 
@@ -45,6 +47,10 @@ class TablePagination(ft.Container):
             on_page_size_change: Called when the user selects a new page size.
             font_size: Font size for text elements.
             font_family: Font family for text elements.
+            page_size_options: The sizes the dropdown offers. Defaults to the list
+                this component has always shown.
+            label: What the dropdown is for, translated. Defaults to the existing
+                `pagination.rows_per_page` key.
         """
         super().__init__()
         self._page: int = page
@@ -52,6 +58,15 @@ class TablePagination(ft.Container):
         self._total: int = total
         self._on_page_change: Optional[Callable[[int], None]] = on_page_change
         self._on_page_size_change: Optional[Callable[[int], None]] = on_page_size_change
+        self._page_size_options: list[int] = page_size_options or [
+            1,
+            10,
+            15,
+            20,
+            50,
+            100,
+        ]
+        self._label: str = label or _("pagination.rows_per_page")
 
         self._range_text: ft.Text = ft.Text(
             self._format_range(), 
@@ -61,12 +76,7 @@ class TablePagination(ft.Container):
         self._dropdown: ft.Dropdown = ft.Dropdown(
             value=str(page_size),
             options=[
-                ft.dropdown.Option("1"),
-                ft.dropdown.Option("10"),
-                ft.dropdown.Option("15"),
-                ft.dropdown.Option("20"),
-                ft.dropdown.Option("50"),
-                ft.dropdown.Option("100"),
+                ft.dropdown.Option(str(size)) for size in self._page_size_options
             ],
             width=50,
             height=None,
@@ -99,9 +109,10 @@ class TablePagination(ft.Container):
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text(f"{_("pagination.rows_per_page")}:", 
-                                size=font_size, 
-                                font_family=font_family
+                        ft.Text(
+                            f"{self._label}:",
+                            size=font_size,
+                            font_family=font_family,
                         ),
                         self._dropdown,
                     ],
