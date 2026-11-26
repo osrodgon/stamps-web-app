@@ -64,23 +64,25 @@ def fmt_currency(value: Any, lang: str) -> str:
     return formatted
 
 
-def fmt_number(value: Any, lang: str) -> str:
-    """Format an integer with locale-aware thousands separator; return "-" for zero.
+def fmt_number(value: Any, lang: str, zero: str = "-") -> str:
+    """Format an integer with locale-aware thousands separator.
 
     en: "1,234,567"
     es: "1.234.567"
-    Returns "-" when value is 0, None, or empty.
+    Returns `zero` when the value is 0, None, or empty: the tables show "-" for a
+    missing figure, while a counter that legitimately is zero shows "0".
 
     Args:
-        value: Raw value (string or number). None/empty → "-".
+        value: Raw value (string or number). None/empty → `zero`.
         lang: Language code ("en" or "es").
+        zero: What to return for 0, None or empty. Defaults to "-".
 
     Returns:
-        Formatted integer string without decimals, or "-" for zero.
+        Formatted integer string without decimals, or `zero`.
     """
     val: int = int(value or 0)
     if val == 0:
-        return "-"
+        return zero
     formatted: str = f"{val:,}"
     if lang == "es":
         formatted = formatted.replace(",", ".")
