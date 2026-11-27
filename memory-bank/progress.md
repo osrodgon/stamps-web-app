@@ -997,7 +997,11 @@ when A is merged into `development`.
         stamps is not a row. `Query.int_param` moved to `common/core/query.py`, shared by the
         two list views. 19 tests, two of them pinning that B1 and B2 still hide what the
         collection does not hold.
-  - [ ] C3 — `CatalogueService` (Flet-free, JWT) + tests, S
+  - [x] C3 — `CatalogueService` (2026-11-27, S): `frontend/services/catalogue_service.py` on
+        `BaseService`, Flet-free and with the JWT: `search_issues`, `get_issue`, `add_stamps`,
+        `add_issue`, `add_year`. The three adds share a private `__add` (one endpoint, three
+        bodies) and the URL base is the existing `URLs.Backend.collections`. 11 tests; frontend
+        suite **812**.
   - [ ] C4 — `AddStampsDialog` and its two entry points + tests, L
   - [ ] C5 — close-out: empty state, counts, keys, browser pass, suites, S
 - [ ] **B3b-2 — what the series screen still owes its mockup** (deferred 2026-11-27 by
