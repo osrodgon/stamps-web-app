@@ -24,6 +24,7 @@ class Texts:
         found: list[str] = []
         if isinstance(control, ft.Text):
             found.append(control.value or "")
+            found.extend(span.text for span in (control.spans or []))
         for child in (getattr(control, "controls", None) or []):
             found.extend(cls.of(child))
         content = getattr(control, "content", None)
@@ -118,6 +119,51 @@ class TestDisplay:
 
         assert card.item is None
         assert _("collections.add_my_copy") in Texts.of(card._copy_box)
+
+
+class TestCatalogue:
+    """The read-only half, as the mockup: codes, face value, colour and pills."""
+
+    def test_it_shows_the_codes_face_value_and_colour(self):
+        card = Cards.build(Cards.ITEM)
+
+        texts = " · ".join(Texts.of(card.content))
+
+        assert "FESOFI " in texts
+        assert "0001 · " in texts
+        assert "6 cuartos" in texts
+        assert "Negro" in texts
+
+    def test_it_shows_both_values_as_pills(self):
+        card = Cards.build(Cards.ITEM)
+
+        texts = Texts.of(card.content)
+
+        assert any("Mint" in text and "300" in text for text in texts)
+        assert any("Used" in text and "30" in text for text in texts)
+
+
+class TestCopyGrid:
+    """Six fields in two rows of three, under the `YOUR COPY` caption."""
+
+    def test_it_is_a_grid_of_six_cells(self):
+        card = Cards.build(Cards.ITEM)
+
+        rows = [
+            control
+            for control in card._copy_box.content.controls
+            if isinstance(control, ft.Row)
+            and control.controls
+            and all(isinstance(cell, ft.Column) for cell in control.controls)
+        ]
+
+        assert len(rows) == 2
+        assert all(len(row.controls) == 3 for row in rows)
+
+    def test_it_offers_the_edit_link(self):
+        card = Cards.build(Cards.ITEM)
+
+        assert _("collections.edit") in Texts.of(card._copy_box)
 
 
 class TestLayout:

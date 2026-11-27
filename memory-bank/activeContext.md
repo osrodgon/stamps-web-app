@@ -179,12 +179,27 @@ afirmar nada que las fuentes no sostengan.
   route resolver, the clickable cards and the series screen with filters and paginator
   (frontend suite **744**). **B4 is done too**: the series detail with "Your copy"
   (frontend suite **775**). **B5 is done too**: the close-out fixed the grey-screen
-  layout bugs and phase B is closed (frontend suite **784**). **Open follow-up**: there is
-  no way to add the first stamp/series to an empty collection; needs its own step. Decisions still standing: the series order **mirrors
+  layout bugs and phase B is closed (frontend suite **784**). **B4b is done too**: the
+  series detail follows the mockup (plate, pills, the copy as a grid, two cards per row),
+  frontend suite **790**. **Open follow-up**: there is no way to add the first
+  stamp/series to an empty collection; needs its own step. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B4b, **la pantalla de detalle como el mockup**: el contenido y las
+  escrituras de B4 estaban bien, la disposición no. La tarjeta pasa a ser la del mockup
+  —placa de 96 px sobre `BG_ALT`, códigos, facial y color al lado, y los dos valores de
+  catálogo como píldoras verde y azul— y debajo `TU EJEMPLAR` con `Editar` como enlace y
+  los seis campos en **dos filas de tres**; el sello que no se tiene deja el bloque
+  atenuado con `Añadir mi ejemplar`. La página gana la cabecera `Sellos` con el resumen al
+  lado y las tarjetas en un `ResponsiveRow` a **dos por fila desde `lg`**. Clave nueva
+  `collections.stamps_section` y los tonos como constantes (`MINT_*`, `USED_*`, `AMBER_*`).
+  **La trampa**: `CrossAxisAlignment.BASELINE` en una fila de esa columna **colapsa la
+  página entera** —Flutter pide un `textBaseline` que Flet no manda y el contenido se pinta
+  desplazado hacia arriba, sin nada en el log ni en la consola—; con `CENTER` se arregla y
+  un test lo fija. 6 tests, suite del frontend **790**; Chromium a 1493 y 1100 con dos
+  tarjetas, una, ninguna y el formulario de edición.
 - [Today] Colecciones B5 y **cierre de la fase B**: la pasada en navegador (las páginas
   reales con servicios stub, 1493×800) encontró los fallos que hacían inutilizables las
   pantallas. **`Row(wrap=True)` con un hijo con `expand`** deja a Flutter pintando su

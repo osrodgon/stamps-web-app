@@ -396,6 +396,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 | B3 | `CollectionSeriesPage` | B2 | L | **hecho 2026-11-26** |
 | B4 | `CollectionIssuePage` | B3 | L | **hecho 2026-11-26** |
 | B5 | Close-out | B4 | S | **hecho 2026-11-26** |
+| B4b | The series detail follows the mockup | B5 | M | **hecho 2026-11-27** |
 
 **B1 — Series of a collection — HECHO 2026-11-26.**
 `GET /collections/<pk>/issues/` mirroring `/issues/`: same parameters, same defaults,
@@ -483,6 +484,33 @@ stamp) to an empty collection. The series endpoint only lists series the collect
 already holds something of, and the detail adds stamps inside those. It needs its own
 step: a catalogue search from the collection that adds one stamp, which makes its series
 appear. It was out of scope here on purpose.
+
+**B4b — The series detail follows the mockup — HECHO 2026-11-27.**
+The content and the writes of B4 were right; the screen did not look like
+`mockups/collection-series-detail.html`. What changed, in the card and in the page:
+
+- **The card is the mockup's**: a 96px plate on the left — on `BG_ALT`, the plate B4 never
+  had — with the name, `FESOFI 0001 · Edifil 1`, face value and colour beside it and the
+  two catalogue values as pills (`Mint 300,00 €` on green, `Used 30,00 €` on blue, the
+  mockup's tones). Below a hairline, `YOUR COPY` with `Edit` as a link and the six fields
+  as a **grid of two rows of three**, not a list of label/value lines. A stamp the user
+  does not own keeps the same block dimmed (0.62) with `Add my copy`.
+- **The page** gained the mockup's section head: `Stamps` and the summary
+  (`1 of 2 stamps · Paid: €120.00`) side by side, and the cards sit in a `ResponsiveRow`
+  — **two per row from `lg`**, one below it. The read-only badge took the mockup's amber.
+- New locale key `collections.stamps_section`, and the tones as constants in
+  `colors.py` (`MINT_BG`/`MINT_INK`, `USED_BG`/`USED_INK`, `AMBER_BG`/`AMBER_INK`).
+
+**The trap worth remembering**: `CrossAxisAlignment.BASELINE` in a `Row` inside the
+scrolling column **collapses the whole page** — Flutter asks for a `textBaseline` Flet
+does not send, and the content is painted shifted upwards with the rest missing and
+nothing in the server log or the browser console. `CENTER` on that head fixed it; a test
+pins the alignment so it cannot go back. It is the second silent Flet layout failure in
+this phase, after `Row(wrap=True)` + `expand`.
+
+6 tests (3 card, 1 page, plus the two helper extensions); frontend suite **790**. Checked
+in Chromium at 1493x1000 and 1100x1000: two cards, one card, no stamps and the editing
+form with its three-column grid and `Remove`/`Cancel`/`Save`.
 
 **Acceptance, per screen**
 
