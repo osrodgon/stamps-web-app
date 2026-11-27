@@ -35,33 +35,6 @@ class CollectionIssueDetailView(Logger, APIView):
     serializer_class = CollectionIssueDetailSerializer
 
     @extend_schema(
-        operation_id="get_collection_issue",
-        tags=["Collection Management"],
-        summary="Read one series of a collection",
-        description="Returns the series as the catalogue has it, every stamp with the "
-        "caller's `item` or `null`, and the summary of how many are owned. The "
-        "catalogue fields are read-only: the user only edits their own copy.",
-        responses={
-            status.HTTP_200_OK: standardized_response(
-                CollectionIssueDetailSerializer,
-                name="CollectionIssueRetrieved",
-                description="The series was retrieved with the caller's copies.",
-            ),
-            status.HTTP_403_FORBIDDEN: standardized_response(
-                GenericResponseSerializer,
-                name="CollectionIssueDetailForbidden",
-                success=False,
-                description="Permission denied.",
-            ),
-            status.HTTP_404_NOT_FOUND: standardized_response(
-                GenericResponseSerializer,
-                name="CollectionIssueDetailNotFound",
-                success=False,
-                description="The collection or the series is not the caller's.",
-            ),
-        },
-    )
-    @extend_schema(
         operation_id="remove_collection_issue",
         tags=["Collection Management"],
         summary="Remove a series from a collection",
@@ -130,6 +103,33 @@ class CollectionIssueDetailView(Logger, APIView):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        operation_id="get_collection_issue",
+        tags=["Collection Management"],
+        summary="Read one series of a collection",
+        description="Returns the series as the catalogue has it, every stamp with the "
+        "caller's `item` or `null`, and the summary of how many are owned. The "
+        "catalogue fields are read-only: the user only edits their own copy.",
+        responses={
+            status.HTTP_200_OK: standardized_response(
+                CollectionIssueDetailSerializer,
+                name="CollectionIssueRetrieved",
+                description="The series was retrieved with the caller's copies.",
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionIssueDetailForbidden",
+                success=False,
+                description="Permission denied.",
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionIssueDetailNotFound",
+                success=False,
+                description="The collection or the series is not the caller's.",
+            ),
+        },
+    )
     def get(
         self, request: Request, pk: int, issue_pk: int, *args, **kwargs
     ) -> Response:

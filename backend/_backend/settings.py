@@ -335,6 +335,7 @@ SPECTACULAR_SETTINGS = {
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
     "SWAGGER_UI_SETTINGS": {
+        "docExpansion": "none",
         "defaultModelsExpandDepth": -1,
         'deepLinking': True,
         'persistAuthorization': True,
@@ -388,6 +389,13 @@ DATABASES = {
         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),      # Your PostgreSQL password
         'HOST': os.getenv('POSTGRES_HOST', 'localhost'), # The host where Postgres is running (or IP)
         'PORT': os.getenv('POSTGRES_PORT', '5432'),      # The port Postgres is running on
+        # `dumpdata` walks every table through a server-side (named) cursor.
+        # Behind a connection pooler — PgBouncer in transaction mode — or when a
+        # statement timeout aborts the query, that cursor is gone by the next
+        # fetch and the backup dies with `cursor "_django_curs_…" does not exist`.
+        # The whole catalogue is a few megabytes, so reading it in batches on the
+        # client costs nothing and the backup survives either case.
+        'DISABLE_SERVER_SIDE_CURSORS': True,
     }
 }
 # Use SQLite for testing (see pytest.ini)
