@@ -974,6 +974,23 @@ when A is merged into `development`.
       in both languages. 6 backend + 11 frontend tests; suites **1.824** / **801**;
       screenshots at 1493, 1024 and an empty collection next to the mockup. `AGENTS.md` now
       requires that comparison for every screen step.
+- [ ] **Phase C — Adding stamps to a collection** (planned 2026-11-27, plan §10): an empty
+      collection has no door in. One dialog with three scopes — one stamp, one series, one
+      whole year — over a catalogue search, and one bulk write per request (cap 500,
+      duplicates skipped, copies created with collection and stamp only).
+  - [x] C0 — mockup of the dialog (`memory-bank/mockups/add-stamps-dialog.html`, four states
+        shown in Chromium at 1493x900), redrawn with the app's own controls and tokens after
+        the first review said its look did not match the frontend, S
+  - [ ] C1 — `POST collections/<pk>/items/bulk/` + tests, M
+  - [ ] C2 — catalogue search and catalogue detail endpoints + tests, M
+  - [ ] C3 — `CatalogueService` (Flet-free, JWT) + tests, S
+  - [ ] C4 — `AddStampsDialog` and its two entry points + tests, L
+  - [ ] C5 — close-out: empty state, counts, keys, browser pass, suites, S
+- [ ] **B3b-2 — what the series screen still owes its mockup** (deferred 2026-11-27 by
+      decision, revisit with real data): the mockup's **numbered paginator** (`TablePagination`
+      is the house one, only dressed as a card today), the `h1` at the mockup's **26px**
+      instead of 24 (`FONT_SIZE_HEADING`), and the meta line at the mockup's size. None of
+      the three blocks using the screen; they are recorded here so they are not forgotten.
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)

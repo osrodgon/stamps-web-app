@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Add stamps to a collection</title>
+<style>
+  /* ------------------------------------------------------------------
+     The tokens are the app's, not a designer's: colors.py and constants.py
+     (SKY_BLUE, DARK_BLUE_GREY, BG_ALT, ROW_BORDER, GREY_700, radius 8 for
+     cards and 4 for buttons, button height 40). The controls are the
+     components the dialog will be built from: the house TextField (label
+     above, underline, no box), the house dropdown, LinkButton, DefaultButton
+     and PrimaryButton.
+     ------------------------------------------------------------------ */
+  :root {
+    --bar: #1e2b3c;          /* DARK_BLUE_GREY */
+    --page: #f1f5f9;         /* BG_ALT */
+    --surface: #fff;
+    --ink: #1f2933;
+    --muted: #616161;        /* GREY_700 */
+    --line: #d0d0d0;         /* ROW_BORDER */
+    --field-line: #cfd6df;   /* BLUE_GREY_100 */
+    --sky: #5898d4;          /* SKY_BLUE */
+    --sky-hover: #6ba3d9;
+    --green: #388e3c;        /* GREEN_700 */
+    --card-radius: 8px;      /* CARD_BORDER_RADIUS */
+    --btn-radius: 4px;       /* BUTTON_BORDER_RADIUS */
+    --card-shadow: 0 1px 4px rgba(16, 24, 40, .10);
+    --float-shadow: 0 8px 28px rgba(16, 24, 40, .26);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 14px/1.45 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .bar {
+    display: flex; align-items: center; gap: 14px;
+    height: 80px; padding: 0 18px;
+    background: var(--bar); color: #fff;
+  }
+  .bar .menu { font-size: 22px; opacity: .9; }
+  .bar .title { font-weight: 700; font-size: 20px; }
+
+  /* fixed above the veil: the review aid, not part of the design */
+  .switch {
+    position: fixed; bottom: 20px; left: 20px; z-index: 10;
+    display: flex; gap: 6px; align-items: center;
+    padding: 6px 8px; border-radius: 999px;
+    background: rgba(30, 43, 60, .94);
+    font-size: 12px; color: #c9d3df;
+  }
+  .switch button {
+    border: 1px solid #3c4c60; background: #26364a; color: #dfe6ee;
+    border-radius: 999px; padding: 5px 11px; font: inherit; cursor: pointer;
+  }
+  .switch button.on { background: var(--sky); border-color: var(--sky); color: #fff; }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 24px 48px; }
+
+  .crumbs { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .crumbs a { color: var(--sky); text-decoration: none; }
+  .crumbs b { color: var(--ink); }
+
+  .head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+  .head h1 { margin: 0; font-size: 26px; }
+  .head .meta { color: var(--muted); }
+
+  /* the screen behind: a card of filters and two series cards, enough to
+     read the dialog as an overlay */
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+  }
+  .filters {
+    display: flex; gap: 12px; align-items: flex-end;
+    padding: 16px 16px 10px; margin-bottom: 18px;
+  }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field.grow { flex: 1; }
+  .field label { font-size: 12px; color: var(--muted); }
+  .field input, .field select {
+    height: 30px; padding: 0; border: 0; border-bottom: 1px solid var(--field-line);
+    background: transparent; font: inherit; color: var(--ink); outline: none;
+  }
+  .field input:focus, .field select:focus { border-bottom: 2px solid var(--sky); }
+  .field.grow input { width: 100%; }
+  .field select { cursor: pointer; }
+
+  .row {
+    display: grid; grid-template-columns: 64px minmax(220px, 1fr) 150px 130px 24px;
+    align-items: center; gap: 16px;
+    padding: 12px 16px; margin-bottom: 10px;
+  }
+  .row.dim { opacity: .4; pointer-events: none; }
+  .thumb {
+    display: grid; place-items: center;
+    width: 56px; height: 50px; border-radius: 4px; background: var(--page);
+    border: 1px solid var(--line); overflow: hidden;
+  }
+  .thumb img { max-height: 44px; max-width: 50px; }
+  .ident .year { font-size: 12px; color: var(--muted); }
+  .ident .name { font-weight: 700; font-size: 15px; }
+  .ident .where { font-size: 12px; color: var(--muted); }
+  .chev { color: #b6c0cc; font-size: 18px; }
+
+  /* --- the dialog ---------------------------------------------------- */
+  .veil {
+    position: fixed; inset: 0; background: rgba(16, 24, 40, .38);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 56px 24px; overflow: auto;
+  }
+  .dialog {
+    width: 900px; max-width: 100%;
+    background: var(--surface); border-radius: var(--card-radius);
+    box-shadow: var(--float-shadow);
+  }
+  .dialog-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 22px 8px; }
+  .dialog-head h2 { margin: 0; font-size: 20px; font-weight: 700; }
+  .dialog-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .dialog-head .sub b { color: var(--ink); }
+  .dialog-head .close {
+    margin-left: auto; border: 0; background: none; font-size: 18px; line-height: 1;
+    color: var(--muted); cursor: pointer; padding: 6px; border-radius: 4px;
+  }
+  .dialog-head .close:hover { background: #f1f3f5; }
+
+  .dialog-filters {
+    display: flex; gap: 16px; align-items: flex-end;
+    padding: 6px 22px 14px; border-bottom: 1px solid var(--line);
+  }
+  .dialog-filters .field.grow { flex: 1; }
+  .dialog-filters .count { color: var(--muted); font-size: 13px; padding-bottom: 8px; }
+  .dialog-filters .spacer { flex: 1; }
+
+  .results { padding: 12px 16px 4px; max-height: 44vh; overflow: auto; }
+
+  .result { border: 1px solid var(--line); border-radius: var(--card-radius); margin-bottom: 8px; }
+  .result-top {
+    display: grid; grid-template-columns: 48px minmax(180px, 1fr) 160px 30px auto;
+    align-items: center; gap: 14px; padding: 8px 10px;
+  }
+  .result .thumb { width: 44px; height: 40px; }
+  .result .thumb img { max-height: 34px; max-width: 38px; }
+  .held { font-size: 13px; color: var(--muted); text-align: right; }
+  .held b { color: var(--ink); }
+  .expand {
+    border: 0; background: none; cursor: pointer; color: #b6c0cc;
+    font-size: 16px; padding: 4px; border-radius: 4px;
+  }
+  .expand:hover { background: #f1f3f5; color: var(--muted); }
+
+  /* the house buttons: PrimaryButton is filled, DefaultButton is its text in
+     SKY_BLUE, both 40 high with a 4px radius */
+  .btn {
+    height: 40px; padding: 0 16px; border: 0; border-radius: var(--btn-radius);
+    font: 500 14px Roboto, system-ui, sans-serif; cursor: pointer;
+    background: transparent; color: var(--sky); white-space: nowrap;
+  }
+  .btn:hover { background: rgba(88, 152, 212, .10); }
+  .btn.primary { background: var(--sky); color: #fff; }
+  .btn.primary:hover { background: var(--sky-hover); }
+  .btn:disabled { color: #9e9e9e; background: transparent; cursor: default; }
+  .btn.small { height: 32px; padding: 0 12px; font-size: 13px; }
+
+  .link {
+    border: 0; background: none; cursor: pointer; padding: 0;
+    color: var(--sky); font: inherit; text-decoration: underline;
+  }
+
+  /* the stamps unfolded under a series */
+  .stamps {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px;
+    padding: 12px; border-top: 1px solid var(--line);
+  }
+  .stamp {
+    border: 1px solid var(--line); border-radius: var(--card-radius); padding: 8px;
+    display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center;
+  }
+  .stamp .plate {
+    display: grid; place-items: center; width: 100%; height: 72px;
+    border-radius: 4px; background: var(--page);
+  }
+  .stamp .plate img { max-height: 66px; max-width: 90%; }
+  .stamp .nm { font-size: 12px; font-weight: 600; line-height: 1.2; }
+  .stamp .cv, .stamp .codes { font-size: 11px; color: var(--muted); }
+  .stamp .own { font-size: 12px; color: var(--green); font-weight: 600; }
+  .stamp .btn { height: 30px; padding: 0 10px; font-size: 13px; }
+
+  .dialog-foot {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 22px; border-top: 1px solid var(--line);
+  }
+  .dialog-foot .hint { color: var(--muted); font-size: 13px; }
+  .dialog-foot .hint b { color: var(--ink); }
+  .dialog-foot .spacer { flex: 1; }
+
+  /* the confirmation, over the dialog */
+  .confirm-veil {
+    position: fixed; inset: 0; background: rgba(16, 24, 40, .46);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .confirm {
+    width: 420px; background: var(--surface); border-radius: var(--card-radius);
+    box-shadow: var(--float-shadow); padding: 20px 22px;
+  }
+  .confirm h3 { margin: 0 0 8px; font-size: 18px; }
+  .confirm p { margin: 0 0 6px; }
+  .confirm .note { color: var(--muted); font-size: 13px; }
+  .confirm .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="menu">☰</span>
+  <span class="title">Collections</span>
+</header>
+
+<span class="switch">
+  <span>state:</span>
+  <button data-state="default" class="on">search</button>
+  <button data-state="expanded">series open</button>
+  <button data-state="year">a whole year</button>
+  <button data-state="confirm">confirmation</button>
+</span>
+
+<main>
+  <div class="crumbs"><a href="#">Collections</a> / <b>Test</b></div>
+  <div class="head">
+    <h1>Test</h1>
+    <span class="meta">Series: 2 · Stamps: 9 · Paid: 315.00 €</span>
+  </div>
+
+  <div class="card filters">
+    <div class="field grow">
+      <label for="q">Series</label>
+      <input id="q" type="text" placeholder="Search by name…">
+    </div>
+    <div class="field">
+      <label for="from">From year</label>
+      <input id="from" type="number" value="1850">
+    </div>
+    <div class="field">
+      <label for="to">To year</label>
+      <input id="to" type="number" value="1860">
+    </div>
+    <div class="field">
+      <label for="sort">Sort</label>
+      <select id="sort"><option>Date ↑</option><option>Date ↓</option><option>Name</option></select>
+    </div>
+  </div>
+
+  <div class="card row dim">
+    <div class="thumb"><img src="../../frontend/assets/stamps/1852/0012.webp" alt=""></div>
+    <div class="ident">
+      <div class="year">1852 · March 1st</div>
+      <div class="name">Isabel II</div>
+      <div class="where">España · Sello de correo ordinario</div>
+    </div>
+    <div></div><div></div><div class="chev">›</div>
+  </div>
+  <div class="card row dim">
+    <div class="thumb"><img src="../../frontend/assets/stamps/1853/0017.webp" alt=""></div>
+    <div class="ident">
+      <div class="year">1853 · April 1st</div>
+      <div class="name">Isabel II</div>
+      <div class="where">España · Sello de correo ordinario</div>
+    </div>
+    <div></div><div></div><div class="chev">›</div>
+  </div>
+</main>
+
+<!-- the dialog --------------------------------------------------------- -->
+<div class="veil">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+
+    <div class="dialog-head">
+      <div>
+        <h2 id="dlg-title">Add stamps</h2>
+        <div class="sub">The catalogue, into <b>Test</b>. Add a stamp, a series or a whole year.</div>
+      </div>
+      <button class="close" title="Close">✕</button>
+    </div>
+
+    <div class="dialog-filters">
+      <div class="field grow">
+        <label for="dq">Series</label>
+        <input id="dq" type="text" value="Isabel" placeholder="Search by name…">
+      </div>
+      <div class="field">
+        <label for="df">From year</label>
+        <input id="df" type="number" value="1850">
+      </div>
+      <div class="field">
+        <label for="dt">To year</label>
+        <input id="dt" type="number" value="1860">
+      </div>
+      <div class="spacer"></div>
+      <div class="count" id="count">3 series · 16 stamps</div>
+    </div>
+
+    <div class="results">
+
+      <div class="result" id="row-1851">
+        <div class="result-top">
+          <div class="thumb"><img src="../../frontend/assets/stamps/1851/0006.webp" alt=""></div>
+          <div class="ident">
+            <div class="year">1851 · January 1st</div>
+            <div class="name">Isabel II</div>
+            <div class="where">España · Sello de correo ordinario</div>
+          </div>
+          <div class="held"><b>0 of 6</b> in this collection</div>
+          <button class="expand" title="Show its stamps">▸</button>
+          <button class="btn small">Add the series</button>
+        </div>
+      </div>
+
+      <div class="result" id="open-series">
+        <div class="result-top">
+          <div class="thumb"><img src="../../frontend/assets/stamps/1852/0012.webp" alt=""></div>
+          <div class="ident">
+            <div class="year">1852 · February 1st</div>
+            <div class="name">Isabel II</div>
+            <div class="where">España · Sello de correo ordinario</div>
+          </div>
+          <div class="held"><b>2 of 5</b> in this collection</div>
+          <button class="expand" title="Hide its stamps">▾</button>
+          <button class="btn small">Add the missing 3</button>
+        </div>
+
+        <div class="stamps" hidden="">
+          <div class="stamp">
+            <div class="plate"><img src="../../frontend/assets/stamps/1852/0012.webp" alt=""></div>
+            <div class="nm">Isabel II</div>
+            <div class="cv">6 cuartos · Rosa</div>
+            <div class="codes">FESOFI 0012</div>
+            <div class="own">In this collection</div>
+          </div>
+          <div class="stamp">
+            <div class="plate"><img src="../../frontend/assets/stamps/1852/0013.webp" alt=""></div>
+            <div class="nm">Isabel II</div>
+            <div class="cv">12 cuartos · Lila</div>
+            <div class="codes">FESOFI 0013</div>
+            <div class="own">In this collection</div>
+          </div>
+          <div class="stamp">
+            <div class="plate"><img src="../../frontend/assets/stamps/1852/0014.webp" alt=""></div>
+            <div class="nm">Isabel II</div>
+            <div class="cv">2 reales · Naranja pálido</div>
+            <div class="codes">FESOFI 0014</div>
+            <button class="btn small">Add</button>
+          </div>
+          <div class="stamp">
+            <div class="plate"><img src="../../frontend/assets/stamps/1852/0015.webp" alt=""></div>
+            <div class="nm">Isabel II</div>
+            <div class="cv">5 reales · Verde</div>
+            <div class="codes">FESOFI 0015</div>
+            <button class="btn small">Add</button>
+          </div>
+          <div class="stamp">
+            <div class="plate"><img src="../../frontend/assets/stamps/1852/0016.webp" alt=""></div>
+            <div class="nm">Retrato de Isabel II</div>
+            <div class="cv">6 reales · Azul verdoso</div>
+            <div class="codes">FESOFI 0016</div>
+            <button class="btn small">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result" id="row-1853">
+        <div class="result-top">
+          <div class="thumb"><img src="../../frontend/assets/stamps/1853/0017.webp" alt=""></div>
+          <div class="ident">
+            <div class="year">1853 · March 1st</div>
+            <div class="name">Isabel II</div>
+            <div class="where">España · Sello de correo ordinario</div>
+          </div>
+          <div class="held"><b>5 of 5</b> in this collection</div>
+          <button class="expand" title="Show its stamps">▸</button>
+          <button class="btn small" disabled>Already complete</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="dialog-foot">
+      <span class="hint" id="foot-hint">Pick a stamp, a series, or filter a single year.</span>
+      <span class="hint" id="foot-year" hidden=""><b>1852</b> · 37 stamps in 8 series</span>
+      <span class="spacer"></span>
+      <button class="btn">Close</button>
+      <button class="btn primary" id="foot-year-btn" hidden="">Add every stamp of 1852 (37)</button>
+    </div>
+  </div>
+</div>
+
+<!-- the confirmation of a big add -------------------------------------- -->
+<div class="confirm-veil" id="confirm" hidden="">
+  <div class="confirm" role="alertdialog" aria-modal="true">
+    <h3>Add 37 stamps?</h3>
+    <p>Every stamp of 1852 goes into <b>Test</b>.</p>
+    <p class="note">They arrive with no condition, price, date or location: those are yours to fill in.</p>
+    <div class="actions">
+      <button class="btn">Cancel</button>
+      <button class="btn primary">Add 37 stamps</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Review aid: the four states of the dialog, so they can be compared at once.
+  const states = {
+    default: { year: false, confirm: false, open: false },
+    expanded: { year: false, confirm: false, open: true },
+    year: { year: true, confirm: false, open: false },
+    confirm: { year: true, confirm: true, open: false },
+  };
+
+  const open = document.getElementById('open-series');
+  const series = open.querySelector('.stamps');
+  const arrow = open.querySelector('.expand');
+  const footHint = document.getElementById('foot-hint');
+  const footYear = document.getElementById('foot-year');
+  const footYearBtn = document.getElementById('foot-year-btn');
+  const confirm = document.getElementById('confirm');
+  const search = document.getElementById('dq');
+  const from = document.getElementById('df');
+  const to = document.getElementById('dt');
+  const count = document.getElementById('count');
+
+  document.querySelectorAll('.switch button').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.switch button').forEach((b) => b.classList.remove('on'));
+      button.classList.add('on');
+      const state = states[button.dataset.state];
+
+      series.hidden = !state.open;
+      arrow.textContent = state.open ? '▾' : '▸';
+      footHint.hidden = state.year;
+      footYear.hidden = !state.year;
+      footYearBtn.hidden = !state.year;
+      confirm.hidden = !state.confirm;
+
+      // a single year cannot be filtered together with a name
+      search.value = state.year ? '' : 'Isabel';
+      from.value = state.year ? '1852' : '1850';
+      to.value = state.year ? '1852' : '1860';
+      count.textContent = state.year ? '8 series · 37 stamps' : '3 series · 16 stamps';
+      document.getElementById('row-1851').hidden = state.year;
+      document.getElementById('row-1853').hidden = state.year;
+    });
+  });
+</script>
+</body>
+</html>
