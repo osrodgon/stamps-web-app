@@ -11,6 +11,7 @@ import flet as ft
 import pytest
 
 from components.constants import PAGE_SCROLL_GUTTER
+from core.collection_names import CollectionNames
 from core.translations import _
 from pages.collection.collection_issue_page import CollectionIssuePage
 
@@ -111,9 +112,9 @@ class TestConstruction(PageTest):
         assert isinstance(content, ft.ListView)
         assert content.padding == ft.Padding.only(right=PAGE_SCROLL_GUTTER)
 
-    def test_the_header_has_no_separator(self, view):
-        assert len(view.header.left_area.controls) == 2
-        assert view.header.right_area.controls == []
+    def test_the_header_carries_the_menu_and_the_path(self, view):
+        assert len(view.header.left_area.controls) == 1
+        assert view.header.center_area.controls == [view._crumbs]
 
 
 class TestSummary(PageTest):
@@ -150,7 +151,7 @@ class TestRender(PageTest):
         assert view._cards[0].item is not None
         assert view._cards[1].item is None
         assert view._detail_box.visible is True
-        assert view._series_crumb.value == "Isabel II"
+        assert view._crumbs.text(2) == "Isabel II"
 
     def test_the_summary_follows_the_cards(self, view, mocker):
         mocker.patch(
@@ -233,52 +234,81 @@ class TestNeighbours(PageTest):
         assert page.run_task.call_args.args[1] == 3
 
 
-class TestRemoveSeries(PageTest):
-    """The bin beside the badge takes the series out of the collection."""
+class TestRememberedName(PageTest):
+    """The collection's name is not asked for again when it is known."""
 
-    def test_the_bin_is_in_the_badge_row(self, view):
-        icons = [
-            control
-            for control in self.walk(view._build_badge_row())
-            if isinstance(control, ft.IconButton)
-        ]
+    def test_the_crumbs_start_filled(self, page):
+        CollectionNames.remember(7, "Test")
 
-        assert icons
-        assert icons[0].tooltip == _("collections.remove_series")
+        view = CollectionIssuePage(
+            page, 7, 3, collection_service=MagicMock(), item_service=MagicMock()
+        )
 
-    async def test_it_removes_and_goes_back_to_the_list(self, view, page):
+        assert view._crumbs.text(1) == "Test"
+
+    async def test_a_known_name_costs_no_request(self, view):
+        CollectionNames.remember(7, "Test")
+
+        await view._load_collection_name()
+
+        view._collection_service.get_collections.assert_not_called()
+        assert view._collection_name == "Test"
+
+    async def test_a_loaded_name_is_kept_for_the_next_screen(self, view):
         response = MagicMock()
         response.status_code = 200
-        response.json.return_value = {"data": {"deleted": 3}}
-        view._item_service.remove_issue = AsyncMock(return_value=response)
+        response.json.return_value = {"data": [{"id": 7, "name": "Test"}]}
+        view._collection_service.get_collections = AsyncMock(return_value=response)
+
+        await view._load_collection_name()
+
+        assert CollectionNames.get(7) == "Test"
+
+
+class TestRemoveSeries(PageTest):
+    """The bin sits at the height of the series' name, and the dialog is the shared one."""
+
+    def test_the_bin_travels_with_the_header_section(self, view):
+        view._render(Details.payload())
+        header = view._detail_box.controls[0]
+
+        assert view._remove_button in header._trailing
+
+    def test_the_arrows_travel_with_it(self, view):
+        view._render(Details.payload())
+        header = view._detail_box.controls[0]
+
+        assert view._previous_button in header._trailing
+        assert view._next_button in header._trailing
+
+    def test_the_read_only_badge_goes_with_the_date(self, view):
+        view._render(Details.payload())
+        header = view._detail_box.controls[0]
+
+        assert len(header._subtitle_trailing) == 1
+
+    def test_the_bin_opens_the_shared_dialog(self, view, mocker):
+        dialog = mocker.patch(
+            "pages.collection.collection_issue_page.RemoveSeriesDialog"
+        )
+        view._crumbs.set_text(2, "Isabel II")
+        view._owned_copies = 5
+
+        view._ask_remove_series(None)
+
+        dialog.assert_called_once()
+        assert dialog.call_args.args[2] == 7
+        assert dialog.call_args.args[3] == 3
+        assert dialog.call_args.kwargs["name"] == "Isabel II"
+        assert dialog.call_args.kwargs["count"] == 5
+        dialog.return_value.show.assert_called_once_with()
+
+    async def test_removing_says_what_left_and_goes_back(self, view, page):
         view.show_notification = AsyncMock()
-        view._close_dialog = MagicMock()
 
-        await view._remove_series(None)
+        await view._say_removed(3)
 
-        view._item_service.remove_issue.assert_awaited_once_with(7, 3)
         page.push_route.assert_awaited_once_with("/collections/7")
-
-    async def test_a_refusal_stays_and_says_so(self, view, page):
-        view._item_service.remove_issue = AsyncMock(return_value=None)
-        view.show_notification = AsyncMock()
-        view._close_dialog = MagicMock()
-
-        await view._remove_series(None)
-
-        page.push_route.assert_not_awaited()
-        view.show_notification.assert_awaited()
-
-    @staticmethod
-    def walk(control) -> list:
-        """Every control of the tree."""
-        found: list = [control]
-        for child in (getattr(control, "controls", None) or []):
-            found.extend(TestRemoveSeries.walk(child))
-        content = getattr(control, "content", None)
-        if content is not None and not isinstance(content, (str, int, float)):
-            found.extend(TestRemoveSeries.walk(content))
-        return found
 
 
 class TestWrites(PageTest):

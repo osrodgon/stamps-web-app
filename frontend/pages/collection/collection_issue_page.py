@@ -19,7 +19,6 @@ from components.buttons.action_icon import ActionIcon
 from components.buttons.alert_button import AlertButton
 from components.buttons.default_button import DefaultButton
 from components.buttons.icon_button import IconButton
-from components.buttons.link_button import LinkButton
 from components.buttons.primary_button import PrimaryButton
 from components.collection.collection_stamp_card import CollectionStampCard
 from components.colors import (
@@ -39,7 +38,10 @@ from components.constants import (
     PAGE_SCROLL_GUTTER,
 )
 from components.layout.app_drawer import AppDrawer
+from components.collection.remove_series_dialog import RemoveSeriesDialog
 from components.layout.app_header import AppHeader
+from components.layout.header_crumbs import HeaderCrumbs
+from core.collection_names import CollectionNames
 from components.table.column_def import fmt_currency, fmt_number
 from components.table.issue_detail.issue_header_section import IssueHeaderSection
 from components.table.issue_detail.issue_specs_grid import IssueSpecsGrid
@@ -89,36 +91,31 @@ class CollectionIssuePage(StandardPage):
         self._lang: str = get_language()
         #: How many copies of the series the collection holds, for the question.
         self._owned_copies: int = 0
-        self._confirm_dialog: Optional[ft.AlertDialog] = None
         self.header = self.set_app_header(AppHeader())
         menu = IconButton(
             icon=ft.Icons.MENU,
             bgcolor=DARK_BLUE_GREY,
             on_click=self.menu_clicked,
         )
-        title = ft.Text(
-            _("collections.title"),
-            color=ft.Colors.WHITE,
-            font_family="Roboto-Bold",
-            size=20,
+        #: The path lives in the header (plan D1); the last step is the series.
+        self._crumbs: HeaderCrumbs = HeaderCrumbs(
+            [
+                (_("collections.title"), self._go_collections),
+                (
+                    CollectionNames.get(collection_id) or "",
+                    self._go_collections_parent,
+                ),
+                ("", None),
+            ]
         )
         self.header.add_left(menu)
-        self.header.add_left(title)
+        # The path takes the middle, which is the space that stretches, so the
+        # long names truncate instead of growing the bar.
+        self.header.center_area.alignment = ft.MainAxisAlignment.START
+        self.header.add_center(self._crumbs)
 
         self.drawer = AppDrawer(on_logout=self.request_logout)
 
-        self._collection_link: LinkButton = LinkButton(
-            "",
-            on_click=self._go_collections_parent,
-            underline=False,
-            padding=ft.Padding.all(0),
-        )
-        self._series_crumb: ft.Text = ft.Text(
-            "",
-            size=FONT_SIZE_XS,
-            color=DARK_BLUE_GREY,
-            weight=ft.FontWeight.BOLD,
-        )
         #: Where the series sits in the collection's list, and the two arrows.
         self._neighbours: dict = {}
         self._position_text: ft.Text = ft.Text(
@@ -133,6 +130,12 @@ class CollectionIssuePage(StandardPage):
             icon=ft.Icons.CHEVRON_RIGHT,
             tooltip=_("collections.next_series"),
             on_click=self._go_next,
+        )
+        self._remove_button: ActionIcon = ActionIcon(
+            icon=ft.Icons.DELETE,
+            tooltip=_("collections.remove_series"),
+            hover_color=ft.Colors.RED_700,
+            on_click=self._ask_remove_series,
         )
         self._loading: ft.ProgressBar = ft.ProgressBar(color=SKY_BLUE, visible=False)
         self._error_text: ft.Text = ft.Text(
@@ -174,7 +177,6 @@ class CollectionIssuePage(StandardPage):
             content=ft.ListView(
                 padding=ft.Padding.only(right=PAGE_SCROLL_GUTTER),
                 controls=[
-                    self._build_breadcrumb(),
                     self._loading,
                     self._error_box,
                     self._detail_box,
@@ -195,46 +197,6 @@ class CollectionIssuePage(StandardPage):
     # ------------------------------------------------------------------
     # Layout
     # ------------------------------------------------------------------
-
-    def _build_breadcrumb(self) -> ft.Row:
-        """`Collections / <collection> / <series>`, the first two links."""
-        return ft.Row(
-            controls=[
-                LinkButton(
-                    _("collections.title"),
-                    on_click=self._go_collections,
-                    underline=False,
-                    padding=ft.Padding.all(0),
-                ),
-                ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
-                self._collection_link,
-                ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
-                self._series_crumb,
-                ft.Container(expand=True),
-                self._previous_button,
-                self._position_text,
-                self._next_button,
-            ],
-            spacing=6,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        )
-
-    def _build_badge_row(self) -> ft.Row:
-        """The read-only badge and the bin that takes the series out."""
-        return ft.Row(
-            controls=[
-                ft.Container(expand=True),
-                self._badge(),
-                ActionIcon(
-                    icon=ft.Icons.DELETE,
-                    tooltip=_("collections.remove_series"),
-                    hover_color=ft.Colors.RED_700,
-                    on_click=self._confirm_remove_series,
-                ),
-            ],
-            spacing=8,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        )
 
     def _badge(self) -> ft.Container:
         """Says the catalogue half is read-only."""
@@ -301,7 +263,18 @@ class CollectionIssuePage(StandardPage):
         await self._load_detail()
 
     async def _load_collection_name(self) -> None:
-        """The collection's name from the overview list."""
+        """The collection's name, from the cache or from the overview list.
+
+        Moving between series rebuilds this screen, and the name never changes: when
+        it is known, asking for it again is a request that only repaints the same
+        text a moment later.
+        """
+        remembered = CollectionNames.get(self._collection_id)
+        if remembered:
+            self._collection_name = remembered
+            self._crumbs.set_text(1, remembered)
+            return
+
         self._loading.visible = True
         self._error_box.visible = False
         self.main_page.update()
@@ -334,7 +307,8 @@ class CollectionIssuePage(StandardPage):
             return
 
         self._collection_name = row.get("name") or ""
-        self._collection_link.content.value = self._collection_name
+        CollectionNames.remember(self._collection_id, self._collection_name)
+        self._crumbs.set_text(1, self._collection_name)
         self.main_page.update()
 
     async def _load_references(self) -> None:
@@ -386,7 +360,7 @@ class CollectionIssuePage(StandardPage):
         summary = detail.get("summary") or {}
         self._lang = get_language()
 
-        self._series_crumb.value = issue.get("name") or ""
+        self._crumbs.set_text(2, issue.get("name") or "")
         self._owned_copies = int(summary.get("owned") or 0)
         self._neighbours = detail.get("neighbours") or {}
         self.__paint_neighbours()
@@ -403,8 +377,19 @@ class CollectionIssuePage(StandardPage):
         self._cards_row.controls = self._cards
         self._empty_text.visible = not stamps
         self._detail_box.controls = [
-            self._build_badge_row(),
-            IssueHeaderSection(issue, self._lang, hide_action_icons=True),
+            IssueHeaderSection(
+                issue,
+                self._lang,
+                hide_action_icons=True,
+                trailing=[
+                    self._previous_button,
+                    self._position_text,
+                    self._next_button,
+                    self._remove_button,
+                    ft.Container(width=4),
+                ],
+                subtitle_trailing=[self._badge()],
+            ),
             IssueSpecsGrid(issue),
             self._stamps_head(),
             self._empty_text,
@@ -502,67 +487,26 @@ class CollectionIssuePage(StandardPage):
         )
         self.main_page.update()
 
-    def _confirm_remove_series(self, event: ft.ControlEvent = None) -> None:
+    def _ask_remove_series(self, event: ft.ControlEvent = None) -> None:
         """Ask once before the series leaves the collection."""
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text(
-                _("collections.remove_series"),
-                size=20,
-                font_family="Roboto-Bold",
-            ),
-            content=ft.Text(
-                _(
-                    "collections.remove_series_message",
-                    name=self._series_crumb.value,
-                    count=self._owned_copies,
-                )
-            ),
-            actions=[
-                DefaultButton(
-                    text=_("collections.cancel"),
-                    on_click=self._close_dialog,
-                    expand=False,
-                ),
-                AlertButton(
-                    text=_("collections.remove"),
-                    on_click=self._remove_series,
-                    expand=False,
-                ),
-            ],
-            shape=ft.RoundedRectangleBorder(radius=CARD_BORDER_RADIUS),
-        )
-        self.main_page.overlay.append(dialog)
-        dialog.open = True
-        self.main_page.update()
-        self._confirm_dialog = dialog
-
-    def _close_dialog(self, event: ft.ControlEvent = None) -> None:
-        """Close the question without removing anything."""
-        if self._confirm_dialog is not None:
-            self._confirm_dialog.open = False
-        self.main_page.update()
-
-    async def _remove_series(self, event: ft.ControlEvent = None) -> None:
-        """Remove the copies of the series and go back to the list."""
-        self._close_dialog()
         if self._item_service is None:
             return
+        RemoveSeriesDialog(
+            self.main_page,
+            self._item_service,
+            self._collection_id,
+            self._issue_id,
+            name=self._crumbs.text(2),
+            count=self._owned_copies,
+            on_removed=self._after_remove,
+            on_forbidden=self._session_expired,
+        ).show()
 
-        response = await self._item_service.remove_issue(
-            self._collection_id, self._issue_id
-        )
+    def _after_remove(self, deleted: int) -> None:
+        """Say what left and go back to the collection's list."""
+        self.main_page.run_task(self._say_removed, deleted)
 
-        if response is None or response.status_code not in (200, 403):
-            await self.show_notification(
-                _("collections.delete_failed"), Severity.ERROR
-            )
-            return
-        if response.status_code == 403:
-            await self._expire_session()
-            return
-
-        deleted = int((response.json().get("data") or {}).get("deleted") or 0)
+    async def _say_removed(self, deleted: int) -> None:
         await self.show_notification(
             _("collections.series_removed", count=deleted), Severity.SUCCESS
         )

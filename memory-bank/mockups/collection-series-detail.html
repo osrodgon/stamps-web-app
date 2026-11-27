@@ -32,7 +32,11 @@
     background: var(--bar); color: #fff;
   }
   .bar .menu { font-size: 22px; opacity: .9; }
-  .bar .title { font-weight: 700; font-size: 20px; }
+  /* the path lives in the header (D1): 14px, links in a light blue */
+  .bar .title { font-weight: 400; font-size: 20px; display: flex; align-items: center; gap: 6px; }
+  .bar .title a { color: #90caf9; text-decoration: none; }
+  .bar .title b { color: #fff; font-weight: 700; }
+  .bar .title .sep { color: #b0bec5; }
 
   main { max-width: 1240px; margin: 0 auto; padding: 24px 24px 56px; }
 
@@ -48,6 +52,16 @@
   .pill.mint { background: var(--mint-bg); color: var(--mint-ink); }
   .pill.used { background: var(--used-bg); color: var(--used-ink); }
   .pill.printed { background: #f1f3f5; color: var(--ink); font-weight: 500; }
+  .series-head .spacer { flex: 1; }
+  .icon {
+    border: 0; background: none; cursor: pointer; color: #616161;
+    font-size: 18px; padding: 4px 6px; border-radius: 4px;
+  }
+  .icon:hover { background: #f1f3f5; }
+  .icon.bin:hover { color: #d32f2f; }
+  .pos { font-size: 12px; color: var(--muted); }
+  .series-date { display: flex; align-items: center; gap: 12px; }
+  .series-date .read-only { margin-left: auto; }
   .read-only {
     margin-left: auto; padding: 4px 10px; border-radius: 999px;
     background: #fff8e1; color: #8a6d00; font-size: 12px;
@@ -88,7 +102,7 @@
   .stamp-top { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
   .plate {
     display: grid; place-items: center; width: 96px; height: 96px;
-    border-radius: 6px; background: #eef1f4;
+    border-radius: 6px; background: #313131;
   }
   .plate img { max-height: 82px; max-width: 86px; }
   .stamp-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
@@ -130,20 +144,23 @@
 
 <header class="bar">
   <span class="menu">☰</span>
-  <span class="title">Collections</span>
+  <span class="title"><a href="#">Collections</a><span class="sep">›</span><a href="#">Isabel II</a><span class="sep">›</span><b>1850</b></span>
 </header>
 
 <main>
-  <div class="crumbs"><a href="#">Collections</a> / <a href="#">Isabel II</a> / 1850</div>
-
+  <!-- the actions sit at the height of the name; the chip goes with the date (D2) -->
   <div class="series-head">
     <h1>Isabel II</h1>
     <span class="pill mint">Mint 37,500.00 €</span>
     <span class="pill used">Used 2,250.00 €</span>
     <span class="pill printed">Stamp Total Printed –</span>
-    <span class="read-only">Catalogue data · you can only edit your copy</span>
+    <span class="spacer"></span>
+    <button class="icon" title="Previous series">‹</button>
+    <span class="pos">1 / 28</span>
+    <button class="icon" title="Next series">›</button>
+    <button class="icon bin" title="Remove from the collection">🗑</button>
   </div>
-  <p class="series-date">1 of January of 1850</p>
+  <p class="series-date">1 of January of 1850 <span class="read-only">Catalogue data · you can only edit your copy</span></p>
 
   <section class="panel">
     <div class="specs">

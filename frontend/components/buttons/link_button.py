@@ -31,6 +31,7 @@ class LinkButton(ft.TextButton):
         size=FONT_SIZE_DEFAULT,
         underline: bool = True,
         padding: Optional[ft.Padding] = None,
+        color: Optional[str] = None,
     ):
         """
         Initializes a LinkButton with the specified text and behavior.
@@ -51,12 +52,16 @@ class LinkButton(ft.TextButton):
             padding (ft.Padding, optional): The button's own padding. A breadcrumb
                 passes `Padding.all(0)` so the gaps around its separators are the
                 row's and not the button's. Defaults to the Material one.
+            color (str, optional): The link's colour, in the two states. The dark
+                header needs a lighter blue than `SKY_BLUE`. Defaults to the house
+                sky blue, which is what every other link in the app wears.
         """
         style = ft.ButtonStyle(
-            color={
-                "hovered": SKY_BLUE_HOVER,
-                "default": SKY_BLUE
-            },
+            color=(
+                {"hovered": color, "default": color}
+                if color is not None
+                else {"hovered": SKY_BLUE_HOVER, "default": SKY_BLUE}
+            ),
             overlay_color=ft.Colors.TRANSPARENT,
             text_style=ft.TextStyle(
                 decoration=(

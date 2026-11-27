@@ -75,6 +75,16 @@ class TestIssueHeaderSection:
         date_text = h.content.controls[1].content
         assert "2023" in date_text.value
 
+    def test_the_name_is_cut_with_an_ellipsis(self, sample_issue: dict) -> None:
+        """A long name truncates instead of pushing the badges and the actions."""
+        name = self._header(sample_issue)._build_name_control()
+
+        assert name.content.max_lines == 1
+        assert name.content.overflow == ft.TextOverflow.ELLIPSIS
+        assert name.content.tooltip == name.content.value
+        assert name.expand is True
+        assert name.expand_loose is True
+
     def test_has_edit_icon(self, sample_issue: dict) -> None:
         h = self._header(sample_issue)
         action_row = h.content.controls[0].controls[2]

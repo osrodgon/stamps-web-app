@@ -232,10 +232,21 @@ campo Cantidad lleva `autofocus` y el foco lo trae a la vista). Paridad de local
 ubicaciones, la papelera en cada fila de la lista, el paginador con números (B3b-2) y el
 navegador de catálogo.
 
+**D1–D4 (2026-11-28)**: la miga subió al header **a los 20 px del título** (`HeaderCrumbs`, en
+el área central, con elipsis en el último paso), el botón de nueva colección pasó al header y
+el título «Tus colecciones» desapareció; las placas de los sellos usan `DARK_IMG_BG`; el detalle pone flechas y papelera a la altura del nombre (bloque
+`trailing` de `IssueHeaderSection`) y el chip ámbar se va con la fecha; y la lista tiene
+papelera por fila, con el diálogo compartido `RemoveSeriesDialog` y el botón **fuera** del
+área clicable. **D6**: el nombre de la colección se recuerda (`core/collection_names.py`),
+así que moverse entre series no lo vuelve a pedir ni lo repinta (cero llamadas medidas en
+Chromium). **D7**: el nombre de la serie en su fila de detalle se recorta con elipsis
+(hijo flex «loose»), así que las píldoras, la tirada, las flechas y la papelera no se
+mueven. Mockups actualizados. Suite del frontend **887**.
+
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **La fase C está cerrada (C0 a C5).** Lo que sigue son los huecos anotados en
-§10: sembrar condiciones y ubicaciones, la papelera en cada fila de la lista y el paginador
-con números (B3b-2).
+devcontainer. **La fase C está cerrada (C0 a C5) y D1–D3 hechos.** Lo que sigue son los
+huecos anotados en §10: sembrar condiciones y ubicaciones y el paginador con números
+(B3b-2).
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que

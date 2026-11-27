@@ -2,6 +2,16 @@
 
 import pytest
 
+from core.collection_names import CollectionNames
+
+
+@pytest.fixture(autouse=True)
+def clean_collection_names():
+    """The name cache lives for the life of the process; each test starts empty."""
+    CollectionNames.clear()
+    yield
+    CollectionNames.clear()
+
 
 @pytest.fixture
 def valid_email() -> str:

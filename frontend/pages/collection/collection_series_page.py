@@ -18,7 +18,6 @@ from typing import Optional
 import flet as ft
 
 from components.buttons.icon_button import IconButton
-from components.buttons.link_button import LinkButton
 from components.buttons.primary_button import PrimaryButton
 from components.collection.issue_progress_card import IssueProgressCard
 from components.colors import DARK_BLUE_GREY, GREY_700, ROW_BORDER, SKY_BLUE
@@ -36,7 +35,10 @@ from components.form.dialogs.add_stamps_dialog import AddStampsDialog
 from components.form.dropdown import Dropdown
 from components.form.text_field import TextField
 from components.layout.app_drawer import AppDrawer
+from components.collection.remove_series_dialog import RemoveSeriesDialog
 from components.layout.app_header import AppHeader
+from components.layout.header_crumbs import HeaderCrumbs
+from core.collection_names import CollectionNames
 from components.table.column_def import fmt_currency, fmt_number
 from components.table.table_pagination import TablePagination
 from components.templates.standard_page import StandardPage
@@ -106,14 +108,18 @@ class CollectionSeriesPage(StandardPage):
             bgcolor=DARK_BLUE_GREY,
             on_click=self.menu_clicked,
         )
-        title = ft.Text(
-            _("collections.title"),
-            color=ft.Colors.WHITE,
-            font_family="Roboto-Bold",
-            size=20,
+        #: The path lives in the header (plan D1), so the page saves a row.
+        self._crumbs: HeaderCrumbs = HeaderCrumbs(
+            [
+                (_("collections.title"), self._back),
+                (CollectionNames.get(collection_id) or "", None),
+            ]
         )
         self.header.add_left(menu)
-        self.header.add_left(title)
+        # The path takes the middle, which is the space that stretches, so the
+        # long names truncate instead of growing the bar.
+        self.header.center_area.alignment = ft.MainAxisAlignment.START
+        self.header.add_center(self._crumbs)
 
         self.drawer = AppDrawer(on_logout=self.request_logout)
 
@@ -122,12 +128,6 @@ class CollectionSeriesPage(StandardPage):
         )
         self._summary_text: ft.Text = ft.Text(
             "", size=FONT_SIZE_DEFAULT, color=GREY_700
-        )
-        self._crumb_name: ft.Text = ft.Text(
-            "",
-            size=FONT_SIZE_XS,
-            color=DARK_BLUE_GREY,
-            weight=ft.FontWeight.BOLD,
         )
 
         self._name_field: TextField = TextField(
@@ -208,7 +208,6 @@ class CollectionSeriesPage(StandardPage):
             content=ft.ListView(
                 padding=ft.Padding.only(right=PAGE_SCROLL_GUTTER),
                 controls=[
-                    self._build_breadcrumb(),
                     self._build_header(),
                     self._build_filters(),
                     self._loading,
@@ -233,28 +232,6 @@ class CollectionSeriesPage(StandardPage):
     # ------------------------------------------------------------------
     # Layout
     # ------------------------------------------------------------------
-
-    def _build_breadcrumb(self) -> ft.Row:
-        """`Collections / <name>`, the first part a way back.
-
-        The link is tight and not underlined, and the name is bold, as the mockup
-        draws it: the button's own padding is what made the two gaps around the
-        slash differ.
-        """
-        return ft.Row(
-            controls=[
-                LinkButton(
-                    _("collections.title"),
-                    on_click=self._back,
-                    underline=False,
-                    padding=ft.Padding.all(0),
-                ),
-                ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
-                self._crumb_name,
-            ],
-            spacing=6,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-        )
 
     def _build_header(self) -> ft.Row:
         """The collection's name and its figures, as the mockup's head.
@@ -409,7 +386,8 @@ class CollectionSeriesPage(StandardPage):
         self._collection = collection
         self._name_text.value = collection.get("name") or ""
         self._summary_text.value = self.summary_label(collection)
-        self._crumb_name.value = collection.get("name") or ""
+        CollectionNames.remember(collection.get("id"), collection.get("name") or "")
+        self._crumbs.set_text(1, collection.get("name") or "")
         self.main_page.update()
 
     async def load_series(self) -> None:
@@ -473,7 +451,12 @@ class CollectionSeriesPage(StandardPage):
         """Paint the rows, the empty state and the paginator."""
         self._lang = get_language()
         self._rows_column.controls = [
-            IssueProgressCard(row, self._lang, on_open=self._open_issue)
+            IssueProgressCard(
+                row,
+                self._lang,
+                on_open=self._open_issue,
+                on_remove=self._ask_remove,
+            )
             for row in rows
         ]
         self._rows_box.visible = bool(rows)
@@ -596,6 +579,32 @@ class CollectionSeriesPage(StandardPage):
         """Reload the series behind the dialog, so the new ones appear."""
         self._page_number = 1
         self.main_page.run_task(self.load_series)
+
+    def _ask_remove(self, row: dict) -> None:
+        """Ask once before the series leaves the collection."""
+        if self._item_service is None:
+            return
+        RemoveSeriesDialog(
+            self.main_page,
+            self._item_service,
+            self._collection_id,
+            int(row.get("id") or 0),
+            name=row.get("name") or "",
+            count=int(row.get("owned_stamps") or 0),
+            on_removed=self._after_remove,
+            on_forbidden=self._session_expired,
+        ).show()
+
+    def _after_remove(self, deleted: int) -> None:
+        """Say what left and read the page again with the series gone."""
+        self.main_page.run_task(self._say_removed, deleted)
+
+    async def _say_removed(self, deleted: int) -> None:
+        await self.show_notification(
+            _("collections.series_removed", count=deleted), Severity.SUCCESS
+        )
+        self._page_number = 1
+        await self.load_series()
 
     def _open_issue(self, issue_id: int) -> None:
         """Open one series of this collection."""

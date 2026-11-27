@@ -14,8 +14,10 @@ from typing import Callable, Optional
 
 import flet as ft
 
+from components.buttons.action_icon import ActionIcon
 from components.colors import (
     BG_ALT,
+    DARK_IMG_BG,
     DARK_BLUE_GREY,
     GREY_700,
     ICON_GREY,
@@ -46,6 +48,9 @@ class IssueProgressCard(ft.Container):
         lang: the active language, for the numbers and the date.
         on_open: called with the series' id when the row is clicked; when it is
             None the row is not clickable.
+        on_remove: called with the row when its bin is clicked; when it is None
+            there is no bin. The bin sits outside the clickable area, so it
+            cannot open the series by mistake (plan D3).
     """
 
     THUMBNAIL_SIZE: int = 64
@@ -59,11 +64,14 @@ class IssueProgressCard(ft.Container):
         data: dict,
         lang: str,
         on_open: Optional[Callable[[int], None]] = None,
+        on_remove: Optional[Callable[[dict], None]] = None,
     ) -> None:
         super().__init__()
         self._data: dict = data
         self._lang: str = lang
         self._on_open: Optional[Callable[[int], None]] = on_open
+        self._on_remove: Optional[Callable[[dict], None]] = on_remove
+        self._remove_icon: Optional[ActionIcon] = None
 
         # Exposed to the tests: what the row painted and what it says.
         self._image: ft.Image = self.__image()
@@ -71,19 +79,39 @@ class IssueProgressCard(ft.Container):
         self._progress_text: ft.Text = self.__progress_text()
         self._percentage: ft.Text = self.__percentage()
 
+        #: The five columns that open the series. The bin lives outside it, so a
+        #: click on the bin can never be a click on the row.
+        self._open_area: ft.Container = ft.Container(
+            expand=True,
+            content=ft.Row(
+                controls=[
+                    self.__thumbnail(),
+                    self.__identity(),
+                    self.__progress(),
+                    self.__figures(),
+                    ft.Icon(
+                        ft.Icons.CHEVRON_RIGHT,
+                        size=self.CHEVRON_SIZE,
+                        color=ICON_GREY,
+                    ),
+                ],
+                spacing=STANDARD_PADDING,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            on_click=self._handle_open if on_open is not None else None,
+        )
+        controls: list[ft.Control] = [self._open_area]
+        if on_remove is not None:
+            self._remove_icon = ActionIcon(
+                icon=ft.Icons.DELETE,
+                tooltip=_("collections.remove_series"),
+                hover_color=ft.Colors.RED_700,
+                on_click=self._handle_remove,
+            )
+            controls.append(self._remove_icon)
         self.content = ft.Row(
-            controls=[
-                self.__thumbnail(),
-                self.__identity(),
-                self.__progress(),
-                self.__figures(),
-                ft.Icon(
-                    ft.Icons.CHEVRON_RIGHT,
-                    size=self.CHEVRON_SIZE,
-                    color=ICON_GREY,
-                ),
-            ],
-            spacing=STANDARD_PADDING,
+            controls=controls,
+            spacing=8,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
         self.padding = ft.Padding.symmetric(
@@ -97,13 +125,17 @@ class IssueProgressCard(ft.Container):
             color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK),
             offset=ft.Offset(0, 2),
         )
-        if on_open is not None:
-            self.on_click = self._handle_open
 
-    def _handle_open(self, event: ft.ControlEvent) -> None:
+
+    def _handle_open(self, event: Optional[ft.ControlEvent]) -> None:
         """Open the series."""
         if self._on_open is not None:
             self._on_open(int(self._data.get("id") or 0))
+
+    def _handle_remove(self, event: ft.ControlEvent) -> None:
+        """Ask the page to remove the series; the row does not open."""
+        if self._on_remove is not None:
+            self._on_remove(self._data)
 
     # ------------------------------------------------------------------
     # Cover
@@ -139,7 +171,7 @@ class IssueProgressCard(ft.Container):
             width=self.THUMBNAIL_SIZE,
             height=self.THUMBNAIL_SIZE,
             padding=self.THUMBNAIL_PADDING,
-            bgcolor=BG_ALT,
+            bgcolor=DARK_IMG_BG,
             border_radius=CARD_BORDER_RADIUS,
             alignment=ft.Alignment.CENTER,
             content=self._image,

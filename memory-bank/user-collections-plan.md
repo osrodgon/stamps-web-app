@@ -886,12 +886,34 @@ covers, colours and arrows, a copy edited to `quantity 2` and saved (`Cantidad 2
   (series page, series detail with `neighbours`, series removal, single add, bulk add,
   catalogue page and detail) with their parameters, payloads and query costs.
 
+### D1–D3 — what the first walk through the screens asked for (2026-11-28)
+
+Three small steps, done the same day, after using the phase C screens:
+
+- **D1 — the path in the header.** The breadcrumb spent a whole row under a header that only
+  said "Collections", the same word the breadcrumb repeated, and it was written at 12px while
+  everything around it was 14. `components/layout/header_crumbs.py` puts it in the dark bar at
+  the **20px the title had** (a first attempt used 14 and was too small next to the rest): links in `BLUE_200`, the current screen white and bold, ellipsis and tooltip for the
+  long names. The three collection screens lose the row; the overview shows a single step so
+  the header has the same shape everywhere, and it sits in the centre area so the last step
+  can truncate with ellipsis. `LinkButton` gained `color` for it. The header also took the
+  screen's action: `New collection` moved to the right area as the admin's add-issue icon,
+  and the "Your collections" title left the body. A later note (D4): the plates behind the
+  stamp pictures are `DARK_IMG_BG`, because a white stamp frame vanishes on a light plate.
+- **D2 — the actions at the height of the name.** `IssueHeaderSection` gained `trailing` and
+  `subtitle_trailing`: the detail puts `‹ n / total ›` and the bin there, right-aligned with
+  the title, and the read-only chip travels with the date. The badge row disappeared.
+- **D3 — the bin in the list.** Every row of `/collections/<id>` carries a bin outside the
+  clickable area — the five columns of the row are the link — so it cannot open the series by
+  mistake. The confirmation moved to `components/collection/remove_series_dialog.py` and is
+  shared with the detail, which no longer carries its own copy.
+
+The two mockups (list and detail) were updated with D1–D3, so the comparison still holds.
+
 ### Deferred on purpose (recorded so they are not lost)
 
 - **Condition and location are empty tables.** The copy form disables those two selects and
   saves the copy without them, and says so. Needs seeding or their own CRUD: its own step.
-- **The bin that removes a series exists in the detail, not on each row of the series list.**
-
 - **B3b-2, the rest of the series screen's mockup**: `TablePagination` with the mockup's
   numbered pages (today it is the house paginator, dressed as a card by the page), the `h1`
   at the mockup's 26px instead of 24 (`FONT_SIZE_HEADING`), and the meta line at the mockup's

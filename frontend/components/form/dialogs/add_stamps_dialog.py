@@ -22,7 +22,7 @@ import flet as ft
 
 from components.buttons.default_button import DefaultButton
 from components.buttons.primary_button import PrimaryButton
-from components.colors import BG_ALT, GREY_700, RED, ROW_BORDER
+from components.colors import DARK_IMG_BG, GREY_700, RED, ROW_BORDER
 from components.constants import (
     CARD_BORDER_RADIUS,
     FONT_SIZE_DEFAULT,
@@ -437,7 +437,7 @@ class AddStampsDialog(BaseUI):
         return ft.Container(
             width=48,
             height=44,
-            bgcolor=BG_ALT,
+            bgcolor=DARK_IMG_BG,
             border=ft.Border.all(1, ROW_BORDER),
             border_radius=4,
             alignment=ft.Alignment.CENTER,
@@ -560,7 +560,7 @@ class AddStampsDialog(BaseUI):
                 controls=[
                     ft.Container(
                         height=64,
-                        bgcolor=BG_ALT,
+                        bgcolor=DARK_IMG_BG,
                         border_radius=4,
                         alignment=ft.Alignment.CENTER,
                         content=ft.Image(
