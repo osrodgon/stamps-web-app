@@ -1034,7 +1034,16 @@ when A is merged into `development`.
         areas became **`ListView` with a right padding** (`PAGE_SCROLL_GUTTER`): the children
         end where the bar floats, as the probe in `/tmp` showed. Pinned in both pages;
         frontend suite **853**.
-  - [ ] C5 — close-out: empty state, counts, keys, browser pass, suites, S
+  - [x] C5 — **close-out of phase C** (2026-11-27, S): the whole phase run end to end
+        against the **real backend and real data** (a disposable collection: created, a series
+        added from the dialog with `5 añadidos`, opened, a copy edited to `quantity 2` and
+        saved). What broke and was fixed: the copy form opened **below the fold** when the
+        card sits at the bottom, so the pencil looked dead — the quantity field now carries
+        `autofocus`, and focusing it is what brings the form into view. Locale parity checked
+        (214 keys in both, same set, none empty, and all 164 keys used in code exist);
+        `manage.py check` and `spectacular` clean; suites green. `collections_api/README.md`
+        now documents the seven endpoints added since phase A. The disposable collections were
+        deleted from the dev database.
   - [x] C4b — **what the first use of the dialog found** (2026-11-27, S): the row actions
         (`Add the series`, the chevron, the stamp's `Add` and the confirmation) were wired to
         `lambda` handlers that **returned a coroutine Flet never awaited**, so they did nothing;
