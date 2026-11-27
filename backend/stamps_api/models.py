@@ -12,11 +12,12 @@ class Stamp(models.Model):
         face_value (CharField): The denominated value printed on the stamp.
         name (CharField):   The specific name or title of the stamp, if different
                             from the issue name.
-        others_code (CharField): Any other relevant catalog code (e.g., Scott, Yvert).
+        description (CharField): A description of the stamp.
         image (ImageField): An uploaded image of the stamp.
         colors (ManyToManyField): The colors present on the stamp.
         market_value (DecimalField):    The estimated market value of this specific
                                         stamp.
+        total_printed (BigIntegerField): The total number of stamps printed.
     """
     issue = models.ForeignKey(
         'issues_api.Issue', 
@@ -24,9 +25,10 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     edifil_code = models.CharField(max_length=255, null=True, blank=True)
+    fesofi_code = models.CharField(max_length=255, null=True, blank=True)
     face_value = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    others_code = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='stamps/', null=True, blank=True)
     
     # This is the many-to-many relationship field.
@@ -35,8 +37,13 @@ class Stamp(models.Model):
         related_name='stamps'
     )
     
-    market_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    
+    market_value_mnh = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    market_value_used = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    total_printed = models.BigIntegerField(null=True, blank=True)
+    # Last time the row changed. Nullable on purpose: fixtures dumped before this
+    # column existed still load, and DataDesk reads null as "no conflict info".
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True, db_index=True)
+
     class Meta:
         verbose_name = "Stamp"
         verbose_name_plural = "Stamps"

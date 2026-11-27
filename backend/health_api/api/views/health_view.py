@@ -64,7 +64,7 @@ class HealthView(Logger, APIView):
             -   Returns HTTP 503 Service Unavailable if the response payload
                 itself cannot be serialized, indicating a deeper application issue.
         """
-        self.debug("Attempting to retrieve system health")
+        self.log.debug("Attempting to retrieve system health")
         db_status = Messages.Health.ok()
         backend_status = Messages.Health.running()
         response_status = 200
@@ -89,13 +89,13 @@ class HealthView(Logger, APIView):
         response = HealthResponseSerializer(data=data)
         
         if response.is_valid():
-            self.debug("System health was successfully retrieved.")
+            self.log.debug("System health was successfully retrieved.")
             return Response(
                 data=response.data, 
                 status=status.HTTP_200_OK
             )
         
-        self.warning(f"System health could not be retrieved. Error: {response.errors}")
+        self.log.warning(f"System health could not be retrieved. Error: {response.errors}")
         return Response(
             data=GenericResponseSerializer(GenericResponse(response.errors)).data,
             status=status.HTTP_503_SERVICE_UNAVAILABLE

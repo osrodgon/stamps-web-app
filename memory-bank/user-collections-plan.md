@@ -1,0 +1,899 @@
+# Normal-user collections: the reading screens
+
+> **Status**: revised 2026-11-26, **implementation not started** — next is step A1 (§6)
+> **Audience**: authenticated normal users (`is_admin = false`)
+> **Goal**: a user opens the app and walks their own collection — collections →
+> series (paginated) → series detail with its stamps — editing **only** the fields
+> that describe their own copy. Series and stamps belong to the catalogue and are
+> read-only here.
+>
+> Mockups (open them in a browser, they use the real stamp pictures from
+> `frontend/assets/stamps/`):
+> `memory-bank/mockups/collections-overview.html`,
+> `collection-series.html`, `collection-series-detail.html`.
+
+---
+
+## 1. What exists today
+
+**Frontend** (Flet 0.84):
+- `pages/collection/collections_page.py` is a skeleton: header, drawer, an empty
+  `ft.Column` with the title. `main.py` registers it at `/collections` and the
+  form's router is an exact-match dict (`ROUTE_HANDLERS`), unknown path → 404.
+- The pieces to reuse are already there: `StandardPage` (header + main + drawer),
+  `AppDrawer`, `YearRangeSelector`, `TablePagination`, `fmt_currency` in
+  `components/table/column_def.py` (not `core/utils.py`), `_()` from
+  `core/translations.py`, and the stamp pictures:
+  `components/table/issue_detail/stamp_card.py` resolves
+  `assets/stamps/<year>/<fesofi>.webp` with `os.path.exists` and falls back to
+  `no_stamp.webp`. **The images are local to the frontend**, so no card needs an
+  image URL from the API.
+- Locale keys `collections.title` and `collections.no_issues_found` exist. The
+  rest of the keys this feature needs must be added by the user: the JSON files
+  under `assets/locales/` are user-managed and are never edited by the agent.
+
+**Backend** (Django + DRF):
+- `collections_api.Collection`: `user` (FK `users_api.UserCollection`), `name`.
+  No timestamps.
+- `collection_items_api.CollectionItem`: `collection`, `stamp`, `location`,
+  `condition_type`, `price_paid`, `acquisition_date`, `note`, `quantity`.
+  `unique_together = (collection, stamp)` — one row per stamp per collection, so
+  duplicates are counted in `quantity`.
+- Endpoints: `GET /api/v1/collections/` (and `/<pk>`, create, update, delete),
+  `GET /api/v1/collection_items/` (and `/<pk>`, create, update, delete).
+  **What is wrong with them**:
+  1. they return `Collection.objects.all()` / `CollectionItem.objects.all()` —
+     every user's data, with no ownership check at all; and a `POST` of an item
+     accepts any `collection` id, so it can write into somebody else's collection;
+  2. `?username=` is declared in the schema of `CollectionsView` and then
+     ignored — and it is not the way in either: the token says who is asking
+     (D0);
+  3. creating a collection relies on `X-API-KEY` being the user's
+     `password_hash` (`# TODO. This need to be fixed`);
+  4. no counts, no pagination, no "the series of a collection" and no
+     "the stamps of one series with my copy".
+- Authentication: the public API uses `CustomAPIKeyAuthentication` +
+  `HasSpecificKeyName`, i.e. **one master key** shared by the app
+  (`API_MASTER_KEY` in the Flet settings). The JWT that the login issues is accepted
+  only on the views listed in `USER_VIEWS` (the four collection ones are), but those
+  views ignore who the token belongs to and return every user's rows.
+  `common/core/jwt_token.py` already validates it and returns `user_id`, and
+  `users_api.UserToken` exists.
+- `Collection.user` is nullable, so rows created before this feature may have no
+  owner. After scoping they are invisible to everybody; if any exist in production
+  they are fixed from DataDesk, not here.
+- The locale system has **no plurals** (`_()` has no `_one`/`_other`), so any sentence
+  with a count is written with neutral labels (`Series: 3 · Stamps: 9`), never
+  `1 series · 1 stamps`.
+- Data volume: 2.540 series, 9.555 stamps, 88% with a picture.
+
+---
+
+## 2. The three screens
+
+1. **Collections** — `/collections`. A card per collection: collage of up to six
+   stamps, name, `Series: N · Stamps: M` and a completion bar (stamps owned / stamps
+   in those series). `+ New collection` and the empty state. No pagination: they are
+   one person's collections. The cards are **not clickable until B3**, when the route
+   of the second screen exists: a step does not leave a dead door. The app bar carries
+   the menu and the page title only: the user already lives in the drawer, so no name
+   on the right and no separator for it (revised 2026-11-26, mockup updated).
+2. **One collection** — `/collections/<id>`. Its series, **paginated server-side
+   with the same contract as `/issues/`** (15 per page, `sortBy=date` by default,
+   ties broken by `id`): thumbnail, `year · date`, name, country and stamp type,
+   `3 of 5 stamps · 60%` with a bar, `paid` and `catalogue (MNH)`, and a chevron
+   into the third screen. A search box and a year range, reusing
+   `YearRangeSelector`.
+3. **One series** — `/collections/<id>/issues/<issue_id>`. The series header as
+   the admin shows it (name, `Mint` / `Used` / `Printed` pills, date, the eight
+   catalogue fields, description and notes) **without** the edit and delete
+   icons, plus a badge saying the catalogue data is read-only. Below, one card
+   per stamp of the series: picture, FESOFI/Edifil, face value, colour, catalogue
+   values, and — the only editable part — **“Your copy”**: condition, quantity,
+   price paid, acquisition date, location, note, with Save / Cancel / Remove from
+   collection. A stamp the user does not own appears dimmed with `Add my copy`
+   (see D2).
+
+Navigation needs routes with a parameter, so `main.py` grows a small resolver:
+`/collections` (exact, as today), `/collections/<int>` and
+`/collections/<int>/issues/<int>` by prefix match, keeping `ROUTE_HANDLERS` for
+the rest. `push_route` + `on_view_pop` already handle the browser back button.
+
+---
+
+## 3. Decisions
+
+All closed; the plan was revised on 2026-11-26 with the corrections found against the
+code (the real status for a missing header, item ownership, the `/issues/` order,
+Flet-free services) and is ready
+to implement step by step (§6).
+
+| # | Decision | Closed |
+|---|---|---|
+| D0 | **How the API knows the user.** | **Closed 2026-11-22: the JWT the login returns.** The collection requests send `Authorization: JWT <token>` (`USER_JWT_TOKEN`, stored by `core/base_ui.py` at login), which is what `HasSpecificKeyName` already understands: its `JWT` branch validates the token and the view must be listed in `USER_VIEWS` (the four collection views already are). A missing header answers **403** — measured in A1: DRF turns `AuthenticationFailed` into 401 only when the authentication class declares a challenge header, and `CustomAPIKeyAuthentication` does not, so it falls back to 403. A bad or expired token, or the master key used on these views, also answers **403**; making a missing header a true 401 is a global change (a `WWW-Authenticate` header plus 75 test expectations) and is not part of this feature. The user is taken from the token itself: `JwtToken.validate()` returns `user_id`, `username`, names and email, so **no `?username=` is needed** and no query parameter can lie about who is asking. The catalogue endpoints keep the master key. |
+| D1 | **Can the user create / rename / delete a collection?** | **Closed 2026-11-22: yes.** A `CollectionForm` dialog with the name only, for create and rename, and a delete that warns with the counts of what goes with it (series and stamps of *their* rows; the catalogue is untouched). Without it a new user could never fill the page. |
+| D2 | **Can the user add a stamp to a collection, or remove their copy?** | **Closed 2026-11-22: yes, and only their copy.** `Add my copy` creates a `CollectionItem`; `Remove from collection` deletes it. The catalogue (series and stamps) is **admin-only**: a normal user's token is accepted only on the views listed in `USER_VIEWS`, which is why these screens send the JWT and the admin screens keep the master key. The catalogue browser with “select all stamps in a series” stays a later phase. |
+| D3 | **Which “Your copy” fields are editable?** | All six. `condition_type` and `location` are **selects** from their tables (read-only lists for the user); `quantity` ≥ 1; `price_paid` with two decimals; `acquisition_date` with the existing `DatePickerField`; `note` multiline. |
+| D4 | **What does a collection card show?** | **Closed 2026-11-23: a collage of up to six stamps**, plus the name, the summary (`Series: N · Stamps: M`) and the completion bar. The six are **stable**, not random on every load (a card that shuffles is a card you stop recognising): the API sends up to **12** of the collection's stamps in a stable order and the frontend paints the first **six whose file exists** — the picture lives in the frontend's tree, so only it knows. A collection with no stamps (or with none of its pictures) shows `no_stamp.webp`, greyed like the admin does. Layout: one stamp centred and big, two to six as a mosaic of three columns; no empty holes. The covers of a whole page come in **one** query, not one per card. |
+| D5 | **What does a series card show?** | **Closed 2026-11-23:** thumbnail, `year · date`, name, country and stamp type, `3 of 5 stamps · 60%` with the bar, **paid** (sum of `price_paid` of the user's items) and **catalogue (MNH)** (sum of the series' stamps). Two figures because they answer two questions: what it cost me and what the catalogue says it is worth. To be refined later with real data. |
+| D6 | **Pagination** | Server-side, **15 series per page** by default (same as the admin table), selector 15/30/50. Reuses `TablePagination`, which gains two optional parameters — `page_size_options` (defaults to today's list) and `label` (defaults to the current key) — so its other screens do not change. Never load a whole collection. |
+| D7 | **Default order of the series** | **Revised 2026-11-26: the one `/issues/` already uses.** `sortBy=date` and `order=asc` by default, ties broken by `id`, which makes the order total and keeps OFFSET paging from repeating a row. Selector `Date ↑`, `Date ↓`, `Name`. No catalogue-code tiebreak and nothing from DataDesk: the collections API mirrors the issues endpoint. |
+| D8 | **Do stamps I don't own appear in the series?** | **Closed 2026-11-23: yes, dimmed**, with `Add my copy`. The progress bar needs its denominator and “what is missing” is half the reason to open a collection. |
+| D9 | **Search and filters inside a collection** | Name search plus year range in the first version (both cheap server-side); country/stamp type later. |
+| D10 | **Money on screen** | `fmt_currency` from `components/table/column_def.py` (already used by the admin), Spanish grouping (`37.500,00 €`), from the raw decimals the API sends. |
+
+---
+
+## 4. Backend: what is missing
+
+Everything lives under `/api/v1/`, with **`Authorization: JWT <token>`** (D0), scoped to
+the user the token carries. A missing header answers **403**: DRF's authentication
+class raises `AuthenticationFailed`, but DRF only turns that into 401 when the class
+declares a challenge header, and `CustomAPIKeyAuthentication` does not — so it falls back
+to 403. A bad or expired token, or the master key used on these views, is also a **403**. A
+collection or item of another user answers **404**, never 403: whether it exists is none of
+the caller's business.
+
+The envelope and the pagination are the ones `/issues/` already uses: `page`,
+`pageSize`, `sortBy`, `order` and a `pagination` block with `sort_by`, `order`, `page`,
+`page_size`, `total`, `has_more`. The series list **mirrors `/issues/` on purpose** — same
+parameters, same defaults (`sortBy=date`, `order=asc`, ties broken by `id`) — so
+`TablePagination` and the existing parsing work unchanged. It is a new endpoint because
+`/issues/` knows nothing about collections and would return the whole catalogue.
+
+`common/core/current_user.py` (new) is the first thing to write: the **class**
+`CurrentUser`, used as `CurrentUser(request).get()`. It reads `Authorization`, requires
+the `JWT` scheme, validates with `JwtToken().validate()` and returns the `UserCollection`;
+a missing header, a bad token, an unknown `jti` or an unknown user raise
+`PermissionDenied`. The views use it instead of `all()`. It validates a second time on
+purpose (the permission already did) so a view never depends on a side effect of another
+class.
+
+```
+GET    /api/v1/collections/
+       -> [{id, name, series, stamps, total, covers:[{year, code} up to 12]}]
+
+GET    /api/v1/collections/<pk>/
+POST   /api/v1/collections/            {name}
+PUT    /api/v1/collections/<pk>/       {name}
+DELETE /api/v1/collections/<pk>/       (the items go with it, by cascade)
+
+GET    /api/v1/collections/<pk>/issues/?page=&pageSize=&name=&year=&sortBy=&order=
+       -> {issues: [{id, year, date, name, country, stamp_type, cover,
+                     total_stamps, owned_stamps, paid, catalogue_mnh}],
+           pagination: {sort_by, order, page, page_size, total, has_more}}
+
+GET    /api/v1/collections/<pk>/issues/<issue_pk>/
+       -> {issue: {the 15 catalogue fields},
+           stamps: [{stamp..., item: {id, condition_type, quantity, price_paid,
+                                      acquisition_date, location, note} | null}],
+           summary: {owned, total, paid}}
+
+POST   /api/v1/collections/<pk>/items/  {stamp}
+PUT    /api/v1/collection_items/<pk>/   {condition_type, quantity, price_paid,
+                                         acquisition_date, location, note}
+DELETE /api/v1/collection_items/<pk>/
+```
+
+Notes for the implementation:
+
+- **The list endpoints stop returning `all()`** — collections **and** items. That is a
+  data leak today, not a missing feature. `POST /collection_items/` must reject a
+  `collection` that is not the caller's, and the item update (`PUT`) must accept only the
+  six "Your copy" fields: without that, an item can be moved into someone else's
+  collection.
+- Overview counters: `series` = distinct issues among the user's items; `stamps` =
+  distinct stamps owned (a `quantity` of 2 does not inflate the card); `total` = stamps
+  of **those** issues (the bar's denominator: what is missing from what was started);
+  `covers` = up to 12 `{year, code}` from the user's stamps that carry a `fesofi_code`,
+  in a stable order. Empty collection -> `0, 0, 0, []`. At most five queries for the
+  whole page, independent of the number of cards.
+- Series and detail read the catalogue (series and stamps) and attach **only the
+  caller's** `item`. Counts and sums with `annotate(Count(..., distinct=True), Sum(...))`
+  over the items; the series page is one annotated query plus `count()`, never one per
+  row.
+- **DataDesk is not part of this feature**: no import, no shared helper, no ordering
+  function from it. The collections API is its own reader and mirrors `/issues/`.
+- New views (`CollectionIssuesView`, `CollectionIssueDetailView`,
+  `CollectionIssueItemsView`) join `USER_VIEWS`; the four existing ones are already
+  there.
+- Response serializers: reuse `IssueResponseSerializer` and `StampResponseSerializer`
+  where they fit, and add thin ones for the cards (`CollectionOverviewSerializer`,
+  `CollectionIssueSummarySerializer`). The single-collection response keeps its shape
+  (`id`, `user`, `name`); the overview uses its own and does not nest the user.
+
+---
+
+## 5. Frontend: files
+
+```
+services/collection_service.py                    # Flet-free: list/create/rename/delete
+services/collection_item_service.py               # Flet-free: series, detail, item writes
+pages/collection/collections_page.py              # screen 1 (fills the skeleton)
+pages/collection/collection_series_page.py        # screen 2
+pages/collection/collection_issue_page.py         # screen 3
+components/collection/collection_card.py
+components/collection/issue_progress_card.py
+components/collection/collection_stamp_card.py    # picture + catalogue + "Your copy"
+components/form/dialogs/collection_form.py        # name; create, rename and delete confirm
+core/urls.py    # Backend + Frontend route constants
+main.py         # the resolver described in §2
+```
+
+The backend helper `common/core/current_user.py` is described in §4 and belongs to A1.
+
+The **services are Flet-free and receive the token** (`CollectionService(token)`), exactly
+like `IssueService` receives the master key from `settings`. The token is read from
+`SharedPreferences` by the **page** (`USER_JWT_TOKEN`, saved by `core/base_ui.py` at
+login) and handed to the service; a service that read prefs would drag Flet into the
+layer that has to be testable without it. The catalogue services keep the master key.
+
+### Frontend conventions this code has to follow
+
+Read from the existing code, not invented; the first component of each kind copies the
+closest one that already exists:
+
+- **Pages** extend `StandardPage` (header + main + drawer), build the `AppHeader` in
+  `__init__`, register in `main.py`'s route table, and take `page: ft.Page`. The
+  collections pages do **not** add the `VerticalLine` separator behind the title: the
+  revised mockup has no user on the right, so there is nothing to separate.
+- **Services** extend `BaseService`, stay **Flet-free**, are `async`, build the URL from
+  `core.urls.URLs.Backend`, and return the raw `requests.Response` (or `None` on a
+  network error) — the page decides what a status code means. `IssueService` is the
+  reference, including its `_auth_headers` property.
+- **Components** extend `ft.Container` (or `ft.View` for a page), receive their data as a
+  `dict` plus callbacks (`on_open`, `on_edit`, `on_delete`) and never call a service
+  themselves. `components/table/issue_detail/stamp_card.py` is the pattern for a card
+  with a picture.
+- **Dialogs** are the `ft.AlertDialog` builders under `components/form/dialogs/`, shown
+  on `page.overlay` (see `stamp_form.py`).
+- **Type hints and docstrings on every class and public method**, private methods with a
+  leading underscore, constants in `UPPER_CASE`, colours imported from
+  `components/colors.py` (no raw hex).
+- **Money and dates**: `fmt_currency`, `fmt_number` and `fmt_date` from
+  `components/table/column_def.py`; the picture path is resolved like `stamp_card.py`
+  does (local `assets/stamps/<year>/<fesofi>.webp`, `no_stamp.webp` when missing).
+- **Reuse before writing**: `YearRangeSelector`, `TablePagination`, `AppDrawer`,
+  `TextField`, `AlertButton`/`DefaultButton`/`PrimaryButton`, `HEADER_HEIGHT` and
+  `CARD_BORDER_RADIUS` from `components/constants.py`.
+- **Localization**: every user-visible string through `_("group.key")`; the JSON files
+  under `assets/locales/` are user-managed and the agent never edits them. Counts are
+  written with neutral labels because the translation helper has no plurals.
+
+**Tests** live in `frontend/tests/` with `pytest-asyncio` + `pytest-mock` and the isolated
+`frontend/pytest.ini`. Services are tested with a mocked `_make_request` (URL, headers,
+payload and status handling), components where Flet allows it (the `_values` descriptor
+problems are known and documented in `progress.md`), and page-level behaviour that cannot
+be tested is checked by hand and said so. The suite was at 651 passing tests before this
+feature.
+
+**Locale keys for phase A** (the user supplies them in `en.json`/`es.json`, with
+placeholders so each language decides the wording):
+
+```
+collections.title            (exists)
+collections.your_collections
+collections.count            "Collections: {count}"
+collections.summary          "Series: {series} · Stamps: {stamps}"
+collections.new
+collections.empty_title
+collections.empty_hint
+collections.new_title
+collections.rename_title
+collections.rename
+collections.name_label
+collections.create
+collections.save
+collections.cancel
+collections.delete_title
+collections.delete_message
+collections.delete_confirm
+collections.name_required
+collections.session_expired
+collections.load_failed
+collections.save_failed
+collections.delete_failed
+```
+
+Phase B adds its own list (progress line, sort options, filters, the six "Your copy"
+labels, `Add my copy`, `Remove from collection`) and hands it over before B3.
+
+---
+
+## 6. Steps
+
+Two phases. **Phase A** ships the overview end to end and leaves a usable screen.
+**Phase B** starts only when A is closed, committed and merged into `development`, and
+adds the other two screens. Every step leaves the app running.
+
+### Phase A — Collections overview
+
+| # | Step | Depends on | Size | Status |
+|---|---|---|---|---|
+| A1 | Ownership and JWT | — | M | **hecho 2026-11-26** |
+| A2 | Overview list: counters and covers | A1 | S | **hecho 2026-11-26** |
+| A3 | `CollectionService` | A2 | S | **hecho 2026-11-26** (mergeado, PR #477) |
+| A4 | `CollectionCard` | A3 | M | **hecho 2026-11-26** |
+| A5 | Screen, dialog and states | A4 | M | **hecho 2026-11-26** |
+| A6 | Phase A close-out | A5 | S | **hecho 2026-11-26** |
+
+**A1 — Ownership and JWT (backend) — HECHO 2026-11-26.**
+The `CurrentUser` class (`common/core/current_user.py`); the four collection and item views scoped to the token's
+user; the item update serializer (`PUT`) reduced to the six fields; `POST
+/collection_items/` refuses a foreign `collection`; `POST /collections/` stops taking the
+user from `X-API-KEY`; the `?username=` parameter and its `# TODO` are removed. Tests:
+only mine, a foreign pk answers 404 in GET, PUT and DELETE, `POST` creates for the token's
+user and ignores a `user` in the body, no header 403, bad token 403, master key 403, plus
+unit tests for `CurrentUser`. The old tests that assert "all collections" are rewritten with a real
+JWT (`JwtToken().create()` in a fixture) — there is no way around it once the views read
+the token.
+*Leaves working:* the API no longer leaks between users and the suite proves it. No UI.
+*Done:* 51 tests with real tokens (the suites plus the shared `Authorization`
+parser), the whole suite at 1.767, and a measured correction — a missing header is 403,
+not 401 (see §9).
+
+**A2 — Overview list (backend) — HECHO 2026-11-26.**
+`CollectionOverviewSerializer` and the counting function behind `GET /collections/`:
+`series`, `stamps`, `total` and up to 12 `covers`, in at most five queries. Ordered by
+name, no pagination. Tests: two users, a `quantity` of 2, a cover without `fesofi_code`,
+an empty collection, the query count.
+*Leaves working:* `curl` returns the cards complete.
+*Done:* `CollectionOverviewService` (five queries, pinned by a test) and
+`CollectionOverviewSerializer`; `series`, `stamps` and `total` are three different
+numbers in the test data; the covers keep only stamps with a `fesofi_code`, are stable
+and are capped at 12. 14 tests new, suite at 1.781.
+
+**A3 — `CollectionService` (frontend) — HECHO 2026-11-26 (mergeado, PR #477).**
+`services/collection_service.py` with `get_collections`, `create_collection`,
+`update_collection` (PUT) and `delete_collection`; `URLs.Backend.collections` and
+`collection_items`; the service takes the token and sends `Authorization: JWT`. Tests
+with a mocked `_make_request`: URL, header, payload, status handling, `None` on network
+error.
+*Leaves working:* the service is testable and the page can call it.
+*Done:* `CollectionService` with the token in the constructor and the four calls;
+`URLs.Backend.collections` and `collection_items`; 9 tests with `_make_request`
+mocked, and the frontend suite at 660.
+
+**A4 — `CollectionCard` — HECHO 2026-11-26.**
+`components/collection/collection_card.py`: collage of up to six stamps (one big,
+2–6 in three columns, `no_stamp.webp` when none), name, summary, bar and percentage.
+It takes no click handler yet: B3 adds it when the route exists. Tests: 0/1/6 covers,
+missing file, `total = 0`.
+*Leaves working:* the card renders on its own, with any data dict.
+*Done:* `CollectionCard` paints the first six covers whose file exists (one big, or a
+three-column mosaic), the placeholder when none does, the summary through
+`collections.summary`, and the bar with its percentage (`—` when the collection is
+empty). It is not clickable until B3. `fmt_number` gained a `zero` argument so a counter
+that is zero reads `0` while the tables keep their dash. 14 tests; frontend suite 675.
+
+**A5 — Screen, dialog and states — HECHO 2026-11-26.**
+`CollectionsPage`: header without separator, toolbar with the count and
+`+ New collection`, responsive grid, empty state, loading and error. `read_prefs` reads
+the JWT and builds the service; 403 sends the user to the login. `collection_form.py`:
+create/rename dialog and the delete confirmation with the card's counts. Tests for the
+static helpers; the page itself, by hand.
+*Leaves working:* phase A is usable end to end.
+*Done:* `CollectionsPage` with the header without separator, the toolbar (title, count and
+`+ New collection`), the responsive grid, the empty/loading/error states and the 403 →
+login path; `CollectionForm` and `CollectionDeleteDialog`; the card gained a menu with
+rename and delete, shown only when the page passes the handlers. `PAGE_PADDING` joined the
+constants. The name field is created with `expand=False`: a text field expands by
+default, and inside the dialog's column that stretched the dialog to the full height of
+the window — found on first use, pinned by a test. 23 tests (dialogs, construction and
+render on a mocked page); frontend suite **698**, checked by hand for the paths a page
+cannot test.
+
+**A6 — Phase A close-out — HECHO 2026-11-26. Phase A is closed.**
+Two real users in the browser; empty state, create, rename, delete, reload and expired
+token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
+
+### Phase B — One collection, one series
+
+| # | Step | Depends on | Size | Status |
+|---|---|---|---|---|
+| B1 | Series of a collection (backend) | A6 | M | **hecho 2026-11-26** |
+| B2 | Series detail and item writes (backend) | B1 | M | **hecho 2026-11-26** |
+| B3 | `CollectionSeriesPage` | B2 | L | **hecho 2026-11-26** |
+| B4 | `CollectionIssuePage` | B3 | L | **hecho 2026-11-26** |
+| B5 | Close-out | B4 | S | **hecho 2026-11-26** |
+| B4b | The series detail follows the mockup | B5 | M | **hecho 2026-11-27** |
+| B3b | The series list follows the mockup | B4b | M | **hecho 2026-11-27** |
+
+**B1 — Series of a collection — HECHO 2026-11-26.**
+`GET /collections/<pk>/issues/` mirroring `/issues/`: same parameters, same defaults,
+same `pagination` block, plus `cover`, `total_stamps`, `owned_stamps`, `paid` and
+`catalogue_mnh`. One annotated query plus `count()`. `CollectionIssuesView` joins
+`USER_VIEWS`. Tests: pagination, filters, order with repeated dates, sums, foreign
+collection 404, query count.
+
+**B2 — Series detail and item writes — HECHO 2026-11-26.**
+`GET /collections/<pk>/issues/<issue_pk>/` with every stamp and its `item` or `null`, and
+the `summary`; `POST /collections/<pk>/items/` (409 when the stamp is already there);
+`PUT`/`DELETE` already scoped from A1, now answering with the names of condition and
+location. Tests: unowned stamp has `item: null`, adding, duplicate 409, removing,
+foreign 404.
+
+*Done:* `CollectionIssueDetailService` (the issue, its stamps, their colours and the
+caller's items: **four** queries, not three — the colours are a prefetch) and
+`CollectionIssueDetailSerializer`, which reuses `StampResponseSerializer` and adds
+`item` flat. `POST /collections/<pk>/items/` answers 201, 404 for a foreign collection or
+an unknown stamp, and 409 for a duplicate without touching the existing copy. 16 tests;
+suite **1.818**. The figures serializer was renamed `CollectionIssueFiguresSerializer`:
+two components called `CollectionIssueSummary` made drf-spectacular warn.
+
+**B3 — `CollectionSeriesPage` — HECHO 2026-11-26.**
+`main.py` grows the parameter resolver; the overview card becomes clickable. The page
+reuses `TablePagination` with `page_size_options=[15, 30, 50]` and its own `label`, the
+name search with debounce and `YearRangeSelector`. `Services` gain `get_collection` and
+`get_series`. Tests: service params, row formatting, paginator defaults.
+
+*Done:* `RouteResolver` (`core/routing.py`) resolves `/collections/<id>` and leaves the
+exact table alone; `CollectionCard` is clickable when it receives `on_open`, and the
+overview passes it. `CollectionSeriesPage` with the breadcrumb, the name and the two
+counters from the overview row, the name/range/sort filters and the shared paginator
+with 15/30/50 and its own label. `IssueProgressCard` paints the row. **The header shows
+series and stamps, not the collection's paid total**: the overview row does not carry it,
+and adding it would be a backend change; the per-series paid is in each row. 37 tests
+more; frontend suite **744**. No browser pass: the running backend image predates B1/B2,
+so the rows cannot load until it is rebuilt.
+
+**B4 — `CollectionIssuePage` — HECHO 2026-11-26.**
+Read-only series header (`hide_action_icons=True`) with the catalogue badge, then one
+`CollectionStampCard` per stamp: picture, codes, face value, colours, catalogue values,
+and "Your copy" with the six fields, save/cancel/remove and `Add my copy` for the ones
+the user does not own. Refreshes the summary without a reload. Tests: service writes,
+card in read and edit mode, stamp without an item.
+
+*Done:* `CollectionIssuePage` with the breadcrumb, the admin's header and specs grid
+(`hide_action_icons=True`), the read-only badge and the summary recomputed from the
+cards after each write (no request, no flicker). `CollectionStampCard` shows the copy or
+`Add my copy`, edits the six fields in place (disabled selects with a hint when the
+reference lists fail), validates quantity and price, and asks once before removing. The
+detail's stamps carry no year, so the page injects `issue_year` from the series for the
+picture path. `RouteResolver` adds the detail route and the series rows become links.
+`CollectionItemService` gains `get_issue`, `add_item`, `update_item`, `delete_item`,
+`get_condition_types` and `get_locations`. 31 tests more; frontend suite **775**. No
+browser pass: the backend image in use still predates B1/B2, and headless Chromium does
+not paint Flutter images.
+
+**B5 — Close-out — HECHO 2026-11-26. Phase B is closed.**
+Loading, error and empty states on both screens, the i18n pass with the phase B keys,
+`TablePagination` covered, and a browser pass with an empty collection, a full one and a
+series with no stamps.
+
+*Done:* the browser pass with the real pages and stubbed services found and fixed the
+layout bugs that made the screens unusable:
+- **`Row(wrap=True)` with an `expand` child** leaves Flutter painting its error
+  placeholder (the grey block) over the content. The B3 filters row and the B4 card's
+  content and form rows hit it; the wrappers are gone.
+- The paginator helper was called `_notify`, **the same name Flet uses internally**; it
+  overrode it and broke every property change. Renamed `_dispatch`.
+- `update_state` set the dropdown value, which fired `on_text_change` as if the user had
+  picked a size; a `_syncing` guard stops the reload loop.
+- The paginator called async callbacks synchronously, so the coroutine was dropped and
+  paging did nothing; `_dispatch` now schedules coroutines.
+- `YearRangeSelector` divided by zero with a single year in the catalogue.
+- The empty state distinguishes "no series match these filters" from "this collection
+  has no series yet", and the paginator is hidden when there is nothing to page.
+The visual pass rendered the three screens at 1493x800 with stubbed services (the real
+classes): filters, rows, empty state and the detail with "Your copy" all paint; stamp
+pictures are not painted by the headless renderer here, which is an environment limit
+already noted. Frontend suite **784**, backend unchanged at 1.818.
+
+**What the close-out leaves open**: there is still no way to add the **first** series (or
+stamp) to an empty collection. The series endpoint only lists series the collection
+already holds something of, and the detail adds stamps inside those. It needs its own
+step: a catalogue search from the collection that adds one stamp, which makes its series
+appear. It was out of scope here on purpose.
+
+**B4b — The series detail follows the mockup — HECHO 2026-11-27.**
+The content and the writes of B4 were right; the screen did not look like
+`mockups/collection-series-detail.html`. What changed, in the card and in the page:
+
+- **The card is the mockup's**: a 96px plate on the left — on `BG_ALT`, the plate B4 never
+  had — with the name, `FESOFI 0001 · Edifil 1`, face value and colour beside it and the
+  two catalogue values as pills (`Mint 300,00 €` on green, `Used 30,00 €` on blue, the
+  mockup's tones). Below a hairline, `YOUR COPY` with `Edit` as a link and the six fields
+  as a **grid of two rows of three**, not a list of label/value lines. A stamp the user
+  does not own keeps the same block dimmed (0.62) with `Add my copy`.
+- **The page** gained the mockup's section head: `Stamps` and the summary
+  (`1 of 2 stamps · Paid: €120.00`) side by side, and the cards sit in a `ResponsiveRow`
+  — **two per row from `lg`**, one below it. The read-only badge took the mockup's amber.
+- New locale key `collections.stamps_section`, and the tones as constants in
+  `colors.py` (`MINT_BG`/`MINT_INK`, `USED_BG`/`USED_INK`, `AMBER_BG`/`AMBER_INK`).
+
+**The trap worth remembering**: `CrossAxisAlignment.BASELINE` in a `Row` inside the
+scrolling column **collapses the whole page** — Flutter asks for a `textBaseline` Flet
+does not send, and the content is painted shifted upwards with the rest missing and
+nothing in the server log or the browser console. `CENTER` on that head fixed it; a test
+pins the alignment so it cannot go back. It is the second silent Flet layout failure in
+this phase, after `Row(wrap=True)` + `expand`.
+
+6 tests (3 card, 1 page, plus the two helper extensions); frontend suite **790**. Checked
+in Chromium at 1493x1000 and 1100x1000: two cards, one card, no stamps and the editing
+form with its three-column grid and `Remove`/`Cancel`/`Save`.
+
+**B3b — The series list follows the mockup — HECHO 2026-11-27.**
+The rows were the only part of `/collections/<id>` that came from
+`mockups/collection-series.html`; the header, the filters and the paginator did not.
+
+- **Header**: the name gains the mockup's meta line — `Series: 3 · Stamps: 14 · Paid:
+  1.240,00 €` — with neutral labels, because the locale system has no plurals. The paid
+  total comes from the overview row, so the screen asks once.
+- **`paid` in the overview** (backend): `Sum("price_paid")` in the same grouped query
+  the counters already make, so a copy with a quantity of two adds its price once and the
+  list stays at **five queries**. `null` when no copy of the collection has a price, which
+  is not the same as 0,00, and the frontend leaves the part out of the sentence.
+- **Filters in a card**: white and rounded, holding the mockup's four controls, but with
+  **the controls the rest of the app uses** (a later review: the card is a frame, not a
+  second design language). The name box is the house `TextField` with its floating label;
+  the year range went back to **two typed boxes** (`From year` / `To year`) because the
+  slider's own line plus ours read as two labels and never lined up; the sort is the house
+  dropdown from `components/form/dropdown.py`, so the sort does not put a Material outlined
+  box next to two underlined fields.
+- **Rows as cards**: each series is its own white card with border, radius and shadow and
+  a 10px gap, as the mockup draws them, instead of one box with dividers. Inside, the
+  progress text and its percentage share a line and the bar takes the full width.
+- **Breadcrumb**: the link is tight and not underlined (`LinkButton` gained `underline` and
+  `padding`, and the detail screen uses them too), the separator gets the same 6px on both
+  sides, and the current crumb is bold, as the mockup writes it.
+- **The head's two lines**: `BASELINE` is still out (it collapses the page), so the meta is
+  lifted 4px inside its own container until its baseline sits on the name's.
+
+The two year boxes send `1850`, `1850-1860`, `1850-` or `-1860`, which needed the series
+endpoint to understand an **open end** as a bound: `1850-` is `year__year__gte` and `-1860`
+is `lte`, where before the pair was cast to int and a blank side threw the filter away
+silently.
+- **The paginator is dressed, not changed** (decision): the page sets `bgcolor`, border,
+  radius and padding on the shared `TablePagination`; the component is untouched, so the
+  admin keeps what it has.
+- New keys `collections.filter_series`, `filter_years`, `filter_sort` and
+  `summary_paid`; 54 collection keys in both languages.
+
+6 backend tests (sum, quantity, no price; open lower bound, open upper bound, a bound
+beyond the catalogue and junk) and 11 frontend ones; suites **1.824** backend and **801**
+frontend. Screenshot of the real page with stubbed services at 1493x800 next
+to the mockup: crumbs, head with the three figures, filter card, three series cards and the
+paginator card, and the empty collection keeps its card and hides the paginator. From this
+step on, `AGENTS.md` makes that comparison part of every screen step.
+
+**Acceptance, per screen**
+
+- Screen 1 (A5): a user with no collections sees the empty state and can create one; a
+  card shows the collage, the summary and a bar that matches the counters; rename and
+  delete work and the page reloads with the change; the API never returns another user's
+  collection.
+- Screen 2 (B3): 15 series per page with the totals in the footer; the browser back
+  button returns to screen 1; a filter that matches nothing shows the empty state, not a
+  broken pager; the order matches what `/issues/` would return.
+- Screen 3 (B4): the catalogue data cannot be edited (no control); "Your copy" saves and
+  the card shows the new values without a reload; removing a copy asks once and the
+  progress of the collection goes down.
+- A user can never see or write another user's collection, series or item — a test per
+  endpoint.
+
+## 7. Out of scope (later phases)
+
+- The **catalogue browser** with “select all stamps in a series” (the old plan's
+  step 4). D2 only adds one copy at a time from the series screen.
+- Adding pictures, sharing a collection, exporting it, CSV, stats over time.
+- Editing the catalogue from here: the catalogue is admin-only, and these screens only
+  read it.
+- The admin's Stamps Manager stays as it is; this is a new set of screens for
+  non-admin users.
+
+---
+
+## 8. Risks
+
+| Risk | When it shows | Plan B |
+|---|---|---|
+| A collection with 500 series makes the page slow | screen 2 | paginated from day one; one annotated queryset plus `count()`, never per row |
+| N+1 on images | any card | resolved locally with `os.path.exists`, as the admin already does; a missing picture falls back to `no_stamp.webp` |
+| The API keeps leaking other users' rows | while implementing | A1 is exactly that fix, with tests, before any screen is built. The master key is allowed everywhere by design, so the app sends the **JWT** on these screens and `CurrentUser` refuses the master key there |
+| The token expires (24 h) in the middle of a session | any screen | the API answers 403; the page treats it as "session expired" and sends the user to the login, as `main.py` already does when `validate_jwt_token` fails |
+| Logging in again invalidates the previous token (`UserToken` is one per user) | manual testing with two windows | expected; the second window gets 403 and the login. Not a bug to fix here |
+| Flet `_values` descriptor issues on views | tests of pages | the same deferral the admin pages have: test the services and the components, not `ft.View` internals |
+| Locale keys missing | every screen | the key lists are handed over before A5 and B3; while they are missing the screens show the key (as the app does today) |
+| Counts with plurals ("1 series") | any label | neutral labels (`Series: 1 · Stamps: 1`), because the locale helper has no plural forms |
+| Money and dates formatted differently from the admin | screens 2 and 3 | reuse `fmt_currency` / `fmt_date` from `components/table/column_def.py` |
+
+---
+
+## 9. State when this was revised (2026-11-26)
+
+Nothing implemented: no helper, no endpoint, no service, no page, no key. The plan, the
+decisions (§3) and the three mockups are the whole deliverable so far.
+
+**Decisions closed while revising it**
+
+1. The user comes from the **JWT**. Measured in A1: a missing header, a bad token and
+   the master key all answer **403** (DRF only makes it 401 with a challenge header, and
+   `CustomAPIKeyAuthentication` has none), and a foreign row answers **404**.
+2. **A1 includes the item views and the update whitelist (`PUT`)**, not just the collection
+   views: otherwise an item can be moved into someone else's collection.
+3. The series order **mirrors `/issues/`** (`sortBy=date`, ties by `id`). No catalogue
+   code and **nothing from DataDesk**.
+4. Rename uses the existing **`PUT /collections/<pk>/`**; no `PATCH` was added.
+5. Overview counters: `stamps` = distinct stamps owned; `total` = stamps of the series
+   the user has something in; `quantity` does not inflate the card.
+6. Counts are written with **neutral labels**, because the locale system has no plurals.
+7. The frontend reaches the database **only through the API**. DataDesk is out of the
+   equation.
+
+**A1 is done (2026-11-26).** The `CurrentUser` class exists and the four
+collection and item views are scoped with `CurrentUser(request).get()`; the item update has its own six-field
+serializer and refuses `collection` and `stamp`; `POST /collection_items/` refuses a
+collection that is not the caller's; `POST /collections/` takes the owner from the token
+(the `X-API-KEY` lookup and the `# TODO` are gone) and `?username=` is out of the schema.
+51 tests across `test_authorization.py`, `test_current_user.py`, `test_collections_api.py`
+and `test_collection_items_api.py`, with real tokens; the suite is at **1.767** because the
+old auth permutations (the same `PermissionDenied` mocked on every method) were replaced
+by one case per behaviour, already covered centrally in `common/test/test_permissions.py`.
+
+**Shared with the permission**: `common/core/authorization.py` holds the only parser of the
+`Authorization` header; `HasSpecificKeyName` and `CurrentUser` both use it instead of each
+splitting the string.
+
+**Measured while implementing**: a missing header is **403**, not 401 — DRF only converts
+`AuthenticationFailed` into 401 when the authentication class declares a challenge header,
+and `CustomAPIKeyAuthentication` does not. The plan, this section and the issue
+description said 401; the code is what the framework does. A true 401 would need
+`authenticate_header()` and 75 test expectations across the suite, so it is left out of
+this feature.
+
+**A2 is done (2026-11-26).** `GET /collections/` returns the caller's collections with
+`series`, `stamps`, `total` and up to 12 covers, in exactly **five queries** (pinned by
+`django_assert_num_queries`). The fixture makes the three figures different on purpose
+(two stamps owned across two series, four in those series), a `quantity` of 2 still
+counts as one stamp, a stamp without a `fesofi_code` is not a cover, and a collection
+without an owner is not listed. 14 tests new; suite **1.781**.
+
+**A3 is done and merged (2026-11-26, PR #477).** `CollectionService(token)` sends
+`Authorization: JWT` and offers the four calls; the URLs live in `URLs.Backend`; 9 tests
+mock `_make_request` and assert URL, method, header and payload, plus the `None` on a
+network error.
+
+**A4 is implemented (2026-11-26) and not merged yet.** It lives in the branch
+`478-feature-collections-overview-card`, uncommitted: `components/collection/collection_card.py`
+and its 14 tests, plus the `zero` argument of `fmt_number`. Frontend suite **675**.
+
+**A5 is done (2026-11-26).** The overview is a usable screen: grid, empty/loading/error,
+create/rename/delete and the 403 → login path.
+
+**A6 is done (2026-11-26) and phase A is closed.** The browser pass covered the list,
+create, delete, rename and the expired-token path; the locale files are complete and
+equal; suites at **1.781** backend / **707** frontend. Two things could not be checked
+headlessly and are named above: the painted covers (the renderer here does not paint
+Flutter images) and the empty state (no account without collections on hand).
+
+**B1 is done (2026-11-26).** `GET /collections/<pk>/issues/` returns the page with the
+three figures and the cover in two queries; 21 tests, suite **1.802**.
+
+**B2 is done (2026-11-26).** The detail with every stamp and its copy, and adding one
+(201/404/409), are in; 16 tests, suite **1.818**.
+
+**B3 is done (2026-11-26).** The second screen, the resolver and the clickable cards.
+**B4 is done (2026-11-26).** The series detail with "Your copy".
+
+**B5 is done (2026-11-26) and phase B is closed.** The browser pass found the layout bugs
+(the wrapping rows, the paginator's `_notify` collision, the async callbacks, the
+single-year range) and they are fixed; frontend suite **784**. The plan is closed except
+for one follow-up written down in B5: **a way to add the first stamp/series to an empty
+collection**, which the current screens do not have.
+
+## 10. Phase C — Adding stamps to a collection (planned 2026-11-27)
+
+The three reading screens are done, but a collection has **no door in**: the series list
+only shows series the collection already holds something of, and the detail only adds
+copies of stamps of a series that is already there. An empty collection is a dead end —
+seen with the two collections of the dev database, both at 0.
+
+This phase opens that door with three scopes, because entering a collection one stamp at a
+time is not how a collector fills one: **one stamp**, **one series**, or **one whole year**.
+
+### C-decisions
+
+- **One dialog, three scopes.** `Add stamps` opens a search over the catalogue; a result
+  row adds its whole series in one click, expands to its stamps to add one, and when a
+  single year is chosen the dialog offers to add every stamp of that year. The three
+  scopes share one endpoint call shape, so the frontend never loops writes.
+- **The write is one request, one transaction.** Doing N calls to `items/` would be slow and
+  would leave half a series in on a failure. A bulk endpoint takes the scope, resolves it
+  server-side and answers with how many were created and how many were already there.
+- **Adding is not editing.** A new copy gets `collection` and `stamp` only: condition,
+  price, date, location and note are the user's to fill later in the series screen, and
+  inventing defaults would write data nobody typed. `quantity` stays at the model's default.
+- **Duplicates are skipped, not refused.** A series half-owned adds only what is missing and
+  answers `created` and `skipped`; the screen says both. This is not the single-item
+  endpoint's 409, which exists to protect a copy that is there: here the whole point is to
+  complete a set.
+- **A cap, said out loud.** One request adds at most **500 stamps**; a year over that
+  answers 400 `too_many` with the number, and the dialog asks the user to narrow it rather
+  than silently doing half. The frontend shows the count in the confirmation before asking.
+- **Catalogue search is its own endpoint, not a flag on B1.** B1 answers "series I hold
+  something of"; the picker needs the opposite. Two endpoints that read differently and
+  cost the same two queries are clearer than one that changes its filter with a parameter.
+- **The detail of a series the collection does not own yet** needs a catalogue route: B2's
+  `/collections/<pk>/issues/<issue_pk>/` answers 404 when nothing of that series is held,
+  which is right for the reading screen and useless for the picker. The catalogue detail
+  reuses B2's service without the ownership precondition.
+
+### C-contracts
+
+1. `GET /collections/<pk>/catalogue/issues/` — the page of the catalogue, with how much of
+   each series the collection already has. Same parameters and `pagination` block as B1
+   (`name`, `year` with open ends, `sortBy`, `order`, `page`, `pageSize`), plus
+   `owned_stamps` per row. **Two queries**, pinned. 403 without a token, 404 for a foreign
+   collection.
+2. `GET /collections/<pk>/catalogue/issues/<issue_pk>/` — the series with every stamp and
+   its `item` or `null`, and the summary; same shape as B2 and **four queries** (the colour
+   prefetch is the fourth). Any catalogue series, owned or not.
+3. `POST /collections/<pk>/items/bulk/` — body:
+
+   ```json
+   {"scope": "stamp", "ids": [10, 11]}
+   {"scope": "issue", "issue": 42}
+   {"scope": "year", "year": 1850}
+   ```
+
+   One transaction, `bulk_create(ignore_conflicts=True)` over
+   `CollectionItem(collection, stamp)`. Answers `{"created": n, "skipped": n, "total": n}`
+   where `total` is the number of stamps the scope resolves to. 400 for an unknown scope, a
+   missing key, a non-numeric id or more than 500 stamps; 404 when the series or the year
+   holds nothing; 403 for a foreign collection or no token.
+
+### C-steps
+
+| # | Step | Depends on | Size | State |
+|---|---|---|---|---|
+| C0 | Mockup of the dialog (search, series row with both actions, stamp list, year footer, confirmation) | — | S | **done 2026-11-27** |
+| C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | **done 2026-11-27** |
+| C2 | Catalogue search and catalogue detail endpoints + tests | — | M | **done 2026-11-27** |
+| C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | **done 2026-11-27** |
+| C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | **done 2026-11-27** |
+| C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | **done 2026-11-27** |
+
+**C0 — Mockup — DONE 2026-11-27.** `memory-bank/mockups/add-stamps-dialog.html`, in the same
+language as the three existing ones: a dialog over a dimmed screen, `Add stamps` as its title, the two
+filters, one row per series (cover, year and date, name, `3 of 5 in your collection`), the
+row's two actions (`Add the series`, `Show its stamps`), the stamp list unfolded under a
+row with one `Add` per stamp, a footer that says `Add every stamp of 1850 (214)` when one
+year is chosen, and the confirmation for a big add. Browser-checked at 1493x800 with the
+real stamp pictures. The step exists because the AGENTS rule now says a screen is compared
+with its mockup before it is called done, and this dialog is a screen.
+
+*What the mockup settles, beyond the drawing:* the row's two actions are `Show its stamps`
+(expands the series in place, no second dialog) and `Add the series` / `Add the missing N`
+when some of it is already held, with `Already complete` disabled; a series already whole
+says so instead of hiding; the year action lives in the footer, only when a single year is
+filtered, and carries the count; the confirmation says what the copies arrive **without**
+(condition, price, date, location); and the dialog's own filters are the same two as the
+screen behind, so the vocabulary does not change between them. Four states are in the file
+(search, a series open, a whole year, the confirmation) and each was rendered in Chromium
+at 1493x900 with the real stamp pictures.
+
+*Redrawn on the same day, at the first review:* the first version used the boxed inputs
+and the outlined buttons of the older mockups, which Flet does not render — the app has
+underline fields with the label above and text buttons in `SKY_BLUE`. The file now uses
+`colors.py` and `components/constants.py` (bar, page, line, sky, green, radius 8 for cards
+and 4 for buttons, height 40) and the shapes of `TextField`, the house dropdown,
+`DefaultButton` and `PrimaryButton`, so the dialog can be built without translating it.
+`AGENTS.md` now requires this of every new mockup.
+
+**C1 — Bulk add — DONE 2026-11-27.** `collections_api/services/collection_items_bulk_service.py`: resolve the
+scope to a queryset of stamps (`stamp` by ids, `issue` by `stamp__issue_id`, `year` by
+`stamp__issue__year__year`), count it, refuse over the cap, `bulk_create` with
+`ignore_conflicts=True`, and answer the three numbers. The count and the insert share one
+transaction so two of them cannot disagree. Tests: each scope, the three numbers, a
+half-owned series (created + skipped), the cap answered as 400 with `too_many`, unknown
+series and empty year as 404, foreign collection as 404, no token as 403, and one query
+count for the insert path.
+
+*What the step found while being built:*
+
+- the transaction that makes the count and the insert one decision costs a savepoint pair,
+  so the path is **three statements** (the ids, what is already there, the insert) **plus
+  two** `SAVEPOINT`/`RELEASE`, none of which grows with the scope — pinned at 5;
+- the standard renderer drops `data` on a 400, so the cap's number travels in the
+  `errors[].message` (`"501 stamps asked for, the limit is 500."`) and not in a body field.
+  The dialog already knows the count it asked for, so nothing is lost;
+- the service refuses with two exceptions of its own (`NothingFound` → 404, `TooMany` → 400)
+  instead of returning a result the view would have to interpret;
+- the serializer accepts exactly the key of its scope: `issue` with `ids` is a body that
+  does not know what it is asking for, and answers 400 instead of picking one.
+
+**C2 — Catalogue endpoints — DONE 2026-11-27.** Two read routes: `GET
+/collections/<pk>/catalogue/issues/` and `GET /collections/<pk>/catalogue/issues/<issue_pk>/`.
+
+*It did not become the new service the plan described*: B1's and B2's services already build
+the figures, the cover, the filters, the order and the pagination, and the only thing that
+had to change was the scope. So `CollectionIssuesService.page` and
+`CollectionIssueDetailService.for_collection` gained `owned_only: bool = True` and the
+catalogue calls them with `False` — one implementation, and the two screens cannot drift
+from the dialog's. Tests prove the default still hides what the collection does not hold.
+
+- The page costs **two queries** and the detail **four**, as B1 and B2 do; `owned_stamps`,
+  `paid` and the cover stay subqueries.
+- A series with no stamps is **not a row** in the catalogue page (`total_stamps > 0`): it
+  would add nothing.
+- The integer reader of the query string lived as a private method of B1's view; it is now
+  `common/core/query.py::Query.int_param`, used by both views.
+- 19 tests, including one per reading screen pinning that the new parameter did not loosen
+  them.
+
+**C3 — `CatalogueService` — DONE 2026-11-27.** `frontend/services/catalogue_service.py` on
+`BaseService`, Flet-free, token in the constructor: `search_issues`, `get_issue`, `add_stamps`,
+`add_issue` and `add_year`, all returning the raw response and `None` when the transport
+fails.
+
+- The three adds differ only in the body, so they share a private `__add` and the scope says
+  which key travels; the endpoint is one.
+- The URL base is the existing `URLs.Backend.collections`, as `CollectionItemService` already
+  does, instead of two constants that would mean the same base.
+- 11 tests with `_make_request` mocked: the URL and its query, the method, the JWT header, the
+  body of each scope, a refusal coming back untouched, `None` on a network error, and the
+  module importing no Flet.
+
+**C4 — The dialog — DONE 2026-11-27.** `frontend/components/form/dialogs/add_stamps_dialog.py`
+(not `components/collection/`: the three dialogs of the app live in one folder and this is a
+dialog), built on the same pieces as the A5 ones (`DefaultButton`/`PrimaryButton`, the house
+`TextField`): the two filters debounced, the results list, the expandable stamps,
+`Add the series`, `Add`, the year footer, a confirmation past twenty stamps, the API's
+counts in a notification, and a reload of the screen. Opening it: an `Add stamps` button in
+the series screen next to the filters, and the same action in the empty state, which today
+only says "This collection has no series yet". Locale keys (neutral, no plurals) handed
+over for en/es: title, the two filters, `Add the series`, `Show its stamps`, `Add`,
+`Add every stamp of {year} ({count})`, the confirmation question, `{created} added`,
+`{skipped} already there`, `too many` and the retry text.
+
+*What the step found while being built and looking at it:*
+
+- `AlertDialog.actions` is a **wrapping Row**: an expanding spacer there stacks the buttons
+  on two lines (the third time this family of traps appears, after `Row(wrap=True)` and
+  `BASELINE`). The footer is a `Row` inside the content, with the spacer, and `actions` is
+  left empty.
+- The dialog needs an explicit `bgcolor`: Material's default surface is tinted, and over the
+  scrim it read as grey instead of the white card of the mockup.
+- The results list is bounded (360px, scrolling): twenty series pushed the actions out of the
+  window.
+- The year action needs the number of stamps of that year, and no endpoint returns it: when
+  both boxes hold the same year the dialog asks that year with `pageSize=0` and sums
+  `total_stamps`. One request, and the number in the button and in the confirmation is the
+  real one.
+- After a write the dialog stays open, says `12 added · 3 already there` in its footer and
+  calls `on_added`, so the screen behind reloads without closing what is being used.
+- The page gains the `Add stamps` button at the end of the filter card and the same action in
+  the empty state (`Add your first stamp`): an empty collection finally has a door.
+
+18 dialog tests (search, the two year boxes, the three scopes, the confirmation past twenty,
+the counts, a refusal, a 403, the unfold, and a pin against a wrapping Row with an expand
+child) and 3 page tests; frontend suite **832**. Screenshots of the dialog at 1493x900 in its
+search, unfolded, whole-year and confirmation states, next to the mockup.
+
+**C5 — Close-out — DONE 2026-11-27. Phase C is closed.** The phase ran end to end against
+the real backend and real data, in a disposable collection: created, a series added from the
+dialog (`5 añadidos · 0 ya estaban`), the series visible in the list behind, the detail with
+covers, colours and arrows, a copy edited to `quantity 2` and saved (`Cantidad 2`).
+
+- **What the pass found**: clicking the pencil on a card at the bottom of the page looked
+  dead — the form was rendering **below the fold**. The quantity field now carries
+  `autofocus`, and focusing it is what scrolls the form into view. Everything else worked on
+  the first try.
+- **Checks**: locale parity (214 keys in both languages, same set, none empty, and all 164
+  keys used in code exist), `manage.py check` and `manage.py spectacular` clean, suites green.
+- **Docs**: `collections_api/README.md` documents the seven endpoints added since phase A
+  (series page, series detail with `neighbours`, series removal, single add, bulk add,
+  catalogue page and detail) with their parameters, payloads and query costs.
+
+### Deferred on purpose (recorded so they are not lost)
+
+- **Condition and location are empty tables.** The copy form disables those two selects and
+  saves the copy without them, and says so. Needs seeding or their own CRUD: its own step.
+- **The bin that removes a series exists in the detail, not on each row of the series list.**
+
+- **B3b-2, the rest of the series screen's mockup**: `TablePagination` with the mockup's
+  numbered pages (today it is the house paginator, dressed as a card by the page), the `h1`
+  at the mockup's 26px instead of 24 (`FONT_SIZE_HEADING`), and the meta line at the mockup's
+  size. Deferred on 2026-11-27 by decision: revisit when the app is used with real data and
+  one of the three actually bothers. It is not part of phase C.

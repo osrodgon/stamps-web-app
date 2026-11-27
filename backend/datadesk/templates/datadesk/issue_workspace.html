@@ -1,0 +1,464 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {% if mode == "new" %}{% translate "New series" %}{% else %}{{ issue.name }}{% endif %}{% endblock %}
+
+{% block breadcrumbs %}
+  <a href="{% url 'datadesk:issues' %}">{% translate "Issues" %}</a>
+  <span class="dd-crumb-sep">/</span>
+  {% if mode == "new" %}
+    <b>{% translate "New series" %}</b>
+  {% else %}
+    {{ issue.year.year }}
+    <span class="dd-crumb-sep">/</span>
+    <b>{{ issue.name }}</b>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <section class="dd-page dd-workspace-page">
+    <div class="dd-meta">
+      <div class="dd-meta-head">
+        <span class="dd-label">{% translate "Issue metadata" %}</span>
+        <span class="dd-hint">
+          {% translate "series values describe the whole set, stamp values the stamp" %}
+        </span>
+        {% if mode == "new" %}
+          {% if prefill %}
+            <button type="button" id="use-last-issue" class="dd-btn dd-btn-ghost dd-meta-back">
+              ↺ {% translate "Use last issue" %}
+              {% if prefill_label %}<span class="dd-hint">{{ prefill_label }}</span>{% endif %}
+            </button>
+          {% endif %}
+        {% else %}
+          <span class="dd-meta-actions">
+            {% comment %}
+              The neighbour in the list the user came from, filters included; a
+              span when there is none, so the arrows do not move and do not lie
+              about it. [ and ] do the same from the keyboard.
+            {% endcomment %}
+            {% if navigation.previous %}
+              <a class="dd-btn dd-btn-ghost dd-nav" id="nav-previous"
+                 href="{{ navigation.previous }}"
+                 title="{% translate 'Previous series' %}"
+                 aria-label="{% translate 'Previous series' %}">‹</a>
+            {% else %}
+              <span class="dd-btn dd-btn-ghost dd-nav" aria-disabled="true">‹</span>
+            {% endif %}
+            <span class="dd-hint dd-nav-count">{{ navigation.position }} / {{ navigation.total }}</span>
+            {% if navigation.next %}
+              <a class="dd-btn dd-btn-ghost dd-nav" id="nav-next"
+                 href="{{ navigation.next }}"
+                 title="{% translate 'Next series' %}"
+                 aria-label="{% translate 'Next series' %}">›</a>
+            {% else %}
+              <span class="dd-btn dd-btn-ghost dd-nav" aria-disabled="true">›</span>
+            {% endif %}
+            <button type="button" class="dd-btn dd-btn-ghost" id="clone-button">
+              {% translate "Clone" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-ghost dd-btn-danger-text" id="delete-button">
+              {% translate "Delete" %}
+            </button>
+            <a class="dd-btn dd-btn-ghost" href="{{ navigation.back }}">
+              {% translate "Back to the issues workbench" %}
+            </a>
+          </span>
+        {% endif %}
+      </div>
+
+      {% comment %}
+        One form for the two modes: writing a series and correcting one are the
+        same fifteen fields, so they share the definitions and the markup. A
+        real <form> would reload the page on Enter and throw the draft away, so
+        the container is a plain div and the commit is explicit.
+      {% endcomment %}
+      <div class="dd-fields" id="series-form">
+        {% for field in form_fields %}
+          <label class="dd-field{% if field.wide %} dd-field-wide{% endif %}"
+                 for="field-{{ field.name }}">
+            <span class="dd-field-key">
+              {{ field.label }}{% if field.unit %} ({{ field.unit }}){% endif %}{% if field.required %} <span class="dd-req">*</span>{% endif %}
+            </span>
+            {% if field.kind == "year" %}
+              <input class="dd-input" id="field-{{ field.name }}"
+                     name="{{ field.name }}" type="number" inputmode="numeric"
+                     list="year-options" step="1"
+                     {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                     min="{{ field.min }}" max="{{ field.max }}"
+                     {% if field.required %}required{% endif %}>
+              <datalist id="year-options">
+                {% for option in field.options %}
+                  <option value="{{ option.value }}"></option>
+                {% endfor %}
+              </datalist>
+              <span class="dd-hint dd-year-hint" id="year-new-hint" hidden>
+                {% translate "This year does not exist yet: it will be created when the series is saved." %}
+              </span>
+            {% elif field.kind == "date" %}
+              {% comment %}
+                Not `input[type=date]`: the native picker speaks the browser's
+                language and wears the browser's chrome, and it cannot show the
+                month by name. The field shows the date written out and keeps the
+                ISO value in `data-value`, so everything that reads the form keeps
+                reading an ISO date.
+              {% endcomment %}
+              <span class="dd-date">
+                <input class="dd-input dd-date-value" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="text" readonly
+                       value="{{ field.value_text }}"
+                       data-value="{{ field.value }}"
+                       min="{{ field.min }}" max="{{ field.max }}"
+                       autocomplete="off"
+                       aria-haspopup="dialog" aria-controls="date-popover">
+                <button type="button" class="dd-date-open" id="date-open"
+                        aria-label="{% translate 'Choose the date' %}"
+                        title="{% translate 'Choose the date' %}">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+                       stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2"/>
+                    <path d="M3 10h18M8 3v4M16 3v4"/>
+                  </svg>
+                </button>
+              </span>
+            {% elif field.kind == "select" %}
+              {% comment %}
+                Typed, not chosen: the datalist asks the server as the user
+                types, so the page ships no reference table. The form sends the
+                id, the box shows the name, and the script keeps the two apart.
+              {% endcomment %}
+              <span class="dd-lookup">
+                <input class="dd-input" id="field-{{ field.name }}"
+                       name="{{ field.name }}" type="text" autocomplete="off"
+                       spellcheck="false" list="lookup-{{ field.name }}"
+                       data-lookup="{{ field.name }}"
+                       data-value="{{ field.value }}"
+                       value="{{ field.value_label }}">
+                <datalist id="lookup-{{ field.name }}"></datalist>
+                <button type="button" class="dd-lookup-create"
+                        data-create-for="{{ field.name }}" hidden></button>
+              </span>
+            {% elif field.kind == "textarea" %}
+              <textarea class="dd-input" id="field-{{ field.name }}"
+                        name="{{ field.name }}" rows="2">{{ field.value }}</textarea>
+            {% else %}
+              <input class="dd-input" id="field-{{ field.name }}"
+                     name="{{ field.name }}" type="{{ field.kind }}"
+                     {% if field.value != "" %}value="{{ field.value }}"{% endif %}
+                     {% if field.step %}step="{{ field.step }}"{% endif %}
+                     {% if "min" in field %}min="{{ field.min }}"{% endif %}
+                     {% if "max" in field %}max="{{ field.max }}"{% endif %}
+                     {% if field.required %}required{% endif %}>
+            {% endif %}
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if mode == "edit" %}
+      <div class="dd-tabnotice" id="tab-notice" hidden>
+        {% translate "Another tab has changes on this series." %}
+      </div>
+    {% endif %}
+
+    <div class="dd-gridwrap">
+      <div class="dd-grid-head">
+        <span class="dd-label">{% translate "Stamps" %}</span>
+        <span class="dd-count" id="stamp-count">{{ stamp_count }}</span>
+        {% if mode == "new" %}
+          <span class="dd-grid-tools">
+            <button type="button" class="dd-btn dd-btn-ghost" id="fill-series">
+              {% translate "Fill series" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-ghost" id="new-colour">
+              {% translate "New colour" %}
+            </button>
+            <label class="dd-rows dd-fast" for="fast-row">
+              <input type="checkbox" id="fast-row" checked>
+              {% translate "Fast row" %}
+            </label>
+            <label class="dd-rows" for="row-count">
+              {% translate "Rows" %}
+              <input class="dd-input dd-rows-input" id="row-count" type="number"
+                     step="1" inputmode="numeric"
+                     min="{{ config.rows.min }}" max="{{ config.rows.max }}"
+                     value="{{ config.rows.default }}">
+            </label>
+          </span>
+        {% else %}
+          {% comment %}
+            A stamp is added to the series that is already open: the row appears
+            in this grid as a draft, the change set sends a `create` for it and
+            the review panel shows it before anything is written.
+          {% endcomment %}
+          <span class="dd-grid-tools">
+            <button type="button" class="dd-btn dd-btn-ghost" id="add-stamp">
+              {% translate "+ Stamp" %}
+            </button>
+          </span>
+        {% endif %}
+      </div>
+      <div class="dd-grid-body">
+        <div id="stamp-grid"></div>
+
+        {% comment %}
+          The thumbnail is 26px tall inside a 38px row: at that size it is a
+          colour swatch, not a picture, and the description has no column of
+          its own. The pane follows the selected row (no hover, no click on the
+          picture) and edits the description in place, so the value travels in
+          the same change set as every other field.
+        {% endcomment %}
+        <aside class="dd-preview" id="stamp-preview" aria-live="polite">
+          <p class="dd-hint dd-preview-empty" id="preview-empty">
+            {% translate "Select a stamp to see its picture and description." %}
+          </p>
+          <div class="dd-preview-body" id="preview-body" hidden>
+            <img class="dd-preview-image" id="preview-image" alt="">
+            <p class="dd-hint dd-preview-missing" id="preview-missing" hidden>
+              {% translate "This stamp has no picture." %}
+            </p>
+            <p class="dd-preview-identity" id="preview-identity"></p>
+
+            {% comment %}
+              The colours are edited here, not in the cell: a multi-select does
+              not fit a 38px row, and the pane is where the stamp is looked at.
+              The chips carry their × and the field completes as you type (S18);
+              a name nobody has creates the colour in the same gesture.
+            {% endcomment %}
+            <div class="dd-preview-colours">
+              <span class="dd-field-key">{% translate "Colors" %}</span>
+              <span class="dd-chips dd-preview-chips" id="preview-colours"></span>
+              <span class="dd-hint" id="preview-colours-empty">
+                {% translate "No colours." %}
+              </span>
+              <span class="dd-lookup dd-preview-colour-field">
+                <input class="dd-input" id="colour-picker" type="text"
+                       autocomplete="off" spellcheck="false" list="lookup-color"
+                       placeholder="{% translate 'Add a colour' %}"
+                       aria-label="{% translate 'Add a colour' %}">
+                <datalist id="lookup-color"></datalist>
+                <button type="button" class="dd-lookup-create"
+                        id="colour-picker-create" hidden></button>
+              </span>
+            </div>
+
+            <label class="dd-preview-field">
+              <span class="dd-field-key">{% translate "Stamp description" %}</span>
+              <textarea class="dd-input dd-preview-text" id="preview-description"
+                        rows="6"
+                        placeholder="{% translate 'No description yet.' %}"></textarea>
+            </label>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    {% if mode == "new" %}
+      <div class="dd-commitbar">
+        <span class="dd-hint" id="create-status">
+          {% translate "Shift+Enter creates the series." %}
+        </span>
+        <span class="dd-hint dd-right">
+          <button type="button" class="dd-btn dd-btn-dark" id="create-button">
+            {% translate "Create series" %}
+          </button>
+        </span>
+      </div>
+
+      {% comment %}
+        After a clean create the workspace stops editing: the series is in the
+        database and further typing here would have nowhere to go. The bar is
+        the two things left to do, and the loop is a fresh page the server
+        pre-fills — never a draft kept by the browser.
+      {% endcomment %}
+      <div class="dd-created" id="created-bar" hidden>
+        <span class="dd-hint dd-status-ok" id="created-text"></span>
+        <span class="dd-right">
+          <a class="dd-btn dd-btn-ghost" id="created-open" href="#">
+            {% translate "Open the series" %}
+          </a>
+          <a class="dd-btn dd-btn-dark" id="created-again" href="#">
+            {% translate "Create another" %}
+          </a>
+        </span>
+      </div>
+
+      {% comment %}
+        A colour typed for the first time. The cell editor is Tabulator's list,
+        which takes no free text, so the row is created here and appears in the
+        list the cell offers — reopening the editor shows it.
+      {% endcomment %}
+      <div class="dd-dialog-backdrop" id="colour-panel" hidden>
+        <div class="dd-dialog" role="dialog" aria-modal="true"
+             aria-labelledby="colour-title">
+          <div class="dd-review-head">
+            <span class="dd-label" id="colour-title">
+              {% translate "New colour" %}
+            </span>
+            <button type="button" class="dd-review-close" id="colour-close"
+                    aria-label="{% translate 'Close' %}">×</button>
+          </div>
+          <div class="dd-dialog-body">
+            <label class="dd-field" for="colour-name">
+              <span class="dd-field-key">{% translate "Name" %}</span>
+              <input class="dd-input" id="colour-name" type="text"
+                     autocomplete="off" maxlength="255">
+            </label>
+            <p class="dd-hint dd-status-error" id="colour-status"></p>
+          </div>
+          <div class="dd-dialog-foot">
+            <button type="button" class="dd-btn dd-btn-ghost" id="colour-cancel">
+              {% translate "Cancel" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-dark" id="colour-create">
+              {% translate "Create the colour" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="dd-recover" id="recovery-bar" hidden>
+        <span class="dd-recover-text" id="recovery-text"></span>
+        <span class="dd-right">
+          <button type="button" class="dd-btn dd-btn-dark" id="recover-button">
+            {% translate "Recover" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-ghost" id="recovery-discard">
+            {% translate "Discard" %}
+          </button>
+        </span>
+      </div>
+
+      <div class="dd-commitbar">
+        <span class="dd-count" id="change-count"></span>
+        <span class="dd-hint" id="commit-status">
+          {% translate "Shift+Enter commits the pending changes." %}
+        </span>
+        <span class="dd-hint dd-right">
+          <button type="button" class="dd-btn dd-btn-ghost" id="undo-button" disabled>
+            {% translate "Undo" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-ghost" id="redo-button" disabled>
+            {% translate "Redo" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-dark" id="review-button" disabled>
+            {% translate "Review changes" %}
+          </button>
+        </span>
+      </div>
+
+      <aside class="dd-review" id="review-panel" role="dialog" hidden
+             aria-labelledby="review-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="review-title">
+            {% translate "Pending changes" %}
+          </span>
+          <button type="button" class="dd-review-close" id="review-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-review-body" id="review-body"></div>
+        <div class="dd-review-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="backup-button" hidden>
+            {% translate "Back up first" %}
+          </button>
+          <span class="dd-hint" id="backup-status"></span>
+          <span class="dd-review-actions">
+            <button type="button" class="dd-btn dd-btn-ghost" id="discard-button" disabled>
+              {% translate "Discard" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-dark" id="commit-button" disabled>
+              {% translate "Commit" %}
+            </button>
+          </span>
+        </div>
+      </aside>
+
+      {% include "datadesk/partials/series_delete_dialog.html" %}
+
+      {% comment %}
+        One row is not a set, so this dialog has no typed confirmation: it names
+        the stamp and says what the cascade takes. The sentence and the identity
+        come from the preview, which is why the body starts empty.
+      {% endcomment %}
+      <div class="dd-dialog-backdrop" id="stamp-delete-panel" hidden>
+        <div class="dd-dialog" role="dialog" aria-modal="true"
+             aria-labelledby="stamp-delete-title">
+          <div class="dd-review-head">
+            <span class="dd-label" id="stamp-delete-title">
+              {% translate "Delete this stamp" %}
+            </span>
+            <button type="button" class="dd-review-close" id="stamp-delete-close"
+                    aria-label="{% translate 'Close' %}">×</button>
+          </div>
+          <div class="dd-dialog-body">
+            <p class="dd-dialog-warning" id="stamp-delete-warning"></p>
+            <dl class="dd-dialog-counts dd-dialog-counts-pair">
+              <div>
+                <dt>{% translate "Collection items" %}</dt>
+                <dd id="stamp-delete-items">·</dd>
+              </div>
+              <div>
+                <dt>{% translate "User collections" %}</dt>
+                <dd id="stamp-delete-collections">·</dd>
+              </div>
+            </dl>
+            <p class="dd-hint" id="stamp-delete-identity"></p>
+            <p class="dd-hint dd-status-error" id="stamp-delete-status"></p>
+          </div>
+          <div class="dd-dialog-foot">
+            <button type="button" class="dd-btn dd-btn-ghost" id="stamp-delete-cancel">
+              {% translate "Cancel" %}
+            </button>
+            <button type="button" class="dd-btn dd-btn-danger" id="stamp-delete-confirm">
+              {% translate "Delete the stamp" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+  {% comment %}
+    Our own calendar, positioned under the date field when it opens. It belongs to
+    the page and not to the strip: inside the field's label a click would also
+    focus the field and close what was just opened.
+  {% endcomment %}
+  <div class="dd-calendar" id="date-popover" role="dialog" hidden
+       aria-label="{% translate 'Choose the date' %}">
+    <div class="dd-calendar-head">
+      <button type="button" class="dd-calendar-nav" id="calendar-prev"
+              aria-label="{% translate 'Previous month' %}"
+              title="{% translate 'Previous month' %}">‹</button>
+      {% comment %}
+        The month is a button and not a `select`: a select opens the browser's
+        list, which is square and not ours. Clicking it shows the twelve months.
+      {% endcomment %}
+      <button type="button" class="dd-input dd-select dd-calendar-month"
+              id="calendar-month" aria-label="{% translate 'Month' %}"
+              aria-haspopup="true" aria-expanded="false"></button>
+      <input class="dd-input dd-calendar-year" id="calendar-year" type="number"
+             inputmode="numeric" step="1" aria-label="{% translate 'Year' %}">
+      <button type="button" class="dd-calendar-nav" id="calendar-next"
+              aria-label="{% translate 'Next month' %}"
+              title="{% translate 'Next month' %}">›</button>
+    </div>
+    <div class="dd-calendar-week" id="calendar-weekdays" aria-hidden="true"></div>
+    <div class="dd-calendar-days" id="calendar-days"></div>
+    <div class="dd-calendar-months" id="calendar-months" hidden></div>
+    <div class="dd-calendar-foot">
+      <button type="button" class="dd-btn dd-btn-ghost" id="calendar-today">
+        {% translate "Today" %}
+      </button>
+      <button type="button" class="dd-btn dd-btn-ghost" id="calendar-clear">
+        {% translate "Clear the date" %}
+      </button>
+    </div>
+  </div>
+
+  {{ config|json_script:"stamp-config" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/issue_workspace.js' %}?v={{ datadesk_asset_version }}"></script>
+{% endblock %}

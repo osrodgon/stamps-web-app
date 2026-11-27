@@ -1,0 +1,15 @@
+{% extends "datadesk/base.html" %}
+{% load i18n %}
+
+{% block title %}DataDesk — {% translate "Access denied" %}{% endblock %}
+
+{% block breadcrumbs %}<b>{% translate "Access denied" %}</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page">
+    <h1 class="dd-label">{% translate "Access denied" %}</h1>
+    <p class="dd-hint">
+      {% blocktranslate %}This account is not staff, so DataDesk will not open for it. Sign in with the maintenance account.{% endblocktranslate %}
+    </p>
+  </section>
+{% endblock %}

@@ -4,5 +4,8 @@
 python3 -m pip install --upgrade pip
 
 # 2. Install dependencies
-python3 -m pip install -r backend/requirements.txt
-python3 -m pip install -r frontend/requirements.txt
+python3 -m pip install -r backend/requirements.dev.txt
+python3 -m pip install -r frontend/requirements.dev.txt
+
+# 3. Install OpenCode 2 
+curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 2.3.2

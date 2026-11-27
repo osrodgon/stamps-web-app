@@ -10,12 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
+import os
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    
+    # Load variables from environment
+    load_dotenv()
+except ImportError:
+    pass
 
-# Load variables from environment
-load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,19 +30,81 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "django-insecure-9x4!-i!avu(zzevv&3j)es5og+^^z1f0ty*r2sb8zk=dzqnhhh"
+)
 
 JWT_SECRET = SECRET_KEY 
 JWT_ALGORITHM = 'HS256'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# opencode inference API: the only LLM provider.
+# The key is created in the opencode Console and sent as a bearer token; the
+# model is configuration, not code, so swapping engines is an .env change.
+OPENCODE_API_KEY = os.getenv('OPENCODE_API_KEY', None)
+OPENCODE_MODEL = os.getenv('OPENCODE_MODEL', None)
+OPENCODE_BASE_URL = os.getenv(
+    'OPENCODE_BASE_URL', 'https://opencode.ai/inference/openai/v1'
+)
+OPENCODE_TIMEOUT = int(os.getenv('OPENCODE_TIMEOUT', '120'))
+OPENCODE_MAX_TOKENS = int(os.getenv('OPENCODE_MAX_TOKENS', '8192'))
 
-ALLOWED_HOSTS = []
+# LLM Batch Processing
+# Number of stamps to process per LLM call when batch processing is needed
+LLM_BATCH_SIZE = int(os.getenv('LLM_BATCH_SIZE', '5'))
+
+# Serper API Key
+SERPER_API_KEY = os.getenv('SERPER_API_KEY', None)
+SERPER_URL = os.getenv('SERPER_URL', None)
+
+# Outbound HTTP for the AI API: one client, one allowlist.
+# Every host the pipeline may reach is listed here; anything else is refused
+# before the request leaves the process (see ai_api/sources/http.py).
+AI_SOURCE_ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'AI_SOURCE_ALLOWED_HOSTS',
+        'catalogodesellos.fesofi.es,filatelia.online,www.filatelia.online,'
+        'todocoleccion.net,www.todocoleccion.net,'
+        'ebay.es,www.ebay.es,ebay.com,www.ebay.com,'
+        'google.serper.dev',
+    ).split(',')
+    if host.strip()
+]
+AI_SOURCE_TIMEOUT = float(os.getenv('AI_SOURCE_TIMEOUT', '20'))
+AI_SOURCE_CONNECT_TIMEOUT = float(os.getenv('AI_SOURCE_CONNECT_TIMEOUT', '5'))
+AI_SOURCE_RETRIES = int(os.getenv('AI_SOURCE_RETRIES', '2'))
+AI_SOURCE_MAX_PER_HOST = int(os.getenv('AI_SOURCE_MAX_PER_HOST', '4'))
+AI_SOURCE_CACHE_TTL = int(os.getenv('AI_SOURCE_CACHE_TTL', '3600'))
+# How many stamps of a series are priced in one request: each one is a term
+# lookup plus a product list, and a 57-stamp series would pay for all of them.
+AI_PRICE_STAMPS = int(os.getenv('AI_PRICE_STAMPS', '5'))
+
+# Execution budget for one extraction: the whole request, and the most one call
+# may take of it. A partial answer beats a request that never returns (A8).
+AI_BUDGET_SECONDS = float(os.getenv('AI_BUDGET_SECONDS', '25'))
+AI_BUDGET_PER_CALL = float(os.getenv('AI_BUDGET_PER_CALL', '8'))
+
+AI_SOURCE_USER_AGENT = os.getenv(
+    'AI_SOURCE_USER_AGENT',
+    'stamps-web-app/0.1 (+https://github.com/osrodgon/stamps-web-app)',
+)
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
+
+hosts = os.getenv("ALLOWED_HOSTS", "localhost")
+ALLOWED_HOSTS = [host.strip() for host in hosts.split(',') if host.strip()]
+
+hosts = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [host.strip() for host in hosts.split(',') if host.strip()]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', '')
 
 # Application configuration
-LOG_LEVEL="DEBUG"
+LOG_LEVEL= os.getenv("LOG_LEVEL", "DEBUG")
 LOG_FILE_NAME="backend.log"
+LOG_BASE_DIR="logs"
 
 # API Key header
 API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
@@ -46,6 +113,12 @@ API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 USER_VIEWS = [
     "CollectionsView",
     "CollectionsByIdView",
+    "CollectionIssuesView",
+    "CollectionIssueDetailView",
+    "CollectionCatalogueIssuesView",
+    "CollectionCatalogueIssueDetailView",
+    "CollectionIssueItemsView",
+    "CollectionItemsBulkView",
     "CollectionItemsView",
     "CollectionItemsByIdView",
     "ConditionTypesView",
@@ -61,7 +134,7 @@ CONFIG_ENDPOINT="config/"
 COUNTRIES_ENDPOINT="countries/"
 ISSUES_ENDPOINT="issues/"
 LOCATIONS_ENDPOINT="locations/"
-PAPER_TYPES_ENDPOINT="paper_types/"
+PRINT_TYPES_ENDPOINT="print_types/"
 STAMP_TYPES_ENDPOINT="stamps_type/"
 STAMPS_ENDPOINT="stamps/"
 YEARS_ENDPOINT="years/"
@@ -72,6 +145,15 @@ USERS_ENDPOINT = "users/"
 HEALTH_ENDPOINT = "health/"
 LOGIN_ENDPOINT = "login/"
 LOGOFF_ENDPOINT = "logoff/"
+AI_ISSUES_EXTRACTION_ENDPOINT = "issues/extraction/"
+ISSUES_COLLECTIONS_ENDPOINT = "collections/"    # This is a sub-endpoint of issues, not collections. 
+                                                # It is used for the creation of issues with all 
+                                                # related entities in a single request. 
+                                                # It is not used for the retrieval of collections, 
+                                                # which is handled by the collections endpoint.
+ARTISTS_ENDPOINT = "artists/"
+PRINTERS_ENDPOINT = "printers/"
+PAPER_TYPES_ENDPOINT = "paper_types/"
 
 # Documentations end points
 SWAGGER_ENDPOINT="swagger/"
@@ -80,14 +162,14 @@ SCHEMA_ENDPOINT="schema/"
 
 # URLs
 ADMIN_URL="admin/"
-SERVER_URL_V1="stamps_server/api/v1/"
+SERVER_URL_V1="stamps-backend/api/v1/"
 
 COLORS_URL_V1=f"{SERVER_URL_V1}{COLORS_ENDPOINT}"
 CONFIG_URL_V1=f"{SERVER_URL_V1}{CONFIG_ENDPOINT}"
 COUNTRIES_URL_V1=f"{SERVER_URL_V1}{COUNTRIES_ENDPOINT}"
 ISSUES_URL_V1=f"{SERVER_URL_V1}{ISSUES_ENDPOINT}"
 LOCATIONS_URL_V1=f"{SERVER_URL_V1}{LOCATIONS_ENDPOINT}"
-PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
+PRINT_TYPES_URL_V1=f"{SERVER_URL_V1}{PRINT_TYPES_ENDPOINT}"
 STAMP_TYPES_URL_V1=f"{SERVER_URL_V1}{STAMP_TYPES_ENDPOINT}"
 STAMPS_URL_V1=f"{SERVER_URL_V1}{STAMPS_ENDPOINT}"
 YEARS_URL_V1=f"{SERVER_URL_V1}{YEARS_ENDPOINT}"
@@ -97,8 +179,77 @@ CONDITION_TYPES_URL_V1=f"{SERVER_URL_V1}{CONDITION_TYPES_ENDPOINT}"
 USERS_URL_V1=f"{SERVER_URL_V1}{USERS_ENDPOINT}"
 LOGIN_URL_V1=f"{SERVER_URL_V1}{LOGIN_ENDPOINT}"
 LOGOFF_URL_V1=f"{SERVER_URL_V1}{LOGOFF_ENDPOINT}"
+AI_ISSUES_EXTRACTION_URL_V1=f"{SERVER_URL_V1}{AI_ISSUES_EXTRACTION_ENDPOINT}"
+ARTISTS_URL_V1=f"{SERVER_URL_V1}{ARTISTS_ENDPOINT}"
+PRINTERS_URL_V1=f"{SERVER_URL_V1}{PRINTERS_ENDPOINT}"
+PAPER_TYPES_URL_V1=f"{SERVER_URL_V1}{PAPER_TYPES_ENDPOINT}"
+
+# DataDesk: internal DB-maintenance app.
+# It lives outside SERVER_URL_V1 on purpose: it is not part of the public API,
+# it has no DRF exposure and it is only mounted when the flag is on.
+DATADESK_ENABLED = os.getenv("DATADESK_ENABLED", "False").lower() in ("true", "1", "t")
+DATADESK_URL = "datadesk/"
+DATADESK_LOGIN_URL = f"/{DATADESK_URL}login/"
+DATADESK_LOGOUT_URL = f"/{DATADESK_URL}logout/"
+
+# DataDesk is deployed on a server behind nginx with TLS, but locally it runs on
+# plain HTTP with no proxy. This flag only flips cookie/header settings, never
+# logic, so the same code covers both deployments.
+DATADESK_TLS = os.getenv("DATADESK_TLS", "0").lower() in ("1", "true", "t", "yes")
+
+# Stamp pictures live with the frontend, one webp per FESOFI code under
+# <year>/<code>.webp, and are mounted read-only here (docker-compose.dev/prod).
+# The default is the repository copy, which is what dev uses; a path that does
+# not exist simply means "no pictures", never an error.
+DATADESK_STAMP_IMAGES = Path(
+    os.getenv(
+        "DATADESK_STAMP_IMAGES",
+        BASE_DIR.parent / "frontend" / "assets" / "stamps",
+    )
+)
+
+# Login throttling for DataDesk. A file cache instead of LocMem: gunicorn runs
+# 4 workers and LocMem would multiply the attempt limit by four. No table, no
+# migration, no createcachetable.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": BASE_DIR / ".cache",
+        "TIMEOUT": 300,
+    }
+}
+
+# DataDesk sessions. The app is a single-user maintenance tool, so a long
+# session is fine as long as the cookie is not reachable from JavaScript.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = DATADESK_TLS
+CSRF_COOKIE_SECURE = DATADESK_TLS
+
+if DATADESK_TLS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
+
+# Production serves hashed, compressed names through whitenoise. That backend
+# needs a collected manifest, so with DEBUG on (local development) plain
+# storage is used instead: `runserver` serves the assets from the finders and
+# DataDesk works without running collectstatic first.
+STATICFILES_BACKEND = (
+    "django.contrib.staticfiles.storage.StaticFilesStorage"
+    if DEBUG
+    else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": STATICFILES_BACKEND,
+    },
+}
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -107,13 +258,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.postgres',
+    'django_extensions',
     'rest_framework',
     'rest_framework_api_key',
     'drf_spectacular',      # For Swagger documentation
     "config_api",           # All APIs for the config table
     "stamp_types_api",      # All APIs for the stamp type table
     "locations_api",        # All APIs for the location table
-    "paper_types_api",      # All APIs for the paper type table
+    "print_types_api",      # All APIs for the print type table
     "countries_api",        # All APIs for the country table
     "colors_api",           # All APIs for the color table
     "stamps_api",           # All APIs for the stamp table
@@ -123,7 +276,12 @@ INSTALLED_APPS = [
     "collection_items_api", # All APIs for the table collection item
     "condition_types_api",  # All APIs for the table condition type
     "users_api",            # All APIs for the table user
-    "health_api"            # All APIs for checking the system health
+    "artists_api",          # All APIs for the table artist
+    "paper_types_api",      # All APIs for the table paper type
+    "printers_api",         # All APIs for the table printer
+    "ai_api",               # All APIs for the AI service
+    "health_api",           # All APIs for checking the system health
+    "datadesk",             # Internal DB-maintenance UI (not part of the public API)
 ]
 
 REST_FRAMEWORK = {
@@ -152,6 +310,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # customize access
     # Future-friendly:
     "COMPONENT_SPLIT_REQUEST": True,   # better request/response separation
+    'SORT_OPERATION_PARAMETERS': False,
     "TAGS": [
         {
             "name": "Database Management",
@@ -168,6 +327,10 @@ SPECTACULAR_SETTINGS = {
         {
             "name": "User Management",
             "description": "APIs for managing users."  
+        },
+        {
+            "name": "AI Services",  
+            "description": "APIs for AI-powered stamp series extraction and data validation."
         }
     ],
     # "SCHEMA_PATH_PREFIX": "/api/v1",   # useful if versioning your API
@@ -180,10 +343,13 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "datadesk.middleware.DataDeskGateMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -200,6 +366,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # The DataDesk assets carry a version stamp: without it a
+                # browser can run yesterday's script against today's page.
+                "datadesk.context.assets",
             ],
         },
     },
@@ -212,11 +381,21 @@ WSGI_APPLICATION = "_backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),                # The name of your database (e.g., 'my_project_db')
+        'USER': os.getenv('POSTGRES_USER'),              # Your PostgreSQL username (e.g., 'postgres')
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),      # Your PostgreSQL password
+        'HOST': os.getenv('POSTGRES_HOST', 'localhost'), # The host where Postgres is running (or IP)
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),      # The port Postgres is running on
     }
 }
+# Use SQLite for testing (see pytest.ini)
+if os.environ.get('RUNNING_TESTS','false').lower() == 'true':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
 
 
 # Password validation
@@ -247,13 +426,18 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
+# DataDesk is translated in English and Spanish. The project default stays
+# untouched, and these are the only languages the DataDesk switch accepts.
+DATADESK_LANGUAGES = ("en", "es")
+
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_collected')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

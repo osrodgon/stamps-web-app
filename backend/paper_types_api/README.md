@@ -1,8 +1,8 @@
 # Paper Types API Documentation
 
-Welcome to the API documentation for the Paper Types resource. This document provides detailed information about the RESTful endpoints for managing the types of paper used for stamps.
+Welcome to the API documentation for the Paper Types resource. This document provides detailed information about the RESTful endpoints for managing the paper types used to describe stamps.
 
-The Paper Types API is a simple lookup table that allows for creating, viewing, updating, and deleting paper type entries (e.g., "Wove", "Laid", "Granite").
+The Paper Types API is a simple lookup table that allows for creating, viewing, updating, and deleting paper type entries.
 
 ## Resource URL
 
@@ -18,12 +18,12 @@ All endpoints are protected and require authentication via an API key or a passw
 
 ## Model Description
 
-The `PaperType` model represents a type of paper that a stamp can be printed on.
+The `PaperType` model represents a paper type that can be associated with a stamp.
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `id` | Integer | The unique identifier for the paper type. |
-| `name` | String | The name of the paper type (e.g., "Wove"). |
+| `name` | String | The name of the paper type (e.g., "Matte", "Glossy", "Lustre"). |
 
 ---
 
@@ -40,11 +40,11 @@ Retrieves a list of all available paper types.
     [
       {
         "id": 1,
-        "name": "Wove"
+        "name": "Matte"
       },
       {
         "id": 2,
-        "name": "Laid"
+        "name": "Glossy"
       }
     ]
     ```
@@ -60,7 +60,7 @@ Creates a new paper type.
     A JSON object representing the new paper type.
     ```json
     {
-      "name": "Granite"
+      "name": "Silk"
     }
     ```
 *   **Success Response (201 Created):**
@@ -68,7 +68,7 @@ Creates a new paper type.
     ```json
     {
       "id": 3,
-      "name": "Granite"
+      "name": "Silk"
     }
     ```
 *   **Error Responses:**
@@ -86,7 +86,7 @@ Retrieves a single, specific paper type by its unique ID.
     ```json
     {
         "id": 1,
-        "name": "Wove"
+        "name": "Matte"
     }
     ```
 *   **Error Responses:**
@@ -103,15 +103,15 @@ Updates an existing paper type. This method supports partial updates, so you onl
     A JSON object containing the fields to be updated.
     ```json
     {
-      "name": "Chalk-surfaced"
+      "name": "Satin"
     }
     ```
 *   **Success Response (200 OK):**
     The full, updated paper type object.
     ```json
     {
-        "id": 4,
-        "name": "Chalk-surfaced"
+        "id": 1,
+        "name": "Satin"
     }
     ```
 *   **Error Responses:**

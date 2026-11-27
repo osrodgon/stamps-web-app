@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DataDesk workbench — three skins, side by side</title>
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #eceef1;
+    color: #12161c;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .intro { max-width: 900px; margin: 0 auto 24px; }
+  .intro h1 { margin: 0 0 6px; font-size: 20px; }
+  .intro p { margin: 0 0 6px; color: #4a5563; }
+  .intro code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+
+  section { max-width: 1600px; margin: 0 auto 32px; }
+  .caption {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .caption h2 { margin: 0; font-size: 15px; }
+  .caption span { color: #4a5563; font-size: 13px; }
+  iframe {
+    display: block;
+    width: 100%;
+    height: 1000px;
+    border: 1px solid #d3d9e1;
+    border-radius: 10px;
+    background: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>The same workbench, three skins</h1>
+  <p>
+    Same screen, same columns, same twelve rows. Only the styling changes —
+    no markup rewrite, no new dependency in the last one.
+  </p>
+  <p>
+    Caveat: these render with <code>system-ui</code> resolved to DejaVu Sans
+    (Linux), so variants 1 and 2 look worse here than they will on a Mac or
+    Windows, where the same stack lands on SF Pro or Segoe UI.
+  </p>
+</div>
+
+<section>
+  <div class="caption">
+    <h2>1 · Current</h2>
+    <span>the real <code>datadesk.css</code> after S24, trimmed to this screen</span>
+  </div>
+  <iframe src="workbench-current.html" title="Current"></iframe>
+</section>
+
+<section>
+  <div class="caption">
+    <h2>2 · Bootstrap 5.3.3</h2>
+    <span>stock components, stock colours, stock spacing — no custom CSS except the width cap</span>
+  </div>
+  <iframe src="workbench-bootstrap.html" title="Bootstrap"></iframe>
+</section>
+
+<section>
+  <div class="caption">
+    <h2>3 · Polished</h2>
+    <span>same tokens and class names: Inter, soft focus rings, 120ms transitions, light grid header, 4px rhythm</span>
+  </div>
+  <iframe src="workbench-polished.html" title="Polished"></iframe>
+</section>
+
+</body>
+</html>

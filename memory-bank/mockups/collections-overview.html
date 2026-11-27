@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Collections (normal user)</title>
+<style>
+  :root {
+    --bar: #1e2b3c;
+    --page: #f5f6f8;
+    --surface: #fff;
+    --ink: #1f2933;
+    --muted: #6b7280;
+    --line: #e3e7ec;
+    --sky: #5898d4;
+    --sky-dark: #3f7fbb;
+    --mint-bg: #e8f5e9;
+    --mint-ink: #2e7d32;
+    --used-bg: #e3f2fd;
+    --used-ink: #1565c0;
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 14px/1.45 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  /* --- the app bar, as it is today ------------------------------------- */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 80px;
+    padding: 0 18px;
+    background: var(--bar);
+    color: #fff;
+  }
+  .bar .menu { font-size: 22px; opacity: .9; }
+  .bar .title { font-weight: 700; font-size: 20px; letter-spacing: .2px; }
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 48px; }
+
+  .head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px; }
+  .head h1 { margin: 0; font-size: 26px; font-weight: 700; }
+  .head .count { color: var(--muted); padding-bottom: 3px; }
+  .head .spacer { flex: 1; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--sky);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--sky-dark); }
+  .btn.ghost { background: transparent; color: var(--sky); border: 1px solid var(--line); }
+
+  /* --- the collection cards -------------------------------------------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  @media (max-width: 1040px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, .14);
+  }
+  /* The cover is a collage of up to six stamps; one is centred and big, six make
+   * a 3 x 2 mosaic, none falls back to the placeholder. */
+  .cover {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    place-items: center;
+    gap: 6px;
+    height: 168px;
+    padding: 14px;
+    background: #eef1f4;
+    border-bottom: 1px solid var(--line);
+  }
+  .cover img {
+    grid-column: span 2;
+    max-height: 56px;
+    max-width: 100%;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.16));
+  }
+  .cover.one { grid-template-columns: 1fr; }
+  .cover.one img { grid-column: auto; max-height: 124px; }
+  .cover.three { grid-template-columns: repeat(3, 1fr); }
+  .cover.three img { grid-column: auto; max-height: 84px; }
+  .cover.empty img { grid-column: 1 / -1; max-height: 96px; opacity: .55; filter: grayscale(1); }
+  .card-body { padding: 14px 16px 16px; }
+  .card-name { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+  .card-count { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+
+  .progress { height: 6px; border-radius: 999px; background: #eceff3; overflow: hidden; }
+  .progress span { display: block; height: 100%; background: var(--sky); }
+  .progress-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .progress-line .progress { flex: 1; }
+  .progress-line b { color: var(--ink); font-weight: 600; }
+
+  /* --- the empty state ------------------------------------------------- */
+  .empty-note {
+    margin: 44px 0 12px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .empty {
+    display: grid;
+    place-items: center;
+    gap: 10px;
+    padding: 46px 20px;
+    border: 1px dashed #cfd6df;
+    border-radius: var(--radius);
+    background: rgba(255,255,255,.6);
+    text-align: center;
+  }
+  .empty .mark { font-size: 30px; opacity: .5; }
+  .empty p { margin: 0; color: var(--muted); }
+
+  /* --- the header of the third mockup (the series view) is elsewhere ---- */
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="menu">☰</span>
+  <span class="title">Collections</span>
+</header>
+
+<main>
+  <div class="head">
+    <h1>Your collections</h1>
+    <span class="count">3 collections</span>
+    <span class="spacer"></span>
+    <button class="btn">＋ New collection</button>
+  </div>
+
+  <section class="grid">
+    <article class="card">
+      <div class="cover">
+        <img src="../../frontend/assets/stamps/1850/0001.webp" alt="">
+        <img src="../../frontend/assets/stamps/1850/0002.webp" alt="">
+        <img src="../../frontend/assets/stamps/1850/0003.webp" alt="">
+        <img src="../../frontend/assets/stamps/1850/0004.webp" alt="">
+        <img src="../../frontend/assets/stamps/1850/0005.webp" alt="">
+        <img src="../../frontend/assets/stamps/1853/0017.webp" alt="">
+      </div>
+      <div class="card-body">
+        <div class="card-name">Isabel II</div>
+        <div class="card-count">3 series · 14 stamps</div>
+        <div class="progress-line">
+          <div class="progress"><span style="width:62%"></span></div>
+          <b>62%</b>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cover three">
+        <img src="../../frontend/assets/stamps/1976/2306.webp" alt="">
+        <img src="../../frontend/assets/stamps/1976/2307.webp" alt="">
+        <img src="../../frontend/assets/stamps/1976/2308.webp" alt="">
+      </div>
+      <div class="card-body">
+        <div class="card-name">Escudos de España</div>
+        <div class="card-count">1 series · 3 stamps</div>
+        <div class="progress-line">
+          <div class="progress"><span style="width:100%"></span></div>
+          <b>100%</b>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cover empty">
+        <img src="../../frontend/assets/no_stamp.webp" alt="">
+      </div>
+      <div class="card-body">
+        <div class="card-name">Spain 2000</div>
+        <div class="card-count">No stamps yet</div>
+        <div class="progress-line">
+          <div class="progress"><span style="width:0%"></span></div>
+          <b>0%</b>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <p class="empty-note">Empty state — a user with no collections</p>
+  <div class="empty">
+    <div class="mark">🗂</div>
+    <p>You have no collections yet.</p>
+    <button class="btn">＋ New collection</button>
+  </div>
+</main>
+
+</body>
+</html>

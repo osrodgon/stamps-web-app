@@ -3,13 +3,34 @@
 {
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+
+	"runArgs": [
+        "--network=stamps-network",  // Join the network where the compose containers live
+		"-e", "TZ=Europe/Madrid",  // Set the timezone environment variable to Europe/Madrid
+		"--init"
+    ],
+
+	// Create the network if not present. This runs on the host, before the container
+	// exists, which is where the containers started by stamps.sh will live.
+	"initializeCommand": "docker network inspect stamps-network >/dev/null 2>&1 || docker network create stamps-network",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "22"
+		},
+		// Use the host daemon instead of installing a second engine in here. A nested
+		// daemon cannot use overlayfs (the container root is already overlay), so it
+		// needs vfs and cannot pull images; this feature mounts the host socket at
+		// /var/run/docker-host.sock, sets DOCKER_HOST and sorts the group out itself.
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [8000, 5173],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "bash .devcontainer/setup.sh",
@@ -21,13 +42,17 @@
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"tal7aouy.indent-colorizer",
-				"qwtel.sqlite-viewer",
-				"rapidapi.vscode-rapidapi-client",
 				"gnramsay.create-python-module",
 				"kevinrose.vsc-python-indent",
 				"shamanu4.django-intellisense",
 				"njpwerner.autodocstring",
-				"google.geminicodeassist"
+				"google.geminicodeassist",
+				"fedaykindev.openchamber",
+				// "daelonsuzuka.nicegui",
+				// "saoudrizwan.claude-dev",
+				// "lakefs.lakefs-dvc",
+				"sst-dev.opencode",
+				"tanishqkancharla.opencode-vscode"
 			]
 		}
 	},

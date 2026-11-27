@@ -1,0 +1,61 @@
+{% load static i18n %}{% get_current_language as CURRENT_LANGUAGE %}<!doctype html>
+<html lang="{{ CURRENT_LANGUAGE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% comment %}
+    The page scripts write JSON with fetch, which does not go through HTMX or a
+    <form>, so the token needs a place they can read without parsing a cookie.
+  {% endcomment %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}DataDesk{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'datadesk/vendor/tabulator.min.css' %}">
+  <link rel="stylesheet" href="{% static 'datadesk/datadesk.css' %}?v={{ datadesk_asset_version }}">
+  {% block extra_css %}{% endblock %}
+</head>
+{% comment %}
+  hx-headers sends the CSRF token with every HTMX request, so partial views
+  never have to repeat it.
+{% endcomment %}
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div class="dd-app">
+    <header class="dd-topbar">
+      <a class="dd-brand" href="{% url 'datadesk:dashboard' %}">DataDesk<span>.</span></a>
+      <div class="dd-crumbs">{% block breadcrumbs %}{% endblock %}</div>
+      <div class="dd-topbar-right">
+        {% block topbar_actions %}{% endblock %}
+        {% get_current_language as DATADESK_LANG %}
+        <form class="dd-lang" method="post" action="{% url 'datadesk:language' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" name="language" value="en"
+                  class="{% if DATADESK_LANG|slice:':2' == 'en' %}dd-lang-active{% endif %}">EN</button>
+          <span class="dd-lang-sep">|</span>
+          <button type="submit" name="language" value="es"
+                  class="{% if DATADESK_LANG|slice:':2' == 'es' %}dd-lang-active{% endif %}">ES</button>
+        </form>
+        {% if user.is_authenticated %}
+          <span class="dd-user">{{ user.get_username }}</span>
+          <form class="dd-logout" method="post" action="{% url 'datadesk:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dd-btn dd-btn-ghost">{% translate "Sign out" %}</button>
+          </form>
+        {% endif %}
+      </div>
+    </header>
+
+    <main class="dd-main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% comment %}
+    Vendor scripts load at the end of the body, before extra_js, so page
+    scripts can use htmx, Alpine and Tabulator straight away.
+  {% endcomment %}
+  <script src="{% static 'datadesk/vendor/htmx.min.js' %}"></script>
+  <script src="{% static 'datadesk/vendor/alpine.min.js' %}"></script>
+  <script src="{% static 'datadesk/vendor/tabulator.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

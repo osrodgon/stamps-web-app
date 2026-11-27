@@ -1,0 +1,919 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DataDesk\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: datadesk/templates/datadesk/base.html
+msgid "Sign out"
+msgstr "Cerrar sesión"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Dashboard"
+msgstr "Panel"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid ""
+"Internal database maintenance. The workbench, the issue workspace and the "
+"lookup admin arrive in the next steps."
+msgstr ""
+"Mantenimiento interno de la base de datos. El banco de trabajo, el editor de "
+"series y la administración de tablas de referencia llegan en los próximos "
+"pasos."
+
+#: datadesk/templates/datadesk/login.html
+msgid "DataDesk login"
+msgstr "Acceso a DataDesk"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Internal database maintenance"
+msgstr "Mantenimiento interno de la base de datos"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+#, python-format
+msgid "Too many failed attempts. Try again in %(seconds)s seconds."
+msgstr "Demasiados intentos fallidos. Vuelve a intentarlo en %(seconds)s segundos."
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Username"
+msgstr "Usuario"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Password"
+msgstr "Contraseña"
+
+#: datadesk/templates/datadesk/partials/login_form.html
+msgid "Sign in"
+msgstr "Entrar"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid "Access denied"
+msgstr "Acceso denegado"
+
+#: datadesk/templates/datadesk/forbidden.html
+msgid ""
+"This account is not staff, so DataDesk will not open for it. Sign in with "
+"the maintenance account."
+msgstr ""
+"Esta cuenta no es de personal, así que DataDesk no se abrirá con ella. "
+"Inicia sesión con la cuenta de mantenimiento."
+
+#: datadesk/registry.py
+msgid "Year"
+msgstr "Año"
+
+#: datadesk/registry.py
+msgid "Country"
+msgstr "País"
+
+#: datadesk/registry.py
+msgid "Color"
+msgstr "Color"
+
+#: datadesk/registry.py
+msgid "Artist"
+msgstr "Artista"
+
+#: datadesk/registry.py
+msgid "Printer"
+msgstr "Imprenta"
+
+#: datadesk/registry.py
+msgid "Paper type"
+msgstr "Tipo de papel"
+
+#: datadesk/registry.py
+msgid "Print type"
+msgstr "Tipo de impresión"
+
+#: datadesk/registry.py
+msgid "Stamp type"
+msgstr "Tipo de sello"
+
+
+#: datadesk/views/workbench.py
+msgid "Issues"
+msgstr "Series"
+
+#: datadesk/views/workbench.py
+msgid "From year"
+msgstr "Desde año"
+
+#: datadesk/views/workbench.py
+msgid "To year"
+msgstr "Hasta año"
+
+#: datadesk/views/workbench.py
+msgid "Name"
+msgstr "Nombre"
+
+#: datadesk/views/workbench.py
+msgid "Any"
+msgstr "Cualquiera"
+
+#: datadesk/views/workbench.py
+msgid "Needs attention"
+msgstr "Requiere atención"
+
+#: datadesk/views/workbench.py
+msgid "Nothing"
+msgstr "Nada"
+
+#: datadesk/views/workbench.py
+msgid "No country"
+msgstr "Sin país"
+
+#: datadesk/views/workbench.py
+msgid "No date"
+msgstr "Sin fecha"
+
+#: datadesk/views/workbench.py
+msgid "No stamps"
+msgstr "Sin sellos"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without colors"
+msgstr "Sellos sin colores"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without face value"
+msgstr "Sellos sin facial"
+
+#: datadesk/views/workbench.py
+msgid "Stamps without image"
+msgstr "Sellos sin imagen"
+
+#: datadesk/views/workbench.py
+msgid "Reset"
+msgstr "Limpiar"
+
+#: datadesk/views/workbench.py
+msgid "Columns"
+msgstr "Columnas"
+
+#: datadesk/views/workbench.py
+msgid "Date"
+msgstr "Fecha"
+
+#: datadesk/views/workbench.py
+msgid "Stamps"
+msgstr "Sellos"
+
+#: datadesk/views/workbench.py
+msgid "MNH"
+msgstr "MNH"
+
+#: datadesk/views/workbench.py
+msgid "Used"
+msgstr "Usado"
+
+#: datadesk/views/workbench.py
+msgid "Perforation"
+msgstr "Perforación"
+
+#: datadesk/views/workbench.py
+msgid "Total printed"
+msgstr "Tirada"
+
+#: datadesk/views/workbench.py
+msgid "Gaps"
+msgstr "Huecos"
+
+#: datadesk/views/workbench.py
+msgid "No issues match these filters."
+msgstr "Ninguna serie coincide con estos filtros."
+
+#: datadesk/views/workbench.py
+msgid "issues"
+msgstr "series"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Open the issues workbench"
+msgstr "Abrir el banco de series"
+
+#: datadesk/views/workspace.py
+msgid "Edifil"
+msgstr "Edifil"
+
+#: datadesk/views/workspace.py
+msgid "Fesofi"
+msgstr "Fesofi"
+
+#: datadesk/views/workspace.py
+msgid "Face value"
+msgstr "Valor facial"
+
+#: datadesk/views/workspace.py
+msgid "Colors"
+msgstr "Colores"
+
+#: datadesk/views/workspace.py
+msgid "Market value MNH"
+msgstr "Valor de mercado MNH"
+
+#: datadesk/views/workspace.py
+msgid "Market value used"
+msgstr "Valor de mercado usado"
+
+#: datadesk/views/workspace.py
+msgid "Description"
+msgstr "Descripción"
+
+#: datadesk/views/workspace.py
+msgid "Stamp description"
+msgstr "Descripción del sello"
+
+#: datadesk/views/workspace.py
+msgid "Note"
+msgstr "Nota"
+
+#: datadesk/views/workspace.py
+msgid "No stamps in this issue."
+msgstr "Esta serie no tiene sellos."
+
+
+#: datadesk/views/workbench.py
+msgid "Open"
+msgstr "Abrir"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Issue metadata"
+msgstr "Metadatos de la serie"
+
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Back to the issues workbench"
+msgstr "Volver al banco de series"
+
+
+
+
+
+#: datadesk/views/workspace.py
+msgid "No stamp rows yet."
+msgstr "Aún no hay filas de sellos."
+
+#: datadesk/views/workspace.py
+msgid "New series"
+msgstr "Nueva serie"
+
+#: datadesk/views/workspace.py
+msgid "Use last issue"
+msgstr "Usar la última serie"
+
+#: datadesk/views/workspace.py
+msgid "Rows"
+msgstr "Filas"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "series values describe the whole set, stamp values the stamp"
+msgstr "los valores de la serie describen el conjunto y los del sello, el sello"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This year does not exist yet: it will be created when the series is saved."
+msgstr "Este año todavía no existe: se creará al guardar la serie."
+
+#: datadesk/views/workspace.py
+msgid "Saved"
+msgstr "Guardado"
+
+#: datadesk/views/workspace.py
+msgid "The change was refused."
+msgstr "El cambio se ha rechazado."
+
+#: datadesk/views/workspace.py
+msgid "Nothing changed."
+msgstr "No ha cambiado nada."
+
+#: datadesk/views/workspace.py
+msgid "Saving…"
+msgstr "Guardando…"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Recover"
+msgstr "Recuperar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Discard"
+msgstr "Descartar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Undo"
+msgstr "Deshacer"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Redo"
+msgstr "Rehacer"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Another tab has changes on this series."
+msgstr "Otra pestaña tiene cambios en esta serie."
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "%(count)s change"
+msgid_plural "%(count)s changes"
+msgstr[0] "%(count)s cambio"
+msgstr[1] "%(count)s cambios"
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "%(count)s saved change"
+msgid_plural "%(count)s saved changes"
+msgstr[0] "%(count)s cambio guardado"
+msgstr[1] "%(count)s cambios guardados"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter commits the pending changes."
+msgstr "Mayús+Intro confirma los cambios pendientes."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Review changes"
+msgstr "Revisar cambios"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Pending changes"
+msgstr "Cambios pendientes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Close"
+msgstr "Cerrar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Back up first"
+msgstr "Copia de seguridad"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Commit"
+msgstr "Confirmar"
+
+#: datadesk/views/workspace.py
+msgid "Series"
+msgstr "Serie"
+
+#: datadesk/views/workspace.py
+msgid "Backup saved: %(file)s"
+msgstr "Copia guardada: %(file)s"
+
+#: datadesk/views/workspace.py
+msgid "The backup failed, so nothing was committed."
+msgstr "La copia de seguridad falló, así que no se ha confirmado nada."
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "Commit %(count)s change"
+msgid_plural "Commit %(count)s changes"
+msgstr[0] "Confirmar %(count)s cambio"
+msgstr[1] "Confirmar %(count)s cambios"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Shift+Enter creates the series."
+msgstr "Mayús+Intro crea la serie."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create series"
+msgstr "Crear serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Open the series"
+msgstr "Abrir la serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create another"
+msgstr "Crear otra"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fill series"
+msgstr "Numerar serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Fast row"
+msgstr "Fila rápida"
+
+#: datadesk/views/workspace.py
+msgid "The series was created."
+msgstr "La serie se ha creado."
+
+#: datadesk/views/workspace.py
+msgid "The series was not created."
+msgstr "La serie no se ha creado."
+
+#: datadesk/views/workspace.py
+msgid "Create another in %(year)s"
+msgstr "Crear otra en %(year)s"
+
+#: datadesk/views/workspace.py
+msgid "Stamp %(row)s: %(message)s"
+msgstr "Sello %(row)s: %(message)s"
+
+#: datadesk/views/workspace.py
+msgid "Type the first code to number the rest."
+msgstr "Teclea el primer código para numerar el resto."
+
+#: datadesk/views/workspace.py
+msgid "The first %(column)s code has no number to continue from."
+msgstr "El primer código %(column)s no tiene número del que continuar."
+
+#: datadesk/views/workspace.py
+msgid "Remove this row"
+msgstr "Quitar esta fila"
+
+#: datadesk/views/workspace.py
+msgid "The year comes from the date."
+msgstr "El año viene de la fecha."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Clone"
+msgstr "Clonar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete"
+msgstr "Eliminar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this series"
+msgstr "Eliminar esta serie"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Collection items"
+msgstr "Ítems de colección"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "User collections"
+msgstr "Colecciones de usuario"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Type the year to confirm"
+msgstr "Teclea el año para confirmar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the series"
+msgstr "Eliminar la serie"
+
+#: datadesk/dependencies.py
+msgid "This series has no stamps."
+msgstr "Esta serie no tiene sellos."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds these stamps."
+msgstr "Ninguna colección de usuario tiene estos sellos."
+
+#: datadesk/dependencies.py
+msgid "These stamps are in user collections, which lose them too."
+msgstr "Estos sellos están en colecciones de usuario, que también los pierden."
+
+#: datadesk/views/workspace.py
+msgid "Cloning…"
+msgstr "Clonando…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not cloned."
+msgstr "La serie no se ha clonado."
+
+#: datadesk/views/workspace.py
+msgid "Deleting…"
+msgstr "Eliminando…"
+
+#: datadesk/views/workspace.py
+msgid "The series was not deleted."
+msgstr "La serie no se ha eliminado."
+
+#: datadesk/views/workspace.py
+msgid "The preview could not be loaded."
+msgstr "No se ha podido cargar la previsualización."
+
+#: datadesk/views/workspace.py
+msgid "Commit or discard the pending changes first."
+msgstr "Confirma o descarta antes los cambios pendientes."
+
+#: datadesk/views/workspace.py
+msgid "Type %(year)s to confirm"
+msgstr "Teclea %(year)s para confirmar"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "New colour"
+msgstr "Nuevo color"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Create the colour"
+msgstr "Crear el color"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: datadesk/views/workspace.py
+msgid "+ Create \"%(name)s\""
+msgstr "+ Crear «%(name)s»"
+
+#: datadesk/views/workspace.py
+msgid "Added to the list."
+msgstr "Añadido a la lista."
+
+#: datadesk/views/workspace.py
+msgid "The value could not be created."
+msgstr "No se ha podido crear el valor."
+
+#: datadesk/views/workspace.py
+msgid "%(name)s is not a saved value yet. Use the + button to add it."
+msgstr "«%(name)s» todavía no existe. Usa el botón + para añadirlo."
+
+#: datadesk/views/workspace.py
+msgid "New reference rows"
+msgstr "Nuevas filas de referencia"
+
+#: datadesk/views/workspace.py
+msgid "Saved now: reference rows are reused."
+msgstr "Guardada ahora: las filas de referencia se reutilizan."
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "Reference tables"
+msgstr "Tablas de referencia"
+
+#: datadesk/templates/datadesk/lookups_index.html
+msgid "The lists every series points at. Rename a row here, or merge two that say the same thing."
+msgstr "Las listas a las que apunta cada serie. Renombra una fila aquí o fusiona dos que digan lo mismo."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Search"
+msgstr "Buscar"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge two rows"
+msgstr "Fusionar dos filas"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Create the next 10 years"
+msgstr "Crear los 10 años siguientes"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Merge and delete the other row"
+msgstr "Fusionar y borrar la otra fila"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Delete the row"
+msgstr "Borrar la fila"
+
+#: datadesk/views/lookups.py
+msgid "Used by"
+msgstr "Usada por"
+
+#: datadesk/views/lookups.py
+msgid "No rows yet."
+msgstr "Todavía no hay filas."
+
+#: datadesk/views/lookups.py
+msgid "In use: merge it into another row"
+msgstr "En uso: fusiónala con otra fila"
+
+#: datadesk/views/lookups.py
+msgid "Keep this name"
+msgstr "Conservar este nombre"
+
+#: datadesk/views/lookups.py
+msgid "The references move for good: this cannot be undone. Back up first."
+msgstr "Las referencias se mueven para siempre: esto no se puede deshacer. Haz antes una copia de seguridad."
+
+#: datadesk/views/lookups.py
+msgid "That name already exists. Merge the two rows instead?"
+msgstr "Ese nombre ya existe. ¿Fusionamos las dos filas?"
+
+#: datadesk/views/lookups.py
+msgid "Saved."
+msgstr "Guardado."
+
+#: datadesk/views/lookups.py
+msgid "The row was deleted."
+msgstr "La fila se ha borrado."
+
+#: datadesk/views/lookups.py
+msgid "Select exactly two rows to merge."
+msgstr "Selecciona exactamente dos filas."
+
+#: datadesk/views/lookups.py
+msgid "Source row: it disappears after the merge."
+msgstr "Fila de origen: desaparece tras fusionar."
+
+#: datadesk/views/lookups.py
+msgid "Surviving row: it keeps every reference."
+msgstr "Fila que se queda: conserva todas las referencias."
+
+#: datadesk/views/lookups.py
+msgid "Create the next %(count)s years"
+msgstr "Crear los %(count)s años siguientes"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "%(count)s row"
+msgid_plural "%(count)s rows"
+msgstr[0] "%(count)s fila"
+msgstr[1] "%(count)s filas"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Used by %(count)s row"
+msgid_plural "Used by %(count)s rows"
+msgstr[0] "Usada por %(count)s fila"
+msgstr[1] "Usada por %(count)s filas"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Moved %(count)s reference"
+msgid_plural "Moved %(count)s references"
+msgstr[0] "Movida %(count)s referencia"
+msgstr[1] "Movidas %(count)s referencias"
+
+#: datadesk/views/lookups.py
+#, python-format
+msgid "Created %(count)s year"
+msgid_plural "Created %(count)s years"
+msgstr[0] "Creado %(count)s año"
+msgstr[1] "Creados %(count)s años"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Nothing missing here:"
+msgstr "Aquí no falta nada:"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Nothing needs attention: every series has its country, date and stamps, and every stamp has its colour, face value and picture."
+msgstr "Nada necesita atención: todas las series tienen país, fecha y sellos, y todos los sellos tienen color, valor facial e imagen."
+
+#: datadesk/service.py
+msgid "Series with no country"
+msgstr "Series sin país"
+
+#: datadesk/service.py
+msgid "Series with no date"
+msgstr "Series sin fecha"
+
+#: datadesk/service.py
+msgid "Series with no stamps"
+msgstr "Series sin sellos"
+
+#: datadesk/service.py
+msgid "Stamps with no colour"
+msgstr "Sellos sin color"
+
+#: datadesk/service.py
+msgid "Stamps with no value"
+msgstr "Sellos sin valor facial"
+
+#: datadesk/service.py
+msgid "Stamps with no picture"
+msgstr "Sellos sin imagen"
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "Internal database maintenance. What is missing comes first, everything else is one click away."
+msgstr "Mantenimiento interno de la base de datos. Lo que falta va primero; el resto está a un clic."
+
+#: datadesk/templates/datadesk/dashboard.html
+msgid "%(issues)s series · %(stamps)s stamps"
+msgstr "%(issues)s series · %(stamps)s sellos"
+
+#: datadesk/service.py
+#, python-format
+msgid "in %(count)s series"
+msgid_plural "in %(count)s series"
+msgstr[0] "en %(count)s serie"
+msgstr[1] "en %(count)s series"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Activity"
+msgstr "Actividad"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "The commit was reverted."
+msgstr "El commit se ha revertido."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Every change made from DataDesk, newest first. A commit is undone whole or not at all."
+msgstr "Cada cambio hecho desde DataDesk, lo más reciente primero. Un commit se deshace entero o no se deshace."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Revert this commit"
+msgstr "Revertir este commit"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Undo this commit"
+msgstr "Deshacer este commit"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Collection items removed with a series or a stamp are not restored: the catalogue comes back, who owned those stamps does not."
+msgstr "Los ítems de colección que se borraron con una serie o un sello no se recuperan: vuelve el catálogo, no quién tenía esos sellos."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Revert"
+msgstr "Revertir"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Nothing has been changed from here yet."
+msgstr "Todavía no se ha cambiado nada desde aquí."
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Previous"
+msgstr "Anterior"
+
+#: datadesk/templates/datadesk/activity.html
+msgid "Next"
+msgstr "Siguiente"
+
+#: datadesk/activity.py
+msgid "created"
+msgstr "creado"
+
+#: datadesk/activity.py
+msgid "updated"
+msgstr "modificado"
+
+#: datadesk/activity.py
+msgid "deleted"
+msgstr "borrado"
+
+#: datadesk/activity.py
+msgid "merged"
+msgstr "fusionado"
+
+#: datadesk/activity.py
+msgid "will be deleted"
+msgstr "se borrará"
+
+#: datadesk/activity.py
+msgid "will be restored"
+msgstr "se restaurará"
+
+#: datadesk/activity.py
+msgid "will be created again"
+msgstr "se volverá a crear"
+
+#: datadesk/activity.py
+msgid "Not revertible: it contains a merge"
+msgstr "No reversible: contiene una fusión"
+
+#: datadesk/activity.py
+msgid "Reverted on %(when)s"
+msgstr "Revertido el %(when)s"
+
+#: datadesk/activity.py
+msgid "Revertible"
+msgstr "Reversible"
+
+#: datadesk/views/activity.py
+msgid "Anonymous"
+msgstr "Anónimo"
+
+#: datadesk/activity.py
+#, python-format
+msgid "%(count)s object"
+msgid_plural "%(count)s objects"
+msgstr[0] "%(count)s objeto"
+msgstr[1] "%(count)s objetos"
+
+#: datadesk/activity.py
+msgid "Stamp"
+msgstr "Sello"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one."
+msgstr "La barra diagonal lleva al buscador, J y K mueven la selección, Enter abre la serie y N crea una nueva."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Slash focuses the search and J and K move the selection. Two selected rows can be merged."
+msgstr "La barra diagonal lleva al buscador, J y K mueven la selección y N añade una fila. Dos filas seleccionadas se pueden fusionar."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete this stamp"
+msgstr "Eliminar este sello"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Delete the stamp"
+msgstr "Eliminar el sello"
+
+#: datadesk/views/workspace.py
+msgid "The stamp was deleted."
+msgstr "El sello se ha eliminado."
+
+#: datadesk/views/workspace.py
+msgid "The stamp was not deleted."
+msgstr "El sello no se ha eliminado."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series, and its collections go too."
+msgstr "Es el último sello de la serie y sus colecciones se van con él."
+
+#: datadesk/dependencies.py
+msgid "It is the last stamp of the series: the series is left empty."
+msgstr "Es el último sello de la serie: la serie se queda sin sellos."
+
+#: datadesk/dependencies.py
+msgid "This stamp is in user collections, which lose it too."
+msgstr "Este sello está en colecciones de usuario, que lo pierden también."
+
+#: datadesk/dependencies.py
+msgid "No user collection holds this stamp."
+msgstr "Ninguna colección de usuario tiene este sello."
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "New row"
+msgstr "Fila nueva"
+
+#: datadesk/templates/datadesk/lookups.html
+msgid "Create the row"
+msgstr "Crear la fila"
+
+#: datadesk/views/lookups.py
+msgid "The row was created."
+msgstr "La fila se ha creado."
+
+#: datadesk/views/lookups.py
+msgid "That row already existed."
+msgstr "Esa fila ya existía."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Select a stamp to see its picture and description."
+msgstr "Selecciona un sello para ver su imagen y su descripción."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "This stamp has no picture."
+msgstr "Este sello no tiene imagen."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No description yet."
+msgstr "Sin descripción todavía."
+
+#: datadesk/views/workbench.py
+msgid "Filters"
+msgstr "Filtros"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Remove this filter"
+msgstr "Quitar este filtro"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "Clear all"
+msgstr "Quitar todos"
+
+#: datadesk/views/lookups.py
+msgid "See the series that use it"
+msgstr "Ver las series que lo usan"
+
+#: datadesk/views/lookups.py
+msgid "%(count)s series"
+msgid_plural "%(count)s series"
+msgstr[0] "%(count)s serie"
+msgstr[1] "%(count)s series"
+
+#: datadesk/templates/datadesk/workbench.html
+msgid "More filters"
+msgstr "Más filtros"
+
+#: datadesk/views/workspace.py
+msgid "Printed"
+msgstr "Tirada"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "+ Stamp"
+msgstr "+ Sello"
+
+#: datadesk/views/workspace.py
+msgid "New"
+msgstr "Nuevo"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "No colours."
+msgstr "Sin colores."
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Add a colour"
+msgstr "Añadir un color"
+
+#: datadesk/views/workspace.py
+#, python-format
+msgid "Remove %(name)s"
+msgstr "Quitar %(name)s"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Choose the date"
+msgstr "Elegir la fecha"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Previous month"
+msgstr "Mes anterior"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Next month"
+msgstr "Mes siguiente"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Month"
+msgstr "Mes"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Clear the date"
+msgstr "Quitar la fecha"
+
+#: datadesk/templates/datadesk/issue_workspace.html
+msgid "Today"
+msgstr "Hoy"

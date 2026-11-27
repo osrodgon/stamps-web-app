@@ -1,0 +1,143 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {{ label }}{% endblock %}
+
+{% block breadcrumbs %}
+  <a href="{% url 'datadesk:lookups' %}">{% translate "Reference tables" %}</a>
+  <span class="dd-crumb-sep">/</span>
+  <b>{{ label }}</b>
+{% endblock %}
+
+{% block content %}
+  <section class="dd-page">
+    <nav class="dd-lookup-tabs">
+      {% for tab in tabs %}
+        <a class="dd-lookup-tab{% if tab.active %} dd-lookup-tab-active{% endif %}"
+           href="{{ tab.url }}">{{ tab.label }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="dd-workbench-toolbar">
+      <label class="dd-filter dd-filter-wide">
+        <span class="dd-label">{% translate "Search" %}</span>
+        <input type="search" id="lookup-search" autocomplete="off">
+      </label>
+      <span class="dd-hint" id="lookup-count"></span>
+      <span class="dd-hint dd-status-error" id="lookup-status"></span>
+      <span class="dd-lookup-actions">
+        <button type="button" class="dd-btn dd-btn-ghost" id="new-row-button">
+          {% translate "New row" %}
+        </button>
+        <button type="button" class="dd-btn dd-btn-ghost" id="merge-button" disabled>
+          {% translate "Merge two rows" %}
+        </button>
+        {% if is_years %}
+          <button type="button" class="dd-btn dd-btn-ghost" id="next-years">
+            {% translate "Create the next 10 years" %}
+          </button>
+        {% endif %}
+      </span>
+    </div>
+
+    <div id="lookup-grid"></div>
+
+    <p class="dd-hint dd-keys">
+      {% translate "Slash focuses the search, J and K move the selection and N adds a row. Two selected rows can be merged." %}
+    </p>
+
+    {% comment %}
+      Merging is the destructive one and the plan says so: the references move
+      for good, the audit keeps the counts and not the rows, so S21 will refuse
+      to revert it. The dialog therefore asks which name survives, because
+      "the good one is the row I am deleting" is the common case.
+    {% endcomment %}
+    {% comment %}
+      One field, because a reference row is a name. The years carry the same
+      bounds as the workspace's form: a year is a number and 20.216 is a typo,
+      not a year.
+    {% endcomment %}
+    <div class="dd-dialog-backdrop" id="new-row-panel" hidden>
+      <div class="dd-dialog" role="dialog" aria-modal="true"
+           aria-labelledby="new-row-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="new-row-title">{% translate "New row" %}</span>
+          <button type="button" class="dd-review-close" id="new-row-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-dialog-body">
+          <label class="dd-field" for="new-row-name">
+            <span class="dd-field-key">{{ config.texts.name }}</span>
+            <input class="dd-input" id="new-row-name"
+                   type="{% if config.numeric %}number{% else %}text{% endif %}"
+                   {% if config.numeric %}inputmode="numeric" step="1"
+                   min="{{ config.bounds.min }}" max="{{ config.bounds.max }}"{% endif %}
+                   autocomplete="off" maxlength="255">
+          </label>
+          <p class="dd-hint dd-status-error" id="new-row-status"></p>
+        </div>
+        <div class="dd-dialog-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="new-row-cancel">
+            {% translate "Cancel" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-dark" id="new-row-confirm">
+            {% translate "Create the row" %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dd-dialog-backdrop" id="merge-panel" hidden>
+      <div class="dd-dialog dd-dialog-wide" role="dialog" aria-modal="true"
+           aria-labelledby="merge-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="merge-title">{% translate "Merge two rows" %}</span>
+          <button type="button" class="dd-review-close" id="merge-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-dialog-body">
+          <p class="dd-dialog-warning" id="merge-warning"></p>
+          <div class="dd-merge-rows" id="merge-rows"></div>
+          <p class="dd-hint dd-status-error" id="merge-status"></p>
+        </div>
+        <div class="dd-dialog-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="merge-cancel">
+            {% translate "Cancel" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-dark" id="merge-confirm">
+            {% translate "Merge and delete the other row" %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dd-dialog-backdrop" id="delete-panel" hidden>
+      <div class="dd-dialog" role="dialog" aria-modal="true"
+           aria-labelledby="delete-title">
+        <div class="dd-review-head">
+          <span class="dd-label" id="delete-title">{% translate "Delete this row" %}</span>
+          <button type="button" class="dd-review-close" id="delete-close"
+                  aria-label="{% translate 'Close' %}">×</button>
+        </div>
+        <div class="dd-dialog-body">
+          <p class="dd-dialog-warning" id="delete-warning"></p>
+          <p class="dd-hint dd-status-error" id="delete-status"></p>
+        </div>
+        <div class="dd-dialog-foot">
+          <button type="button" class="dd-btn dd-btn-ghost" id="delete-cancel">
+            {% translate "Cancel" %}
+          </button>
+          <button type="button" class="dd-btn dd-btn-danger" id="delete-confirm">
+            {% translate "Delete the row" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {{ config|json_script:"lookup-config" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/lookups.js' %}?v={{ datadesk_asset_version }}"></script>
+{% endblock %}

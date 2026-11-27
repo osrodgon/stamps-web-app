@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — One collection: its series</title>
+<style>
+  :root {
+    --bar: #1e2b3c;
+    --page: #f5f6f8;
+    --surface: #fff;
+    --ink: #1f2933;
+    --muted: #6b7280;
+    --line: #e3e7ec;
+    --sky: #5898d4;
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 14px/1.45 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .bar {
+    display: flex; align-items: center; gap: 14px;
+    height: 80px; padding: 0 18px;
+    background: var(--bar); color: #fff;
+  }
+  .bar .menu { font-size: 22px; opacity: .9; }
+  .bar .title { font-weight: 700; font-size: 20px; }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 24px 48px; }
+
+  .crumbs { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .crumbs a { color: var(--sky); text-decoration: none; }
+  .crumbs b { color: var(--ink); }
+
+  .head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+  .head h1 { margin: 0; font-size: 26px; }
+  .head .meta { color: var(--muted); }
+  .head .spacer { flex: 1; }
+
+  /* --- filters --------------------------------------------------------- */
+  .filters {
+    display: flex; gap: 12px; align-items: flex-end;
+    padding: 14px 16px; margin-bottom: 18px;
+    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .field input, .field select {
+    height: 34px; padding: 0 10px; min-width: 90px;
+    border: 1px solid #cfd6df; border-radius: 6px; background: #fff;
+    font: inherit; color: var(--ink);
+  }
+  .field.grow { flex: 1; }
+  .field.grow input { width: 100%; }
+  .filters .spacer { flex: 1; }
+
+  /* --- series rows ----------------------------------------------------- */
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: grid;
+    grid-template-columns: 64px minmax(220px, 1.6fr) minmax(180px, 1fr) 150px 130px 24px;
+    align-items: center; gap: 16px;
+    padding: 12px 16px;
+    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .row:hover { box-shadow: 0 6px 18px rgba(16, 24, 40, .14); }
+  .thumb {
+    display: grid; place-items: center;
+    width: 64px; height: 56px; border-radius: 4px; background: #eef1f4;
+    overflow: hidden;
+  }
+  .thumb img { max-height: 50px; max-width: 58px; }
+  .ident .year { font-size: 12px; color: var(--muted); }
+  .ident .name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ident .where { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .progress { height: 6px; border-radius: 999px; background: #eceff3; overflow: hidden; }
+  .progress span { display: block; height: 100%; background: var(--sky); }
+  .held { font-size: 13px; margin-bottom: 6px; }
+  .held b { font-weight: 700; }
+  .held span { color: var(--muted); }
+
+  .money { font-size: 13px; text-align: right; }
+  .money .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  .money .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .money .value.muted { font-weight: 400; color: var(--muted); }
+  .chev { color: #b6c0cc; font-size: 18px; }
+
+  /* --- pagination ------------------------------------------------------ */
+  .pager {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; margin-top: 18px;
+    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+    color: var(--muted); font-size: 13px;
+  }
+  .pager .spacer { flex: 1; }
+  .pager select { height: 30px; border: 1px solid #cfd6df; border-radius: 6px; font: inherit; }
+  .pager .pages { display: flex; gap: 2px; }
+  .pager .pages button {
+    width: 32px; height: 30px; border: 0; border-radius: 6px; background: none;
+    color: var(--ink); font: inherit; cursor: pointer;
+  }
+  .pager .pages button.on { background: var(--sky); color: #fff; }
+  .pager .pages button:hover:not(.on) { background: #eef1f4; }
+  .pager .arrow { border: 0; background: none; color: var(--ink); font-size: 15px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="menu">☰</span>
+  <span class="title">Collections</span>
+</header>
+
+<main>
+  <div class="crumbs"><a href="#">Collections</a> / <b>Isabel II</b></div>
+  <div class="head">
+    <h1>Isabel II</h1>
+    <span class="meta">3 series · 14 stamps · 1,240.00 € paid</span>
+    <span class="spacer"></span>
+  </div>
+
+  <form class="filters">
+    <div class="field grow">
+      <label for="q">Series</label>
+      <input id="q" type="text" placeholder="Search by name…">
+    </div>
+    <div class="field">
+      <label for="from">From year</label>
+      <input id="from" type="number" value="1850">
+    </div>
+    <div class="field">
+      <label for="to">To year</label>
+      <input id="to" type="number" value="1860">
+    </div>
+    <div class="field">
+      <label for="sort">Sort</label>
+      <select id="sort">
+        <option>Year ↑</option>
+        <option>Year ↓</option>
+        <option>Name</option>
+      </select>
+    </div>
+  </form>
+
+  <section class="list">
+    <article class="row">
+      <div class="thumb"><img src="../../frontend/assets/stamps/1850/0001.webp" alt=""></div>
+      <div class="ident">
+        <div class="year">1850 · January 1st</div>
+        <div class="name">Isabel II</div>
+        <div class="where">España · Conjunto filatélico</div>
+      </div>
+      <div>
+        <div class="held"><b>3</b> of 5 stamps <span>· 60%</span></div>
+        <div class="progress"><span style="width:60%"></span></div>
+      </div>
+      <div class="money">
+        <div class="label">Paid</div>
+        <div class="value">315.00 €</div>
+      </div>
+      <div class="money">
+        <div class="label">Catalogue (MNH)</div>
+        <div class="value muted">24,850.00 €</div>
+      </div>
+      <div class="chev">›</div>
+    </article>
+
+    <article class="row">
+      <div class="thumb"><img src="../../frontend/assets/stamps/1850/0003.webp" alt=""></div>
+      <div class="ident">
+        <div class="year">1853 · January 1st</div>
+        <div class="name">Isabel II</div>
+        <div class="where">España · Sello de correo ordinario</div>
+      </div>
+      <div>
+        <div class="held"><b>5</b> of 5 stamps <span>· 100%</span></div>
+        <div class="progress"><span style="width:100%"></span></div>
+      </div>
+      <div class="money">
+        <div class="label">Paid</div>
+        <div class="value">780.00 €</div>
+      </div>
+      <div class="money">
+        <div class="label">Catalogue (MNH)</div>
+        <div class="value muted">48,527.50 €</div>
+      </div>
+      <div class="chev">›</div>
+    </article>
+
+    <article class="row">
+      <div class="thumb"><img src="../../frontend/assets/stamps/1854/0024.webp" alt=""></div>
+      <div class="ident">
+        <div class="year">1854 · July 1st</div>
+        <div class="name">Escudo de España</div>
+        <div class="where">España · Sello de correo ordinario</div>
+      </div>
+      <div>
+        <div class="held"><b>2</b> of 4 stamps <span>· 50%</span></div>
+        <div class="progress"><span style="width:50%"></span></div>
+      </div>
+      <div class="money">
+        <div class="label">Paid</div>
+        <div class="value">145.00 €</div>
+      </div>
+      <div class="money">
+        <div class="label">Catalogue (MNH)</div>
+        <div class="value muted">7,627.50 €</div>
+      </div>
+      <div class="chev">›</div>
+    </article>
+  </section>
+
+  <div class="pager">
+    <span>Series per page:</span>
+    <select><option>15</option><option>30</option><option>50</option></select>
+    <span class="spacer"></span>
+    <span>1-15 of 47</span>
+    <button class="arrow" aria-label="First">|‹</button>
+    <button class="arrow" aria-label="Previous">‹</button>
+    <span class="pages">
+      <button class="on">1</button><button>2</button><button>3</button><button>4</button>
+    </span>
+    <button class="arrow" aria-label="Next">›</button>
+    <button class="arrow" aria-label="Last">›|</button>
+  </div>
+</main>
+
+</body>
+</html>

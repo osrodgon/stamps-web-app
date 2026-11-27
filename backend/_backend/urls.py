@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -7,6 +8,7 @@ from drf_spectacular.views import (
 
 from _backend.settings import (
     ADMIN_URL,
+    DATADESK_URL,
     COLLECTION_ITEMS_ENDPOINT,
     COLLECTIONS_ENDPOINT,
     COLORS_ENDPOINT,
@@ -17,6 +19,8 @@ from _backend.settings import (
     ISSUES_ENDPOINT,
     LOCATIONS_ENDPOINT,
     PAPER_TYPES_ENDPOINT,
+    PRINT_TYPES_ENDPOINT,
+    PRINTERS_ENDPOINT,
     REDOC_ENDPOINT,
     SCHEMA_ENDPOINT, 
     SERVER_URL_V1,
@@ -26,7 +30,9 @@ from _backend.settings import (
     USERS_ENDPOINT,
     YEARS_ENDPOINT,
     LOGIN_ENDPOINT,
-    LOGOFF_ENDPOINT
+    LOGOFF_ENDPOINT,
+    AI_ISSUES_EXTRACTION_ENDPOINT,
+    ARTISTS_ENDPOINT
 )
 from _backend.stamps_admin_site import stamps_admin_site
 from health_api.api.views.health_view import HealthView
@@ -40,10 +46,13 @@ urlpatterns = [
             path(YEARS_ENDPOINT, include('years_api.urls')),
             path(CONFIG_ENDPOINT, include('config_api.urls')),
             path(STAMP_TYPES_ENDPOINT, include('stamp_types_api.urls')),
-            path(PAPER_TYPES_ENDPOINT, include('paper_types_api.urls')),
+            path(PRINT_TYPES_ENDPOINT, include('print_types_api.urls')),
             path(LOCATIONS_ENDPOINT, include('locations_api.urls')),
             path(COUNTRIES_ENDPOINT, include('countries_api.urls')),
             path(COLORS_ENDPOINT, include('colors_api.urls')),
+            path(PAPER_TYPES_ENDPOINT, include('paper_types_api.urls')),
+            path(ARTISTS_ENDPOINT, include('artists_api.urls')),
+            path(PRINTERS_ENDPOINT, include('printers_api.urls')),
             path(ISSUES_ENDPOINT, include('issues_api.urls')),
             path(STAMPS_ENDPOINT, include('stamps_api.urls')),
             path(COLLECTIONS_ENDPOINT, include('collections_api.urls')),
@@ -53,6 +62,8 @@ urlpatterns = [
             # Login/Logoff
             path(LOGIN_ENDPOINT, LoginView.as_view(), name="login"),
             path(LOGOFF_ENDPOINT, LogoffView.as_view(), name="logoff"),
+            # AI
+            path(AI_ISSUES_EXTRACTION_ENDPOINT, include('ai_api.urls')),
             # Health
             path(HEALTH_ENDPOINT, HealthView.as_view(), name="health"),
             # Documentations
@@ -62,3 +73,8 @@ urlpatterns = [
         ]
     ))
 ]
+
+# DataDesk is an internal DB-maintenance UI, not part of the public API: it is
+# mounted on its own path and only when explicitly enabled.
+if settings.DATADESK_ENABLED:
+    urlpatterns += [path(DATADESK_URL, include("datadesk.urls"))]

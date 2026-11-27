@@ -55,9 +55,9 @@ class StampTypesView(Logger, APIView):
             A Response object containing a list of all serialized stamp types
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("StampType"))
+        self.log.debug(Messages.Get.retrieve_all("StampType"))
         stamp_types = StampType.objects.all()
-        self.debug(Messages.Get.retrieved_all("StampType", len(stamp_types)))
+        self.log.debug(Messages.Get.retrieved_all("StampType", len(stamp_types)))
         response = StampTypeResponseSerializer(stamp_types, many=True)
         
         return Response(
@@ -105,18 +105,18 @@ class StampTypesView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("StampType", request.data))
+        self.log.debug(Messages.Post.create_one("StampType", request.data))
         stamp_type = StampTypeRequestSerializer(data = request.data)
         
         if stamp_type.is_valid():
             instance = stamp_type.save()
-            self.info(Messages.Post.created_one("StampType", instance.id))
+            self.log.info(Messages.Post.created_one("StampType", instance.id))
             return Response(
                 data=StampTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("StampType", stamp_type.errors))
+        self.log.warning(Messages.Post.validation_failed("StampType", stamp_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(stamp_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

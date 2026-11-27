@@ -79,12 +79,12 @@ class LogoffView(Logger, APIView):
             the logoff was successful. Returns a 401 Unauthorized status if
             the token is invalid or already invalidated.
         """
-        self.debug("Logging off...")
+        self.log.debug("Logging off...")
         
         header = request.headers.get('Authorization')
         if header is None:
             message = Messages.Auth.header_missing()
-            self.debug(message)
+            self.log.debug(message)
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data=GenericResponseSerializer(GenericResponse(message)).data
@@ -94,14 +94,14 @@ class LogoffView(Logger, APIView):
             jwt, token = header.split(' ')
             if jwt.lower() != "jwt":
                 message = Messages.Auth.not_supported()
-                self.debug(message)
+                self.log.debug(message)
                 return Response(
                     status=status.HTTP_400_BAD_REQUEST,
                     data=GenericResponseSerializer(GenericResponse(message)).data
                 )
         except Exception as e:
             message = Messages.Auth.invalid_format()
-            self.debug(message)
+            self.log.debug(message)
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data=GenericResponseSerializer(GenericResponse(message)).data
@@ -111,7 +111,7 @@ class LogoffView(Logger, APIView):
         
         if token_data is None:
             message = Messages.Auth.invalid_jwt()
-            self.debug(message)
+            self.log.debug(message)
             return Response(
                 status=status.HTTP_401_UNAUTHORIZED, 
                 data=GenericResponseSerializer(GenericResponse(message)).data
@@ -120,7 +120,7 @@ class LogoffView(Logger, APIView):
         try:
             user_token = UserToken.objects.get(user=token_data['user_id'], jti=token_data['jti'])
             user_token.delete()
-            self.debug("User logged off.")
+            self.log.debug("User logged off.")
             return Response(
                 status=status.HTTP_200_OK, 
                 data=Messages.Post.logoff()
@@ -128,7 +128,7 @@ class LogoffView(Logger, APIView):
         
         except UserToken.DoesNotExist:
             message = Messages.Auth.user_not_found()
-            self.debug(message)
+            self.log.debug(message)
             return Response(
                 status=status.HTTP_401_UNAUTHORIZED, 
                 data=GenericResponseSerializer(GenericResponse(message)).data

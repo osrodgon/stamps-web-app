@@ -89,8 +89,6 @@ class TestLoginAPI(AbstractApiUnitTest):
         self.connection_lost(UserCollection, self.GET_ONE)
         response = api_client.post(self.__get_url(), login_api_payload_ok, format='json')
         
-        print(response.json())
-        
         assert response.json()['success'] == False
         assert response.json()['message'] == Messages.failed()
         assert response.json()['errors'][0]['field'] == 'detail'

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from issues_api.models import Issue
 
-
 class IssueResponseSerializer(serializers.ModelSerializer):
     """
     Serializer for representing Issue instances in responses.
@@ -11,10 +10,15 @@ class IssueResponseSerializer(serializers.ModelSerializer):
     """
     country = serializers.StringRelatedField()
     year = serializers.StringRelatedField()
-    location = serializers.StringRelatedField(allow_null=True)
     stamp_type = serializers.StringRelatedField(allow_null=True)
+    print_type = serializers.StringRelatedField(allow_null=True)
+    printer = serializers.StringRelatedField(allow_null=True)
+    artist = serializers.StringRelatedField(allow_null=True)
     paper_type = serializers.StringRelatedField(allow_null=True)
 
     class Meta:
         model = Issue
-        fields = '__all__'
+        # `updated_at` is internal bookkeeping for DataDesk: keeping it out of the
+        # response leaves the public payload and the OpenAPI schema unchanged.
+        exclude = ["updated_at"]
+        

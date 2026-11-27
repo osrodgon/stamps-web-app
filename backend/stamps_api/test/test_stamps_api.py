@@ -13,7 +13,7 @@ from common.test.stamps_api_test_data import (
 from common.test.year_api_test_data import years_table
 from common.test.countries_api_test_data import countries_table
 from common.test.stamp_types_api_test_data import stamp_types_table
-from common.test.paper_types_api_test_data import paper_types_table
+from common.test.print_types_api_test_data import print_types_table
 from common.test.locations_api_test_data import locations_table
 from common.test.issues_api_test_data import issues_table
 from common.test.colors_api_test_data import colors_table
@@ -142,6 +142,36 @@ class TestStampsAPI(AbstractApiUnitTest):
         assert response.json()['errors'][0]['message'] == Messages.Database.connection_lost()
         assert response.json()['errors'][0]['code'] == Messages.Code.connection_lost()
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+    def test_get_all_stamps_filtering_by_valid_issue_id_returns_200_ok_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=1")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 1
+        assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_all_stamps_filtering_by_valid_issue_id_returns_200_ok_no_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=999")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 0
+        assert response.status_code == status.HTTP_200_OK
+        
+    def test_get_all_stamps_filtering_by_invalid_issue_id_returns_200_ok_no_data(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(f"{self.__get_url()}?issue_id=issue")
+        
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.retrieved_successfully()
+        assert response.json()['errors'] == None
+        assert len(response.json()['data']) == 0
+        assert response.status_code == status.HTTP_200_OK
 
     def test_post_stamp_returns_201_created(self, api_client, stamp_post_payload_ok):
         self.permission(granted=True)
@@ -152,6 +182,7 @@ class TestStampsAPI(AbstractApiUnitTest):
         assert response.json()['errors'] == None
         assert response.json()['data']['name'] == stamp_post_payload_ok["name"]
         assert response.json()['data']['edifil_code'] == stamp_post_payload_ok["edifil_code"]
+        assert response.json()['data']['total_printed'] == stamp_post_payload_ok.get("total_printed")
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_post_stamp_returns_400_missing_field(self, api_client, stamp_post_payload_ok):
@@ -673,6 +704,49 @@ class TestStampsAPI(AbstractApiUnitTest):
         )
 
         assert str(stamp) == f"{test_edifil_code} - {test_name}"
+
+    def test_post_stamp_returns_201_created_with_market_value_used(self, api_client, stamp_post_payload_ok):
+        self.permission(granted=True)
+        response = api_client.post(self.__get_url(), stamp_post_payload_ok, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.created_successfully()
+        assert response.json()['errors'] == None
+        # Check that the market values are returned (Decimal serialization format may differ)
+        assert response.json()['data']['market_value_mnh'] is not None
+        assert response.json()['data']['market_value_used'] is not None
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_post_stamp_returns_201_created_with_fesofi_code(self, api_client, stamp_post_payload_ok):
+        self.permission(granted=True)
+        response = api_client.post(self.__get_url(), stamp_post_payload_ok, format='json')
+
+        assert response.json()['success'] == True
+        assert response.json()['message'] == Messages.created_successfully()
+        assert response.json()['errors'] == None
+        assert response.json()['data']['fesofi_code'] == stamp_post_payload_ok["fesofi_code"]
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_get_all_stamps_returns_market_value_used(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(self.__get_url())
+
+        original = StampResponseSerializer(stamps_table, many=True)
+
+        assert response.json()['success'] == True
+        assert response.json()['data'][0]['market_value_mnh'] == original.data[0]['market_value_mnh']
+        assert response.json()['data'][0]['market_value_used'] == original.data[0]['market_value_used']
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_get_all_stamps_returns_fesofi_code(self, api_client, stamps_table):
+        self.permission(granted=True)
+        response = api_client.get(self.__get_url())
+
+        original = StampResponseSerializer(stamps_table, many=True)
+
+        assert response.json()['success'] == True
+        assert response.json()['data'][0]['fesofi_code'] == original.data[0]['fesofi_code']
+        assert response.status_code == status.HTTP_200_OK
 
     def __get_url(self):
         return f"/{STAMPS_URL_V1}"

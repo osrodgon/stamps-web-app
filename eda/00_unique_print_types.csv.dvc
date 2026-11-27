@@ -1,0 +1,5 @@
+outs:
+- md5: c9088411f94657d5bf2816fcf9a2a950
+  size: 3192
+  hash: md5
+  path: 00_unique_print_types.csv

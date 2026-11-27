@@ -74,19 +74,19 @@ class CountriesByIdView(Logger, APIView):
             Response:   A DRF Response object with the serialized country
                         data and 200 OK status, or a 404 Not Found response.
         """
-        self.debug(Messages.Get.retrieve_one("country", pk))
+        self.log.debug(Messages.Get.retrieve_one("country", pk))
         country = self.__get_country(pk)
         
         if country is None:
             message = Messages.Get.not_found("country", pk) 
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = CountryResponseSerializer(country)
-        self.info(Messages.Get.retrieved_one("country", pk))
+        self.log.info(Messages.Get.retrieved_one("country", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -135,11 +135,11 @@ class CountriesByIdView(Logger, APIView):
             Response:   A DRF Response with updated data and 200 OK status,
                         a 404 if not found, or a 400 on validation error.
         """
-        self.debug(Messages.Put.update_one("country", pk, request.data))
+        self.log.debug(Messages.Put.update_one("country", pk, request.data))
         country = self.__get_country(pk)
         if country is None:
             message = Messages.Put.not_found("country", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -148,13 +148,13 @@ class CountriesByIdView(Logger, APIView):
         updated_country = CountryRequestSerializer(data=request.data, instance=country, partial=False)
         if updated_country.is_valid():
             instance = updated_country.save()
-            self.info(Messages.Put.updated_one("country", instance.id))
+            self.log.info(Messages.Put.updated_one("country", instance.id))
             return Response(
                 data=CountryResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("country", pk, updated_country.errors))
+        self.log.warning(Messages.Put.validation_failed("country", pk, updated_country.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_country.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -197,11 +197,11 @@ class CountriesByIdView(Logger, APIView):
             Response:   A DRF Response with a success message and 200 OK status,
                         or a 404 Not Found response if the item does not exist.
         """
-        self.debug(Messages.Delete.delete_one("country", pk))
+        self.log.debug(Messages.Delete.delete_one("country", pk))
         country = self.__get_country(pk)
         if country is None:
             message = Messages.Delete.not_found("country", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -209,7 +209,7 @@ class CountriesByIdView(Logger, APIView):
         
         country.delete()
         message = Messages.Delete.deleted_one("country", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

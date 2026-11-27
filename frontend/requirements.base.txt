@@ -1,0 +1,9 @@
+colorlog==6.10.1
+fastapi==0.115.12 # Needed by flet 0.84.0
+flet==0.84.0
+flet-cli==0.84.0
+flet-desktop==0.84.0
+flet-web==0.84.0
+pillow==12.0.0
+PyJWT==2.10.1
+starlette==0.46.2  # Needed by flet 0.84.0

@@ -98,6 +98,15 @@ class Messages:
         
         def created_one(table_name, id):
             return f"Successfully created {table_name.lower()} with id: {id}."
+
+        def created_many(table_name, count):
+            return f"Successfully created {count} {table_name.lower()}."
+
+        def nothing_matched(table_name, scope):
+            return f"No {table_name.lower()} matched the scope '{scope}'."
+
+        def too_many(table_name, count, limit):
+            return f"{count} {table_name.lower()} asked for, the limit is {limit}."
         
         def validation_failed(table_name, errors):
             return f"Payload validation failed for new {table_name.lower()} entry: {errors}."
@@ -175,3 +184,31 @@ class Messages:
         
         def running():
             return "Running"
+        
+    class AI:
+        def unavailable():
+            return "The AI service is currently unavailable or encountered an error."
+        
+        def validation_error():
+            return "AI Validation Error"
+        
+        def missing_api_key():
+            return "The LLM API key is required (OPENCODE_API_KEY)"
+        
+        def missing_model_name():
+            return "The LLM model is required (OPENCODE_MODEL)"
+        
+        def response_format_error():
+            return "Invalid AI response format"
+        
+        def error():
+            return "Research Service Error"
+        
+        def missing_input_data():
+            return "No input data provided"
+        
+        def empty_response():
+            return "Empty response from AI service"
+        
+        def service_error(error_message):
+            return f"Extraction service error: {error_message}"

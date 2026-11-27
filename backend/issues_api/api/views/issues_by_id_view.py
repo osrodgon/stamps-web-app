@@ -1,14 +1,13 @@
-from functools import partial
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
+from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from common.log.logger import Logger
 from issues_api.models import Issue
 from issues_api.api.serializers.issue_request_serializer import IssueRequestSerializer
-from issues_api.api.serializers.issue_response_serializer import IssueResponseSerializer
 from common.api.messages import Messages
 from common.core.schemas import standardized_response
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
@@ -77,15 +76,15 @@ class IssuesByIdView(Logger, APIView):
             A Response object containing the serialized issue data with a
             200 OK status, or a 404 Not Found if the issue does not exist.
         """
-        self.debug(Messages.Get.retrieve_one("issue", pk))
+        self.log.debug(Messages.Get.retrieve_one("issue", pk))
         issue = self.__get_object(pk)
         if issue is None:
             message = Messages.Get.not_found("issue", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(data=GenericResponseSerializer(GenericResponse(message)).data, status=status.HTTP_404_NOT_FOUND)
         
         serializer = IssueResponseSerializer(issue)
-        self.info(Messages.Get.retrieved_one("issue", pk))
+        self.log.info(Messages.Get.retrieved_one("issue", pk))
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -134,11 +133,11 @@ class IssuesByIdView(Logger, APIView):
             if successful. Returns a 404 Not Found if the issue does not exist,
             or a 400 Bad Request if the provided data is invalid.
         """
-        self.debug(Messages.Put.update_one("issue", pk, request.data))
+        self.log.debug(Messages.Put.update_one("issue", pk, request.data))
         issue = self.__get_object(pk)
         if issue is None:
             message = Messages.Put.not_found("issue", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
                 status=status.HTTP_404_NOT_FOUND
@@ -146,14 +145,14 @@ class IssuesByIdView(Logger, APIView):
         
         serializer = IssueRequestSerializer(issue, data=request.data, partial=True)
         if not serializer.is_valid():
-            self.warning(Messages.Put.validation_failed("issue", pk, serializer.errors))
+            self.log.warning(Messages.Put.validation_failed("issue", pk, serializer.errors))
             return Response(
                 data=GenericResponseSerializer(GenericResponse(serializer.errors)).data,
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         instance = serializer.save()
-        self.info(Messages.Put.updated_one("issue", instance.id))
+        self.log.info(Messages.Put.updated_one("issue", instance.id))
         response_serializer = IssueResponseSerializer(instance)
         return Response(
             data=response_serializer.data, 
@@ -197,11 +196,11 @@ class IssuesByIdView(Logger, APIView):
             A Response object with a success message and a 200 OK status if
             the deletion was successful, or a 404 Not Found if the issue does not exist.
         """
-        self.debug(Messages.Delete.delete_one("issue", pk))
+        self.log.debug(Messages.Delete.delete_one("issue", pk))
         issue = self.__get_object(pk)
         if issue is None:
             message = Messages.Delete.not_found("issue", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data, 
                 status=status.HTTP_404_NOT_FOUND
@@ -209,7 +208,7 @@ class IssuesByIdView(Logger, APIView):
         
         issue.delete()
         message = Messages.Delete.deleted_one("issue", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data, 
             status=status.HTTP_200_OK

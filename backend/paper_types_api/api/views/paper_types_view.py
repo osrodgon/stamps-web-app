@@ -1,4 +1,3 @@
-import stat
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -13,12 +12,11 @@ from paper_types_api.models import PaperType
 from paper_types_api.api.serializers.paper_type_response_serializer import PaperTypeResponseSerializer
 from paper_types_api.api.serializers.paper_type_request_serializer import PaperTypeRequestSerializer
 
-
 class PaperTypesView(Logger, APIView):
-    """
-    API view for handling collections of PaperType instances.
+    """Manages bulk API operations for PaperType instances.
 
-    This view provides GET (list) and POST (create) operations for paper types.
+    This view handles the retrieval of all paper types (GET) and the creation
+    of a new paper type (POST).
     """
     serializer_class = PaperTypeResponseSerializer
     
@@ -28,36 +26,33 @@ class PaperTypesView(Logger, APIView):
         summary="List All Paper Types",
         description="Retrieves a list of all paper type entries currently stored in the database.",
         responses={
-            status.HTTP_200_OK: standardized_response(
+            200: standardized_response(
                 PaperTypeResponseSerializer, 
                 name="PaperTypesRetrieved",
                 description="A list of paper types was successfully retrieved.",
                 many=True
                 ),
-            status.HTTP_403_FORBIDDEN: standardized_response(
-                PaperTypeResponseSerializer,
-                name="PaperTypesRetrieveForbidden",
+            403: standardized_response(
+                GenericResponseSerializer,
+                name="PaperTypesForbidden",
                 success=False,
                 description="Permission denied."
-            )
+                )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        """
-        Handles GET requests to retrieve a list of all paper types.
+        """Handles GET requests to retrieve all paper types.
 
         Args:
-            request: The incoming HTTP request.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
+            request (Request): The incoming HTTP request.
 
         Returns:
-            A Response object containing a list of all serialized paper types
-            with a 200 OK status.
+            Response:   A DRF Response object containing a list of all serialized
+                        paper type objects and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("paper types"))
+        self.log.debug(Messages.Get.retrieve_all("paper types"))
         paper_types = PaperType.objects.all()
-        self.debug(Messages.Get.retrieved_all("paper types", len(paper_types)))
+        self.log.debug(Messages.Get.retrieved_all("paper types", paper_types.count()))
         response = PaperTypeResponseSerializer(paper_types, many=True)
         
         return Response(
@@ -84,39 +79,36 @@ class PaperTypesView(Logger, APIView):
                 description="The request payload was invalid (e.g., missing a required field)."
                 ),
             status.HTTP_403_FORBIDDEN: standardized_response(
-                PaperTypeResponseSerializer,
+                GenericResponseSerializer,
                 name="PaperTypeCreateForbidden",
                 success=False,
                 description="Permission denied."
-            )
+                )
         }
     )
     def post(self, request:Request, *args, **kwargs) -> Response:
-        """
-        Handles POST requests to create a new paper type.
+        """Handles POST requests to create a new paper type.
 
         Args:
-            request: The incoming HTTP request containing the new paper type data.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
+            request (Request):  The incoming HTTP request containing the data for
+                                the new paper type.
 
         Returns:
-            A Response object with the newly created paper type data and a 201 Created
-            status if successful. Returns a 400 Bad Request if the provided
-            data is invalid.
+            Response:   A DRF Response with the newly created paper type's data and a
+                        201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("paper type", request.data))
+        self.log.debug(Messages.Post.create_one("paper type", request.data))
         paper_type = PaperTypeRequestSerializer(data = request.data)
         
         if paper_type.is_valid():
             instance = paper_type.save()
-            self.info(Messages.Post.created_one("paper type", instance.id))
+            self.log.info(Messages.Post.created_one("paper type", instance.id))
             return Response(
                 data=PaperTypeResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("paper type", paper_type.errors))
+        self.log.warning(Messages.Post.validation_failed("paper type", paper_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(paper_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST

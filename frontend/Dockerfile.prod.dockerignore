@@ -1,0 +1,51 @@
+# Git and version control
+.git
+.gitignore
+
+# Python specific
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env/
+*.egg-info/
+
+# IDE and editor config
+.vscode/
+.idea/
+
+# Build and test artifacts
+build/
+dist/
+*.log
+.pytest_cache/
+htmlcov/  
+**/test*/
+logs/
+pytest.ini
+
+# Docker related
+Dockerfile*
+docker-compose*
+
+# DVC files
+.dvc/
+.dvcignore
+dvc.lock
+*.dvc
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Environment files
+.env
+.env.*
+
+# Other (stamps will be a docker volume, so we don't want to include it in the build context)
+**/assets/stamps

@@ -1,0 +1,2330 @@
+/* DataDesk styles.
+ *
+ * Design tokens come from the agreed mockups (memory-bank/mockups/). Keep
+ * colors, spacing and density here so screens never hardcode a hex value;
+ * vendor CSS (Tabulator) is themed by overriding its variables further down.
+ *
+ * S28 settled the look: Inter instead of the system stack, 34px controls with
+ * a soft ring, 120ms of motion, two shadow levels with a light grid header,
+ * and a 4px rhythm. All of it is CSS over the same class names.
+ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("vendor/inter-latin-var.woff2") format("woff2");
+}
+
+:root {
+  /* Ink and surfaces */
+  --dd-ink: #12161c;
+  --dd-muted: #667085;
+  --dd-soft: #6b7280;
+  --dd-line: #e6e9ee;
+  --dd-line-strong: #d3d9e1;
+  --dd-bg: #f5f6f8;
+  --dd-surface: #fff;
+  /* The plate behind a stamp picture. The files are RGBA with the piece cut
+   * out, so this is the background of every stamp — and it cannot be white:
+   * most stamps have a white frame, and against white the perforation, which
+   * is the edge of the piece, disappears. */
+  --dd-plate: #404954;
+  /* The edge of the plate is darker than the plate: a lighter hairline reads as
+   * a glow, and these pictures already have a white margin of their own. */
+  --dd-plate-edge: #b6c0cc;
+  --dd-navy: #232f3e;
+  --dd-navy-hover: #1a2531;
+
+  /* Semantic accents */
+  --dd-green: #1e8e3e;
+  --dd-green-hover: #187a34;
+  --dd-green-soft: #eef7ee;
+  --dd-amber: #f0b429;
+  --dd-amber-soft: #fff8e1;
+  --dd-red: #c5221f;
+  --dd-red-soft: #fdecec;
+
+  /* Fonts. Inter is self-hosted: `system-ui` lands on DejaVu or Liberation
+   * depending on the machine, which is a different product per operating
+   * system. */
+  --dd-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --dd-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* The type scale. Every font-size in this file is one of these five: a scale
+   * that only exists in tokens is not a scale if a rule can quietly write 10px.
+   * Nothing here is below 11px — the uppercase micro-labels earn their size
+   * back with letter-spacing, not by shrinking. */
+  --dd-text-xl: 22px;
+  --dd-text-lg: 16px;
+  --dd-text: 14px;
+  --dd-text-sm: 13px;
+  --dd-text-xs: 12px;
+  --dd-label: 11px;
+
+  /* The 4px rhythm: every gap and every padding in the blocks below is one of
+   * these, so two screens cannot drift a pixel apart. */
+  --dd-s1: 4px;
+  --dd-s2: 8px;
+  --dd-s3: 12px;
+  --dd-s4: 16px;
+  --dd-s6: 24px;
+
+  /* Density: the grids are read for hours, so rows stay compact and the
+   * numbers line up in columns — but 38px is still a row you can hit. */
+  --dd-row-height: 38px;
+  --dd-cell-padding-y: var(--dd-s2);
+  --dd-cell-padding-x: var(--dd-s3);
+  --dd-topbar-height: 52px;
+  --dd-radius: 8px;
+  --dd-radius-card: 12px;
+  --dd-btn-height: 32px;
+  --dd-input-height: 34px;
+
+  /* Elevation: two levels, one for what rests on the page and one for what
+   * floats over it. A card with a border and a shadow says "card" twice. */
+  --dd-shadow-rest: 0 1px 2px rgba(16, 24, 40, 0.06),
+    0 1px 3px rgba(16, 24, 40, 0.1);
+  --dd-shadow-float: 0 12px 32px -8px rgba(16, 24, 40, 0.24);
+
+  /* Focus: a soft ring instead of a solid outline, which reads as a selection
+   * and not as a warning. */
+  --dd-ring: 0 0 0 3px rgba(35, 47, 62, 0.12);
+
+  /* Motion: enough to say "this is a control", not enough to wait for. */
+  --dd-ease: 120ms ease;
+
+  /* Commit bar */
+  --dd-commitbar-bg: #fbfcfd;
+
+  /* Tabulator theming: the grid's lines are the app's lines, not the
+   * library's #aaa. */
+  --tabulator-border: var(--dd-line);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* `hidden` is an attribute, not a suggestion: a class with its own `display`
+ * (a flex bar, a drawer) was overriding it and leaving an empty strip on
+ * screen. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--dd-bg);
+  color: var(--dd-ink);
+  font: var(--dd-text) / 1.5 var(--dd-font);
+}
+
+a {
+  color: var(--dd-navy);
+  transition: color var(--dd-ease);
+}
+
+/* --- Shell ------------------------------------------------------------- */
+
+.dd-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: var(--dd-topbar-height);
+  padding: 0 16px;
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-brand {
+  font-size: var(--dd-text);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.dd-brand span {
+  color: #8fd18f;
+}
+
+/* A long series name truncates instead of pushing the right side of the bar:
+ * the current screen is the title, not a reason to overflow. */
+.dd-crumbs {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--dd-text-xs);
+  color: #aab4c0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd-crumbs b {
+  color: #fff;
+  font-size: var(--dd-text-lg);
+  font-weight: 600;
+}
+
+.dd-crumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dd-crumbs a:hover,
+.dd-crumbs a:focus-visible {
+  color: #fff;
+}
+
+.dd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  font-size: var(--dd-text-xs);
+  color: #c3ccd6;
+}
+
+.dd-lang {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.dd-lang button {
+  font: inherit;
+  font-size: var(--dd-text-xs);
+  color: #c3ccd6;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dd-lang button.dd-lang-active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.dd-lang-sep {
+  color: #4a5a6d;
+}
+
+.dd-main {
+  flex: 1 1 auto;
+  padding: 24px 20px 40px;
+}
+
+/* Wide enough for the nine default columns at the new type size, narrow enough
+ * that the six-column strip of the workspace is still a form and not a desert:
+ * past this the page reads worse, not bigger. */
+.dd-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--dd-s4);
+  background: var(--dd-surface);
+  border-radius: var(--dd-radius-card);
+  box-shadow: var(--dd-shadow-rest);
+}
+
+/* --- Buttons ----------------------------------------------------------- */
+
+/* A button that happens to be an <a> is still a button: without this the
+ * browser underlines it and it reads as an unstyled link. */
+/* One button, one height. The height is fixed and not derived from padding or
+ * content, so a variant can tighten its sides without getting shorter and two
+ * buttons side by side always line up; the label is centred by the flex box,
+ * which is also what made an <a> styled as a button sit on the same baseline
+ * as a <button>. */
+.dd-btn {
+  transition: background var(--dd-ease), border-color var(--dd-ease),
+    color var(--dd-ease), box-shadow var(--dd-ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--dd-btn-height);
+  padding: 0 14px;
+  white-space: nowrap;
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  border: 0;
+  border-radius: var(--dd-radius);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.dd-btn-primary {
+  background: var(--dd-green);
+  color: #fff;
+}
+
+.dd-btn-primary:hover {
+  background: var(--dd-green-hover);
+}
+
+/* Neutral primary action for screens that are not committing data (the login
+ * form). Green stays reserved for the commit/apply action. */
+.dd-btn-dark {
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-btn-dark:hover {
+  background: var(--dd-navy-hover);
+}
+
+.dd-btn-ghost {
+  padding: 0 10px;
+  font-size: var(--dd-text-xs);
+  font-weight: 400;
+  border: 1px solid #cfd5dc;
+  background: #fff;
+  color: #2b3440;
+}
+
+.dd-btn-ghost:hover {
+  background: #f5f7f9;
+}
+
+.dd-topbar .dd-btn-ghost {
+  color: #e6ebf1;
+  background: transparent;
+  border-color: #4a5a6d;
+}
+
+.dd-topbar .dd-btn-ghost:hover {
+  background: #39485a;
+}
+
+/* Keyboard focus is visible on everything you can act on, not just inputs:
+ * DataDesk is a keyboard-first screen, and a button you cannot see is a button
+ * you do not press. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--dd-navy);
+  outline-offset: 2px;
+}
+
+/* On the dark bar the navy ring disappears: the same ring in white. */
+.dd-topbar a:focus-visible,
+.dd-topbar button:focus-visible {
+  outline-color: #fff;
+}
+
+/* A field the prefill just wrote, for a moment: the button said what it would
+ * set and this is where it landed. */
+.dd-field .dd-input.dd-applied {
+  box-shadow: 0 0 0 2px var(--dd-green);
+}
+
+/* The line under a grid that says what the keyboard does here. */
+.dd-keys {
+  margin: var(--dd-s2) 0 0;
+  font-size: var(--dd-text-xs);
+}
+
+/* The workbench card has no padding (the filter bar spans it), so this one
+ * would otherwise start at the edge and nearly touch it on a narrow window. */
+.dd-workbench-page > .dd-keys {
+  margin: var(--dd-s2) 0 var(--dd-s3);
+  padding: 0 var(--dd-s4);
+}
+
+/* --- Small text primitives -------------------------------------------- */
+
+.dd-label {
+  font-size: var(--dd-label);
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--dd-muted);
+}
+
+.dd-hint {
+  font-size: var(--dd-text-xs);
+  color: var(--dd-soft);
+}
+
+.dd-kbd,
+kbd {
+  font: 11px / 1 var(--dd-font-mono);
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #eef1f4;
+  color: #4a535e;
+}
+
+.dd-chip {
+  display: inline-block;
+  font-size: var(--dd-text-xs);
+  line-height: 1;
+  padding: 3px 6px;
+  margin-right: 3px;
+  border: 1px solid #e0e5ea;
+  border-radius: 9px;
+  background: #eef1f4;
+  color: #2b3440;
+}
+
+/* The colour cell shows one name and how many more there are: a cell clips and
+ * "..." hides the only information it had. The full list is in the title. */
+.dd-chips {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dd-chip-more {
+  background: #eef1f4;
+  border-color: #e0e5ea;
+  color: #5b6675;
+}
+
+/* Chip tones: one pastel per colour family, decided in datadesk/palette.py so
+ * the same colour keeps its look on every screen. */
+.dd-chip-red {
+  background: #fde8ec;
+  border-color: #f6c8d1;
+  color: #8c1f34;
+}
+
+.dd-chip-blue {
+  background: #e7effc;
+  border-color: #c6d8f5;
+  color: #1f4a8c;
+}
+
+.dd-chip-green {
+  background: #e9f4e9;
+  border-color: #c9e4c9;
+  color: #1e6b34;
+}
+
+.dd-chip-amber {
+  background: #fff8e1;
+  border-color: #f0e0b0;
+  color: #7a5a00;
+}
+
+.dd-chip-brown {
+  background: #f7f0e2;
+  border-color: #e8dcc2;
+  color: #7a5a1e;
+}
+
+.dd-chip-grey {
+  background: #eef1f4;
+  border-color: #e0e5ea;
+  color: #2b3440;
+}
+
+.dd-chip-purple {
+  background: #f0e9f7;
+  border-color: #ddccee;
+  color: #5b2d82;
+}
+
+.dd-chip-orange {
+  background: #fdeee2;
+  border-color: #f6d6bd;
+  color: #8a4a14;
+}
+
+/* Cell states of the stamp grid: edited on the stamp, generated by the app.
+ * There is no "inherited" state: series values describe the set, not the
+ * stamp, so nothing is copied down (decided 2026-11-18). */
+.dd-overridden {
+  background: var(--dd-amber-soft);
+  box-shadow: inset 2px 0 0 var(--dd-amber);
+}
+
+.dd-generated {
+  background: var(--dd-green-soft);
+}
+
+/* --- Workbench --------------------------------------------------------- */
+
+/* The workbench is the one screen that fills the window: the filters take what
+ * they need and the grid takes the rest, so the pagination footer cannot end up
+ * below the fold when a filter row is added (it did, with a hardcoded height). */
+.dd-workbench-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--dd-topbar-height) - 64px);
+}
+
+.dd-workbench-page > #workbench {
+  flex: 1 1 auto;
+  min-height: 200px;
+}
+
+.dd-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dd-filter-wide {
+  flex: 1 1 220px;
+}
+
+.dd-filter input,
+.dd-filter select {
+  height: var(--dd-input-height);
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  padding: 0 var(--dd-s2);
+  border: 1px solid var(--dd-line-strong);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+  transition: border-color var(--dd-ease), box-shadow var(--dd-ease);
+}
+
+.dd-filter input[type="number"] {
+  width: 88px;
+}
+
+/* A native arrow is a 2010 control: one chevron of our own costs four lines. */
+.dd-filter select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--dd-s2) center;
+  background-size: 14px;
+}
+
+.dd-filter input:hover,
+.dd-filter select:hover {
+  border-color: #b9c2cd;
+}
+
+.dd-filter input:focus,
+.dd-filter select:focus {
+  outline: none;
+  border-color: var(--dd-navy);
+  box-shadow: var(--dd-ring);
+}
+
+/* The filters that do not need to be on screen: a disclosure that takes the
+ * whole width when it opens, so the bar grows downwards and not sideways. */
+.dd-more-filters {
+  flex: 1 1 100%;
+}
+
+.dd-more-filters-toggle {
+  cursor: pointer;
+  font-size: var(--dd-text-xs);
+  color: var(--dd-navy);
+  font-weight: 600;
+  width: fit-content;
+}
+
+.dd-more-filters-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  padding-top: 10px;
+}
+
+/* The filters that are on, as links that turn them off. They sit between the
+ * form and the grid because that is where the question "why is this list
+ * short?" gets asked. */
+.dd-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--dd-line);
+  background: #fbfcfd;
+}
+
+.dd-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid #c9d3e0;
+  border-radius: 12px;
+  background: #eef2f7;
+  color: var(--dd-navy);
+  font-size: var(--dd-text-xs);
+  text-decoration: none;
+}
+
+.dd-filter-chip:hover {
+  border-color: var(--dd-navy);
+  background: #e3eaf3;
+}
+
+.dd-filter-chip-key {
+  font-weight: 600;
+}
+
+.dd-filter-chip-x {
+  margin-left: 2px;
+  color: var(--dd-muted);
+}
+
+.dd-filter-clear {
+  margin-left: 4px;
+}
+
+.dd-workbench-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-columns {
+  position: relative;
+  margin-left: 12px;
+}
+
+/* The only route into mode=new until S16 adds the loop: a page nobody can reach
+ * cannot be checked by hand. */
+.dd-new-issue {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.dd-columns summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.dd-columns summary::-webkit-details-marker {
+  display: none;
+}
+
+.dd-columns-list {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  box-shadow: var(--dd-shadow-float);
+  white-space: nowrap;
+}
+
+.dd-columns-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--dd-text-xs);
+}
+
+/* Tabulator, themed with the app's own tokens instead of its defaults: the
+ * library ships #aaa cell borders and a #9abcea selected row, which is what
+ * made the grid look older than the rest of the screens. */
+/* Tabulator's root is #888 and only the rows paint over it: a series with one
+ * stamp left a grey band under the last row. */
+#workbench,
+#stamp-grid {
+  font-size: var(--dd-text-sm);
+  border-color: var(--tabulator-border);
+  background: var(--dd-surface);
+}
+
+#workbench .tabulator-header,
+#stamp-grid .tabulator-header {
+  border-bottom: 1px solid var(--tabulator-border);
+}
+
+/* A light header instead of the navy one: the navy stays on the topbar, the
+ * grid stops shouting and the rows get the attention. */
+#workbench .tabulator-header,
+#stamp-grid .tabulator-header {
+  background: #f8f9fb;
+}
+
+#workbench .tabulator-header .tabulator-col,
+#stamp-grid .tabulator-header .tabulator-col {
+  background: #f8f9fb;
+  color: var(--dd-muted);
+  border-color: var(--tabulator-border);
+  padding: var(--dd-s2);
+  font-size: var(--dd-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* The sort arrows are the library's #bbb, which disappears on a light header. */
+#workbench .tabulator-col-sorter .tabulator-arrow,
+#stamp-grid .tabulator-col-sorter .tabulator-arrow {
+  border-bottom-color: var(--dd-soft);
+}
+
+#workbench .tabulator-col-sorter .tabulator-arrow:hover,
+#stamp-grid .tabulator-col-sorter .tabulator-arrow:hover {
+  border-bottom-color: var(--dd-navy);
+}
+
+#workbench .tabulator-row,
+#stamp-grid .tabulator-row {
+  height: var(--dd-row-height);
+  min-height: var(--dd-row-height);
+  border-bottom: 1px solid var(--tabulator-border);
+  background: var(--dd-surface);
+}
+
+#workbench .tabulator-row-even,
+#stamp-grid .tabulator-row-even {
+  background: #fafbfc;
+}
+
+#workbench .tabulator-row.tabulator-selectable:hover,
+#stamp-grid .tabulator-row.tabulator-selectable:hover {
+  background: #f3f6fa;
+}
+
+#workbench .tabulator-row.tabulator-selected,
+#stamp-grid .tabulator-row.tabulator-selected {
+  background: #eef2f8;
+}
+
+/* A bar on the left edge says "this row" without a colour that fights the
+ * chips inside it. */
+#workbench .tabulator-row.tabulator-selected .tabulator-cell:first-child,
+#stamp-grid .tabulator-row.tabulator-selected .tabulator-cell:first-child {
+  box-shadow: inset 2px 0 0 var(--dd-navy);
+}
+
+#workbench .tabulator-row.tabulator-selected:hover,
+#stamp-grid .tabulator-row.tabulator-selected:hover {
+  background: #e8edf5;
+}
+
+#workbench .tabulator-row,
+#stamp-grid .tabulator-row {
+  transition: background var(--dd-ease);
+}
+
+/* Money, years and counts line up even when the digits change. */
+#workbench .tabulator-cell,
+#stamp-grid .tabulator-cell {
+  padding: var(--dd-cell-padding-y) var(--dd-cell-padding-x);
+  border-color: var(--tabulator-border);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An empty cell looked like a cell that failed to paint. The dash itself comes
+ * from a formatter (Tabulator writes a non-breaking space, so `:empty` never
+ * matches); this is what it looks like. The `:empty` rule stays for the cells
+ * whose formatter returns nothing at all. */
+.dd-empty {
+  color: var(--dd-soft);
+}
+
+#workbench .tabulator-cell:empty::after,
+#stamp-grid .tabulator-cell:empty::after {
+  content: "—";
+  color: var(--dd-soft);
+}
+
+
+/* The per-row delete of a series in the list: the same affordance as the stamp
+ * one in the workspace. */
+/* Both icons of a row fill their cell: a 16px glyph on the text baseline sits
+ * at the top of a 38px row, which reads as "not centred" even when the column
+ * is. The cell is padded, so the box is the content area. */
+.dd-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dd-muted);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.dd-open:hover,
+.dd-open:focus-visible {
+  color: var(--dd-navy);
+}
+
+/* --- Issue workspace --------------------------------------------------- */
+
+.dd-workspace-page {
+  padding: 0;
+}
+
+/* The strip has a background and would paint its square corner over the card's
+ * radius. Rounding the strip keeps the card looking like a card; clipping the
+ * card instead would cut the grid's dropdowns. */
+.dd-workspace-page .dd-meta {
+  border-top-left-radius: var(--dd-radius-card);
+  border-top-right-radius: var(--dd-radius-card);
+}
+
+/* Same at the bottom: the commit bar is the last thing with a background. */
+.dd-workspace-page .dd-commitbar,
+.dd-workspace-page .dd-created {
+  border-bottom-left-radius: var(--dd-radius-card);
+  border-bottom-right-radius: var(--dd-radius-card);
+}
+
+.dd-crumb-sep {
+  color: var(--dd-soft);
+  margin: 0 4px;
+}
+
+.dd-meta {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--dd-line);
+  background: var(--dd-surface);
+}
+
+.dd-meta-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dd-meta-back {
+  margin-left: auto;
+}
+
+.dd-fields {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px 18px;
+}
+
+.dd-field {
+  min-width: 0;
+}
+
+.dd-field-wide {
+  grid-column: span 2;
+}
+
+.dd-field-key {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--dd-soft);
+  font-size: var(--dd-label);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.dd-field-value {
+  display: block;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid #d6dae0;
+  font-size: var(--dd-text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Every control that carries `.dd-input` looks the same, wherever it lives: the
+ * series strip, the preview pane of the stamp, the colour dialog. The look used
+ * to be scoped to `.dd-field`, so the same class outside a label rendered as a
+ * raw browser input — which is what the pane's colour and description fields
+ * did until they were compared with the strip. The login form keeps its own
+ * `.dd-field input` rule on purpose: its markup carries no `.dd-input`. */
+.dd-input {
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  width: 100%;
+  min-height: var(--dd-input-height);
+  padding: 0 var(--dd-s2);
+  border: 1px solid var(--dd-line-strong);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+  transition: border-color var(--dd-ease), box-shadow var(--dd-ease);
+}
+
+.dd-input:hover {
+  border-color: #b9c2cd;
+}
+
+.dd-input:focus {
+  outline: none;
+  border-color: var(--dd-navy);
+  box-shadow: var(--dd-ring);
+}
+
+/* A select that carries `.dd-input` gets the same chevron the filters have.
+ * Declared here, after the base, because the base's `background` shorthand would
+ * wipe an image declared before it. */
+.dd-input.dd-select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--dd-s2) center;
+  background-size: 14px;
+}
+
+/* The date field: the text is the date written out and the button is the only
+ * way in, because the date is picked, not typed — typing it is where `01/12` and
+ * `12/01` start arguing. */
+.dd-date {
+  display: flex;
+  gap: var(--dd-s1);
+  align-items: stretch;
+}
+
+.dd-date .dd-input {
+  flex: 1 1 auto;
+  cursor: pointer;
+}
+
+.dd-date-open {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--dd-input-height);
+  height: var(--dd-input-height);
+  padding: 0;
+  border: 1px solid var(--dd-line-strong);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-muted);
+  cursor: pointer;
+  transition: color var(--dd-ease), border-color var(--dd-ease);
+}
+
+.dd-date-open:hover {
+  color: var(--dd-navy);
+  border-color: #b9c2cd;
+}
+
+.dd-date-open:focus-visible {
+  outline: none;
+  color: var(--dd-navy);
+  border-color: var(--dd-navy);
+  box-shadow: var(--dd-ring);
+}
+
+/* The calendar floats over the page, under the field it is filling. */
+.dd-calendar {
+  position: fixed;
+  z-index: 30;
+  /* Wide enough for the longest month name in either language beside four
+   * digits of year and the two arrows. */
+  width: 286px;
+  padding: var(--dd-s3);
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius-card);
+  background: var(--dd-surface);
+  box-shadow: var(--dd-shadow-float);
+}
+
+.dd-calendar-head {
+  display: flex;
+  align-items: center;
+  gap: var(--dd-s1);
+  margin-bottom: var(--dd-s2);
+}
+
+/* The two controls in the head size themselves: `width: 100%` is for a form,
+ * and this is a row (a flex basis wins over the width anyway). */
+.dd-calendar-head .dd-input {
+  width: auto;
+}
+
+/* A month that is a button, so it opens our grid of twelve and not a native
+ * list. It keeps the box of a control, because that is what it looks like. */
+.dd-calendar-month {
+  flex: 1 1 auto;
+  /* The chevron is a background at the right: the name must stop before it
+   * instead of running underneath. */
+  overflow: hidden;
+  padding: 0 var(--dd-s2);
+  border: 1px solid var(--dd-line-strong);
+  border-radius: var(--dd-radius);
+  background-color: #fff;
+  color: var(--dd-ink);
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dd-calendar-month:hover {
+  border-color: #b9c2cd;
+}
+
+.dd-calendar-month:focus-visible {
+  outline: none;
+  border-color: var(--dd-navy);
+  box-shadow: var(--dd-ring);
+}
+
+.dd-calendar-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.dd-calendar-month-pick {
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dd-radius);
+  background: none;
+  color: var(--dd-ink);
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.dd-calendar-month-pick:hover {
+  background: var(--dd-bg);
+}
+
+.dd-calendar-month-pick:focus-visible {
+  outline: none;
+  box-shadow: var(--dd-ring);
+}
+
+.dd-calendar-month-pick.is-selected {
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+/* Four digits and nothing more: a year is 9999 at most, and every pixel spent
+ * here is a pixel the month name does not have. The basis is what sizes it — a
+ * width would be overruled by the head's `width: auto`. */
+.dd-calendar-year {
+  flex: 0 0 56x;
+  /* An input's automatic minimum is its twenty-character default, which would
+   * ignore the basis and keep the box at 85px. */
+  min-width: 0;
+  width: 56px;
+  padding: 0 var(--dd-s1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-calendar-nav {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: var(--dd-input-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--dd-radius);
+  background: none;
+  color: var(--dd-muted);
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dd-calendar-nav:hover {
+  background: var(--dd-bg);
+  color: var(--dd-navy);
+}
+
+.dd-calendar-nav:focus-visible {
+  outline: none;
+  box-shadow: var(--dd-ring);
+}
+
+/* Seven columns of numbers, lined up like the rest of the app. */
+.dd-calendar-week,
+.dd-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dd-calendar-week {
+  margin-bottom: 2px;
+}
+
+.dd-calendar-week span {
+  padding: 2px 0;
+  color: var(--dd-soft);
+  font-size: var(--dd-label);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dd-calendar-day {
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dd-radius);
+  background: none;
+  color: var(--dd-ink);
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.dd-calendar-day:hover {
+  background: var(--dd-bg);
+}
+
+.dd-calendar-day:focus-visible {
+  outline: none;
+  box-shadow: var(--dd-ring);
+}
+
+/* Today reads as a candidate, the chosen day as the value. */
+.dd-calendar-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--dd-line-strong);
+}
+
+.dd-calendar-day.is-selected,
+.dd-calendar-day.is-selected:hover {
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-calendar-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--dd-s1);
+  margin-top: var(--dd-s2);
+}
+
+/* A textarea is not a box of one line: without vertical padding the first line
+ * touches the border. */
+textarea.dd-input {
+  min-height: 46px;
+  padding: var(--dd-s1) var(--dd-s2);
+  resize: vertical;
+}
+
+/* Derived from the date, so it reads as a value and not as an empty box the
+ * user forgot to fill. */
+.dd-field .dd-input-derived {
+  background: #f3f5f8;
+  color: var(--dd-muted);
+  cursor: default;
+}
+
+/* The field the server refused, not just the form it lives in: the message
+ * says what is wrong, this says where. */
+.dd-field .dd-input-invalid,
+.dd-field .dd-input-invalid:focus {
+  border-color: var(--dd-red);
+  background: var(--dd-red-soft);
+  outline-color: var(--dd-red);
+}
+
+/* A reference field is typed, so the "+ Crear" button only shows up when the
+ * name on screen is not a row yet: a permanent button would invite duplicates. */
+.dd-lookup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+.dd-lookup-create {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+  font-size: var(--dd-text-xs);
+  padding: 2px 8px;
+  border: 1px dashed #cfd5dc;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--dd-navy);
+  cursor: pointer;
+}
+
+.dd-lookup-create:hover {
+  border-style: solid;
+  border-color: var(--dd-navy);
+  background: var(--dd-navy);
+  color: #fff;
+}
+
+/* Required, but as a quiet mark: the whole form is required-ish when writing a
+ * series, so red asterisks everywhere would shout. */
+.dd-req {
+  color: var(--dd-amber);
+}
+
+/* A year that does not exist yet is not an error: it will be created on save,
+ * so the note is quiet and sits under the field. */
+.dd-field .dd-year-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--dd-text-xs);
+}
+
+.dd-field .dd-year-hint[hidden] {
+  display: none;
+}
+
+.dd-rows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: var(--dd-text-xs);
+  color: var(--dd-muted);
+}
+
+/* The rows control sits in the grid head: the same control, in a narrow box and
+ * with its number aligned. */
+.dd-rows .dd-input {
+  width: 64px;
+  height: var(--dd-input-height);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shift+Enter has nothing to commit yet: the notice flashes instead. */
+.dd-hint-flash {
+  color: var(--dd-amber);
+  font-weight: 600;
+}
+
+.dd-gridwrap {
+  padding: 12px 16px 16px;
+}
+
+/* The grid and the preview pane share the width. The pane is fixed and the
+ * grid keeps the rest: `minmax(0, 1fr)` is what lets a Tabulator grid shrink
+ * instead of pushing the page sideways. */
+.dd-grid-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+  align-items: start;
+}
+
+.dd-preview {
+  position: sticky;
+  top: 12px;
+  padding: 10px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: #fbfcfd;
+}
+
+.dd-preview-empty {
+  margin: 0;
+}
+
+.dd-preview-image {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border: 1px solid var(--dd-plate-edge);
+  border-radius: 3px;
+  background: var(--dd-plate);
+}
+
+/* The same treatment the 26px thumbnail gets: a stamp without a picture shows
+ * the placeholder, greyed, and the caption says why. */
+.dd-preview-image.dd-thumb-missing {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.dd-preview-missing {
+  margin: 6px 0 0;
+}
+
+.dd-preview-identity {
+  margin: 8px 0 6px;
+  font-size: var(--dd-text-sm);
+  font-weight: 600;
+  color: var(--dd-navy);
+  overflow-wrap: anywhere;
+}
+
+.dd-preview-field {
+  display: block;
+}
+
+/* The colours of the selected stamp, edited right here: the chip carries its ×
+ * and the field completes as you type. Everything hangs under the picture, never
+ * on it (no hover, no click on the image). */
+.dd-preview-colours {
+  margin: 0 0 10px;
+}
+
+.dd-preview-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.dd-preview-chips:empty {
+  margin: 0;
+}
+
+/* A chip is a row of things here, not a badge: the name and its ×. */
+.dd-preview-chips .dd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 0;
+}
+
+.dd-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--dd-label);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.dd-chip-x:hover,
+.dd-chip-x:focus-visible {
+  opacity: 1;
+  background: rgba(18, 22, 28, 0.1);
+}
+
+.dd-preview-text {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Below this the pane would leave the grid unusable, so it stacks under it. */
+@media (max-width: 1100px) {
+  .dd-grid-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dd-preview {
+    position: static;
+  }
+}
+
+.dd-grid-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.dd-count {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #eef1f4;
+  color: #2b3440;
+  font-size: var(--dd-text-xs);
+  font-weight: 700;
+}
+
+.dd-mono {
+  font-family: var(--dd-font-mono);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-image-cell {
+  color: #c4cbd3;
+  font-size: var(--dd-text-lg);
+}
+
+.dd-thumb {
+  display: block;
+  max-height: 26px;
+  max-width: 54px;
+  margin: 0 auto;
+  border-radius: 2px;
+  object-fit: contain;
+  background: var(--dd-plate);
+  /* The hairline is a shadow and not a border: at 26px, two border pixels are
+   * two pixels of stamp. */
+  box-shadow: 0 0 0 1px var(--dd-plate-edge);
+}
+
+/* The placeholder is a picture, so it is dimmed instead of outlined. */
+.dd-thumb-missing {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.dd-chevron {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 1100px) {
+  .dd-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --- Edit states -------------------------------------------------------
+ * One row at a time is committed, so the row itself says where it stands:
+ * amber while it holds something unsaved, green for a moment after the write,
+ * red when the server refused it. The colour is never the only signal — the
+ * commit bar carries the message.
+ */
+.dd-row-dirty,
+.dd-row-dirty .tabulator-cell {
+  background: var(--dd-amber-soft);
+}
+
+/* A stamp that does not exist yet: it is drawn with a spine, which is what a
+ * stored row can never have. Its pending tint comes on top, like any other
+ * row with changes. */
+.dd-row-new {
+  box-shadow: inset 2px 0 0 var(--dd-amber);
+}
+
+.dd-row-saved,
+.dd-row-saved .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
+.dd-row-error,
+.dd-row-error .tabulator-cell {
+  background: var(--dd-red-soft);
+}
+
+.dd-meta-error .dd-fields {
+  box-shadow: inset 0 0 0 1px var(--dd-red-soft);
+}
+
+/* Same idea inside the grid: the row is the context, the cell is the field.
+ *
+ * The ring is drawn inside the cell, and Tabulator paints the rows in order: the
+ * one below has an opaque background and covered the bottom pixel of the ring, so
+ * the mark looked cut in half on every row that had another one under it.
+ * `position: relative` is Tabulator's own, and the z-index is what lifts the
+ * cell above the row that comes after. Do not tidy it away as redundant.
+ */
+.dd-cell-invalid {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1px var(--dd-red);
+}
+
+.dd-row-error .dd-cell-invalid {
+  z-index: 3;
+  box-shadow: inset 0 0 0 2px var(--dd-red);
+}
+
+/* --- Commit bar -------------------------------------------------------- */
+.dd-commitbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 11px 16px;
+  background: var(--dd-commitbar-bg);
+  border-top: 1px solid var(--dd-line);
+}
+
+.dd-commitbar .dd-summary {
+  font-size: var(--dd-text-xs);
+  color: var(--dd-muted);
+}
+
+.dd-commitbar .dd-summary b {
+  color: #2b3440;
+}
+
+/* A draft kept by the browser: offered, never restored by itself. */
+.dd-recover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  background: var(--dd-amber-soft);
+  border-top: 1px solid var(--dd-line);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-recover[hidden] {
+  display: none;
+}
+
+.dd-recover .dd-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Two tabs editing the same series: a warning, never a lock. */
+.dd-tabnotice {
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: var(--dd-amber-soft);
+  border-left: 3px solid var(--dd-amber);
+  font-size: var(--dd-text-xs);
+  color: #6b4f00;
+}
+
+.dd-tabnotice[hidden] {
+  display: none;
+}
+
+.dd-commitbar .dd-count {
+  font-size: var(--dd-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+/* --- Review panel ------------------------------------------------------
+ * A side drawer, not a modal: the grid behind it has to stay readable while
+ * the user compares what the panel says with the row it talks about.
+ */
+.dd-review {
+  position: fixed;
+  top: var(--dd-topbar-height);
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  background: var(--dd-surface);
+  border-left: 1px solid var(--dd-line);
+  box-shadow: var(--dd-shadow-float);
+}
+
+.dd-review[hidden] {
+  display: none;
+}
+
+.dd-review-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-review-close {
+  margin-left: auto;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  font-size: var(--dd-text-xl);
+  line-height: 1;
+  color: var(--dd-muted);
+  cursor: pointer;
+}
+
+.dd-review-close:hover {
+  color: var(--dd-ink);
+}
+
+.dd-review-body {
+  flex: 1;
+  padding: 10px 14px;
+  overflow: auto;
+}
+
+.dd-review-group {
+  margin-bottom: 14px;
+}
+
+.dd-review-model {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--dd-soft);
+  font-size: var(--dd-label);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.dd-review-item {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-review-name {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* A row that is not stored yet is listed as what it is: no before, no after,
+ * one badge that says the whole thing. */
+.dd-review-badge {
+  display: inline-block;
+  margin-left: var(--dd-s2);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--dd-amber-soft);
+  color: var(--dd-ink);
+  font-size: var(--dd-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.dd-review-diff {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: var(--dd-text-sm);
+}
+
+.dd-review-field {
+  min-width: 84px;
+  color: var(--dd-muted);
+}
+
+.dd-review-from {
+  color: var(--dd-soft);
+  text-decoration: line-through;
+}
+
+.dd-review-arrow {
+  color: var(--dd-soft);
+}
+
+.dd-review-error {
+  margin-top: 4px;
+  color: var(--dd-red);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-review-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
+.dd-review-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* The row the workbench lands on after a commit. */
+.dd-row-focus,
+.dd-row-focus .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
+.dd-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dd-commitbar .dd-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.dd-status-ok {
+  color: var(--dd-green);
+}
+
+.dd-status-pending {
+  color: var(--dd-amber);
+}
+
+.dd-status-error {
+  color: var(--dd-red);
+}
+
+/* --- Cloning and deleting a series ------------------------------------- */
+
+.dd-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* The arrows walk the workbench list, filters included. */
+.dd-nav {
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+}
+
+.dd-nav[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dd-nav-count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A ghost button that says what it does: the colour is the warning, the box
+ * keeps it from competing with the primary action of the page. */
+.dd-btn-danger-text {
+  color: var(--dd-red);
+  border-color: var(--dd-red-soft);
+}
+
+.dd-btn-danger-text:hover {
+  background: var(--dd-red-soft);
+}
+
+.dd-btn-danger {
+  background: var(--dd-red);
+  color: #fff;
+}
+
+.dd-btn-danger:hover {
+  background: #a91b18;
+}
+
+.dd-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(20, 28, 38, 0.45);
+}
+
+.dd-dialog-backdrop[hidden] {
+  display: none;
+}
+
+.dd-dialog {
+  width: 430px;
+  max-width: 100%;
+  background: var(--dd-surface);
+  border-radius: 10px;
+  box-shadow: var(--dd-shadow-float);
+  overflow: hidden;
+}
+
+.dd-dialog-body {
+  padding: 14px;
+}
+
+.dd-dialog-warning {
+  margin: 0 0 12px;
+  font-size: var(--dd-text-sm);
+  color: var(--dd-ink);
+}
+
+/* Three numbers, not a sentence: the counts are the decision. */
+.dd-dialog-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.dd-dialog-counts dt {
+  font-size: var(--dd-label);
+  font-weight: 700;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  color: var(--dd-soft);
+}
+
+.dd-dialog-counts dd {
+  margin: 2px 0 0;
+  font-size: var(--dd-text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+.dd-dialog-body .dd-field {
+  margin-bottom: 6px;
+}
+
+.dd-review-note {
+  color: var(--dd-soft);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
+/* --- New series: the typing aids and the created state ------------------ */
+
+.dd-grid-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* The Rows label already pushes itself right; inside the tools it does not. */
+.dd-grid-tools .dd-rows {
+  margin-left: 0;
+}
+
+.dd-fast {
+  gap: 5px;
+  cursor: pointer;
+}
+
+.dd-fast input {
+  accent-color: var(--dd-navy);
+}
+
+/* Removing a draft row is a click, not a confirmation: Ctrl+Z puts it back. */
+.dd-remove-cell {
+  padding: 0 !important;
+}
+
+.dd-remove {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: #b6bfc9;
+  font-size: var(--dd-text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dd-remove:hover,
+.dd-remove:focus-visible {
+  color: var(--dd-red);
+}
+
+/* The per-row delete of a real stamp. Dimmed while the change set has edits:
+ * a deletion is not an edit and cannot queue behind one. */
+.dd-grid-locked .dd-stamp-delete {
+  opacity: 0.4;
+}
+
+/* ...except on a draft row: removing a stamp that was never written is local,
+ * undoable, and the only way back out of `+ Stamp`. */
+.dd-grid-locked .dd-row-new .dd-stamp-delete {
+  opacity: 1;
+}
+
+/* Once the series is written the workspace has nothing left to edit: further
+ * typing would have nowhere to go, and pretending otherwise is worse than
+ * taking the fields away and offering the two things that remain. */
+.dd-created-page .dd-meta,
+.dd-created-page .dd-gridwrap,
+.dd-created-page .dd-commitbar {
+  display: none;
+}
+
+.dd-created {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--dd-line);
+  background: var(--dd-commitbar-bg);
+}
+
+.dd-created .dd-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* --- Dashboard ---------------------------------------------------------
+ *
+ * The six counters, each one a door into the workbench with its filter on.
+ */
+
+.dd-section-title {
+  margin: 18px 0 10px;
+}
+
+.dd-dash-totals {
+  margin: 0 0 4px;
+  font-size: var(--dd-text-xs);
+  color: var(--dd-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The second line of a stamp card: the series the stamps live in, because the
+ * grid behind the link counts series. */
+.dd-card-note {
+  font-size: var(--dd-text-xs);
+  color: var(--dd-soft);
+}
+
+.dd-dash-done {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--dd-line);
+  border-left: 3px solid var(--dd-green);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+}
+
+.dd-dash-done .dd-hint {
+  margin: 6px 0 0;
+}
+
+.dd-dash-clear {
+  margin: 16px 0 0;
+}
+
+/* --- Activity -----------------------------------------------------------
+ *
+ * One commit per card: when, who, how many objects, and whether it can be
+ * undone. The rows underneath are what will change if it is.
+ */
+
+.dd-banner {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: var(--dd-radius);
+  font-size: var(--dd-text-sm);
+}
+
+.dd-banner-error {
+  background: var(--dd-red-soft);
+  border-left: 3px solid var(--dd-red);
+  color: #8c1f34;
+}
+
+.dd-banner-ok {
+  background: #eaf6ee;
+  border-left: 3px solid var(--dd-green);
+  color: #1f6b3a;
+}
+
+.dd-commit {
+  margin-bottom: 12px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+  overflow: hidden;
+}
+
+.dd-commit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--dd-line);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-commit-when {
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-ink);
+}
+
+.dd-commit-user {
+  color: var(--dd-soft);
+}
+
+.dd-commit-summary {
+  color: var(--dd-soft);
+}
+
+.dd-state {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--dd-label);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* The row a create just produced, for a moment: the grid is sorted by name, so
+ * it may have landed far from where the eye was. */
+.dd-row-flash,
+.dd-row-flash .tabulator-cell {
+  background: var(--dd-green-soft);
+}
+
+.dd-state-reversible {
+  background: #eef4fb;
+  color: var(--dd-navy);
+}
+
+.dd-state-merged {
+  background: var(--dd-amber-soft);
+  color: #6b4f00;
+}
+
+.dd-state-reverted {
+  background: #f0f2f5;
+  color: var(--dd-soft);
+}
+
+.dd-revert-form {
+  margin-left: auto;
+}
+
+.dd-commit-rows {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--dd-text-sm);
+}
+
+.dd-commit-rows td {
+  padding: 5px 12px;
+  border-top: 1px solid #f0f2f5;
+  vertical-align: top;
+}
+
+.dd-commit-rows tr:first-child td {
+  border-top: none;
+}
+
+.dd-commit-object {
+  width: 30%;
+  color: var(--dd-ink);
+}
+
+.dd-commit-op {
+  width: 12%;
+  color: var(--dd-soft);
+}
+
+.dd-commit-fields {
+  color: var(--dd-soft);
+  font-family: var(--dd-font-mono);
+  font-size: var(--dd-text-xs);
+}
+
+.dd-undo-list {
+  margin: 0 0 10px;
+  padding-left: 16px;
+  font-size: var(--dd-text-sm);
+}
+
+.dd-undo-list li {
+  margin-bottom: 4px;
+}
+
+.dd-undo-object {
+  font-weight: 600;
+}
+
+.dd-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* --- Reference tables --------------------------------------------------
+ *
+ * One screen for eight tables: the tabs are the registry, the cards are how
+ * many rows each holds, and the grid is the same one everywhere.
+ */
+
+.dd-page-hint {
+  margin: 0 0 14px;
+}
+
+.dd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.dd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+  background: var(--dd-surface);
+  color: var(--dd-ink);
+  text-decoration: none;
+}
+
+.dd-card:hover {
+  border-color: var(--dd-navy);
+}
+
+.dd-card-label {
+  font-size: var(--dd-label);
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--dd-soft);
+}
+
+.dd-card-value {
+  font-size: var(--dd-text-xl);
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-lookup-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.dd-lookup-tab {
+  padding: 4px 10px;
+  font-size: var(--dd-text-xs);
+  border: 1px solid var(--dd-line);
+  border-radius: 999px;
+  background: var(--dd-surface);
+  color: var(--dd-ink);
+  text-decoration: none;
+}
+
+.dd-lookup-tab:hover {
+  border-color: var(--dd-navy);
+}
+
+.dd-lookup-tab-active {
+  background: var(--dd-navy);
+  border-color: var(--dd-navy);
+  color: #fff;
+}
+
+.dd-lookup-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Delete is the last resort of a row nobody points at: the styling keeps it
+ * quieter than the merge, which is what the screen is for. */
+.dd-row-delete {
+  font: inherit;
+  font-size: var(--dd-text-xs);
+  padding: 2px 8px;
+  border: 1px solid var(--dd-red-soft);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-red);
+  cursor: pointer;
+}
+
+.dd-row-delete:hover {
+  background: var(--dd-red-soft);
+}
+
+.dd-dialog-wide {
+  width: 520px;
+}
+
+/* Two numbers instead of three: a stamp takes its collection items and their
+ * collections, not a set. */
+.dd-dialog-counts-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dd-merge-rows {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dd-merge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--dd-line);
+  border-radius: var(--dd-radius);
+}
+
+.dd-merge-row:has(input:checked) {
+  border-color: var(--dd-navy);
+  background: #f7f9fc;
+}
+
+.dd-merge-name {
+  font-size: var(--dd-text-sm);
+  font-weight: 600;
+}
+
+.dd-merge-row .dd-hint {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* --- Login ------------------------------------------------------------- */
+
+.dd-login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--dd-navy);
+}
+
+.dd-login {
+  width: 320px;
+}
+
+.dd-login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dd-s3);
+  padding: var(--dd-s6);
+  background: var(--dd-surface);
+  border-radius: var(--dd-radius-card);
+  box-shadow: var(--dd-shadow-float);
+}
+
+.dd-login-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.dd-login-head .dd-brand {
+  font-size: var(--dd-text-lg);
+  color: var(--dd-navy);
+}
+
+.dd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dd-field input {
+  font: inherit;
+  font-size: var(--dd-text-sm);
+  height: var(--dd-input-height);
+  padding: 0 var(--dd-s2);
+  border: 1px solid var(--dd-line-strong);
+  border-radius: var(--dd-radius);
+  background: #fff;
+  color: var(--dd-ink);
+  transition: border-color var(--dd-ease), box-shadow var(--dd-ease);
+}
+
+.dd-field input:hover {
+  border-color: #b9c2cd;
+}
+
+.dd-field input:focus {
+  outline: none;
+  border-color: var(--dd-navy);
+  box-shadow: var(--dd-ring);
+}
+
+.dd-alert {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: var(--dd-text-xs);
+  border-radius: var(--dd-radius);
+}
+
+.dd-alert-error {
+  background: #fde8ec;
+  color: #8c1f34;
+}
+
+.dd-logout {
+  margin: 0;
+}
+
+/* The usage number of a reference row is a door: it opens the workbench with
+ * that filter. Underlined because a number that looks like text is not a hint
+ * that clicking it does something. */
+.dd-usage-link {
+  color: var(--dd-navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dd-usage-link:hover {
+  color: var(--dd-navy-hover);
+}
+
+/* Motion is a courtesy, not a requirement: a reader who asked the system for
+ * less gets the same screens without the 120ms. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

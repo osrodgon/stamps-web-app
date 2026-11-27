@@ -31,10 +31,10 @@ class ConditionTypesByIdView(Logger, APIView):
             ConditionType: The found condition type instance, or None if it does not exist.
         """
         try:
-            self.debug(Messages.Database.querying("condition type", pk))
+            self.log.debug(Messages.Database.querying("condition type", pk))
             return ConditionType.objects.get(pk=pk)
         except ConditionType.DoesNotExist:
-            self.debug(Messages.Database.not_found("condition type", pk))
+            self.log.warning(Messages.Database.not_found("condition type", pk))
             return None
     
     @extend_schema(
@@ -73,19 +73,19 @@ class ConditionTypesByIdView(Logger, APIView):
             Response:   A DRF Response object with the serialized condition type
                         data and 200 OK status, or a 404 Not Found response.
         """
-        self.debug(Messages.Get.retrieve_one("condition type", pk))
+        self.log.debug(Messages.Get.retrieve_one("condition type", pk))
         condition_type = self.__get_condition_type(pk)
         
         if condition_type is None:
             message = Messages.Get.not_found("condition type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
                 )
         
         response = ConditionTypeResponseSerializer(condition_type)
-        self.info(Messages.Get.retrieved_one("condition type", pk))
+        self.log.info(Messages.Get.retrieved_one("condition type", pk))
         return Response(
             data=response.data, 
             status=status.HTTP_200_OK
@@ -134,11 +134,11 @@ class ConditionTypesByIdView(Logger, APIView):
             Response:   A DRF Response with updated data and 200 OK status,
                         a 404 if not found, or a 400 on validation error.
         """
-        self.debug(Messages.Put.update_one("condition type", pk, request.data))
+        self.log.debug(Messages.Put.update_one("condition type", pk, request.data))
         condition_type = self.__get_condition_type(pk)
         if condition_type is None:
             message = Messages.Put.not_found("condition type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -147,13 +147,13 @@ class ConditionTypesByIdView(Logger, APIView):
         updated_condition_type = ConditionTypeRequestSerializer(data=request.data, instance=condition_type, partial=False)
         if updated_condition_type.is_valid():
             instance = updated_condition_type.save()
-            self.info(Messages.Put.updated_one("condition type", instance.id))
+            self.log.info(Messages.Put.updated_one("condition type", instance.id))
             return Response(
                 data=ConditionTypeResponseSerializer(instance).data,
                 status=status.HTTP_200_OK
                 )
         
-        self.warning(Messages.Put.validation_failed("condition type", pk, updated_condition_type.errors))
+        self.log.warning(Messages.Put.validation_failed("condition type", pk, updated_condition_type.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(updated_condition_type.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
@@ -196,11 +196,11 @@ class ConditionTypesByIdView(Logger, APIView):
             Response:   A DRF Response with a success message and 200 OK status,
                         or a 404 Not Found response if the item does not exist.
         """
-        self.debug(Messages.Delete.delete_one("condition type", pk))
+        self.log.debug(Messages.Delete.delete_one("condition type", pk))
         condition_type = self.__get_condition_type(pk)
         if condition_type is None:
             message = Messages.Delete.not_found("condition type", pk)
-            self.warning(message)
+            self.log.warning(message)
             return Response(
                 data=GenericResponseSerializer(GenericResponse(message)).data,
                 status=status.HTTP_404_NOT_FOUND
@@ -208,7 +208,7 @@ class ConditionTypesByIdView(Logger, APIView):
         
         condition_type.delete()
         message = Messages.Delete.deleted_one("condition type", pk)
-        self.info(message)
+        self.log.info(message)
         return Response(
             data=GenericResponseSerializer(GenericResponse(message)).data,
             status=status.HTTP_200_OK

@@ -2,7 +2,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from common.api.messages import Messages
 from common.api.serializers.generic_response import GenericResponse, GenericResponseSerializer
@@ -23,36 +23,56 @@ class ConfigView(Logger, APIView):
     @extend_schema(
         operation_id="list_config_entries",
         tags=['Config Management'],
-        summary="List All Configuration Entries",
-        description="Retrieves a comprehensive list of all configuration key-value pairs stored in the system. This is useful for a complete overview of all settings.",
+        summary="Retrieve Configuration Entries",
+        description="Retrieves a list of configuration key-value pairs. Can be filtered by user ID to get user-specific settings. If no user ID is provided, it returns all settings.",
+        parameters=[
+            OpenApiParameter(
+                name='user_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Filter configuration entries by user ID. If not provided, all entries are returned.',
+                required=False
+            ),
+        ],
         responses={
             200: standardized_response(
                 ConfigResponseSerializer,
-                name="GetAllConfigEntriesSuccess",
+                name="GetConfigEntriesSuccess",
                 many=True, 
-                description="A list of all configuration entries was successfully retrieved."
+                description="A list of configuration entries was successfully retrieved."
             ),
             403: standardized_response(
                 ConfigResponseSerializer,
-                name="GetAllConfigEntriesForbidden",
+                name="GetConfigEntriesForbidden",
                 success=False,
                 description="Permission denied."
             )
         }
     )
     def get(self, request:Request, *args, **kwargs) -> Response:
-        """Handles GET requests to retrieve all configuration entries.
+        """Handles GET requests to retrieve configuration entries.
 
         Args:
             request (Request): The incoming HTTP request.
 
         Returns:
             Response:   A DRF Response object containing a list of all serialized
-                        configuration entries and a 200 OK status.
+                        configuration entries (optionally filtered by user_id) 
+                        and a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("config entries"))
-        config = Config.objects.all()
-        self.debug(Messages.Get.retrieved_all("config entries", config.count()))
+        self.log.debug(Messages.Get.retrieve_all("config entries"))
+        
+        user_id = request.query_params.get('user_id')
+        if user_id:
+            if user_id.isdigit():
+                config = Config.objects.filter(user=user_id)
+            else:
+                # Return an empty queryset for non-numeric user_id to prevent ValueError
+                config = Config.objects.none()
+        else:
+            config = Config.objects.all()
+
+        self.log.debug(Messages.Get.retrieved_all("config entries", config.count()))
         response = ConfigResponseSerializer(config, many=True)
         
         return Response(
@@ -97,18 +117,18 @@ class ConfigView(Logger, APIView):
             Response:   A DRF Response with the newly created entry's data and a
                         201 Created status, or a 400 Bad Request on validation error.
         """
-        self.debug(Messages.Post.create_one("config entry", request.data))
+        self.log.debug(Messages.Post.create_one("config entry", request.data))
         config = ConfigRequestSerializer(data = request.data)
         
         if config.is_valid():
             instance = config.save()
-            self.debug(Messages.Post.created_one("config entry", instance.id))
+            self.log.debug(Messages.Post.created_one("config entry", instance.id))
             return Response(
                 data=ConfigResponseSerializer(instance).data,
                 status=status.HTTP_201_CREATED
                 )
 
-        self.warning(Messages.Post.validation_failed("config entry", config.errors))
+        self.log.warning(Messages.Post.validation_failed("config entry", config.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(config.errors)).data, 
             status=status.HTTP_400_BAD_REQUEST

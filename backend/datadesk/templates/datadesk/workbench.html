@@ -1,0 +1,110 @@
+{% extends "datadesk/base.html" %}
+{% load i18n static %}
+
+{% block title %}DataDesk — {% translate "Issues" %}{% endblock %}
+
+{% block breadcrumbs %}<b>{% translate "Issues" %}</b>{% endblock %}
+
+{% block content %}
+  <section class="dd-page dd-workbench-page">
+    <form class="dd-filters" id="workbench-filters" method="get" action="">
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "From year" %}</span>
+        <input type="number" name="year_min" inputmode="numeric"
+               value="{{ filters.year_min|default_if_none:'' }}">
+      </label>
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "To year" %}</span>
+        <input type="number" name="year_max" inputmode="numeric"
+               value="{{ filters.year_max|default_if_none:'' }}">
+      </label>
+      <label class="dd-filter dd-filter-wide">
+        <span class="dd-label">{% translate "Name" %}</span>
+        <input type="search" name="q" value="{{ filters.q }}">
+      </label>
+      {% for option in filter_options %}
+        <label class="dd-filter">
+          <span class="dd-label">{{ option.label }}</span>
+          <select name="{{ option.key }}">
+            <option value="">{% translate "Any" %}</option>
+            {% for row in option.rows %}
+              <option value="{{ row.id }}"{% if row.selected %} selected{% endif %}>{{ row.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      {% endfor %}
+      <label class="dd-filter">
+        <span class="dd-label">{% translate "Needs attention" %}</span>
+        <select name="attention">
+          <option value="">{% translate "Nothing" %}</option>
+          <option value="no_country" {% if filters.attention == "no_country" %}selected{% endif %}>{% translate "No country" %}</option>
+          <option value="no_date" {% if filters.attention == "no_date" %}selected{% endif %}>{% translate "No date" %}</option>
+          <option value="no_stamps" {% if filters.attention == "no_stamps" %}selected{% endif %}>{% translate "No stamps" %}</option>
+          <option value="stamps_without_colors" {% if filters.attention == "stamps_without_colors" %}selected{% endif %}>{% translate "Stamps without colors" %}</option>
+          <option value="stamps_without_face_value" {% if filters.attention == "stamps_without_face_value" %}selected{% endif %}>{% translate "Stamps without face value" %}</option>
+          <option value="stamps_without_image" {% if filters.attention == "stamps_without_image" %}selected{% endif %}>{% translate "Stamps without image" %}</option>
+        </select>
+      </label>
+      <button type="reset" class="dd-btn dd-btn-ghost" id="workbench-reset">{% translate "Reset" %}</button>
+
+      {% comment %}
+        The five filters S30 added live behind a disclosure: seven selects on
+        screen at once made the bar four rows tall and pushed the grid's
+        pagination below the fold. They open by themselves when one of them is
+        set, so a link from a reference table shows the control that is doing
+        the filtering.
+      {% endcomment %}
+      <details class="dd-more-filters"{% if extra_filters_open %} open{% endif %}>
+        <summary class="dd-more-filters-toggle">{% translate "More filters" %}</summary>
+        <div class="dd-more-filters-body">
+          {% for option in extra_filter_options %}
+            <label class="dd-filter">
+              <span class="dd-label">{{ option.label }}</span>
+              <select name="{{ option.key }}">
+                <option value="">{% translate "Any" %}</option>
+                {% for row in option.rows %}
+                  <option value="{{ row.id }}"{% if row.selected %} selected{% endif %}>{{ row.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          {% endfor %}
+        </div>
+      </details>
+    </form>
+
+    {% comment %}
+      The filters that are on, as links that turn them off and a "clear all".
+      The script paints them from the form and the URL, so the chips and the
+      grid cannot disagree about what is filtered; the labels travel in the
+      config, translated, because the script holds no interface text.
+    {% endcomment %}
+    <div class="dd-active-filters" id="workbench-chips" hidden></div>
+
+    <p class="dd-banner dd-banner-ok" id="workbench-banner" hidden></p>
+
+    <div class="dd-workbench-toolbar">
+      <span class="dd-hint" id="workbench-count"></span>
+      <a class="dd-btn dd-btn-dark dd-new-issue" href="{% url 'datadesk:issue_new' %}">
+        + {% translate "New series" %}
+      </a>
+      <details class="dd-columns">
+        <summary class="dd-hint">{% translate "Columns" %}</summary>
+        <div class="dd-columns-list" id="workbench-columns"></div>
+      </details>
+    </div>
+
+    <div id="workbench"></div>
+
+    {% include "datadesk/partials/series_delete_dialog.html" %}
+
+    <p class="dd-hint dd-keys">
+      {% translate "Slash focuses the search, J and K move the selection, Enter opens the series and N starts a new one." %}
+    </p>
+  </section>
+
+  {{ config|json_script:"workbench-config" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'datadesk/workbench.js' %}?v={{ datadesk_asset_version }}"></script>
+{% endblock %}

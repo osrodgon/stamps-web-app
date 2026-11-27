@@ -1,0 +1,35 @@
+services:
+  stamps-backend:
+    build:
+      dockerfile: Dockerfile.dev
+    image: osrogon/dev-stamps-backend
+    env_file:
+      - .env
+    # Mount the code for live reloading (volume mount takes precedence over COPY)
+    ports:
+      - "8000:8000"
+
+    # volumes:
+    #   - ./backend:/usr/src/app:delegated
+    # Stamp pictures: the same folder the frontend mounts, read-only here so
+    # DataDesk can show thumbnails without importing anything into the database.
+    # The source is a *host* path (the dev container shares the host daemon and
+    # the workspace lives elsewhere there), so `stamps.sh` exports it; the
+    # default is right when the container runs its own engine.
+    volumes:
+      - type: bind
+        source: ${STAMP_IMAGES_DIR:-../frontend/assets/stamps}
+        target: /srv/stamp-images
+        read_only: true
+    # Use the Django dev server
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_DEBUG: 'True'
+      DATADESK_STAMP_IMAGES: /srv/stamp-images
+    networks:
+      - stamps-network
+
+networks:
+  stamps-network:
+    external: true
+

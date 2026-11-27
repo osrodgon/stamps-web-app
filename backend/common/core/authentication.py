@@ -16,9 +16,7 @@ class CustomAPIKeyAuthentication(Logger, BaseAuthentication):
     ]
     
     def authenticate(self, request):
-        self.debug("Checking header...")
-        
-        print(request.path)
+        self.log.debug("Checking header...")
         
         if request.path in self.EXEMPT_PATHS:
             return None
@@ -26,7 +24,7 @@ class CustomAPIKeyAuthentication(Logger, BaseAuthentication):
         key = request.META.get("HTTP_AUTHORIZATION")
         
         if not key:
-            self.error("Header not found.")
+            self.log.error("Header not found.")
             raise AuthenticationFailed(
                 Messages.Auth.header_missing()
             )
@@ -34,7 +32,7 @@ class CustomAPIKeyAuthentication(Logger, BaseAuthentication):
         # Return a non-None value to signal successful authentication. 
         # The user is None, and the auth component is the key itself.
         # The permission class will use this key.
-        self.debug("Header found.")
+        self.log.debug("Header found.")
         return (None, key)
 
         

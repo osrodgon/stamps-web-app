@@ -54,9 +54,9 @@ class LocationsView(Logger, APIView):
             A Response object containing a list of all serialized locations
             with a 200 OK status.
         """
-        self.debug(Messages.Get.retrieve_all("locations"))
+        self.log.debug(Messages.Get.retrieve_all("locations"))
         locations = Location.objects.all()
-        self.debug(Messages.Get.retrieved_all("locations", len(locations)))
+        self.log.debug(Messages.Get.retrieved_all("locations", len(locations)))
         response = LocationResponseSerializer(locations, many=True)
         
         return Response(
@@ -104,18 +104,18 @@ class LocationsView(Logger, APIView):
             status if successful. Returns a 400 Bad Request if the provided
             data is invalid.
         """
-        self.debug(Messages.Post.create_one("location", request.data))
+        self.log.debug(Messages.Post.create_one("location", request.data))
         location = LocationRequestSerializer(data = request.data)
         
         if location.is_valid():
             instance = location.save()
-            self.info(Messages.Post.created_one("location", instance.id))
+            self.log.info(Messages.Post.created_one("location", instance.id))
             return Response(
                 data=LocationResponseSerializer(instance).data, 
                 status=status.HTTP_201_CREATED
                 )
         
-        self.warning(Messages.Post.validation_failed("location", location.errors))
+        self.log.warning(Messages.Post.validation_failed("location", location.errors))
         return Response(
             data=GenericResponseSerializer(GenericResponse(location.errors)).data,
             status=status.HTTP_400_BAD_REQUEST
