@@ -1,3 +1,5 @@
+from typing import Optional
+
 import flet as ft
 
 from components.colors import SKY_BLUE, SKY_BLUE_HOVER
@@ -21,7 +23,15 @@ class LinkButton(ft.TextButton):
         (Inherited from ft.TextButton)
     """
 
-    def __init__(self, text, on_click=None, data=None, size=FONT_SIZE_DEFAULT):
+    def __init__(
+        self,
+        text,
+        on_click=None,
+        data=None,
+        size=FONT_SIZE_DEFAULT,
+        underline: bool = True,
+        padding: Optional[ft.Padding] = None,
+    ):
         """
         Initializes a LinkButton with the specified text and behavior.
 
@@ -35,17 +45,33 @@ class LinkButton(ft.TextButton):
                 Useful for passing context or identifiers. Defaults to None.
             size (int, optional): The font size for the button text.
                 Defaults to 14.
+            underline (bool, optional): Whether the label is underlined. A
+                breadcrumb turns it off: a line under every crumb reads as an
+                accident, not as a link. Defaults to True.
+            padding (ft.Padding, optional): The button's own padding. A breadcrumb
+                passes `Padding.all(0)` so the gaps around its separators are the
+                row's and not the button's. Defaults to the Material one.
         """
+        style = ft.ButtonStyle(
+            color={
+                "hovered": SKY_BLUE_HOVER,
+                "default": SKY_BLUE
+            },
+            overlay_color=ft.Colors.TRANSPARENT,
+            text_style=ft.TextStyle(
+                decoration=(
+                    ft.TextDecoration.UNDERLINE
+                    if underline
+                    else ft.TextDecoration.NONE
+                )
+            ),
+        )
+        if padding is not None:
+            style.padding = padding
+
         super().__init__(
             content=ft.Text(text, size=size, font_family="Roboto"),
             on_click=on_click,
             data=data,
-            style=ft.ButtonStyle(
-                color={
-                    "hovered": SKY_BLUE_HOVER,
-                    "default": SKY_BLUE
-                }, 
-                overlay_color=ft.Colors.TRANSPARENT,
-                text_style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE),
-            )
+            style=style,
         )

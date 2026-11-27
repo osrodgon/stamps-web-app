@@ -185,6 +185,36 @@ class TestFilters:
 
         assert page["pagination"]["total"] == 4
 
+    def test_a_range_can_leave_one_end_open(self, collection_issues_catalogue):
+        """`1850-` is what the screen sends when only the first box is filled."""
+        collection = collection_issues_catalogue["collection"]
+
+        from_1900 = CollectionIssuesService().page(collection, year="1900-")
+        to_1900 = CollectionIssuesService().page(collection, year="-1900")
+
+        assert from_1900["pagination"]["total"] == 4
+        assert to_1900["pagination"]["total"] == 4
+
+    def test_a_bound_beyond_the_catalogue_keeps_nothing(
+        self, collection_issues_catalogue
+    ):
+        collection = collection_issues_catalogue["collection"]
+
+        after = CollectionIssuesService().page(collection, year="1901-")
+        before = CollectionIssuesService().page(collection, year="-1899")
+
+        assert after["pagination"]["total"] == 0
+        assert before["pagination"]["total"] == 0
+
+    def test_a_year_that_is_not_a_number_is_ignored(
+        self, collection_issues_catalogue
+    ):
+        page = CollectionIssuesService().page(
+            collection_issues_catalogue["collection"], year="18a0-19b0"
+        )
+
+        assert page["pagination"]["total"] == 4
+
 
 class TestPagination:
     """15 per page by default, with the block `/issues/` returns."""

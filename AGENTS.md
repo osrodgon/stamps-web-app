@@ -27,6 +27,12 @@ At the **very start of every session** (before any tool calls or responses), you
 - **Tests are part of the step, not a follow-up.** A step is done when the unit
   tests it needs exist or are updated (services with mocked responses, components
   where Flet allows it) and the whole suite stays green.
+- **A screen step is compared with its mockup before it is called done.** The
+  mockups in `memory-bank/mockups/` are the design, not a suggestion: run the real
+  page with stubbed services in the headless Chromium, take a screenshot and put it
+  next to the mockup. The shape of the screen (header, filter card, rows, paginator)
+  is what the step is judged on, not only its data. Tests cannot see a screen that
+  renders nothing like it was drawn.
 
 ## Language and GitHub
 

@@ -1,8 +1,9 @@
-"""The numbers and the covers behind the collections overview (plan step A2).
+"""The numbers and the covers behind the collections overview (plan steps A2, B3b).
 
-A card needs three figures and a few pictures: how many series the collection
+A card needs four figures and a few pictures: how many series the collection
 holds, how many stamps the user owns, how many stamps those series have in total
-(the progress bar's denominator), and up to twelve stamps to build the collage.
+(the progress bar's denominator), what the copies cost so far, and up to twelve
+stamps to build the collage.
 
 The point of this class is the **cost**: the whole page is five queries, whatever
 the number of cards. Doing it per card in the frontend would be an N+1 that grows
@@ -14,7 +15,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Dict, List, Set
 
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 from collection_items_api.models import CollectionItem
 from collections_api.models import Collection
@@ -36,8 +37,8 @@ class CollectionOverviewService:
             user: the user the JWT belongs to.
 
         Returns:
-            One dict per collection with `id`, `name`, `series`, `stamps`, `total`
-            and `covers`; an empty list when the user has none.
+            One dict per collection with `id`, `name`, `series`, `stamps`, `total`,
+            `paid` and `covers`; an empty list when the user has none.
         """
         collections = list(Collection.objects.filter(user=user).order_by("name"))
         if not collections:
@@ -60,13 +61,20 @@ class CollectionOverviewService:
 
     @staticmethod
     def __counts(ids: List[int]) -> Dict[int, dict]:
-        """Series and distinct stamps of each collection, in one grouped query."""
+        """Series, distinct stamps and money paid of each collection, in one query.
+
+        `paid` is a `Sum` over the same rows the counters read, so a copy with a
+        quantity of two still adds its price once — the quantity is a field of the
+        item, not another row. It is `None` when no copy of the collection carries a
+        price, which is not the same as having paid nothing.
+        """
         rows = (
             CollectionItem.objects.filter(collection_id__in=ids)
             .values("collection_id")
             .annotate(
                 series=Count("stamp__issue", distinct=True),
                 stamps=Count("stamp", distinct=True),
+                paid=Sum("price_paid"),
             )
         )
         return {row["collection_id"]: row for row in rows}
@@ -152,5 +160,6 @@ class CollectionOverviewService:
             "series": counted.get("series", 0),
             "stamps": counted.get("stamps", 0),
             "total": total,
+            "paid": counted.get("paid"),
             "covers": covers.get(collection.pk, []),
         }

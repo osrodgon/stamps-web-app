@@ -68,7 +68,7 @@ class TestListCollections(AbstractApiUnitTest):
         assert {row["id"] for row in data} == mine
         assert len(data) == 2
         assert all(
-            set(row) == {"id", "name", "series", "stamps", "total", "covers"}
+            set(row) == {"id", "name", "series", "stamps", "total", "paid", "covers"}
             for row in data
         )
 
@@ -93,6 +93,7 @@ class TestListCollections(AbstractApiUnitTest):
         assert row["series"] == 2
         assert row["stamps"] == 2
         assert row["total"] == 4
+        assert row["paid"] is None
         assert row["covers"] == [
             {"year": overview_catalogue["year"], "code": "F-OWNED"}
         ]

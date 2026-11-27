@@ -24,6 +24,8 @@ from components.colors import (
 )
 from components.constants import (
     CARD_BORDER_RADIUS,
+    CARD_SHADOW_BLUR,
+    CARD_SHADOW_OPACITY,
     FONT_SIZE_DEFAULT,
     FONT_SIZE_SMALL_HEADING,
     FONT_SIZE_XS,
@@ -88,7 +90,13 @@ class IssueProgressCard(ft.Container):
             horizontal=STANDARD_PADDING, vertical=STANDARD_PADDING
         )
         self.bgcolor = ft.Colors.WHITE
-        self.border = ft.Border(bottom=ft.BorderSide(1, ROW_BORDER))
+        self.border = ft.Border.all(1, ROW_BORDER)
+        self.border_radius = CARD_BORDER_RADIUS
+        self.shadow = ft.BoxShadow(
+            blur_radius=CARD_SHADOW_BLUR,
+            color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK),
+            offset=ft.Offset(0, 2),
+        )
         if on_open is not None:
             self.on_click = self._handle_open
 
@@ -222,19 +230,26 @@ class IssueProgressCard(ft.Container):
         )
 
     def __progress(self) -> ft.Container:
-        """The progress label, the bar and the percentage."""
+        """`3 of 5 stamps` and its percentage, with the bar underneath.
+
+        As the mockup: the two texts share a line and the bar takes the width, so a
+        series at 0% and one at 100% paint the same bar.
+        """
         return ft.Container(
-            width=180,
+            width=220,
             content=ft.Column(
                 controls=[
-                    self._progress_text,
                     ft.Row(
-                        controls=[self._progress_bar, self._percentage],
-                        spacing=6,
+                        controls=[
+                            self._progress_text,
+                            ft.Container(expand=True),
+                            self._percentage,
+                        ],
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
+                    self._progress_bar,
                 ],
-                spacing=4,
+                spacing=6,
                 tight=True,
             ),
         )
