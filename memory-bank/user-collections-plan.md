@@ -749,7 +749,7 @@ time is not how a collector fills one: **one stamp**, **one series**, or **one w
 |---|---|---|---|---|
 | C0 | Mockup of the dialog (search, series row with both actions, stamp list, year footer, confirmation) | — | S | **done 2026-11-27** |
 | C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | **done 2026-11-27** |
-| C2 | Catalogue search and catalogue detail endpoints + tests | — | M | pending |
+| C2 | Catalogue search and catalogue detail endpoints + tests | — | M | **done 2026-11-27** |
 | C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | pending |
 | C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | pending |
 | C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | pending |
@@ -803,13 +803,24 @@ count for the insert path.
 - the serializer accepts exactly the key of its scope: `issue` with `ids` is a body that
   does not know what it is asking for, and answers 400 instead of picking one.
 
-**C2 — Catalogue endpoints.** `CollectionCatalogueService` with `page()` (all series,
-`owned_stamps` as a `Subquery` so the join is not multiplied, cover like B1, **two
-queries**) and `detail()` (B2's `CollectionIssueDetailService` without the ownership
-precondition; **four queries**). Serializers reuse B1's and B2's shapes. Tests: a series
-the collection holds nothing of appears in the page and in the detail (this is the
-difference with B1/B2), `owned_stamps` counts only this user's items, the filters and the
-order mirror B1, the query counts are pinned, and 403/404 as in C1.
+**C2 — Catalogue endpoints — DONE 2026-11-27.** Two read routes: `GET
+/collections/<pk>/catalogue/issues/` and `GET /collections/<pk>/catalogue/issues/<issue_pk>/`.
+
+*It did not become the new service the plan described*: B1's and B2's services already build
+the figures, the cover, the filters, the order and the pagination, and the only thing that
+had to change was the scope. So `CollectionIssuesService.page` and
+`CollectionIssueDetailService.for_collection` gained `owned_only: bool = True` and the
+catalogue calls them with `False` — one implementation, and the two screens cannot drift
+from the dialog's. Tests prove the default still hides what the collection does not hold.
+
+- The page costs **two queries** and the detail **four**, as B1 and B2 do; `owned_stamps`,
+  `paid` and the cover stay subqueries.
+- A series with no stamps is **not a row** in the catalogue page (`total_stamps > 0`): it
+  would add nothing.
+- The integer reader of the query string lived as a private method of B1's view; it is now
+  `common/core/query.py::Query.int_param`, used by both views.
+- 19 tests, including one per reading screen pinning that the new parameter did not loosen
+  them.
 
 **C3 — `CatalogueService`.** `frontend/services/catalogue_service.py` on `BaseService`,
 Flet-free, token in the constructor, `search_issues`, `get_issue`, `add_stamps`, `add_issue`,

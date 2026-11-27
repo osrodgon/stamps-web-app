@@ -24,17 +24,24 @@ class CollectionIssueDetailService:
     """Builds the detail of one series of one collection."""
 
     def for_collection(
-        self, collection: Collection, issue_id: int
+        self,
+        collection: Collection,
+        issue_id: int,
+        owned_only: bool = True,
     ) -> Optional[dict]:
         """Return the issue, its stamps with the caller's items and the summary.
 
         Args:
             collection: the collection, already checked to belong to the caller.
             issue_id: the series to read.
+            owned_only: `True` to refuse a series the collection holds nothing of,
+                which is what the reading screen needs; `False` to read any series
+                of the catalogue, which is what the dialog that adds stamps needs
+                (plan step C2).
 
         Returns:
             `{"issue", "stamps", "summary"}`, or None when the series does not exist
-            or the collection holds nothing of it.
+            or — with `owned_only` — the collection holds nothing of it.
         """
         issue = (
             Issue.objects.select_related(
@@ -58,7 +65,7 @@ class CollectionIssueDetailService:
                 collection=collection, stamp__issue=issue
             ).select_related("condition_type", "location")
         }
-        if not items:
+        if not items and owned_only:
             # A series the collection holds nothing of is not part of it.
             return None
 

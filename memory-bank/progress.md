@@ -988,7 +988,15 @@ when A is merged into `development`.
         written), `NothingFound` → 404, foreign collection 404, no token 403; the copy is
         created with `collection` and `stamp` only. Serializer accepts exactly the key of its
         scope. Three statements plus the savepoint pair (pinned at 5). 18 tests.
-  - [ ] C2 — catalogue search and catalogue detail endpoints + tests, M
+  - [x] C2 — catalogue page and detail (2026-11-27, M): `GET
+        /collections/<pk>/catalogue/issues/` lists every series with stamps and how many the
+        collection owns (two queries), and `.../catalogue/issues/<issue_pk>/` returns any
+        series with `item` or `null` (four queries). It is a parameter on B1's and B2's
+        services (`owned_only=True` by default) rather than the new service the plan said:
+        one implementation, and the screens cannot drift from the dialog's. A series with no
+        stamps is not a row. `Query.int_param` moved to `common/core/query.py`, shared by the
+        two list views. 19 tests, two of them pinning that B1 and B2 still hide what the
+        collection does not hold.
   - [ ] C3 — `CatalogueService` (Flet-free, JWT) + tests, S
   - [ ] C4 — `AddStampsDialog` and its two entry points + tests, L
   - [ ] C5 — close-out: empty state, counts, keys, browser pass, suites, S
