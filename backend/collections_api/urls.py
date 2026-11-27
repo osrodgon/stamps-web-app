@@ -6,6 +6,9 @@ from collections_api.api.views.collection_issue_detail_view import (
 from collections_api.api.views.collection_issue_items_view import (
     CollectionIssueItemsView,
 )
+from collections_api.api.views.collection_items_bulk_view import (
+    CollectionItemsBulkView,
+)
 from collections_api.api.views.collection_issues_view import CollectionIssuesView
 from collections_api.api.views.collections_by_id_view import CollectionsByIdView
 from collections_api.api.views.collections_view import CollectionsView
@@ -29,5 +32,10 @@ urlpatterns = [
         base_url + '<int:pk>/items/',
         CollectionIssueItemsView.as_view(),
         name="collection_item_add",
+    ),
+    path(
+        base_url + '<int:pk>/items/bulk/',
+        CollectionItemsBulkView.as_view(),
+        name="collection_items_bulk_add",
     ),
 ]

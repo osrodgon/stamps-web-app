@@ -748,7 +748,7 @@ time is not how a collector fills one: **one stamp**, **one series**, or **one w
 | # | Step | Depends on | Size | State |
 |---|---|---|---|---|
 | C0 | Mockup of the dialog (search, series row with both actions, stamp list, year footer, confirmation) | — | S | **done 2026-11-27** |
-| C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | pending |
+| C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | **done 2026-11-27** |
 | C2 | Catalogue search and catalogue detail endpoints + tests | — | M | pending |
 | C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | pending |
 | C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | pending |
@@ -781,7 +781,7 @@ and 4 for buttons, height 40) and the shapes of `TextField`, the house dropdown,
 `DefaultButton` and `PrimaryButton`, so the dialog can be built without translating it.
 `AGENTS.md` now requires this of every new mockup.
 
-**C1 — Bulk add.** `collections_api/services/collection_items_bulk_service.py`: resolve the
+**C1 — Bulk add — DONE 2026-11-27.** `collections_api/services/collection_items_bulk_service.py`: resolve the
 scope to a queryset of stamps (`stamp` by ids, `issue` by `stamp__issue_id`, `year` by
 `stamp__issue__year__year`), count it, refuse over the cap, `bulk_create` with
 `ignore_conflicts=True`, and answer the three numbers. The count and the insert share one
@@ -789,6 +789,19 @@ transaction so two of them cannot disagree. Tests: each scope, the three numbers
 half-owned series (created + skipped), the cap answered as 400 with `too_many`, unknown
 series and empty year as 404, foreign collection as 404, no token as 403, and one query
 count for the insert path.
+
+*What the step found while being built:*
+
+- the transaction that makes the count and the insert one decision costs a savepoint pair,
+  so the path is **three statements** (the ids, what is already there, the insert) **plus
+  two** `SAVEPOINT`/`RELEASE`, none of which grows with the scope — pinned at 5;
+- the standard renderer drops `data` on a 400, so the cap's number travels in the
+  `errors[].message` (`"501 stamps asked for, the limit is 500."`) and not in a body field.
+  The dialog already knows the count it asked for, so nothing is lost;
+- the service refuses with two exceptions of its own (`NothingFound` → 404, `TooMany` → 400)
+  instead of returning a result the view would have to interpret;
+- the serializer accepts exactly the key of its scope: `issue` with `ids` is a body that
+  does not know what it is asking for, and answers 400 instead of picking one.
 
 **C2 — Catalogue endpoints.** `CollectionCatalogueService` with `page()` (all series,
 `owned_stamps` as a `Subquery` so the join is not multiplied, cover like B1, **two
