@@ -222,11 +222,20 @@ copia nace con `quantity = 1`, el color se lee de `colors` (no `color`), el láp
 `neighbours` en el backend). **C4d**: gutter a la derecha para que la barra de scroll no
 tape las tarjetas, `DELETE` de una serie desde la colección con papelera junto al badge,
 el `Remove` fuera del formulario (papelera al lado del lápiz) y `ActionIcon` compartido con
-el admin. Suites: backend **1.869** / frontend **851**. Lo siguiente es **C5**, el cierre.
+el admin. **C5, cierre de la fase C (2026-11-27)**: la fase entera probada contra el backend
+real y datos reales en una colección desechable —crear, añadir una serie desde el diálogo
+(`5 añadidos`), abrir, editar un ejemplar a `quantity 2` y guardarlo—; lo único que falló fue
+que el formulario se abría **por debajo del pliegue** y el lápiz parecía muerto (ahora el
+campo Cantidad lleva `autofocus` y el foco lo trae a la vista). Paridad de locales, `check` y
+`spectacular` limpios, README del módulo al día. Suites: backend **1.869** / frontend **853**.
+**La fase C está cerrada.** Lo siguiente son los huecos anotados: sembrar condiciones y
+ubicaciones, la papelera en cada fila de la lista, el paginador con números (B3b-2) y el
+navegador de catálogo.
 
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **C0 a C4 ya están**; seguir por **C5** (cierre: claves, estados, capturas y
-suites).
+devcontainer. **La fase C está cerrada (C0 a C5).** Lo que sigue son los huecos anotados en
+§10: sembrar condiciones y ubicaciones, la papelera en cada fila de la lista y el paginador
+con números (B3b-2).
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que

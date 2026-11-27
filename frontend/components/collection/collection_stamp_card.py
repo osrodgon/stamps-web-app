@@ -419,8 +419,12 @@ class CollectionStampCard(ft.Container):
     def __copy_form(self) -> ft.Control:
         """The six fields, in the same three-column grid, and the actions."""
         self._condition = self.__condition_field()
+        # Focusing the first field is also what scrolls the form into view when
+        # the card sits at the bottom of the page: the pencil is clicked and the
+        # browser brings the field it focused.
         self._quantity = TextField(
             label=_("collections.quantity"),
+            autofocus=True,
             value=str(self._item.get("quantity") or "")
             if self._item and self._item.get("quantity") is not None
             else "",

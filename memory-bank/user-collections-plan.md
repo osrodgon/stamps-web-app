@@ -752,7 +752,7 @@ time is not how a collector fills one: **one stamp**, **one series**, or **one w
 | C2 | Catalogue search and catalogue detail endpoints + tests | — | M | **done 2026-11-27** |
 | C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | **done 2026-11-27** |
 | C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | **done 2026-11-27** |
-| C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | pending |
+| C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | **done 2026-11-27** |
 
 **C0 — Mockup — DONE 2026-11-27.** `memory-bank/mockups/add-stamps-dialog.html`, in the same
 language as the three existing ones: a dialog over a dimmed screen, `Add stamps` as its title, the two
@@ -871,12 +871,26 @@ the counts, a refusal, a 403, the unfold, and a pin against a wrapping Row with 
 child) and 3 page tests; frontend suite **832**. Screenshots of the dialog at 1493x900 in its
 search, unfolded, whole-year and confirmation states, next to the mockup.
 
-**C5 — Close-out.** The empty state gains its button and its explanation; after a clean add
-the screen reloads to the first page with the new series visible; the notification says both
-numbers; keys in both languages; suites green; screenshots of the dialog (empty result, a
-series unfolded, a year confirmation) next to C0's mockup.
+**C5 — Close-out — DONE 2026-11-27. Phase C is closed.** The phase ran end to end against
+the real backend and real data, in a disposable collection: created, a series added from the
+dialog (`5 añadidos · 0 ya estaban`), the series visible in the list behind, the detail with
+covers, colours and arrows, a copy edited to `quantity 2` and saved (`Cantidad 2`).
+
+- **What the pass found**: clicking the pencil on a card at the bottom of the page looked
+  dead — the form was rendering **below the fold**. The quantity field now carries
+  `autofocus`, and focusing it is what scrolls the form into view. Everything else worked on
+  the first try.
+- **Checks**: locale parity (214 keys in both languages, same set, none empty, and all 164
+  keys used in code exist), `manage.py check` and `manage.py spectacular` clean, suites green.
+- **Docs**: `collections_api/README.md` documents the seven endpoints added since phase A
+  (series page, series detail with `neighbours`, series removal, single add, bulk add,
+  catalogue page and detail) with their parameters, payloads and query costs.
 
 ### Deferred on purpose (recorded so they are not lost)
+
+- **Condition and location are empty tables.** The copy form disables those two selects and
+  saves the copy without them, and says so. Needs seeding or their own CRUD: its own step.
+- **The bin that removes a series exists in the detail, not on each row of the series list.**
 
 - **B3b-2, the rest of the series screen's mockup**: `TablePagination` with the mockup's
   numbered pages (today it is the house paginator, dressed as a card by the page), the `h1`
