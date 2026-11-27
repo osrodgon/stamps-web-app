@@ -116,10 +116,15 @@ class TestDetailService:
 
         assert detail is None
 
-    def test_the_detail_is_four_queries(
+    def test_the_detail_is_five_queries(
         self, collection_issues_catalogue, django_assert_num_queries
     ):
-        with django_assert_num_queries(4):
+        """The issue, its stamps, their colours, the copies and the neighbours.
+
+        The four of B2 plus the one the arrows cost, which is why the catalogue
+        reader — no list behind it — does not ask for them.
+        """
+        with django_assert_num_queries(5):
             CollectionIssueDetailService().for_collection(
                 collection_issues_catalogue["collection"],
                 collection_issues_catalogue["first"].id,
@@ -206,6 +211,118 @@ class TestDetailEndpoint:
         )
 
 
+class TestNeighbours:
+    """The arrows of the detail walk the collection's list, in its order."""
+
+    def test_the_first_series_has_a_next_and_no_previous(
+        self, collection_issues_catalogue
+    ):
+        detail = CollectionIssueDetailService().for_collection(
+            collection_issues_catalogue["collection"],
+            collection_issues_catalogue["first"].pk,
+        )
+
+        assert detail["neighbours"] == {
+            "position": 1,
+            "total": 4,
+            "previous": None,
+            "next": collection_issues_catalogue["second"].pk,
+        }
+
+    def test_the_last_series_has_a_previous_and_no_next(
+        self, collection_issues_catalogue
+    ):
+        detail = CollectionIssueDetailService().for_collection(
+            collection_issues_catalogue["collection"],
+            collection_issues_catalogue["no_picture"].pk,
+        )
+
+        assert detail["neighbours"]["position"] == 4
+        assert detail["neighbours"]["next"] is None
+        assert detail["neighbours"]["previous"] == collection_issues_catalogue[
+            "aardvark"
+        ].pk
+
+    def test_the_catalogue_reader_has_no_neighbours(
+        self, collection_issues_catalogue
+    ):
+        """There is no list behind the dialog, so it is told so."""
+        detail = CollectionIssueDetailService().for_collection(
+            collection_issues_catalogue["collection"],
+            collection_issues_catalogue["first"].pk,
+            owned_only=False,
+        )
+
+        assert detail["neighbours"] is None
+
+    def test_the_arrows_travel_in_the_response(
+        self, api_client, collection_issues_catalogue, owner
+    ):
+        response = api_client.get(
+            Api.detail(
+                collection_issues_catalogue["collection"].pk,
+                collection_issues_catalogue["first"].pk,
+            ),
+            **owner,
+        )
+
+        neighbours = response.json()["data"]["neighbours"]
+
+        assert neighbours["total"] == 4
+        assert neighbours["next"] == collection_issues_catalogue["second"].pk
+
+
+class TestRemoveSeries:
+    """Removing a series from a collection deletes the copies, not the catalogue."""
+
+    def test_it_deletes_the_copies_of_the_series(
+        self, api_client, collection_issues_catalogue, owner
+    ):
+        collection = collection_issues_catalogue["collection"]
+        issue = collection_issues_catalogue["first"]
+
+        response = api_client.delete(Api.detail(collection.pk, issue.pk), **owner)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == {"deleted": 2}
+        assert CollectionItem.objects.filter(
+            collection=collection, stamp__issue=issue
+        ).count() == 0
+        assert Stamp.objects.filter(issue=issue).count() == 2
+
+    def test_a_series_the_collection_does_not_hold_is_404(
+        self, api_client, collection_issues_catalogue, owner
+    ):
+        response = api_client.delete(
+            Api.detail(
+                collection_issues_catalogue["collection"].pk,
+                collection_issues_catalogue["nobody_has"].pk,
+            ),
+            **owner,
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_a_foreign_collection_is_404(self, api_client, collections_table, owner):
+        response = api_client.delete(
+            Api.detail(collections_table[1].pk, collections_table[1].pk), **owner
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_without_a_token_it_is_403(
+        self, api_client, collection_issues_catalogue
+    ):
+        response = api_client.delete(
+            Api.detail(
+                collection_issues_catalogue["collection"].pk,
+                collection_issues_catalogue["first"].pk,
+            )
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
 class TestAddCopy:
     """A copy is added once; adding it again is a conflict, not an overwrite."""
 
@@ -223,9 +340,11 @@ class TestAddCopy:
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["data"]["condition_type"] is None
-        assert CollectionItem.objects.filter(
+        item = CollectionItem.objects.get(
             collection=collection_issues_catalogue["collection"], stamp=stamp
-        ).exists()
+        )
+        # A copy is at least one stamp.
+        assert item.quantity == 1
 
     def test_a_stamp_already_there_is_409(
         self, api_client, collection_issues_catalogue, owner

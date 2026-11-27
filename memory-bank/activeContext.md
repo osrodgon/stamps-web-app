@@ -210,11 +210,23 @@ desplegada, año entero y confirmación) y un conmutador para verlos; comprobado
 `created`/`skipped`/`total` (18 tests, suite del backend en **1.842**). Lo siguiente es
 **C2 hecho (2026-11-27)**: `catalogue/issues/` y `catalogue/issues/<pk>/`, que son B1 y B2
 con `owned_only=False` (una implementación, no dos). **C3 hecho (2026-11-27)**:
-`CatalogueService` con las cinco llamadas y 11 tests (suite del frontend en **812**). Lo
-siguiente es **C4**, el diálogo.
+`CatalogueService` con las cinco llamadas y 11 tests. **C4 hecho (2026-11-27)**: el diálogo
+`AddStampsDialog` con la búsqueda, las series desplegables, los tres alcances y la
+confirmación, más el botón `Add stamps` en la tarjeta de filtros y en el estado vacío.
+**C4b (el primer uso)**: las acciones de las filas no hacían nada porque una `lambda`
+devolvía una corrutina que Flet no espera (ahora `page.run_task`), el año entero se alcanza
+con **una** caja, el detalle del catálogo recibe `issue_year` para las fotos, la placa del
+detalle pasa a 128 y el formulario de la copia usa los controles de la casa. **C4c**: la
+copia nace con `quantity = 1`, el color se lee de `colors` (no `color`), el lápiz edita y
+`Add my copy` lleva icono, y el detalle navega la lista con `‹ n / total ›` (bloque
+`neighbours` en el backend). **C4d**: gutter a la derecha para que la barra de scroll no
+tape las tarjetas, `DELETE` de una serie desde la colección con papelera junto al badge,
+el `Remove` fuera del formulario (papelera al lado del lápiz) y `ActionIcon` compartido con
+el admin. Suites: backend **1.869** / frontend **851**. Lo siguiente es **C5**, el cierre.
 
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **C0, C1, C2 y C3 ya están**; seguir por **C4** (el diálogo).
+devcontainer. **C0 a C4 ya están**; seguir por **C5** (cierre: claves, estados, capturas y
+suites).
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que

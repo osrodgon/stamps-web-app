@@ -19,9 +19,9 @@ from typing import Awaitable, Callable, Optional
 
 import flet as ft
 
+from components.buttons.action_icon import ActionIcon
 from components.buttons.alert_button import AlertButton
 from components.buttons.default_button import DefaultButton
-from components.buttons.link_button import LinkButton
 from components.buttons.primary_button import PrimaryButton
 from components.colors import (
     BG_ALT,
@@ -42,6 +42,8 @@ from components.constants import (
     FONT_SIZE_XS,
 )
 from components.form.date_picker import DatePickerField
+from components.form.dropdown import Dropdown
+from components.form.text_field import TextField
 from components.table.column_def import fmt_currency, fmt_date
 from core.translations import _
 from settings import ASSETS_DIR, IMAGE_DIR, NO_STAMP
@@ -67,7 +69,7 @@ class CollectionStampCard(ft.Container):
         on_changed: called after the item changes, so the page updates the summary.
     """
 
-    PLATE_SIZE: int = 96
+    PLATE_SIZE: int = 128
     CELLS_PER_ROW: int = 3
 
     def __init__(
@@ -153,7 +155,7 @@ class CollectionStampCard(ft.Container):
                         ),
                         self.__data_line(
                             _("stamps.color"),
-                            ", ".join(self._stamp.get("color") or []) or "-",
+                            ", ".join(self._stamp.get("colors") or []) or "-",
                         ),
                         self.__pills(),
                     ],
@@ -303,8 +305,11 @@ class CollectionStampCard(ft.Container):
                         size=FONT_SIZE_XS,
                         color=GREY_700,
                     ),
-                    LinkButton(
-                        _("collections.add_my_copy"), on_click=self._add
+                    DefaultButton(
+                        text=_("collections.add_my_copy"),
+                        icon=ft.Icons.ADD,
+                        on_click=self._add,
+                        expand=False,
                     ),
                 ],
                 spacing=6,
@@ -373,7 +378,29 @@ class CollectionStampCard(ft.Container):
         )
 
     def __caption(self) -> ft.Row:
-        """`YOUR COPY` and the edit link."""
+        """`YOUR COPY` and its two actions: the pencil, then the bin.
+
+        Icons with a tooltip, grey until hovered, as the admin's header draws its
+        own actions; a copy that is not there has nothing to delete.
+        """
+        actions: list[ft.Control] = [
+            ActionIcon(
+                icon=ft.Icons.EDIT,
+                tooltip=_("collections.edit"),
+                hover_color=ft.Colors.ORANGE_700,
+                on_click=self._start_edit,
+            )
+        ]
+        if self._item is not None:
+            actions.append(
+                ActionIcon(
+                    icon=ft.Icons.DELETE,
+                    tooltip=_("collections.remove"),
+                    hover_color=ft.Colors.RED_700,
+                    on_click=self._confirm_remove,
+                )
+            )
+
         return ft.Row(
             controls=[
                 ft.Text(
@@ -383,15 +410,16 @@ class CollectionStampCard(ft.Container):
                     color=GREY_700,
                 ),
                 ft.Container(expand=True),
-                LinkButton(_("collections.edit"), on_click=self._start_edit),
+                *actions,
             ],
+            spacing=4,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
     def __copy_form(self) -> ft.Control:
         """The six fields, in the same three-column grid, and the actions."""
         self._condition = self.__condition_field()
-        self._quantity = ft.TextField(
+        self._quantity = TextField(
             label=_("collections.quantity"),
             value=str(self._item.get("quantity") or "")
             if self._item and self._item.get("quantity") is not None
@@ -399,7 +427,7 @@ class CollectionStampCard(ft.Container):
             expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
         )
-        self._paid = ft.TextField(
+        self._paid = TextField(
             label=_("collections.paid"),
             value=self._item.get("price_paid") or "" if self._item else "",
             expand=True,
@@ -411,7 +439,7 @@ class CollectionStampCard(ft.Container):
             expand=True,
         )
         self._location = self.__location_field()
-        self._note = ft.TextField(
+        self._note = TextField(
             label=_("collections.note"),
             value=self._item.get("note") or "" if self._item else "",
             expand=True,
@@ -429,29 +457,18 @@ class CollectionStampCard(ft.Container):
             else None
         )
 
-        actions = []
-        if self._item is not None:
-            actions.append(
-                AlertButton(
-                    text=_("collections.remove"),
-                    on_click=self._confirm_remove,
-                    expand=False,
-                )
-            )
-        actions.extend(
-            [
-                DefaultButton(
-                    text=_("collections.cancel"),
-                    on_click=self._cancel,
-                    expand=False,
-                ),
-                PrimaryButton(
-                    text=_("collections.save"),
-                    on_click=self._save,
-                    expand=False,
-                ),
-            ]
-        )
+        actions = [
+            DefaultButton(
+                text=_("collections.cancel"),
+                on_click=self._cancel,
+                expand=False,
+            ),
+            PrimaryButton(
+                text=_("collections.save"),
+                on_click=self._save,
+                expand=False,
+            ),
+        ]
 
         return ft.Column(
             controls=[
@@ -476,10 +493,15 @@ class CollectionStampCard(ft.Container):
             tight=True,
         )
 
-    def __condition_field(self) -> ft.Dropdown:
-        """The condition select, with the values the API returned."""
+    def __condition_field(self) -> Dropdown:
+        """The condition select, with the values the API returned.
+
+        The house dropdown, so it wears the same underline as the fields beside
+        it. It is disabled when the API returned no conditions: a copy cannot be
+        given a value that does not exist, and the card says so above the form.
+        """
         current = (self._item or {}).get("condition_type") or {}
-        return ft.Dropdown(
+        return Dropdown(
             label=_("collections.condition"),
             expand=True,
             value=str(current["id"]) if current.get("id") else None,
@@ -492,10 +514,10 @@ class CollectionStampCard(ft.Container):
             disabled=not self._condition_types,
         )
 
-    def __location_field(self) -> ft.Dropdown:
+    def __location_field(self) -> Dropdown:
         """The location select, with the values the API returned."""
         current = (self._item or {}).get("location") or {}
-        return ft.Dropdown(
+        return Dropdown(
             label=_("collections.location"),
             expand=True,
             value=str(current["id"]) if current.get("id") else None,

@@ -268,7 +268,7 @@ class CollectionCard(ft.Container):
             items.append(
                 ft.PopupMenuItem(
                     content=ft.Text(_("collections.delete_title")),
-                    icon=ft.Icons.DELETE_OUTLINE,
+                    icon=ft.Icons.DELETE,
                     on_click=lambda event: self._on_delete(self._data),
                 )
             )

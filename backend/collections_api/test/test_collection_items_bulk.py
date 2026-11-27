@@ -158,7 +158,8 @@ class TestScopes:
         assert item.price_paid is None
         assert item.acquisition_date is None
         assert item.note is None
-        assert item.quantity is None
+        # A copy is at least one stamp: the row starts at 1, not at null.
+        assert item.quantity == 1
 
 
 class TestRefusals:

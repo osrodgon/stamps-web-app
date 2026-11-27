@@ -1002,8 +1002,50 @@ when A is merged into `development`.
         `add_issue`, `add_year`. The three adds share a private `__add` (one endpoint, three
         bodies) and the URL base is the existing `URLs.Backend.collections`. 11 tests; frontend
         suite **812**.
-  - [ ] C4 — `AddStampsDialog` and its two entry points + tests, L
+  - [x] C4 — `AddStampsDialog` and its two entry points (2026-11-27, L):
+        `components/form/dialogs/add_stamps_dialog.py` — search with the screen's two filters,
+        one row per series (`2 of 5 in this collection`) with the chevron that unfolds it and
+        `Add the series` / `Add the missing N` / `Already complete`, the stamps as mini cards
+        with `Add` or `In this collection`, the year action in the footer with its count, the
+        confirmation past twenty stamps, and the counts in the footer after writing. The
+        footer is a Row **inside the content**: `AlertDialog.actions` wraps and stacks the
+        buttons. The dialog asks the year with `pageSize=0` to know its count. The page gains
+        `Add stamps` at the end of the filter card and `Add your first stamp` in the empty
+        state. 21 tests; frontend suite **832**; four screenshots against the mockup.
+  - [x] C4c — **the four things the second look found** (2026-11-27, M): a copy is created
+        with **`quantity = 1`** (model default, so both the single add and the bulk one start
+        there); the detail card's colour reads the payload's real key (`colors`, not `color`)
+        and the dialog's stamps too; the edit action is the app's **pencil** and `Add my copy`
+        is a button with an **add icon**; and the detail walks the collection's list with
+        **‹ n / total ›** arrows, from a `neighbours` block the detail computes with the list's
+        own order (one extra query, `null` for the catalogue reader). 8 backend + 4 frontend
+        tests; suites **1.849** / **845**.
+  - [x] C4d — **the four things the third look found** (2026-11-27, M): the collection screens
+        gained a **right gutter** (`PAGE_SCROLL_GUTTER` = 12) so the floating scrollbar stops
+        painting over the cards; a series can be **removed from the collection** with
+        `DELETE /collections/<pk>/issues/<issue_pk>/` (deletes the copies, never the catalogue,
+        answers how many went, 404/403 as usual) and a bin beside the read-only badge; the
+        `Remove` button left the copy form and became a **bin next to the pencil** in the
+        card's caption; and both use **`ActionIcon`**, the admin's icon (grey → orange for
+        edit, grey → red for delete, edit first) extracted from `IssueHeaderSection` so the
+        two screens share one implementation. 5 backend + 6 frontend tests; suites
+        **1.869** / **851**. **Fixed at the first look**: padding the container did not move
+        the bar (`Container`'s padding is *outside* the scrollable), so the three scrollable
+        areas became **`ListView` with a right padding** (`PAGE_SCROLL_GUTTER`): the children
+        end where the bar floats, as the probe in `/tmp` showed. Pinned in both pages;
+        frontend suite **853**.
   - [ ] C5 — close-out: empty state, counts, keys, browser pass, suites, S
+  - [x] C4b — **what the first use of the dialog found** (2026-11-27, S): the row actions
+        (`Add the series`, the chevron, the stamp's `Add` and the confirmation) were wired to
+        `lambda` handlers that **returned a coroutine Flet never awaited**, so they did nothing;
+        they now schedule it with `page.run_task`. The whole year is reachable from **one**
+        year box (`From 1852` lists from 1852 on and adds 1852 whole), and its count is asked in
+        its own request because the filtered page of twenty cannot answer it. The dialog now
+        injects `issue_year` into the stamps of the catalogue detail (the payload has no year
+        and the picture is `<year>/<code>`), the detail's plate went from 96 to **128**, the
+        copy form uses the house `TextField`/`Dropdown`, and the unavailable-references message
+        no longer says "could not be loaded" when the tables are simply empty. 5 tests;
+        frontend suite **841**.
 - [ ] **B3b-2 — what the series screen still owes its mockup** (deferred 2026-11-27 by
       decision, revisit with real data): the mockup's **numbered paginator** (`TablePagination`
       is the house one, only dressed as a card today), the `h1` at the mockup's **26px**

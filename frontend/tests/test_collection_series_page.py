@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import flet as ft
 import pytest
 
+from components.buttons.primary_button import PrimaryButton
+from components.constants import PAGE_SCROLL_GUTTER
 from components.form.dropdown import Dropdown as HouseDropdown
 from core.translations import _
 from pages.collection.collection_series_page import CollectionSeriesPage
@@ -65,6 +67,13 @@ class TestConstruction(PageTest):
         assert len(view.header.left_area.controls) == 2
         assert view.header.right_area.controls == []
 
+    def test_the_content_scrolls_in_a_list_with_a_gutter(self, view):
+        """A list, not a column: its right padding is where the scrollbar floats."""
+        content = view.content_area.content
+
+        assert isinstance(content, ft.ListView)
+        assert content.padding == ft.Padding.only(right=PAGE_SCROLL_GUTTER)
+
     def test_the_paginator_offers_15_30_and_50(self, view):
         assert [option.key for option in view._pagination._dropdown.options] == [
             "15",
@@ -82,15 +91,18 @@ class TestFilters(PageTest):
 
         assert card.content.wrap is not True
 
-    def test_the_card_carries_the_four_filters(self, view):
+    def test_the_card_carries_the_four_filters_and_the_add_action(self, view):
         card = view._build_filters()
+        controls = card.content.controls
 
-        assert card.content.controls == [
+        assert controls[:4] == [
             view._name_field,
             view._from_year,
             view._to_year,
             view._sort,
         ]
+        assert isinstance(controls[-1], PrimaryButton)
+        assert controls[-1].on_click == view._open_add_dialog
 
     def test_the_two_year_boxes_are_numbers(self, view):
         assert view._from_year.keyboard_type == ft.KeyboardType.NUMBER
@@ -130,6 +142,26 @@ class TestBreadcrumb(PageTest):
 
     def test_the_name_is_bold(self, view):
         assert view._crumb_name.weight == ft.FontWeight.BOLD
+
+
+class TestEmptyState(PageTest):
+    """An empty collection offers the only door there is."""
+
+    def test_it_carries_the_action_that_adds_the_first_stamp(self, view):
+        assert view._empty_action.on_click == view._open_add_dialog
+        assert view._empty_action in view._empty_box.controls
+
+    def test_an_empty_page_shows_it(self, view, mocker):
+        mocker.patch(
+            "pages.collection.collection_series_page._",
+            side_effect=lambda key, **values: key,
+        )
+        view._pagination.update_state = MagicMock()
+
+        view._render([])
+
+        assert view._empty_box.visible is True
+        assert view._rows_box.visible is False
 
 
 class TestSummary(PageTest):

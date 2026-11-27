@@ -104,6 +104,39 @@ class CollectionIssuesService:
             },
         }
 
+    def neighbours(
+        self, collection: Collection, issue_id: int
+    ) -> Optional[dict]:
+        """Where a series sits in the collection's list, and its two neighbours.
+
+        The order is the list's own (date, then id), so the arrows of the detail
+        walk exactly what the screen shows. One query: the ids, without the
+        figures, which the detail does not need.
+
+        Args:
+            collection: the collection, already checked to belong to the caller.
+            issue_id: the series whose neighbours are asked.
+
+        Returns:
+            `{"position", "total", "previous", "next"}`, or None when the
+            collection does not hold that series.
+        """
+        ids = list(
+            self.__ordered(
+                self.__queryset(collection), "date", "asc"
+            ).values_list("pk", flat=True)
+        )
+        if issue_id not in ids:
+            return None
+
+        index = ids.index(issue_id)
+        return {
+            "position": index + 1,
+            "total": len(ids),
+            "previous": ids[index - 1] if index > 0 else None,
+            "next": ids[index + 1] if index + 1 < len(ids) else None,
+        }
+
     # ------------------------------------------------------------------
     # Query
     # ------------------------------------------------------------------

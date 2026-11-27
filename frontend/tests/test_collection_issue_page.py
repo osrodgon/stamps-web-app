@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import flet as ft
 import pytest
 
+from components.constants import PAGE_SCROLL_GUTTER
 from core.translations import _
 from pages.collection.collection_issue_page import CollectionIssuePage
 
@@ -46,7 +47,7 @@ class Details:
             "edifil_code": "1",
             "fesofi_code": "0001" if with_item else "0002",
             "face_value": "6 cuartos",
-            "color": ["Negro"],
+            "colors": ["Negro"],
             "market_value_mnh": "300.00",
             "market_value_used": "30.00",
             "item": {
@@ -63,11 +64,12 @@ class Details:
         }
 
     @classmethod
-    def payload(cls) -> dict:
+    def payload(cls, neighbours: dict = None) -> dict:
         return {
             "issue": cls.issue(),
             "stamps": [cls.stamp(True), cls.stamp(False)],
             "summary": {"owned": 1, "total": 2, "paid": "120.00"},
+            "neighbours": neighbours,
         }
 
 
@@ -101,6 +103,13 @@ class TestConstruction(PageTest):
     def test_it_builds_for_the_series(self, view):
         assert view._collection_id == 7
         assert view._issue_id == 3
+
+    def test_the_content_scrolls_in_a_list_with_a_gutter(self, view):
+        """A list, not a column: its right padding is where the scrollbar floats."""
+        content = view.content_area.content
+
+        assert isinstance(content, ft.ListView)
+        assert content.padding == ft.Padding.only(right=PAGE_SCROLL_GUTTER)
 
     def test_the_header_has_no_separator(self, view):
         assert len(view.header.left_area.controls) == 2
@@ -177,6 +186,99 @@ class TestLayout(PageTest):
         assert all(
             card.col[ft.ResponsiveRowBreakpoint.LG] == 6 for card in cards.controls
         )
+
+
+class TestNeighbours(PageTest):
+    """The arrows walk the collection's list, in its order."""
+
+    def test_the_position_and_both_arrows(self, view):
+        view._render(
+            Details.payload(
+                {"position": 2, "total": 5, "previous": 1, "next": 3}
+            )
+        )
+
+        assert view._position_text.value == "2 / 5"
+        assert view._previous_button.disabled is False
+        assert view._next_button.disabled is False
+
+    def test_the_first_series_has_no_previous(self, view):
+        view._render(
+            Details.payload(
+                {"position": 1, "total": 5, "previous": None, "next": 2}
+            )
+        )
+
+        assert view._previous_button.disabled is True
+        assert view._next_button.disabled is False
+
+    def test_without_neighbours_the_arrows_are_hidden(self, view):
+        """The catalogue reader has no list behind it."""
+        view._render(Details.payload())
+
+        assert view._previous_button.visible is False
+        assert view._next_button.visible is False
+
+    def test_an_arrow_opens_the_neighbour(self, view, page):
+        view._render(
+            Details.payload(
+                {"position": 2, "total": 5, "previous": 1, "next": 3}
+            )
+        )
+
+        view._go_next(None)
+
+        assert page.run_task.called
+        assert page.run_task.call_args.args[0].__name__.endswith("__push_series")
+        assert page.run_task.call_args.args[1] == 3
+
+
+class TestRemoveSeries(PageTest):
+    """The bin beside the badge takes the series out of the collection."""
+
+    def test_the_bin_is_in_the_badge_row(self, view):
+        icons = [
+            control
+            for control in self.walk(view._build_badge_row())
+            if isinstance(control, ft.IconButton)
+        ]
+
+        assert icons
+        assert icons[0].tooltip == _("collections.remove_series")
+
+    async def test_it_removes_and_goes_back_to_the_list(self, view, page):
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"data": {"deleted": 3}}
+        view._item_service.remove_issue = AsyncMock(return_value=response)
+        view.show_notification = AsyncMock()
+        view._close_dialog = MagicMock()
+
+        await view._remove_series(None)
+
+        view._item_service.remove_issue.assert_awaited_once_with(7, 3)
+        page.push_route.assert_awaited_once_with("/collections/7")
+
+    async def test_a_refusal_stays_and_says_so(self, view, page):
+        view._item_service.remove_issue = AsyncMock(return_value=None)
+        view.show_notification = AsyncMock()
+        view._close_dialog = MagicMock()
+
+        await view._remove_series(None)
+
+        page.push_route.assert_not_awaited()
+        view.show_notification.assert_awaited()
+
+    @staticmethod
+    def walk(control) -> list:
+        """Every control of the tree."""
+        found: list = [control]
+        for child in (getattr(control, "controls", None) or []):
+            found.extend(TestRemoveSeries.walk(child))
+        content = getattr(control, "content", None)
+        if content is not None and not isinstance(content, (str, int, float)):
+            found.extend(TestRemoveSeries.walk(content))
+        return found
 
 
 class TestWrites(PageTest):

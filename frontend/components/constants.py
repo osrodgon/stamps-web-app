@@ -32,6 +32,8 @@ HEADER_HEIGHT: int = 80
 DRAWER_WIDTH: int = 300
 DRAWER_ANIMATION_DURATION: int = 300
 STANDARD_PADDING: int = 10
+#: Room on the right so the floating scrollbar does not paint over the cards.
+PAGE_SCROLL_GUTTER: int = 16
 PAGE_PADDING: int = 24
 TABLE_HEADER_HEIGHT: int = 50
 CHEVRON_CONTAINER_SIZE: int = 24

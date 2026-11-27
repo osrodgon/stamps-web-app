@@ -751,7 +751,7 @@ time is not how a collector fills one: **one stamp**, **one series**, or **one w
 | C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | **done 2026-11-27** |
 | C2 | Catalogue search and catalogue detail endpoints + tests | — | M | **done 2026-11-27** |
 | C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | **done 2026-11-27** |
-| C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | pending |
+| C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | **done 2026-11-27** |
 | C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | pending |
 
 **C0 — Mockup — DONE 2026-11-27.** `memory-bank/mockups/add-stamps-dialog.html`, in the same
@@ -835,9 +835,10 @@ fails.
   body of each scope, a refusal coming back untouched, `None` on a network error, and the
   module importing no Flet.
 
-**C4 — The dialog.** `frontend/components/collection/add_stamps_dialog.py`, built on the
-same pieces as the A5 dialogs (`DefaultButton`/`PrimaryButton`, the house `TextField`, the
-house `Dropdown`): the two filters debounced, the results list, the expandable stamps,
+**C4 — The dialog — DONE 2026-11-27.** `frontend/components/form/dialogs/add_stamps_dialog.py`
+(not `components/collection/`: the three dialogs of the app live in one folder and this is a
+dialog), built on the same pieces as the A5 ones (`DefaultButton`/`PrimaryButton`, the house
+`TextField`): the two filters debounced, the results list, the expandable stamps,
 `Add the series`, `Add`, the year footer, a confirmation past twenty stamps, the API's
 counts in a notification, and a reload of the screen. Opening it: an `Add stamps` button in
 the series screen next to the filters, and the same action in the empty state, which today
@@ -845,6 +846,30 @@ only says "This collection has no series yet". Locale keys (neutral, no plurals)
 over for en/es: title, the two filters, `Add the series`, `Show its stamps`, `Add`,
 `Add every stamp of {year} ({count})`, the confirmation question, `{created} added`,
 `{skipped} already there`, `too many` and the retry text.
+
+*What the step found while being built and looking at it:*
+
+- `AlertDialog.actions` is a **wrapping Row**: an expanding spacer there stacks the buttons
+  on two lines (the third time this family of traps appears, after `Row(wrap=True)` and
+  `BASELINE`). The footer is a `Row` inside the content, with the spacer, and `actions` is
+  left empty.
+- The dialog needs an explicit `bgcolor`: Material's default surface is tinted, and over the
+  scrim it read as grey instead of the white card of the mockup.
+- The results list is bounded (360px, scrolling): twenty series pushed the actions out of the
+  window.
+- The year action needs the number of stamps of that year, and no endpoint returns it: when
+  both boxes hold the same year the dialog asks that year with `pageSize=0` and sums
+  `total_stamps`. One request, and the number in the button and in the confirmation is the
+  real one.
+- After a write the dialog stays open, says `12 added · 3 already there` in its footer and
+  calls `on_added`, so the screen behind reloads without closing what is being used.
+- The page gains the `Add stamps` button at the end of the filter card and the same action in
+  the empty state (`Add your first stamp`): an empty collection finally has a door.
+
+18 dialog tests (search, the two year boxes, the three scopes, the confirmation past twenty,
+the counts, a refusal, a 403, the unfold, and a pin against a wrapping Row with an expand
+child) and 3 page tests; frontend suite **832**. Screenshots of the dialog at 1493x900 in its
+search, unfolded, whole-year and confirmation states, next to the mockup.
 
 **C5 — Close-out.** The empty state gains its button and its explanation; after a clean add
 the screen reloads to the first page with the new series visible; the notification says both

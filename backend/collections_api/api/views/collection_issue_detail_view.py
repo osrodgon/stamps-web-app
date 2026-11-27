@@ -13,6 +13,7 @@ from drf_spectacular.utils import extend_schema
 
 from collections_api.api.serializers.collection_issue_detail_serializer import (
     CollectionIssueDetailSerializer,
+    CollectionIssueRemovalSerializer,
 )
 from collections_api.models import Collection
 from collections_api.services.collection_issue_detail_service import (
@@ -60,6 +61,75 @@ class CollectionIssueDetailView(Logger, APIView):
             ),
         },
     )
+    @extend_schema(
+        operation_id="remove_collection_issue",
+        tags=["Collection Management"],
+        summary="Remove a series from a collection",
+        description="Deletes the caller's copies of one series from their collection. "
+        "The series and its stamps stay in the catalogue: this removes what the "
+        "collection holds, and nothing else.",
+        responses={
+            status.HTTP_200_OK: standardized_response(
+                CollectionIssueRemovalSerializer,
+                name="CollectionIssueRemoved",
+                description="The copies of the series were removed.",
+            ),
+            status.HTTP_403_FORBIDDEN: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionIssueRemoveForbidden",
+                success=False,
+                description="Permission denied.",
+            ),
+            status.HTTP_404_NOT_FOUND: standardized_response(
+                GenericResponseSerializer,
+                name="CollectionIssueRemoveNotFound",
+                success=False,
+                description="The collection is not the caller's, or it holds nothing "
+                "of that series.",
+            ),
+        },
+    )
+    def delete(
+        self, request: Request, pk: int, issue_pk: int, *args, **kwargs
+    ) -> Response:
+        """Remove the caller's copies of one series.
+
+        Args:
+            request: the incoming request, with the user's JWT.
+            pk: the collection's id.
+            issue_pk: the series whose copies are removed.
+
+        Returns:
+            200 with how many copies went, or a 404 when there were none.
+        """
+        self.log.debug(Messages.Delete.delete_one("collection issue", issue_pk))
+        user = CurrentUser(request).get()
+
+        try:
+            collection = Collection.objects.get(pk=pk, user=user)
+        except Collection.DoesNotExist:
+            message = Messages.Get.not_found("collection", pk)
+            self.log.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        deleted = CollectionIssueDetailService().remove(collection, issue_pk)
+        if deleted is None:
+            message = Messages.Get.not_found("issue", issue_pk)
+            self.log.warning(message)
+            return Response(
+                data=GenericResponseSerializer(GenericResponse(message)).data,
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        self.log.info(Messages.Delete.deleted_one("collection issue", issue_pk))
+        return Response(
+            data=CollectionIssueRemovalSerializer({"deleted": deleted}).data,
+            status=status.HTTP_200_OK,
+        )
+
     def get(
         self, request: Request, pk: int, issue_pk: int, *args, **kwargs
     ) -> Response:

@@ -64,9 +64,13 @@ class CollectionItem(models.Model):
         blank=True
     )
     
+    #: A copy is at least one stamp: the row starts at 1 and the user changes it
+    #: if they hold more. Existing rows keep what they had (the column is still
+    #: nullable, because the table predates this default).
     quantity = models.IntegerField(
         null=True,
-        blank=True
+        blank=True,
+        default=1
     )
     
     class Meta:
