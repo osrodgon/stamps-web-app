@@ -208,11 +208,13 @@ desplegada, año entero y confirmación) y un conmutador para verlos; comprobado
 1493x900 con las fotos reales. **C1 hecho (2026-11-27)**: `POST
 /api/v1/collections/<pk>/items/bulk/` con los tres alcances, un tope de 500 y
 `created`/`skipped`/`total` (18 tests, suite del backend en **1.842**). Lo siguiente es
-**C2**, la búsqueda y el detalle de catálogo.
+**C2 hecho (2026-11-27)**: `catalogue/issues/` y `catalogue/issues/<pk>/`, que son B1 y B2
+con `owned_only=False` (una implementación, no dos). Lo siguiente es **C3**, el servicio del
+frontend.
 
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **C0 y C1 ya están**; seguir por **C2** (la búsqueda y el detalle de
-catálogo), que es lo que necesita el diálogo.
+devcontainer. **C0, C1 y C2 ya están**; seguir por **C3** (`CatalogueService` en el
+frontend).
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que

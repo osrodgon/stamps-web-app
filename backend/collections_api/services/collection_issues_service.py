@@ -52,6 +52,7 @@ class CollectionIssuesService:
         year: str = "",
         sort_by: str = "date",
         order: str = "asc",
+        owned_only: bool = True,
     ) -> Dict[str, object]:
         """Return one page of the series of `collection`.
 
@@ -63,6 +64,10 @@ class CollectionIssuesService:
             year: a year or a `start-end` range.
             sort_by: `date` or `name`.
             order: `asc` or `desc`.
+            owned_only: `True` for the series the collection holds something of;
+                `False` for the whole catalogue, which is what the dialog that
+                adds stamps reads (plan step C2). A series with no stamps is
+                never a row: it would add nothing.
 
         Returns:
             `{"issues": [...], "pagination": {...}}`, the shape the serializer and
@@ -73,7 +78,7 @@ class CollectionIssuesService:
         page_size = max(0, page_size)
 
         issues = self.__ordered(
-            self.__filtered(self.__queryset(collection), name, year),
+            self.__filtered(self.__queryset(collection, owned_only), name, year),
             sort_by,
             order,
         )
@@ -104,8 +109,13 @@ class CollectionIssuesService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def __queryset(collection: Collection) -> QuerySet:
-        """The series of the collection, with its three figures and its cover."""
+    def __queryset(collection: Collection, owned_only: bool = True) -> QuerySet:
+        """The series, with its figures and its cover.
+
+        `owned_only` is the only thing that changes between the collection's screen
+        and the catalogue the dialog browses: the scope. The figures are the same
+        for both, so a row means the same in the two screens.
+        """
         owned = CollectionItem.objects.filter(
             collection=collection, stamp__issue=OuterRef("pk")
         )
@@ -132,9 +142,8 @@ class CollectionIssuesService:
             .values("fesofi_code")[:1]
         )
 
-        return (
-            Issue.objects.filter(Exists(owned))
-            .select_related("year", "country", "stamp_type")
+        issues = (
+            Issue.objects.select_related("year", "country", "stamp_type")
             .annotate(
                 total_stamps=Count("stamps", distinct=True),
                 catalogue_mnh=Sum("stamps__market_value_mnh"),
@@ -148,6 +157,9 @@ class CollectionIssuesService:
                 cover_code=Subquery(cover, output_field=CharField()),
             )
         )
+        if owned_only:
+            return issues.filter(Exists(owned))
+        return issues.filter(total_stamps__gt=0)
 
     @staticmethod
     def __filtered(issues: QuerySet, name: str, year: str) -> QuerySet:

@@ -115,6 +115,8 @@ USER_VIEWS = [
     "CollectionsByIdView",
     "CollectionIssuesView",
     "CollectionIssueDetailView",
+    "CollectionCatalogueIssuesView",
+    "CollectionCatalogueIssueDetailView",
     "CollectionIssueItemsView",
     "CollectionItemsBulkView",
     "CollectionItemsView",

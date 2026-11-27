@@ -23,6 +23,7 @@ from common.api.serializers.generic_response import (
     GenericResponseSerializer,
 )
 from common.core.current_user import CurrentUser
+from common.core.query import Query
 from common.core.schemas import standardized_response
 from common.log.logger import Logger
 
@@ -129,8 +130,8 @@ class CollectionIssuesView(Logger, APIView):
 
         page = CollectionIssuesService().page(
             collection,
-            page=self.__int(request.query_params.get("page"), 1),
-            page_size=self.__int(request.query_params.get("pageSize"), 15),
+            page=Query.int_param(request.query_params.get("page"), 1),
+            page_size=Query.int_param(request.query_params.get("pageSize"), 15),
             name=(request.query_params.get("name") or "").strip(),
             year=(request.query_params.get("year") or "").strip(),
             sort_by=request.query_params.get("sortBy") or "date",
@@ -141,11 +142,3 @@ class CollectionIssuesView(Logger, APIView):
             data=CollectionIssuePageSerializer(page).data,
             status=status.HTTP_200_OK,
         )
-
-    @staticmethod
-    def __int(value, default: int) -> int:
-        """Read an integer query parameter, or the default when it is not one."""
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return default

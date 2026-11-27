@@ -1,5 +1,11 @@
 from django.urls import path
 
+from collections_api.api.views.collection_catalogue_issue_detail_view import (
+    CollectionCatalogueIssueDetailView,
+)
+from collections_api.api.views.collection_catalogue_issues_view import (
+    CollectionCatalogueIssuesView,
+)
 from collections_api.api.views.collection_issue_detail_view import (
     CollectionIssueDetailView,
 )
@@ -27,6 +33,16 @@ urlpatterns = [
         base_url + '<int:pk>/issues/<int:issue_pk>/',
         CollectionIssueDetailView.as_view(),
         name="collection_issue_detail",
+    ),
+    path(
+        base_url + '<int:pk>/catalogue/issues/',
+        CollectionCatalogueIssuesView.as_view(),
+        name="collection_catalogue",
+    ),
+    path(
+        base_url + '<int:pk>/catalogue/issues/<int:issue_pk>/',
+        CollectionCatalogueIssueDetailView.as_view(),
+        name="collection_catalogue_issue_detail",
     ),
     path(
         base_url + '<int:pk>/items/',
