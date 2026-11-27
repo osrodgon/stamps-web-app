@@ -194,3 +194,20 @@ class TestReferences(ServiceTest):
             await service.get_locations()
 
         assert self.call(mock_request)["url"] == URLs.Backend.locations
+
+
+class TestRemoveIssue(ServiceTest):
+    """Removing a series deletes the copies, so it is a DELETE on the series' URL."""
+
+    async def test_it_deletes_the_collection_issue_url(self, service, response):
+        with patch.object(
+            service, "_make_request", new_callable=AsyncMock, return_value=response
+        ) as mock_request:
+            result = await service.remove_issue(7, 42)
+
+        call = self.call(mock_request)
+
+        assert result is response
+        assert call["request_type"] == service.DELETE
+        assert call["url"] == f"{URLs.Backend.collections}7/issues/42/"
+        assert call["headers"] == {"Authorization": f"JWT {TOKEN}"}

@@ -5,6 +5,7 @@ from typing import Callable, Optional
 
 import flet as ft
 
+from components.buttons.action_icon import ActionIcon
 from components.colors import GREY_700
 from components.form.date_picker import DatePickerField
 from core.translations import _
@@ -90,26 +91,14 @@ class IssueHeaderSection(ft.Container):
         self.content = self._build_content()
 
     def _new_icon(self, icon: str, tooltip: str, hover_color: str, visible: bool, on_click) -> ft.IconButton:
-        s = ISSUE_ACTION_ICON_SIZE
-        return ft.IconButton(
+        """One action icon, with the shared look the collection cards use too."""
+        return ActionIcon(
             icon=icon,
-            icon_size=s,
-            splash_radius=1,
-            splash_color=ft.Colors.TRANSPARENT,
-            width=s,
-            height=s,
-            padding=0,
-            hover_color=ft.Colors.TRANSPARENT,
-            visible=visible,
-            style=ft.ButtonStyle(
-                color={
-                    ft.ControlState.DEFAULT: GREY_700,
-                    ft.ControlState.HOVERED: hover_color,
-                },
-                overlay_color=ft.Colors.TRANSPARENT,
-            ),
             tooltip=tooltip,
+            hover_color=hover_color,
             on_click=on_click,
+            size=ISSUE_ACTION_ICON_SIZE,
+            visible=visible,
         )
 
     def _build_name_control(self) -> ft.Container:

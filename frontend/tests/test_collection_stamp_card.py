@@ -11,12 +11,25 @@ import flet as ft
 import pytest
 
 from components.collection.collection_stamp_card import CollectionStampCard
+from components.form.dropdown import Dropdown as HouseDropdown
+from components.form.text_field import TextField as HouseTextField
 from core.translations import _
 from settings import NO_STAMP
 
 
 class Texts:
     """Every visible string of a control tree."""
+
+    @classmethod
+    def walk(cls, control) -> list:
+        """Every control of the tree, containers included."""
+        found: list = [control]
+        for child in (getattr(control, "controls", None) or []):
+            found.extend(cls.walk(child))
+        content = getattr(control, "content", None)
+        if content is not None and not isinstance(content, (str, int, float)):
+            found.extend(cls.walk(content))
+        return found
 
     @classmethod
     def of(cls, control) -> list[str]:
@@ -55,7 +68,7 @@ class Cards:
             "edifil_code": "1",
             "fesofi_code": "0001",
             "face_value": "6 cuartos",
-            "color": ["Negro"],
+            "colors": ["Negro"],
             "market_value_mnh": "300.00",
             "market_value_used": "30.00",
             "issue_year": "1850",
@@ -134,6 +147,10 @@ class TestCatalogue:
         assert "6 cuartos" in texts
         assert "Negro" in texts
 
+    def test_the_picture_is_big_enough_to_read(self):
+        """The mockup's 96 read small in a two-column card; it is 128 now."""
+        assert CollectionStampCard.PLATE_SIZE == 128
+
     def test_it_shows_both_values_as_pills(self):
         card = Cards.build(Cards.ITEM)
 
@@ -141,6 +158,34 @@ class TestCatalogue:
 
         assert any("Mint" in text and "300" in text for text in texts)
         assert any("Used" in text and "30" in text for text in texts)
+
+
+class TestFormLook:
+    """The form uses the house controls, like the rest of the collection screens."""
+
+    def test_the_text_fields_are_the_house_ones(self):
+        card = Cards.build(Cards.ITEM)
+        card._start_edit(None)
+
+        assert isinstance(card._quantity, HouseTextField)
+        assert isinstance(card._paid, HouseTextField)
+        assert isinstance(card._note, HouseTextField)
+
+    def test_the_selects_are_the_house_dropdowns(self):
+        card = Cards.build(Cards.ITEM)
+        card._start_edit(None)
+
+        assert isinstance(card._condition, HouseDropdown)
+        assert isinstance(card._location, HouseDropdown)
+
+    def test_a_select_without_reference_rows_is_disabled(self):
+        card = CollectionStampCard(
+            Cards.page(), Cards.stamp(Cards.ITEM), "en", condition_types=[], locations=[]
+        )
+        card._start_edit(None)
+
+        assert card._condition.disabled is True
+        assert card._location.disabled is True
 
 
 class TestCopyGrid:
@@ -160,10 +205,43 @@ class TestCopyGrid:
         assert len(rows) == 2
         assert all(len(row.controls) == 3 for row in rows)
 
-    def test_it_offers_the_edit_link(self):
+    def test_it_offers_the_pencil_then_the_bin(self):
+        """Both icons, the app's look, edit before delete."""
         card = Cards.build(Cards.ITEM)
 
-        assert _("collections.edit") in Texts.of(card._copy_box)
+        actions = [
+            control
+            for control in Texts.walk(card._copy_box)
+            if isinstance(control, ft.IconButton)
+        ]
+
+        assert [action.icon for action in actions] == [
+            ft.Icons.EDIT,
+            ft.Icons.DELETE,
+        ]
+        assert actions[0].tooltip == _("collections.edit")
+        assert actions[1].tooltip == _("collections.remove")
+
+    def test_a_stamp_without_a_copy_offers_no_actions(self):
+        """Nothing to edit and nothing to delete: only the button to add it."""
+        card = Cards.build()
+
+        actions = [
+            control
+            for control in Texts.walk(card._copy_box)
+            if isinstance(control, ft.IconButton)
+        ]
+
+        assert actions == []
+
+    def test_the_form_does_not_carry_the_remove_button(self):
+        """Removing is the bin beside the pencil, not a button under the fields."""
+        card = Cards.build(Cards.ITEM)
+        card._start_edit(None)
+
+        texts = " · ".join(Texts.of(card._copy_box))
+
+        assert _("collections.remove") not in texts
 
 
 class TestLayout:

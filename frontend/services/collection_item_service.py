@@ -24,6 +24,7 @@ class CollectionItemService(BaseService):
     Public methods:
         get_series:          One page of the series of the collection.
         get_issue:           One series with its stamps and the caller's copies.
+        remove_issue:        Remove the caller's copies of one series.
         add_item:            Add the caller's copy of a stamp.
         update_item:         Save the six fields of "Your copy".
         delete_item:         Remove the caller's copy.
@@ -106,6 +107,30 @@ class CollectionItemService(BaseService):
         )
         return await self._make_request(
             request_type=self.GET,
+            url=url,
+            headers=self._auth_headers,
+        )
+
+    async def remove_issue(
+        self, collection_id: int, issue_id: int
+    ) -> requests.Response | None:
+        """Remove the caller's copies of one series from the collection.
+
+        The catalogue keeps the series: this deletes what the collection holds.
+
+        Args:
+            collection_id: the collection the copies leave.
+            issue_id: the series whose copies are removed.
+
+        Returns:
+            Raw requests.Response with how many copies went, or None on a network
+            error.
+        """
+        url = (
+            f"{URLs.Backend.collections}{collection_id}/issues/{issue_id}/"
+        )
+        return await self._make_request(
+            request_type=self.DELETE,
             url=url,
             headers=self._auth_headers,
         )

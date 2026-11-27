@@ -70,9 +70,42 @@ class CollectionIssueFiguresSerializer(serializers.Serializer):
     )
 
 
+class CollectionIssueRemovalSerializer(serializers.Serializer):
+    """What removing a series from a collection answers."""
+
+    deleted = serializers.IntegerField(
+        help_text="How many copies of the series were removed from the collection."
+    )
+
+
+class CollectionNeighboursSerializer(serializers.Serializer):
+    """Where the series sits in the collection's list, and its two neighbours."""
+
+    position = serializers.IntegerField(
+        help_text="1-based position of the series in the collection's list."
+    )
+    total = serializers.IntegerField(
+        help_text="How many series the collection holds."
+    )
+    previous = serializers.IntegerField(
+        allow_null=True,
+        help_text="The series before this one in the list, or null at the top.",
+    )
+    next = serializers.IntegerField(
+        allow_null=True,
+        help_text="The series after this one in the list, or null at the end.",
+    )
+
+
 class CollectionIssueDetailSerializer(serializers.Serializer):
     """The series, its stamps with the caller's copies and the summary."""
 
     issue = IssueResponseSerializer()
     stamps = CollectionStampSerializer(many=True)
     summary = CollectionIssueFiguresSerializer()
+    neighbours = CollectionNeighboursSerializer(
+        allow_null=True,
+        required=False,
+        help_text="The series' place in the collection's list; null for the "
+        "catalogue reader, which has no list behind it.",
+    )

@@ -30,7 +30,9 @@ from components.constants import (
     FONT_SIZE_XS,
     HEADER_HEIGHT,
     PAGE_PADDING,
+    PAGE_SCROLL_GUTTER,
 )
+from components.form.dialogs.add_stamps_dialog import AddStampsDialog
 from components.form.dropdown import Dropdown
 from components.form.text_field import TextField
 from components.layout.app_drawer import AppDrawer
@@ -41,6 +43,7 @@ from components.templates.standard_page import StandardPage
 from core.severity import Severity
 from core.translations import _, get_language
 from core.urls import URLs
+from services.catalogue_service import CatalogueService
 from services.collection_item_service import CollectionItemService
 from services.collection_service import CollectionService
 from settings import (
@@ -59,6 +62,7 @@ class CollectionSeriesPage(StandardPage):
         collection_id: the collection to show.
         collection_service: injected for tests; built from the stored JWT otherwise.
         item_service: injected for tests; built from the stored JWT otherwise.
+        catalogue_service: injected for tests; built from the stored JWT otherwise.
     """
 
     PAGE_SIZE: int = 15
@@ -76,12 +80,14 @@ class CollectionSeriesPage(StandardPage):
         collection_id: int,
         collection_service: Optional[CollectionService] = None,
         item_service: Optional[CollectionItemService] = None,
+        catalogue_service: Optional[CatalogueService] = None,
     ) -> None:
         super().__init__(page=page, header_height=HEADER_HEIGHT)
 
         self._collection_id: int = collection_id
         self._collection_service: Optional[CollectionService] = collection_service
         self._item_service: Optional[CollectionItemService] = item_service
+        self._catalogue_service: Optional[CatalogueService] = catalogue_service
         self._collection: Optional[dict] = None
         self._lang: str = get_language()
 
@@ -143,6 +149,17 @@ class CollectionSeriesPage(StandardPage):
             _("collections.empty_series"), size=FONT_SIZE_DEFAULT, color=GREY_700
         )
         self._empty_text.visible = False
+        self._empty_action: PrimaryButton = PrimaryButton(
+            text=_("collections.add_first_stamp"),
+            on_click=self._open_add_dialog,
+            expand=False,
+        )
+        self._empty_box: ft.Column = ft.Column(
+            controls=[self._empty_text, self._empty_action],
+            spacing=8,
+            tight=True,
+            visible=False,
+        )
         self._error_text: ft.Text = ft.Text(
             _("collections.load_failed"), size=FONT_SIZE_DEFAULT, color=GREY_700
         )
@@ -186,14 +203,17 @@ class CollectionSeriesPage(StandardPage):
         self.content_area = ft.Container(
             expand=True,
             padding=PAGE_PADDING,
-            content=ft.Column(
+            #: A list, not a column: its right padding is the room the floating
+            #: scrollbar needs, and a column's children would end under it.
+            content=ft.ListView(
+                padding=ft.Padding.only(right=PAGE_SCROLL_GUTTER),
                 controls=[
                     self._build_breadcrumb(),
                     self._build_header(),
                     self._build_filters(),
                     self._loading,
                     self._error_box,
-                    self._empty_text,
+                    self._empty_box,
                     self._rows_box,
                     self._pagination,
                 ],
@@ -276,6 +296,13 @@ class CollectionSeriesPage(StandardPage):
                     self._from_year,
                     self._to_year,
                     self._sort,
+                    ft.Container(expand=True),
+                    PrimaryButton(
+                        text=_("collections.add_stamps_action"),
+                        icon=ft.Icons.ADD,
+                        on_click=self._open_add_dialog,
+                        expand=False,
+                    ),
                 ],
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -333,6 +360,9 @@ class CollectionSeriesPage(StandardPage):
             token = await prefs.get(USER_JWT_TOKEN)
             self._collection_service = CollectionService(token or "")
             self._item_service = CollectionItemService(token or "")
+        if self._catalogue_service is None:
+            token = await prefs.get(USER_JWT_TOKEN)
+            self._catalogue_service = CatalogueService(token or "")
 
         await self.load()
 
@@ -453,6 +483,7 @@ class CollectionSeriesPage(StandardPage):
             else _("collections.no_series_yet")
         )
         self._empty_text.visible = not rows
+        self._empty_box.visible = not rows
         self._pagination.visible = self._total > 0
         self._pagination.update_state(
             page=self._page_number,
@@ -546,6 +577,25 @@ class CollectionSeriesPage(StandardPage):
         self._page_size = page_size or self.PAGE_SIZE
         self._page_number = 1
         await self.load_series()
+
+    def _open_add_dialog(self, event: Optional[ft.ControlEvent] = None) -> None:
+        """Open the catalogue and add stamps from there."""
+        if self._catalogue_service is None:
+            return
+
+        AddStampsDialog(
+            self.main_page,
+            self._catalogue_service,
+            self._collection_id,
+            collection_name=(self._collection or {}).get("name") or "",
+            on_added=self._after_add,
+            on_forbidden=self._session_expired,
+        ).show()
+
+    def _after_add(self, created: int, skipped: int) -> None:
+        """Reload the series behind the dialog, so the new ones appear."""
+        self._page_number = 1
+        self.main_page.run_task(self.load_series)
 
     def _open_issue(self, issue_id: int) -> None:
         """Open one series of this collection."""

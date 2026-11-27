@@ -11,11 +11,16 @@ caller's items. Four, whatever the number of stamps.
 
 from __future__ import annotations
 
+from django.db import transaction
+
 from decimal import Decimal
 from typing import Optional
 
 from collection_items_api.models import CollectionItem
 from collections_api.models import Collection
+from collections_api.services.collection_issues_service import (
+    CollectionIssuesService,
+)
 from issues_api.models import Issue
 from stamps_api.models import Stamp
 
@@ -81,7 +86,39 @@ class CollectionIssueDetailService:
             "issue": issue,
             "stamps": stamps,
             "summary": self.__summary(stamps, items),
+            # The arrows of the detail walk the collection's list, so they only
+            # exist when the collection is the one holding the series: the
+            # catalogue reader (the dialog) has no list behind it.
+            "neighbours": (
+                CollectionIssuesService().neighbours(collection, issue.pk)
+                if owned_only
+                else None
+            ),
         }
+
+    def remove(self, collection: Collection, issue_id: int) -> Optional[int]:
+        """Delete the caller's copies of one series from their collection.
+
+        It removes what the collection holds, never the catalogue: the series and
+        its stamps stay in the database for everybody else. One transaction, and
+        the count it returns is the number of copies that went.
+
+        Args:
+            collection: the collection, already checked to belong to the caller.
+            issue_id: the series whose copies are removed.
+
+        Returns:
+            How many copies were deleted, or None when the collection held none.
+        """
+        with transaction.atomic():
+            items = CollectionItem.objects.filter(
+                collection=collection, stamp__issue_id=issue_id
+            )
+            count = items.count()
+            if count == 0:
+                return None
+            items.delete()
+            return count
 
     @staticmethod
     def __summary(stamps: list, items: dict) -> dict:
