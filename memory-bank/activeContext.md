@@ -181,12 +181,36 @@ afirmar nada que las fuentes no sostengan.
   (frontend suite **775**). **B5 is done too**: the close-out fixed the grey-screen
   layout bugs and phase B is closed (frontend suite **784**). **B4b is done too**: the
   series detail follows the mockup (plate, pills, the copy as a grid, two cards per row),
-  frontend suite **790**. **Open follow-up**: there is no way to add the first
+  frontend suite **790**. **B3b is done too**: the series list follows its mockup (header with
+  the paid total, filters in a labelled card, one card per series) and the overview carries
+  `paid`; suites 1.821 / 793. **Open follow-up**: there is no way to add the first
   stamp/series to an empty collection; needs its own step. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que
+  venía del diseño; la cabecera, los filtros y el paginador no. La cabecera gana la línea del
+  mockup (`Series: 3 · Stamps: 14 · Paid: 1.240,00 €`), y para eso el overview lleva **`paid`**
+  —un `Sum("price_paid")` en la consulta que ya hacían los contadores, `null` cuando ningún
+  ejemplar tiene precio y las cinco consultas de siempre—. Los tres filtros pasan a una
+  tarjeta blanca, pero con **los controles del resto de la app**: el `TextField` de la casa
+  para el nombre, **dos cajas de año** (`From year` / `To year`; el slider se va —su línea
+  `Years:` más un rótulo nuestro se leían como dos etiquetas y no alineaban nunca—) y el
+  desplegable de la casa, ahora con su rótulo `Sort`. Las dos cajas envían `1850`,
+  `1850-1860`, `1850-` o `-1860`, así que el endpoint de series aprendió a leer un **extremo
+  abierto** como cota (`gte` / `lte`); antes el lado vacío se casteaba a int y el filtro se
+  tiraba en silencio. Cada serie es ahora su propia tarjeta (borde, radio, sombra, 10 px
+  entre ellas) en vez de una caja con separadores, y dentro el progreso y su porcentaje
+  comparten línea con la barra debajo. La miga también es la del mockup: apretada, sin
+  subrayado (`LinkButton` ganó `underline` y `padding`, compartidos con el detalle) y el
+  nombre actual en negrita. El paginador se **viste, no
+  se cambia**: la página le pone fondo, borde, radio y padding, el componente sigue igual para
+  el admin. Claves `filter_series`, `filter_from_year`, `filter_to_year`, `filter_sort` y
+  `summary_paid` (55 de collections en los dos idiomas). 6 tests de backend y 11 de
+  frontend; suites **1.824** y **801**; capturas a 1493, 1024 y una colección vacía al lado
+  del mockup. Y queda escrito en `AGENTS.md`: cada paso de
+  pantalla se compara con su mockup antes de darlo por hecho.
 - [Today] Colecciones B4b, **la pantalla de detalle como el mockup**: el contenido y las
   escrituras de B4 estaban bien, la disposición no. La tarjeta pasa a ser la del mockup
   —placa de 96 px sobre `BG_ALT`, códigos, facial y color al lado, y los dos valores de

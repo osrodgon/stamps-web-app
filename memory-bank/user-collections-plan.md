@@ -397,6 +397,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 | B4 | `CollectionIssuePage` | B3 | L | **hecho 2026-11-26** |
 | B5 | Close-out | B4 | S | **hecho 2026-11-26** |
 | B4b | The series detail follows the mockup | B5 | M | **hecho 2026-11-27** |
+| B3b | The series list follows the mockup | B4b | M | **hecho 2026-11-27** |
 
 **B1 — Series of a collection — HECHO 2026-11-26.**
 `GET /collections/<pk>/issues/` mirroring `/issues/`: same parameters, same defaults,
@@ -511,6 +512,50 @@ this phase, after `Row(wrap=True)` + `expand`.
 6 tests (3 card, 1 page, plus the two helper extensions); frontend suite **790**. Checked
 in Chromium at 1493x1000 and 1100x1000: two cards, one card, no stamps and the editing
 form with its three-column grid and `Remove`/`Cancel`/`Save`.
+
+**B3b — The series list follows the mockup — HECHO 2026-11-27.**
+The rows were the only part of `/collections/<id>` that came from
+`mockups/collection-series.html`; the header, the filters and the paginator did not.
+
+- **Header**: the name gains the mockup's meta line — `Series: 3 · Stamps: 14 · Paid:
+  1.240,00 €` — with neutral labels, because the locale system has no plurals. The paid
+  total comes from the overview row, so the screen asks once.
+- **`paid` in the overview** (backend): `Sum("price_paid")` in the same grouped query
+  the counters already make, so a copy with a quantity of two adds its price once and the
+  list stays at **five queries**. `null` when no copy of the collection has a price, which
+  is not the same as 0,00, and the frontend leaves the part out of the sentence.
+- **Filters in a card**: white and rounded, holding the mockup's four controls, but with
+  **the controls the rest of the app uses** (a later review: the card is a frame, not a
+  second design language). The name box is the house `TextField` with its floating label;
+  the year range went back to **two typed boxes** (`From year` / `To year`) because the
+  slider's own line plus ours read as two labels and never lined up; the sort is the house
+  dropdown from `components/form/dropdown.py`, so the sort does not put a Material outlined
+  box next to two underlined fields.
+- **Rows as cards**: each series is its own white card with border, radius and shadow and
+  a 10px gap, as the mockup draws them, instead of one box with dividers. Inside, the
+  progress text and its percentage share a line and the bar takes the full width.
+- **Breadcrumb**: the link is tight and not underlined (`LinkButton` gained `underline` and
+  `padding`, and the detail screen uses them too), the separator gets the same 6px on both
+  sides, and the current crumb is bold, as the mockup writes it.
+- **The head's two lines**: `BASELINE` is still out (it collapses the page), so the meta is
+  lifted 4px inside its own container until its baseline sits on the name's.
+
+The two year boxes send `1850`, `1850-1860`, `1850-` or `-1860`, which needed the series
+endpoint to understand an **open end** as a bound: `1850-` is `year__year__gte` and `-1860`
+is `lte`, where before the pair was cast to int and a blank side threw the filter away
+silently.
+- **The paginator is dressed, not changed** (decision): the page sets `bgcolor`, border,
+  radius and padding on the shared `TablePagination`; the component is untouched, so the
+  admin keeps what it has.
+- New keys `collections.filter_series`, `filter_years`, `filter_sort` and
+  `summary_paid`; 54 collection keys in both languages.
+
+6 backend tests (sum, quantity, no price; open lower bound, open upper bound, a bound
+beyond the catalogue and junk) and 11 frontend ones; suites **1.824** backend and **801**
+frontend. Screenshot of the real page with stubbed services at 1493x800 next
+to the mockup: crumbs, head with the three figures, filter card, three series cards and the
+paginator card, and the empty collection keeps its card and hides the paginator. From this
+step on, `AGENTS.md` makes that comparison part of every screen step.
 
 **Acceptance, per screen**
 

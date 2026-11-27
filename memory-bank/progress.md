@@ -953,6 +953,27 @@ when A is merged into `development`.
       and the content is painted shifted upwards with nothing in any log; `CENTER`, pinned
       by a test. 6 tests; frontend suite **790**; Chromium at 1493 and 1100 with two
       cards, one, none and the editing form.
+- [x] B3b — **The series list follows the mockup** (2026-11-27, M): the header gains the
+      mockup's meta line (`Series: 3 · Stamps: 14 · Paid: 1.240,00 €`, neutral labels), which
+      needed `paid` in the overview — a `Sum("price_paid")` in the query the counters already
+      make, `null` when no copy has a price, five queries still. The filters move into a
+      white card that holds **the controls the rest of the app uses**: the house `TextField`
+      for the name, **two typed year boxes** (`From year` / `To year`; the slider is gone —
+      its own `Years:` line plus a label read as two labels and never lined up) and the house
+      dropdown from `components/form/dropdown.py`, so the sort wears the same underline and
+      label as the two fields beside it instead of Material's outlined box. The two boxes send `1850`,
+      `1850-1860`, `1850-` or `-1860`, so the series endpoint learned to read an **open end**
+      as a bound (`gte` / `lte`); before, a blank side was cast to int and the filter thrown
+      away silently. Each series is its own card (border, radius, shadow, 10px gaps) instead
+      of one box with dividers, with the progress text and its percentage on one line and the
+      bar underneath. The breadcrumb is the mockup's: tight, not underlined (`LinkButton`
+      gained `underline` and `padding`, shared with the detail screen) and the current crumb
+      in bold. The paginator is **dressed, not changed**: the page styles the shared
+      `TablePagination`, the admin keeps what it has. Keys `filter_series`,
+      `filter_from_year`, `filter_to_year`, `filter_sort`, `summary_paid`; 55 collection keys
+      in both languages. 6 backend + 11 frontend tests; suites **1.824** / **801**;
+      screenshots at 1493, 1024 and an empty collection next to the mockup. `AGENTS.md` now
+      requires that comparison for every screen step.
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)

@@ -34,6 +34,12 @@ class CollectionOverviewSerializer(serializers.Serializer):
     total = serializers.IntegerField(
         help_text="How many stamps those series have: the progress bar's denominator."
     )
+    paid = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        allow_null=True,
+        help_text="What the copies of the collection cost, or null when none has a price.",
+    )
     covers = CollectionCoverSerializer(
         many=True,
         help_text="Up to twelve stamps with a picture code, in a stable order.",

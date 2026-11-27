@@ -101,10 +101,16 @@ class CollectionIssuePage(StandardPage):
         self.drawer = AppDrawer(on_logout=self.request_logout)
 
         self._collection_link: LinkButton = LinkButton(
-            "", on_click=self._go_collections_parent
+            "",
+            on_click=self._go_collections_parent,
+            underline=False,
+            padding=ft.Padding.all(0),
         )
         self._series_crumb: ft.Text = ft.Text(
-            "", size=FONT_SIZE_XS, color=GREY_700
+            "",
+            size=FONT_SIZE_XS,
+            color=DARK_BLUE_GREY,
+            weight=ft.FontWeight.BOLD,
         )
         self._loading: ft.ProgressBar = ft.ProgressBar(color=SKY_BLUE, visible=False)
         self._error_text: ft.Text = ft.Text(
@@ -169,13 +175,18 @@ class CollectionIssuePage(StandardPage):
         """`Collections / <collection> / <series>`, the first two links."""
         return ft.Row(
             controls=[
-                LinkButton(_("collections.title"), on_click=self._go_collections),
+                LinkButton(
+                    _("collections.title"),
+                    on_click=self._go_collections,
+                    underline=False,
+                    padding=ft.Padding.all(0),
+                ),
                 ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
                 self._collection_link,
                 ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
                 self._series_crumb,
             ],
-            spacing=2,
+            spacing=6,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 

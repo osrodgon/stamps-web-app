@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import flet as ft
 import pytest
 
+from components.form.dropdown import Dropdown as HouseDropdown
+from core.translations import _
 from pages.collection.collection_series_page import CollectionSeriesPage
 
 
@@ -33,7 +35,6 @@ class PageTest:
             7,
             collection_service=MagicMock(),
             item_service=MagicMock(),
-            issue_service=MagicMock(),
         )
 
     @staticmethod
@@ -73,12 +74,62 @@ class TestConstruction(PageTest):
 
 
 class TestFilters(PageTest):
-    """The filter row does not wrap: a wrapping Row with an expand child breaks."""
+    """The filters are the mockup's card, with the controls of the rest of the app."""
 
-    def test_the_filters_row_does_not_wrap(self, view):
-        row = view._build_filters()
+    def test_the_row_inside_the_card_does_not_wrap(self, view):
+        """A wrapping Row with an expand child breaks Flutter (B5)."""
+        card = view._build_filters()
 
-        assert row.wrap is not True
+        assert card.content.wrap is not True
+
+    def test_the_card_carries_the_four_filters(self, view):
+        card = view._build_filters()
+
+        assert card.content.controls == [
+            view._name_field,
+            view._from_year,
+            view._to_year,
+            view._sort,
+        ]
+
+    def test_the_two_year_boxes_are_numbers(self, view):
+        assert view._from_year.keyboard_type == ft.KeyboardType.NUMBER
+        assert view._to_year.keyboard_type == ft.KeyboardType.NUMBER
+
+    def test_the_sort_wears_the_house_dropdown(self, view):
+        """The same underline and label as the fields beside it, not `ft.Dropdown`."""
+        assert isinstance(view._sort, HouseDropdown)
+
+
+class TestYearFilter(PageTest):
+    """The two boxes become the endpoint's `year` parameter."""
+
+    def test_both_bounds_are_a_range(self):
+        assert CollectionSeriesPage.year_filter("1850", "1860") == "1850-1860"
+
+    def test_one_bound_leaves_the_other_end_open(self):
+        assert CollectionSeriesPage.year_filter("1850", "") == "1850-"
+        assert CollectionSeriesPage.year_filter("", "1860") == "-1860"
+
+    def test_nothing_typed_asks_for_nothing(self):
+        assert CollectionSeriesPage.year_filter("", None) == ""
+
+    def test_half_typed_or_junk_is_ignored(self):
+        assert CollectionSeriesPage.year_filter("18a", "") == ""
+        assert CollectionSeriesPage.year_filter("1850", "x") == "1850-"
+
+
+class TestBreadcrumb(PageTest):
+    """A tight link, an even separator and the name in bold, as the mockup."""
+
+    def test_the_link_is_not_underlined_and_has_no_padding(self, view):
+        link = view._build_breadcrumb().controls[0]
+
+        assert link.style.padding == ft.Padding.all(0)
+        assert link.style.text_style.decoration == ft.TextDecoration.NONE
+
+    def test_the_name_is_bold(self, view):
+        assert view._crumb_name.weight == ft.FontWeight.BOLD
 
 
 class TestSummary(PageTest):
@@ -95,6 +146,35 @@ class TestSummary(PageTest):
         label = CollectionSeriesPage.summary_label({"series": 3, "stamps": 9})
 
         assert label == "collections.summary:3/9"
+
+    def test_it_says_what_the_copies_cost(self, mocker):
+        mocker.patch(
+            "pages.collection.collection_series_page._",
+            side_effect=lambda key, **values: (
+                f"{key}:{values.get('paid') or values.get('stamps')}"
+            ),
+        )
+
+        label = CollectionSeriesPage.summary_label(
+            {"series": 3, "stamps": 9, "paid": "1240.00"}
+        )
+
+        assert label.startswith("collections.summary:9 · ")
+        assert "1,240.00" in label
+
+    def test_a_collection_without_prices_leaves_the_part_out(self, mocker):
+        mocker.patch(
+            "pages.collection.collection_series_page._",
+            side_effect=lambda key, **values: (
+                f"{key}:{values['series']}/{values['stamps']}"
+            ),
+        )
+
+        label = CollectionSeriesPage.summary_label(
+            {"series": 1, "stamps": 2, "paid": None}
+        )
+
+        assert "summary_paid" not in label
 
     def test_an_empty_collection_reads_zero(self, mocker):
         mocker.patch(

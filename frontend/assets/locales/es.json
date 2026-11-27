@@ -175,7 +175,12 @@
         "sort_name": "Nombre",
         "empty_series": "Ninguna serie coincide con estos filtros.",
         "retry": "Reintentar",
-        "stamps_section": "Sellos"
+        "stamps_section": "Sellos",
+        "filter_series": "Series",
+        "filter_from_year": "Desde el año",
+        "filter_to_year": "Hasta el año",
+        "filter_sort": "Orden",
+        "summary_paid": "Pagado: {paid}"
     },
     "pagination": {
         "rows_per_page": "Series por página",

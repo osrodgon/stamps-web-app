@@ -31,11 +31,11 @@ from components.constants import (
     HEADER_HEIGHT,
     PAGE_PADDING,
 )
+from components.form.dropdown import Dropdown
 from components.form.text_field import TextField
-from components.form.year_range_selector import YearRangeSelector
 from components.layout.app_drawer import AppDrawer
 from components.layout.app_header import AppHeader
-from components.table.column_def import fmt_number
+from components.table.column_def import fmt_currency, fmt_number
 from components.table.table_pagination import TablePagination
 from components.templates.standard_page import StandardPage
 from core.severity import Severity
@@ -43,7 +43,6 @@ from core.translations import _, get_language
 from core.urls import URLs
 from services.collection_item_service import CollectionItemService
 from services.collection_service import CollectionService
-from services.issue_service import IssueService
 from settings import (
     USER_EMAIL,
     USER_FIRST_NAME,
@@ -60,7 +59,6 @@ class CollectionSeriesPage(StandardPage):
         collection_id: the collection to show.
         collection_service: injected for tests; built from the stored JWT otherwise.
         item_service: injected for tests; built from the stored JWT otherwise.
-        issue_service: the catalogue service, used only to bound the year selector.
     """
 
     PAGE_SIZE: int = 15
@@ -78,14 +76,12 @@ class CollectionSeriesPage(StandardPage):
         collection_id: int,
         collection_service: Optional[CollectionService] = None,
         item_service: Optional[CollectionItemService] = None,
-        issue_service: Optional[IssueService] = None,
     ) -> None:
         super().__init__(page=page, header_height=HEADER_HEIGHT)
 
         self._collection_id: int = collection_id
         self._collection_service: Optional[CollectionService] = collection_service
         self._item_service: Optional[CollectionItemService] = item_service
-        self._issue_service: IssueService = issue_service or IssueService()
         self._collection: Optional[dict] = None
         self._lang: str = get_language()
 
@@ -121,20 +117,25 @@ class CollectionSeriesPage(StandardPage):
         self._summary_text: ft.Text = ft.Text(
             "", size=FONT_SIZE_DEFAULT, color=GREY_700
         )
-        self._crumb_name: ft.Text = ft.Text("", size=FONT_SIZE_XS, color=GREY_700)
+        self._crumb_name: ft.Text = ft.Text(
+            "",
+            size=FONT_SIZE_XS,
+            color=DARK_BLUE_GREY,
+            weight=ft.FontWeight.BOLD,
+        )
 
         self._name_field: TextField = TextField(
-            label=_("collections.filter_name"),
+            label=_("collections.filter_series"),
+            hint_text=_("collections.filter_name"),
             on_change=self._on_name_change,
-            expand=False,
-            width=280,
+            expand=True,
         )
-        self._year_selector: YearRangeSelector = YearRangeSelector(
-            track_height=1,
-            width=250,
-            top_padding=26,
-            on_change=self._on_year_change,
+        #: The two year boxes of the mockup. Typed, not dragged: a series may be
+        #: catalogued under a year that no other series uses, so nothing limits it.
+        self._from_year: TextField = self._year_field(
+            "collections.filter_from_year"
         )
+        self._to_year: TextField = self._year_field("collections.filter_to_year")
         self._sort: ft.Dropdown = self._build_sort()
 
         self._loading: ft.ProgressBar = ft.ProgressBar(color=SKY_BLUE, visible=False)
@@ -160,14 +161,12 @@ class CollectionSeriesPage(StandardPage):
             visible=False,
         )
 
-        self._rows_column: ft.Column = ft.Column(controls=[], spacing=0, tight=True)
+        #: One card per series, as the mockup draws them, with a gap between.
+        self._rows_column: ft.Column = ft.Column(
+            controls=[], spacing=10, tight=True
+        )
         self._rows_box: ft.Container = ft.Container(
-            visible=False,
-            bgcolor=ft.Colors.WHITE,
-            border=ft.Border.all(1, ROW_BORDER),
-            border_radius=CARD_BORDER_RADIUS,
-            clip_behavior=ft.ClipBehavior.HARD_EDGE,
-            content=self._rows_column,
+            visible=False, content=self._rows_column
         )
         self._pagination: TablePagination = TablePagination(
             page=1,
@@ -179,6 +178,10 @@ class CollectionSeriesPage(StandardPage):
             label=_("pagination.series_per_page"),
         )
         self._pagination.visible = False
+        self._pagination.bgcolor = ft.Colors.WHITE
+        self._pagination.border = ft.Border.all(1, ROW_BORDER)
+        self._pagination.border_radius = CARD_BORDER_RADIUS
+        self._pagination.padding = ft.Padding.symmetric(horizontal=16, vertical=10)
 
         self.content_area = ft.Container(
             expand=True,
@@ -212,48 +215,92 @@ class CollectionSeriesPage(StandardPage):
     # ------------------------------------------------------------------
 
     def _build_breadcrumb(self) -> ft.Row:
-        """`Collections / <name>`, the first part a way back."""
+        """`Collections / <name>`, the first part a way back.
+
+        The link is tight and not underlined, and the name is bold, as the mockup
+        draws it: the button's own padding is what made the two gaps around the
+        slash differ.
+        """
         return ft.Row(
             controls=[
-                LinkButton(_("collections.title"), on_click=self._back),
+                LinkButton(
+                    _("collections.title"),
+                    on_click=self._back,
+                    underline=False,
+                    padding=ft.Padding.all(0),
+                ),
                 ft.Text("/", size=FONT_SIZE_XS, color=GREY_700),
                 self._crumb_name,
             ],
-            spacing=2,
+            spacing=6,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
     def _build_header(self) -> ft.Row:
-        """The collection's name and its two figures."""
+        """The collection's name and its figures, as the mockup's head.
+
+        The two share the baseline in the mockup. `BASELINE` alignment is out —
+        it needs a `textBaseline` Flet does not send and collapses the page (B4b)
+        — so the meta is lifted by a few pixels instead, which is what the eye
+        reads as the same line.
+        """
         return ft.Row(
             controls=[
                 self._name_text,
-                self._summary_text,
+                ft.Container(
+                    content=self._summary_text,
+                    padding=ft.Padding.only(bottom=4),
+                ),
                 ft.Container(expand=True),
             ],
             spacing=12,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.END,
         )
 
-    def _build_filters(self) -> ft.Row:
-        """The name box, the year range and the sort selector.
+    def _build_filters(self) -> ft.Container:
+        """The filters in the mockup's card, with the look the rest of the app has.
 
-        No `wrap`: Flet wraps an `expand` child in an `Expanded`, which is
-        invalid inside a Wrap and leaves Flutter painting its error placeholder
-        over the whole content. The custom text field always carries `expand`.
+        The card is only a frame: the controls are the house text field and dropdown,
+        so this screen does not invent a second way of drawing a filter. No `wrap`:
+        Flet wraps an `expand` child in an `Expanded`, which is invalid inside a Wrap
+        and leaves Flutter painting its error placeholder over the content.
         """
-        return ft.Row(
-            controls=[self._name_field, self._year_selector, self._sort],
-            spacing=16,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        return ft.Container(
+            bgcolor=ft.Colors.WHITE,
+            border=ft.Border.all(1, ROW_BORDER),
+            border_radius=CARD_BORDER_RADIUS,
+            padding=ft.Padding.only(left=16, right=16, top=18, bottom=10),
+            content=ft.Row(
+                controls=[
+                    self._name_field,
+                    self._from_year,
+                    self._to_year,
+                    self._sort,
+                ],
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
         )
 
-    def _build_sort(self) -> ft.Dropdown:
-        """The sort selector: date up, date down or name."""
-        # Flet 0.84 does not take `on_change` in the constructor (the admin hits
-        # the same): it is assigned after building the control.
-        dropdown = ft.Dropdown(
-            value=self.DEFAULT_SORT,
+    def _year_field(self, label_key: str) -> TextField:
+        """One year box: a number, as wide as four digits and its label."""
+        return TextField(
+            label=_(label_key),
+            on_change=self._on_year_change,
+            expand=False,
+            width=140,
+            keyboard_type=ft.KeyboardType.NUMBER,
+        )
+
+    def _build_sort(self) -> Dropdown:
+        """The sort selector: date up, date down or name.
+
+        The house dropdown, not `ft.Dropdown`: it wears the same underline and
+        the same label as the name and year fields beside it, so the card does not
+        put three controls of two shapes on one line.
+        """
+        return Dropdown(
+            label=_("collections.filter_sort"),
             options=[
                 ft.dropdown.Option(
                     key="date_asc", text=_("collections.sort_date_asc")
@@ -263,10 +310,11 @@ class CollectionSeriesPage(StandardPage):
                 ),
                 ft.dropdown.Option(key="name", text=_("collections.sort_name")),
             ],
+            value=self.DEFAULT_SORT,
             width=170,
+            expand=False,
+            on_change=self._on_sort_change,
         )
-        dropdown.on_change = self._on_sort_change
-        return dropdown
 
     # ------------------------------------------------------------------
     # Data
@@ -289,11 +337,10 @@ class CollectionSeriesPage(StandardPage):
         await self.load()
 
     async def load(self) -> None:
-        """Load the collection, the year bounds and its series."""
+        """Load the collection and its series."""
         await self._load_collection()
         if self._collection is None:
             return
-        await self._load_years()
         await self.load_series()
 
     async def _load_collection(self) -> None:
@@ -335,25 +382,6 @@ class CollectionSeriesPage(StandardPage):
         self._crumb_name.value = collection.get("name") or ""
         self.main_page.update()
 
-    async def _load_years(self) -> None:
-        """Bound the year selector with the years the catalogue has."""
-        response = await self._issue_service.get_years()
-        if response is None or response.status_code != 200:
-            return
-
-        years = [
-            item["year"]
-            for item in (response.json().get("data") or [])
-            if item.get("year") is not None
-        ]
-        if years:
-            self._year_selector.set_range(
-                min_year=min(years),
-                max_year=max(years),
-                start=min(years),
-                end=max(years),
-            )
-
     async def load_series(self) -> None:
         """Fetch and paint the current page of series."""
         if self._item_service is None:
@@ -392,15 +420,23 @@ class CollectionSeriesPage(StandardPage):
 
     @staticmethod
     def summary_label(collection: dict) -> str:
-        """The two counters of the header, from the locale key."""
-        return _(
+        """The header's figures: series, stamps and, when known, what it cost.
+
+        `paid` is null when no copy of the collection carries a price, and that is
+        not the same as having paid nothing: the part is left out of the sentence.
+        """
+        lang: str = get_language()
+        summary: str = _(
             "collections.summary",
-            series=fmt_number(
-                int(collection.get("series") or 0), get_language(), zero="0"
-            ),
-            stamps=fmt_number(
-                int(collection.get("stamps") or 0), get_language(), zero="0"
-            ),
+            series=fmt_number(int(collection.get("series") or 0), lang, zero="0"),
+            stamps=fmt_number(int(collection.get("stamps") or 0), lang, zero="0"),
+        )
+        paid = collection.get("paid")
+        if paid is None:
+            return summary
+        return (
+            f"{summary} · "
+            f"{_('collections.summary_paid', paid=fmt_currency(paid, lang))}"
         )
 
     def _render(self, rows: list) -> None:
@@ -451,18 +487,47 @@ class CollectionSeriesPage(StandardPage):
         self._page_number = 1
         await self.load_series()
 
-    async def _on_year_change(self, start: int, end: int) -> None:
-        """Debounce the year range."""
+    async def _on_year_change(self, event: ft.ControlEvent) -> None:
+        """Debounce the year range while either box is being typed in."""
         if self._year_task is not None:
             self._year_task.cancel()
-        self._year_task = asyncio.create_task(self._debounced_year(start, end))
+        self._year_task = asyncio.create_task(self._debounced_year())
 
-    async def _debounced_year(self, start: int, end: int) -> None:
-        """Apply the year range after the slider settles."""
+    async def _debounced_year(self) -> None:
+        """Apply the two boxes after the typing stops."""
         await asyncio.sleep(DEBOUNCE_DELAY)
-        self._year_filter = f"{start}-{end}"
+        self._year_filter = self.year_filter(
+            self._from_year.value, self._to_year.value
+        )
         self._page_number = 1
         await self.load_series()
+
+    @staticmethod
+    def year_filter(from_value: Optional[str], to_value: Optional[str]) -> str:
+        """The `year` parameter of the endpoint, from the two boxes.
+
+        `1850`, `1850-1860`, `1850-` and `-1860` are all understood by the API: an
+        open end is a bound, not a missing number. What is not a number is dropped,
+        so half-typed input asks for nothing instead of asking for the year zero.
+        """
+        start = CollectionSeriesPage.__year(from_value)
+        end = CollectionSeriesPage.__year(to_value)
+
+        if start is not None and end is not None:
+            return f"{start}-{end}"
+        if start is not None:
+            return f"{start}-"
+        if end is not None:
+            return f"-{end}"
+        return ""
+
+    @staticmethod
+    def __year(value: Optional[str]) -> Optional[int]:
+        """One box as a year, or None when it is empty or not a number."""
+        text = (value or "").strip()
+        if not text.isdigit():
+            return None
+        return int(text)
 
     async def _on_sort_change(self, event: ft.ControlEvent) -> None:
         """Apply the chosen order and go back to the first page."""

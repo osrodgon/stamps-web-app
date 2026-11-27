@@ -12,7 +12,7 @@ multiplied by the items of other users.
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional
 
 from django.db import connection
 from django.db.models import (
@@ -161,16 +161,41 @@ class CollectionIssuesService:
             issues = issues.filter(**{lookup: name})
 
         if year:
-            try:
-                if "-" in year:
-                    start, end = year.split("-", 1)
-                    issues = issues.filter(year__year__range=(int(start), int(end)))
-                else:
-                    issues = issues.filter(year__year=int(year))
-            except (TypeError, ValueError):
-                pass
+            issues = CollectionIssuesService.__year_filtered(issues, year)
 
         return issues
+
+    @staticmethod
+    def __year_filtered(issues: QuerySet, year: str) -> QuerySet:
+        """`1850`, `1850-1860`, `1850-` and `-1860`, and nothing else.
+
+        An open end is a bound, not a missing number: the two year boxes of the
+        screen send `1850-` when only the first one is filled. Anything that is not
+        a number is ignored instead of asking for the year zero.
+        """
+        if "-" not in year:
+            exact = CollectionIssuesService.__year(year)
+            return issues.filter(year__year=exact) if exact is not None else issues
+
+        start, end = year.split("-", 1)
+        start = CollectionIssuesService.__year(start)
+        end = CollectionIssuesService.__year(end)
+
+        if start is not None and end is not None:
+            return issues.filter(year__year__range=(start, end))
+        if start is not None:
+            return issues.filter(year__year__gte=start)
+        if end is not None:
+            return issues.filter(year__year__lte=end)
+        return issues
+
+    @staticmethod
+    def __year(value: str) -> Optional[int]:
+        """One end of the range as a year, or None when it is not a number."""
+        try:
+            return int(str(value).strip())
+        except (TypeError, ValueError):
+            return None
 
     def __ordered(self, issues: QuerySet, sort_by: str, order: str) -> QuerySet:
         """Order by the chosen column, nulls last, with the id as the last key."""

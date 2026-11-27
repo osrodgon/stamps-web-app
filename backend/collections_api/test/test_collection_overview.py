@@ -5,6 +5,8 @@ keeps the endpoint tests about the contract. The query count is pinned because t
 whole point of the step is that a page of cards costs a fixed number of queries.
 """
 
+from decimal import Decimal
+
 import pytest
 
 from collection_items_api.models import CollectionItem
@@ -64,6 +66,7 @@ class TestCounters:
             "series": 0,
             "stamps": 0,
             "total": 0,
+            "paid": None,
             "covers": [],
         }
 
@@ -86,6 +89,46 @@ class TestCounters:
         rows = CollectionOverviewService().for_user(overview_catalogue["user"])
 
         assert "Nobody" not in {row["name"] for row in rows}
+
+
+class TestPaid:
+    """`paid` is what the copies cost, and nothing when no copy has a price."""
+
+    def test_it_sums_the_prices_of_the_copies(self, overview_catalogue):
+        items = CollectionItem.objects.filter(
+            collection=overview_catalogue["collection"]
+        )
+        items.filter(stamp=overview_catalogue["owned"]).update(
+            price_paid=Decimal("120.00")
+        )
+        items.filter(stamp=overview_catalogue["owned_without_code"]).update(
+            price_paid=Decimal("30.50")
+        )
+
+        rows = CollectionOverviewService().for_user(overview_catalogue["user"])
+
+        assert Rows.of(rows, overview_catalogue["collection"].pk)["paid"] == Decimal(
+            "150.50"
+        )
+
+    def test_a_quantity_does_not_multiply_the_price(self, overview_catalogue):
+        """`owned` holds two copies at 120.00: 240.00 is not what was paid."""
+        CollectionItem.objects.filter(
+            collection=overview_catalogue["collection"],
+            stamp=overview_catalogue["owned"],
+        ).update(price_paid=Decimal("120.00"))
+
+        rows = CollectionOverviewService().for_user(overview_catalogue["user"])
+
+        assert Rows.of(rows, overview_catalogue["collection"].pk)["paid"] == Decimal(
+            "120.00"
+        )
+
+    def test_a_collection_without_prices_has_no_paid(self, overview_catalogue):
+        """No price is not the same as having paid nothing."""
+        rows = CollectionOverviewService().for_user(overview_catalogue["user"])
+
+        assert Rows.of(rows, overview_catalogue["collection"].pk)["paid"] is None
 
 
 class TestCovers:
