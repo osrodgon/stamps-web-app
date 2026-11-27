@@ -72,6 +72,15 @@ class TestConstruction(PageTest):
         ]
 
 
+class TestFilters(PageTest):
+    """The filter row does not wrap: a wrapping Row with an expand child breaks."""
+
+    def test_the_filters_row_does_not_wrap(self, view):
+        row = view._build_filters()
+
+        assert row.wrap is not True
+
+
 class TestSummary(PageTest):
     """The header's counters come from the overview row."""
 
@@ -101,6 +110,7 @@ class TestRender(PageTest):
 
     def test_it_paints_one_row_per_series(self, view):
         view._pagination.update_state = MagicMock()
+        view._total = 2
 
         with patch(
             "components.collection.issue_progress_card.os.path.exists",
@@ -111,15 +121,34 @@ class TestRender(PageTest):
         assert len(view._rows_column.controls) == 2
         assert view._rows_box.visible is True
         assert view._empty_text.visible is False
+        assert view._pagination.visible is True
         assert view._rows_column.controls[0].on_click is not None
 
-    def test_an_empty_page_shows_the_empty_state(self, view):
+    def test_an_empty_page_shows_the_empty_state(self, view, mocker):
+        mocker.patch(
+            "pages.collection.collection_series_page._",
+            side_effect=lambda key, **values: key,
+        )
         view._pagination.update_state = MagicMock()
 
         view._render([])
 
         assert view._rows_box.visible is False
         assert view._empty_text.visible is True
+        assert view._empty_text.value == "collections.no_series_yet"
+        assert view._pagination.visible is False
+
+    def test_an_empty_filter_result_says_so(self, view, mocker):
+        mocker.patch(
+            "pages.collection.collection_series_page._",
+            side_effect=lambda key, **values: key,
+        )
+        view._pagination.update_state = MagicMock()
+        view._name_filter = "nothing"
+
+        view._render([])
+
+        assert view._empty_text.value == "collections.empty_series"
 
 
 class TestCollectionLoading(PageTest):

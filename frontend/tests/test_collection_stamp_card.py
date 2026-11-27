@@ -11,6 +11,7 @@ import flet as ft
 import pytest
 
 from components.collection.collection_stamp_card import CollectionStampCard
+from core.translations import _
 from settings import NO_STAMP
 
 
@@ -98,7 +99,7 @@ class TestDisplay:
 
         texts = Texts.of(card._copy_box)
 
-        assert "collections.add_my_copy" in texts
+        assert _("collections.add_my_copy") in texts
 
     def test_set_item_repaints_and_reports(self):
         changed = MagicMock()
@@ -116,7 +117,29 @@ class TestDisplay:
         card.set_item(None)
 
         assert card.item is None
-        assert "collections.add_my_copy" in Texts.of(card._copy_box)
+        assert _("collections.add_my_copy") in Texts.of(card._copy_box)
+
+
+class TestLayout:
+    """A wrapping Row with an expand child breaks Flutter; these rows do not wrap."""
+
+    def test_the_card_row_does_not_wrap(self):
+        card = Cards.build(Cards.ITEM)
+
+        assert card.content.wrap is not True
+
+    def test_the_form_rows_do_not_wrap(self):
+        card = Cards.build(Cards.ITEM)
+        card._start_edit(None)
+
+        rows = [
+            control
+            for control in card._copy_box.content.controls
+            if isinstance(control, ft.Row)
+        ]
+
+        assert rows
+        assert all(row.wrap is not True for row in rows)
 
 
 class TestPicture:

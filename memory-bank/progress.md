@@ -931,7 +931,16 @@ when A is merged into `development`.
       summary is recomputed from the cards (no request). `RouteResolver` adds the detail
       route and the series rows become links; `CollectionItemService` gains the six calls.
       31 tests; frontend suite 775. No browser pass: the backend image predates B1/B2.
-- [ ] B5 — Close-out (S): states, i18n, paginator, browser pass
+- [x] B5 — **Close-out** (2026-11-26, S): the browser pass with the real pages and
+      stubbed services found and fixed the layout bugs: `Row(wrap=True)` with an `expand`
+      child painted Flutter's grey error placeholder (B3 filters, B4 card and form rows);
+      the paginator helper `_notify` collided with Flet's own and broke every property
+      change (renamed `_dispatch`); the programmatic dropdown update fired the size
+      callback (guarded); async page callbacks were dropped (scheduled now); a single-year
+      range divided by zero; the empty state distinguishes "no series yet" from "no
+      match" and the paginator hides with nothing to page. Visual pass of the three
+      screens at 1493x800; frontend suite **784**. Open follow-up: add the first
+      stamp/series to an empty collection.
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)

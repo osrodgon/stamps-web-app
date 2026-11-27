@@ -106,7 +106,6 @@ class CollectionStampCard(ft.Container):
                 self._copy_box,
             ],
             spacing=16,
-            wrap=True,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
         self.padding = CARD_PADDING
@@ -357,19 +356,13 @@ class CollectionStampCard(ft.Container):
         return ft.Column(
             controls=[
                 self.__copy_title(),
-                ft.Row(
-                    controls=[self._condition, self._quantity],
-                    spacing=8,
-                    wrap=True,
-                ),
-                ft.Row(
-                    controls=[self._paid, self._date], spacing=8, wrap=True
-                ),
+                ft.Row(controls=[self._condition, self._quantity], spacing=8),
+                ft.Row(controls=[self._paid, self._date], spacing=8),
                 self._location,
                 self._note,
                 *([references_warning] if references_warning is not None else []),
                 self._error,
-                ft.Row(controls=actions, spacing=8, wrap=True),
+                ft.Row(controls=actions, spacing=8),
             ],
             spacing=8,
             tight=True,

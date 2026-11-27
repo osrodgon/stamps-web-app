@@ -4,6 +4,7 @@ Table pagination component for the issue table.
 Provides page size selection, range display, and navigation controls.
 """
 
+import asyncio
 from typing import Callable, Optional
 
 import flet as ft
@@ -58,6 +59,7 @@ class TablePagination(ft.Container):
         self._total: int = total
         self._on_page_change: Optional[Callable[[int], None]] = on_page_change
         self._on_page_size_change: Optional[Callable[[int], None]] = on_page_size_change
+        self._syncing: bool = False
         self._page_size_options: list[int] = page_size_options or [
             1,
             10,
@@ -174,6 +176,11 @@ class TablePagination(ft.Container):
 
     def _on_dropdown_change(self, e: ft.ControlEvent) -> None:
         """Handle page size dropdown change."""
+        if self._syncing:
+            # A programmatic value from `update_state`, not the user: firing the
+            # callback would ask for the page again and loop.
+            return
+
         value: str = e.control.value
         new_size: int = 0 if value == _("pagination.all_rows") else int(value)
         self._page_size = new_size
@@ -183,8 +190,7 @@ class TablePagination(ft.Container):
         self.update()
         self._dropdown.width = max(70, len(value) * 17+ 30)
 
-        if self._on_page_size_change:
-            self._on_page_size_change(new_size)
+        self._dispatch(self._on_page_size_change, new_size)
 
     def _go_first(self, e: ft.ControlEvent) -> None:
         """Navigate to the first page."""
@@ -192,8 +198,7 @@ class TablePagination(ft.Container):
         self._range_text.value = self._format_range()
         self._update_nav_buttons()
         self.update()
-        if self._on_page_change:
-            self._on_page_change(self._page)
+        self._dispatch(self._on_page_change, self._page)
 
     def _go_prev(self, e: ft.ControlEvent) -> None:
         """Navigate to the previous page."""
@@ -202,8 +207,7 @@ class TablePagination(ft.Container):
             self._range_text.value = self._format_range()
             self._update_nav_buttons()
             self.update()
-            if self._on_page_change:
-                self._on_page_change(self._page)
+            self._dispatch(self._on_page_change, self._page)
 
     def _go_next(self, e: ft.ControlEvent) -> None:
         """Navigate to the next page."""
@@ -212,8 +216,7 @@ class TablePagination(ft.Container):
             self._range_text.value = self._format_range()
             self._update_nav_buttons()
             self.update()
-            if self._on_page_change:
-                self._on_page_change(self._page)
+            self._dispatch(self._on_page_change, self._page)
 
     def _go_last(self, e: ft.ControlEvent) -> None:
         """Navigate to the last page."""
@@ -221,8 +224,7 @@ class TablePagination(ft.Container):
         self._range_text.value = self._format_range()
         self._update_nav_buttons()
         self.update()
-        if self._on_page_change:
-            self._on_page_change(self._page)
+        self._dispatch(self._on_page_change, self._page)
 
     def update_state(
         self,
@@ -235,6 +237,23 @@ class TablePagination(ft.Container):
         self._page_size = page_size
         self._total = total
         self._range_text.value = self._format_range()
+        self._syncing = True
         self._dropdown.value = str(page_size)
+        self._syncing = False
         self._update_nav_buttons()
         self.update()
+
+    @staticmethod
+    def _dispatch(callback: Optional[Callable], *args) -> None:
+        """Call a callback; when it is a coroutine, schedule it.
+
+        The paginator is used by pages whose handlers are `async` (the collections
+        screens) and by the admin's table, whose handlers are plain functions.
+        Calling an async one directly returned a coroutine that was never awaited,
+        so the page never changed.
+        """
+        if callback is None:
+            return
+        result = callback(*args)
+        if asyncio.iscoroutine(result):
+            asyncio.create_task(result)
