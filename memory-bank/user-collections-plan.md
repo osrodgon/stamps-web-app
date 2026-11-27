@@ -750,7 +750,7 @@ time is not how a collector fills one: **one stamp**, **one series**, or **one w
 | C0 | Mockup of the dialog (search, series row with both actions, stamp list, year footer, confirmation) | — | S | **done 2026-11-27** |
 | C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | **done 2026-11-27** |
 | C2 | Catalogue search and catalogue detail endpoints + tests | — | M | **done 2026-11-27** |
-| C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | pending |
+| C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | **done 2026-11-27** |
 | C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | pending |
 | C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | pending |
 
@@ -822,10 +822,18 @@ from the dialog's. Tests prove the default still hides what the collection does 
 - 19 tests, including one per reading screen pinning that the new parameter did not loosen
   them.
 
-**C3 — `CatalogueService`.** `frontend/services/catalogue_service.py` on `BaseService`,
-Flet-free, token in the constructor, `search_issues`, `get_issue`, `add_stamps`, `add_issue`,
-`add_year`, each one URL in `URLs.Backend`. Tests with `_make_request` mocked: URL, method,
-JWT header, payload, and `None` on a network error.
+**C3 — `CatalogueService` — DONE 2026-11-27.** `frontend/services/catalogue_service.py` on
+`BaseService`, Flet-free, token in the constructor: `search_issues`, `get_issue`, `add_stamps`,
+`add_issue` and `add_year`, all returning the raw response and `None` when the transport
+fails.
+
+- The three adds differ only in the body, so they share a private `__add` and the scope says
+  which key travels; the endpoint is one.
+- The URL base is the existing `URLs.Backend.collections`, as `CollectionItemService` already
+  does, instead of two constants that would mean the same base.
+- 11 tests with `_make_request` mocked: the URL and its query, the method, the JWT header, the
+  body of each scope, a refusal coming back untouched, `None` on a network error, and the
+  module importing no Flet.
 
 **C4 — The dialog.** `frontend/components/collection/add_stamps_dialog.py`, built on the
 same pieces as the A5 dialogs (`DefaultButton`/`PrimaryButton`, the house `TextField`, the

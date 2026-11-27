@@ -209,12 +209,12 @@ desplegada, año entero y confirmación) y un conmutador para verlos; comprobado
 /api/v1/collections/<pk>/items/bulk/` con los tres alcances, un tope de 500 y
 `created`/`skipped`/`total` (18 tests, suite del backend en **1.842**). Lo siguiente es
 **C2 hecho (2026-11-27)**: `catalogue/issues/` y `catalogue/issues/<pk>/`, que son B1 y B2
-con `owned_only=False` (una implementación, no dos). Lo siguiente es **C3**, el servicio del
-frontend.
+con `owned_only=False` (una implementación, no dos). **C3 hecho (2026-11-27)**:
+`CatalogueService` con las cinco llamadas y 11 tests (suite del frontend en **812**). Lo
+siguiente es **C4**, el diálogo.
 
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **C0, C1 y C2 ya están**; seguir por **C3** (`CatalogueService` en el
-frontend).
+devcontainer. **C0, C1, C2 y C3 ya están**; seguir por **C4** (el diálogo).
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que
