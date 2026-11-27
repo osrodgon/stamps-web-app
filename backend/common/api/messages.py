@@ -98,6 +98,15 @@ class Messages:
         
         def created_one(table_name, id):
             return f"Successfully created {table_name.lower()} with id: {id}."
+
+        def created_many(table_name, count):
+            return f"Successfully created {count} {table_name.lower()}."
+
+        def nothing_matched(table_name, scope):
+            return f"No {table_name.lower()} matched the scope '{scope}'."
+
+        def too_many(table_name, count, limit):
+            return f"{count} {table_name.lower()} asked for, the limit is {limit}."
         
         def validation_failed(table_name, errors):
             return f"Payload validation failed for new {table_name.lower()} entry: {errors}."

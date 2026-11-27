@@ -981,7 +981,13 @@ when A is merged into `development`.
   - [x] C0 — mockup of the dialog (`memory-bank/mockups/add-stamps-dialog.html`, four states
         shown in Chromium at 1493x900), redrawn with the app's own controls and tokens after
         the first review said its look did not match the frontend, S
-  - [ ] C1 — `POST collections/<pk>/items/bulk/` + tests, M
+  - [x] C1 — `POST /collections/<pk>/items/bulk/` (2026-11-27, M): one scope per request
+        (`stamp` + `ids`, `issue`, `year`), one transaction that resolves the scope to ids,
+        counts it, skips what is already there (`bulk_create(ignore_conflicts=True)`) and
+        answers `created` / `skipped` / `total`. Cap of **500** (`TooMany` → 400, nothing
+        written), `NothingFound` → 404, foreign collection 404, no token 403; the copy is
+        created with `collection` and `stamp` only. Serializer accepts exactly the key of its
+        scope. Three statements plus the savepoint pair (pinned at 5). 18 tests.
   - [ ] C2 — catalogue search and catalogue detail endpoints + tests, M
   - [ ] C3 — `CatalogueService` (Flet-free, JWT) + tests, S
   - [ ] C4 — `AddStampsDialog` and its two entry points + tests, L

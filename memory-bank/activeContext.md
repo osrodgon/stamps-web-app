@@ -205,11 +205,14 @@ Fase B cerrada. Lo que queda de colecciones está en **`user-collections-plan.md
 **C0 hecho (2026-11-27)**: el mockup del diálogo está en
 `memory-bank/mockups/add-stamps-dialog.html`, con los cuatro estados (búsqueda, serie
 desplegada, año entero y confirmación) y un conmutador para verlos; comprobado en Chromium a
-1493x900 con las fotos reales. Lo siguiente es **C1**, el endpoint en bloque, que no depende
-de nada.
+1493x900 con las fotos reales. **C1 hecho (2026-11-27)**: `POST
+/api/v1/collections/<pk>/items/bulk/` con los tres alcances, un tope de 500 y
+`created`/`skipped`/`total` (18 tests, suite del backend en **1.842**). Lo siguiente es
+**C2**, la búsqueda y el detalle de catálogo.
 
 Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
-devcontainer. **C0 ya está**; seguir por **C1** (backend), que no depende de nada.
+devcontainer. **C0 y C1 ya están**; seguir por **C2** (la búsqueda y el detalle de
+catálogo), que es lo que necesita el diálogo.
 
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que
