@@ -395,7 +395,7 @@ token. Suite green. `progress.md`, `activeContext.md` and this plan updated.
 | B2 | Series detail and item writes (backend) | B1 | M | **hecho 2026-11-26** |
 | B3 | `CollectionSeriesPage` | B2 | L | **hecho 2026-11-26** |
 | B4 | `CollectionIssuePage` | B3 | L | **hecho 2026-11-26** |
-| B5 | Close-out | B4 | S | pendiente |
+| B5 | Close-out | B4 | S | **hecho 2026-11-26** |
 
 **B1 — Series of a collection — HECHO 2026-11-26.**
 `GET /collections/<pk>/issues/` mirroring `/issues/`: same parameters, same defaults,
@@ -454,10 +454,35 @@ picture path. `RouteResolver` adds the detail route and the series rows become l
 browser pass: the backend image in use still predates B1/B2, and headless Chromium does
 not paint Flutter images.
 
-**B5 — Close-out.**
+**B5 — Close-out — HECHO 2026-11-26. Phase B is closed.**
 Loading, error and empty states on both screens, the i18n pass with the phase B keys,
 `TablePagination` covered, and a browser pass with an empty collection, a full one and a
 series with no stamps.
+
+*Done:* the browser pass with the real pages and stubbed services found and fixed the
+layout bugs that made the screens unusable:
+- **`Row(wrap=True)` with an `expand` child** leaves Flutter painting its error
+  placeholder (the grey block) over the content. The B3 filters row and the B4 card's
+  content and form rows hit it; the wrappers are gone.
+- The paginator helper was called `_notify`, **the same name Flet uses internally**; it
+  overrode it and broke every property change. Renamed `_dispatch`.
+- `update_state` set the dropdown value, which fired `on_text_change` as if the user had
+  picked a size; a `_syncing` guard stops the reload loop.
+- The paginator called async callbacks synchronously, so the coroutine was dropped and
+  paging did nothing; `_dispatch` now schedules coroutines.
+- `YearRangeSelector` divided by zero with a single year in the catalogue.
+- The empty state distinguishes "no series match these filters" from "this collection
+  has no series yet", and the paginator is hidden when there is nothing to page.
+The visual pass rendered the three screens at 1493x800 with stubbed services (the real
+classes): filters, rows, empty state and the detail with "Your copy" all paint; stamp
+pictures are not painted by the headless renderer here, which is an environment limit
+already noted. Frontend suite **784**, backend unchanged at 1.818.
+
+**What the close-out leaves open**: there is still no way to add the **first** series (or
+stamp) to an empty collection. The series endpoint only lists series the collection
+already holds something of, and the detail adds stamps inside those. It needs its own
+step: a catalogue search from the collection that adds one stamp, which makes its series
+appear. It was out of scope here on purpose.
 
 **Acceptance, per screen**
 
@@ -576,5 +601,10 @@ three figures and the cover in two queries; 21 tests, suite **1.802**.
 (201/404/409), are in; 16 tests, suite **1.818**.
 
 **B3 is done (2026-11-26).** The second screen, the resolver and the clickable cards.
-**B4 is done (2026-11-26) too.** The series detail with "Your copy"; frontend suite
-**775**. Next action: **B5** — the close-out of phase B.
+**B4 is done (2026-11-26).** The series detail with "Your copy".
+
+**B5 is done (2026-11-26) and phase B is closed.** The browser pass found the layout bugs
+(the wrapping rows, the paginator's `_notify` collision, the async callbacks, the
+single-year range) and they are fixed; frontend suite **784**. The plan is closed except
+for one follow-up written down in B5: **a way to add the first stamp/series to an empty
+collection**, which the current screens do not have.

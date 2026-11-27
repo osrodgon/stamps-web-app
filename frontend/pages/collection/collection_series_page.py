@@ -236,11 +236,15 @@ class CollectionSeriesPage(StandardPage):
         )
 
     def _build_filters(self) -> ft.Row:
-        """The name box, the year range and the sort selector."""
+        """The name box, the year range and the sort selector.
+
+        No `wrap`: Flet wraps an `expand` child in an `Expanded`, which is
+        invalid inside a Wrap and leaves Flutter painting its error placeholder
+        over the whole content. The custom text field always carries `expand`.
+        """
         return ft.Row(
             controls=[self._name_field, self._year_selector, self._sort],
             spacing=16,
-            wrap=True,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
@@ -407,8 +411,13 @@ class CollectionSeriesPage(StandardPage):
             for row in rows
         ]
         self._rows_box.visible = bool(rows)
+        self._empty_text.value = (
+            _("collections.empty_series")
+            if self._name_filter or self._year_filter
+            else _("collections.no_series_yet")
+        )
         self._empty_text.visible = not rows
-        self._pagination.visible = True
+        self._pagination.visible = self._total > 0
         self._pagination.update_state(
             page=self._page_number,
             page_size=self._page_size,

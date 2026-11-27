@@ -150,7 +150,10 @@ class YearRangeSelector(ft.Container):
 
     def _year_to_x(self, year: float) -> float:
         """Convert a year value to a pixel x-coordinate."""
-        fraction: float = (year - self._min_year) / (self._max_year - self._min_year)
+        span: int = self._max_year - self._min_year
+        fraction: float = (
+            0.5 if span == 0 else (year - self._min_year) / span
+        )
         return float(self._aura_margin) + fraction * self._track_width()
 
     def _x_to_year(self, x: float) -> int:
@@ -160,7 +163,8 @@ class YearRangeSelector(ft.Container):
             min(float(self._inner_width - self._aura_margin), x),
         )
         fraction: float = (clamped - self._aura_margin) / self._track_width()
-        raw: int = round(self._min_year + fraction * (self._max_year - self._min_year))
+        span: int = self._max_year - self._min_year
+        raw: int = round(self._min_year + fraction * span) if span else self._min_year
         return round(raw / self._step) * self._step
 
     def _notify_change(self) -> None:

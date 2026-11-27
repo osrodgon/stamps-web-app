@@ -1,5 +1,6 @@
 """Unit tests for components/table/table_pagination.py — pagination controls."""
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -197,3 +198,45 @@ class TestOptionsAndLabel:
         assert pagination.content.controls[0].controls[0].value == (
             "Series per page:"
         )
+
+
+class TestCallbacks:
+    """The paginator calls what it is given, sync or async."""
+
+    def test_a_sync_page_callback_is_called(self) -> None:
+        callback = MagicMock()
+        pagination = TablePagination(
+            page=1, page_size=15, total=60, on_page_change=callback
+        )
+        pagination.update = MagicMock()
+
+        pagination._go_next(None)
+
+        callback.assert_called_once_with(2)
+
+    async def test_an_async_page_callback_is_scheduled(self) -> None:
+        called = asyncio.Event()
+
+        async def callback(page: int) -> None:
+            called.set()
+
+        pagination = TablePagination(
+            page=1, page_size=15, total=60, on_page_change=callback
+        )
+        pagination.update = MagicMock()
+
+        pagination._go_next(None)
+
+        await asyncio.wait_for(called.wait(), timeout=1)
+
+    def test_update_state_does_not_fire_the_size_callback(self) -> None:
+        """Setting the dropdown from the page is not the user picking a size."""
+        callback = MagicMock()
+        pagination = TablePagination(
+            page=1, page_size=15, total=60, on_page_size_change=callback
+        )
+        pagination.update = MagicMock()
+
+        pagination.update_state(page=1, page_size=30, total=60)
+
+        callback.assert_not_called()

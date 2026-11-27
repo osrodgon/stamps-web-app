@@ -156,7 +156,7 @@ afirmar nada que las fuentes no sostengan.
 - 5 core files have zero Flet dependency (utils, logger, severity, urls, log_setup)
 - Frontend unit testing plan saved to memory-bank/frontend-testing-plan.md
 - **Inline Multi-Select Color Picker**: Completed and tested. Replaced nested color picker modal dialog with inline Material 3 searchable `ft.Dropdown` (`border=UNDERLINE`, `border_color=GREY_400`, `menu_style=BOTTOM_LEFT`, `menu_height=200`) and removable `ft.Chip` controls. All 651 tests passing.
-- **Normal-user collections (phase A closed, B1–B4 done 2026-11-26, B5 next)**: the three reading screens are
+- **Normal-user collections (phase A and B closed 2026-11-26)**: the three reading screens are
   designed in `memory-bank/user-collections-plan.md` — collections (cards), one collection
   (its series, paginated server-side, 15 per page), one series (catalogue read-only + one
   card per stamp with the «Your copy» block). Mockups in `memory-bank/mockups/`. **A1 is
@@ -178,11 +178,25 @@ afirmar nada que las fuentes no sostengan.
   and its copy, plus adding one (201/404/409); suite **1.818**. **B3 is done too**: the
   route resolver, the clickable cards and the series screen with filters and paginator
   (frontend suite **744**). **B4 is done too**: the series detail with "Your copy"
-  (frontend suite **775**). **Next: B5** (the close-out of phase B), después de mergear B4. Decisions still standing: the series order **mirrors
+  (frontend suite **775**). **B5 is done too**: the close-out fixed the grey-screen
+  layout bugs and phase B is closed (frontend suite **784**). **Open follow-up**: there is
+  no way to add the first stamp/series to an empty collection; needs its own step. Decisions still standing: the series order **mirrors
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
 ## Session Log
+- [Today] Colecciones B5 y **cierre de la fase B**: la pasada en navegador (las páginas
+  reales con servicios stub, 1493×800) encontró los fallos que hacían inutilizables las
+  pantallas. **`Row(wrap=True)` con un hijo con `expand`** deja a Flutter pintando su
+  placeholder de error (el bloque gris): lo sufrían la fila de filtros de B3 y la tarjeta y
+  el formulario de B4; fuera los `wrap`. El helper del paginador se llamaba `_notify`,
+  **el mismo nombre que usa Flet por dentro**, y lo sobrescribía; ahora es `_dispatch`.
+  `update_state` disparaba el callback de tamaño al fijar el desplegable (guardado con
+  `_syncing`), los callbacks async se descartaban (ahora se programan) y el selector de
+  años dividía por cero con un solo año en el catálogo. El estado vacío distingue «no hay
+  series todavía» de «ningún resultado con estos filtros» y el paginador se oculta sin
+  filas. 784 tests del frontend, backend sin tocar. Queda **una cosa abierta**: no hay
+  forma de añadir la primera serie/sello a una colección vacía; necesita su propio paso.
 - [Today] Colecciones B4: **la tercera pantalla y la escritura del ejemplar**. La página
   reutiliza `IssueHeaderSection` e `IssueSpecsGrid` con `hide_action_icons=True`, añade el
   aviso de catálogo de sólo lectura y pinta una `CollectionStampCard` por sello: la copia

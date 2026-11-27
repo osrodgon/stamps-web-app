@@ -137,3 +137,20 @@ class TestTrackWidth:
 
         expected = selector._inner_width - 2 * selector._aura_margin
         assert selector._track_width() == expected
+
+
+class TestSingleYear:
+    """A catalogue with one year is a valid range, not a division by zero."""
+
+    def test_the_selector_builds(self) -> None:
+        selector = YearRangeSelector(min_year=1900, max_year=1900)
+
+        assert selector._year_to_x(1900) == pytest.approx(
+            (selector._aura_margin + selector._inner_width - selector._aura_margin) / 2
+        )
+
+    def test_any_x_reads_that_year(self) -> None:
+        selector = YearRangeSelector(min_year=1900, max_year=1900)
+
+        assert selector._x_to_year(0) == 1900
+        assert selector._x_to_year(500) == 1900
