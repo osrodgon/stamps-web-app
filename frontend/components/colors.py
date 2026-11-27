@@ -54,6 +54,18 @@ RED_DISABLED: str = "#BDBDBD"
 #: Standard body text color (Flet GREY_700).
 GREY_700: str = ft.Colors.GREY_700
 
+# --- Catalogue pills and badges ---
+
+#: Mint-condition pill background and text.
+MINT_BG: str = ft.Colors.GREEN_100
+MINT_INK: str = ft.Colors.GREEN_800
+#: Used-condition pill background and text.
+USED_BG: str = ft.Colors.BLUE_100
+USED_INK: str = ft.Colors.BLUE_800
+#: The read-only catalogue badge.
+AMBER_BG: str = ft.Colors.AMBER_50
+AMBER_INK: str = ft.Colors.AMBER_900
+
 
 # --- Text Field Colors ---
 

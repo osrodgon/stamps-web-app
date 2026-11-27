@@ -941,6 +941,18 @@ when A is merged into `development`.
       match" and the paginator hides with nothing to page. Visual pass of the three
       screens at 1493x800; frontend suite **784**. Open follow-up: add the first
       stamp/series to an empty collection.
+- [x] B4b — **The series detail follows the mockup** (2026-11-27, M): the card is now the
+      mockup's — a 96px plate on `BG_ALT`, the codes/face value/colour beside it, the two
+      catalogue values as green and blue pills, and under a hairline `YOUR COPY` with
+      `Edit` as a link and the six fields as a **grid of two rows of three**; a stamp the
+      user does not own keeps the block dimmed with `Add my copy`. The page gained the
+      `Stamps` head with the summary beside it and the cards in a `ResponsiveRow`, **two
+      per row from `lg`**. New key `collections.stamps_section` and the tones as constants
+      (`MINT_*`, `USED_*`, `AMBER_*`). **Trap**: `CrossAxisAlignment.BASELINE` in a Row of
+      that column collapses the page — Flutter wants a `textBaseline` Flet does not send,
+      and the content is painted shifted upwards with nothing in any log; `CENTER`, pinned
+      by a test. 6 tests; frontend suite **790**; Chromium at 1493 and 1100 with two
+      cards, one, none and the editing form.
 - [ ] Out of scope for now: the catalogue browser with "Select All in Series"
 
 ### Test debt (frontend)

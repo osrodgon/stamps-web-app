@@ -174,7 +174,8 @@
         "sort_date_desc": "Fecha ↓",
         "sort_name": "Nombre",
         "empty_series": "Ninguna serie coincide con estos filtros.",
-        "retry": "Reintentar"
+        "retry": "Reintentar",
+        "stamps_section": "Sellos"
     },
     "pagination": {
         "rows_per_page": "Series por página",

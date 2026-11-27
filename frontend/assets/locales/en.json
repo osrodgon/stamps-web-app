@@ -174,7 +174,8 @@
         "sort_date_desc": "Date ↓",
         "sort_name": "Name",
         "empty_series": "No series match these filters.",
-        "retry": "Retry"
+        "retry": "Retry",
+        "stamps_section": "Stamps"
     },
     "pagination": {
         "rows_per_page": "Issues per page",

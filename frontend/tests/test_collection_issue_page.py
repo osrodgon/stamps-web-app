@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import flet as ft
 import pytest
 
+from core.translations import _
 from pages.collection.collection_issue_page import CollectionIssuePage
 
 
@@ -154,6 +155,28 @@ class TestRender(PageTest):
         view._cards[0].set_item(None)
 
         assert view._summary_text.value.startswith("collections.progress:0/2")
+
+
+class TestLayout(PageTest):
+    """The stamps section of the mockup: a head and two cards per row."""
+
+    def test_the_head_does_not_align_by_baseline(self, view):
+        """`BASELINE` needs a `textBaseline` Flet does not send and collapses the page."""
+        head = view._stamps_head()
+
+        assert head.content.vertical_alignment is not ft.CrossAxisAlignment.BASELINE
+        assert head.content.controls[0].value == _("collections.stamps_section")
+
+    def test_the_cards_are_a_two_column_grid(self, view):
+        view._render(Details.payload())
+
+        cards = view._cards_row
+
+        assert isinstance(cards, ft.ResponsiveRow)
+        assert len(cards.controls) == 2
+        assert all(
+            card.col[ft.ResponsiveRowBreakpoint.LG] == 6 for card in cards.controls
+        )
 
 
 class TestWrites(PageTest):

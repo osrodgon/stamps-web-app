@@ -20,7 +20,8 @@ from components.buttons.link_button import LinkButton
 from components.buttons.primary_button import PrimaryButton
 from components.collection.collection_stamp_card import CollectionStampCard
 from components.colors import (
-    BG_ALT,
+    AMBER_BG,
+    AMBER_INK,
     DARK_BLUE_GREY,
     GREY_700,
     SKY_BLUE,
@@ -28,6 +29,7 @@ from components.colors import (
 from components.constants import (
     CARD_BORDER_RADIUS,
     FONT_SIZE_DEFAULT,
+    FONT_SIZE_SMALL_HEADING,
     FONT_SIZE_XS,
     HEADER_HEIGHT,
     PAGE_PADDING,
@@ -81,7 +83,6 @@ class CollectionIssuePage(StandardPage):
         self._locations: list = []
         self._cards: list[CollectionStampCard] = []
         self._lang: str = get_language()
-
         self.header = self.set_app_header(AppHeader())
         menu = IconButton(
             icon=ft.Icons.MENU,
@@ -130,7 +131,9 @@ class CollectionIssuePage(StandardPage):
         self._summary_text: ft.Text = ft.Text(
             "", size=FONT_SIZE_DEFAULT, color=GREY_700
         )
-        self._cards_column: ft.Column = ft.Column(controls=[], spacing=12)
+        self._cards_row: ft.ResponsiveRow = ft.ResponsiveRow(
+            controls=[], spacing=16, run_spacing=16
+        )
         self._detail_box: ft.Column = ft.Column(
             controls=[], spacing=12, visible=False
         )
@@ -143,7 +146,6 @@ class CollectionIssuePage(StandardPage):
                     self._build_breadcrumb(),
                     self._loading,
                     self._error_box,
-                    self._empty_text,
                     self._detail_box,
                 ],
                 expand=True,
@@ -183,11 +185,34 @@ class CollectionIssuePage(StandardPage):
             content=ft.Text(
                 _("collections.catalogue_readonly"),
                 size=FONT_SIZE_XS,
-                color=GREY_700,
+                color=AMBER_INK,
             ),
             padding=ft.Padding.symmetric(horizontal=10, vertical=4),
-            bgcolor=BG_ALT,
+            bgcolor=AMBER_BG,
             border_radius=CARD_BORDER_RADIUS,
+        )
+
+    def _stamps_head(self) -> ft.Container:
+        """`Stamps` and the summary, as the mockup's section head.
+
+        The alignment is `CENTER` on purpose: `BASELINE` needs a `textBaseline`
+        that Flet does not send, and Flutter reacts by collapsing the page and
+        painting the content offset upwards, with nothing in the log.
+        """
+        return ft.Container(
+            margin=ft.Margin.only(top=14),
+            content=ft.Row(
+                controls=[
+                    ft.Text(
+                        _("collections.stamps_section"),
+                        size=FONT_SIZE_SMALL_HEADING,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    self._summary_text,
+                ],
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
         )
 
     # ------------------------------------------------------------------
@@ -315,7 +340,7 @@ class CollectionIssuePage(StandardPage):
         self._cards = [
             self._card(stamp, issue) for stamp in stamps
         ]
-        self._cards_column.controls = self._cards
+        self._cards_row.controls = self._cards
         self._empty_text.visible = not stamps
         self._detail_box.controls = [
             ft.Row(
@@ -324,16 +349,22 @@ class CollectionIssuePage(StandardPage):
             ),
             IssueHeaderSection(issue, self._lang, hide_action_icons=True),
             IssueSpecsGrid(issue),
-            self._summary_text,
-            self._cards_column,
+            self._stamps_head(),
+            self._empty_text,
+            self._cards_row,
         ]
         self._detail_box.visible = True
         self.main_page.update()
 
     def _card(self, stamp: dict, issue: dict) -> CollectionStampCard:
-        """One stamp card, with the issue's year for the picture's path."""
+        """One stamp card, with the issue's year for the picture's path.
+
+        The cards sit two per row from `lg` (the mockup's 980px breakpoint) and
+        one per row below it. `col` is the only thing the grid needs; the card
+        itself carries no width.
+        """
         prepared = dict(stamp, issue_year=issue.get("year"))
-        return CollectionStampCard(
+        card = CollectionStampCard(
             self.main_page,
             prepared,
             self._lang,
@@ -344,6 +375,11 @@ class CollectionIssuePage(StandardPage):
             on_remove=self._remove_item,
             on_changed=self._refresh_summary,
         )
+        card.col = {
+            ft.ResponsiveRowBreakpoint.XS: 12,
+            ft.ResponsiveRowBreakpoint.LG: 6,
+        }
+        return card
 
     @staticmethod
     def summary_label(owned: int, total: int, paid, lang: str) -> str:

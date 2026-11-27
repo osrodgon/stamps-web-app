@@ -1,13 +1,13 @@
-"""One stamp of a series with the user's copy (plan step B4).
+"""One stamp of a series with the user's copy (plan steps B4 and B5).
 
-The catalogue half is read-only — codes, face value, colours and values — and the
-right-hand block is the only part a normal user can write: condition, quantity, price
-paid, acquisition date, location and note. When they do not own the stamp, the block
-is the `Add my copy` button.
+The card follows the mockup: a plate and the catalogue data on top, and the user's
+copy underneath, separated by a hairline. The catalogue half is read-only —
+codes, face value, colours and values — and the copy is the only part a normal
+user can write.
 
 The card never calls a service: it receives callbacks that return the item the API
-saved (or None), and paints what came back. That keeps a refused write from leaving
-a card that lies.
+saved (or None), and paints what came back. That keeps a refused write from leaving a
+card that lies.
 """
 
 from __future__ import annotations
@@ -23,10 +23,20 @@ from components.buttons.alert_button import AlertButton
 from components.buttons.default_button import DefaultButton
 from components.buttons.link_button import LinkButton
 from components.buttons.primary_button import PrimaryButton
-from components.colors import BG_ALT, DARK_BLUE_GREY, GREY_700, RED, ROW_BORDER
+from components.colors import (
+    BG_ALT,
+    GREY_700,
+    MINT_BG,
+    MINT_INK,
+    RED,
+    ROW_BORDER,
+    USED_BG,
+    USED_INK,
+)
 from components.constants import (
     CARD_BORDER_RADIUS,
-    CARD_PADDING,
+    CARD_SHADOW_BLUR,
+    CARD_SHADOW_OPACITY,
     FONT_SIZE_DEFAULT,
     FONT_SIZE_SMALL_HEADING,
     FONT_SIZE_XS,
@@ -57,8 +67,8 @@ class CollectionStampCard(ft.Container):
         on_changed: called after the item changes, so the page updates the summary.
     """
 
-    PICTURE_SIZE: int = 120
-    COPY_WIDTH: int = 340
+    PLATE_SIZE: int = 96
+    CELLS_PER_ROW: int = 3
 
     def __init__(
         self,
@@ -88,34 +98,73 @@ class CollectionStampCard(ft.Container):
         self._item: Optional[dict] = stamp.get("item")
         self._image: ft.Image = self.__picture_control()
         self._copy_box: ft.Container = ft.Container(
-            width=self.COPY_WIDTH, content=self.__copy_display()
+            content=self.__copy_display(),
+            border=ft.Border(top=ft.BorderSide(1, ROW_BORDER)),
+            margin=ft.Margin.only(top=12),
+            padding=ft.Padding.only(top=12),
         )
 
-        self.content = ft.Row(
+        self.content = ft.Column(
+            controls=[self.__top(), self._copy_box],
+            spacing=0,
+            tight=True,
+        )
+        self.padding = ft.Padding.symmetric(horizontal=16, vertical=14)
+        self.bgcolor = ft.Colors.WHITE
+        self.border = ft.Border.all(1, ROW_BORDER)
+        self.border_radius = CARD_BORDER_RADIUS
+        self.shadow = ft.BoxShadow(
+            blur_radius=CARD_SHADOW_BLUR,
+            color=ft.Colors.with_opacity(CARD_SHADOW_OPACITY, ft.Colors.BLACK),
+            offset=ft.Offset(0, 2),
+        )
+        self.__dim_copy()
+
+    # ------------------------------------------------------------------
+    # Catalogue (read-only)
+    # ------------------------------------------------------------------
+
+    def __top(self) -> ft.Row:
+        """The plate and the catalogue data, side by side."""
+        return ft.Row(
             controls=[
                 ft.Container(
-                    width=self.PICTURE_SIZE,
-                    height=self.PICTURE_SIZE,
+                    width=self.PLATE_SIZE,
+                    height=self.PLATE_SIZE,
                     padding=4,
                     bgcolor=BG_ALT,
                     border_radius=CARD_BORDER_RADIUS,
                     alignment=ft.Alignment.CENTER,
                     content=self._image,
                 ),
-                self.__catalogue(),
-                self._copy_box,
+                ft.Column(
+                    controls=[
+                        ft.Text(
+                            self._stamp.get("name") or "",
+                            size=FONT_SIZE_SMALL_HEADING,
+                            weight=ft.FontWeight.BOLD,
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                        self.__codes(),
+                        self.__data_line(
+                            _("stamps.face_value"),
+                            self._stamp.get("face_value") or "-",
+                        ),
+                        self.__data_line(
+                            _("stamps.color"),
+                            ", ".join(self._stamp.get("color") or []) or "-",
+                        ),
+                        self.__pills(),
+                    ],
+                    spacing=2,
+                    tight=True,
+                    expand=True,
+                ),
             ],
-            spacing=16,
+            spacing=14,
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
-        self.padding = CARD_PADDING
-        self.bgcolor = ft.Colors.WHITE
-        self.border = ft.Border.all(1, ROW_BORDER)
-        self.border_radius = CARD_BORDER_RADIUS
-
-    # ------------------------------------------------------------------
-    # Catalogue (read-only)
-    # ------------------------------------------------------------------
 
     def __picture_control(self) -> ft.Image:
         """The stamp's picture, or the placeholder."""
@@ -134,54 +183,81 @@ class CollectionStampCard(ft.Container):
 
         return ft.Image(
             src=source,
-            width=self.PICTURE_SIZE - 8,
-            height=self.PICTURE_SIZE - 8,
+            width=self.PLATE_SIZE - 8,
+            height=self.PLATE_SIZE - 8,
             fit=ft.BoxFit.CONTAIN,
             opacity=0.55 if faded else 1,
         )
 
-    def __catalogue(self) -> ft.Container:
-        """Codes, face value, colours and the catalogue values."""
-        codes = (
-            f"{_('stamps.fesofi_code')}: {self._stamp.get('fesofi_code') or '-'}"
-            f" · {_('stamps.edifil_code')}: {self._stamp.get('edifil_code') or '-'}"
+    def __codes(self) -> ft.Text:
+        """`FESOFI 0001 · Edifil 1`, with the labels muted."""
+        return ft.Text(
+            spans=[
+                ft.TextSpan(
+                    "FESOFI ",
+                    ft.TextStyle(color=GREY_700, size=FONT_SIZE_XS),
+                ),
+                ft.TextSpan(
+                    f"{self._stamp.get('fesofi_code') or '-'} · ",
+                    ft.TextStyle(size=FONT_SIZE_XS),
+                ),
+                ft.TextSpan(
+                    "Edifil ",
+                    ft.TextStyle(color=GREY_700, size=FONT_SIZE_XS),
+                ),
+                ft.TextSpan(
+                    self._stamp.get("edifil_code") or "-",
+                    ft.TextStyle(size=FONT_SIZE_XS),
+                ),
+            ],
         )
-        colors = ", ".join(self._stamp.get("color") or []) or "-"
-        mint = fmt_currency(self._stamp.get("market_value_mnh"), self._lang)
-        used = fmt_currency(self._stamp.get("market_value_used"), self._lang)
 
+    @staticmethod
+    def __data_line(key: str, value: str) -> ft.Text:
+        """A muted label and its value."""
+        return ft.Text(
+            spans=[
+                ft.TextSpan(
+                    f"{key} ",
+                    ft.TextStyle(color=GREY_700, size=FONT_SIZE_XS),
+                ),
+                ft.TextSpan(str(value), ft.TextStyle(size=FONT_SIZE_XS)),
+            ],
+        )
+
+    def __pills(self) -> ft.Row:
+        """The catalogue values, as the mockup's pills."""
+        return ft.Row(
+            controls=[
+                self.__pill(
+                    _("stamps.mint"),
+                    fmt_currency(self._stamp.get("market_value_mnh"), self._lang),
+                    MINT_BG,
+                    MINT_INK,
+                ),
+                self.__pill(
+                    _("stamps.used"),
+                    fmt_currency(self._stamp.get("market_value_used"), self._lang),
+                    USED_BG,
+                    USED_INK,
+                ),
+            ],
+            spacing=8,
+        )
+
+    @staticmethod
+    def __pill(label: str, value: str, background: str, ink: str) -> ft.Container:
+        """One small coloured pill."""
         return ft.Container(
-            expand=True,
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        self._stamp.get("name") or "",
-                        size=FONT_SIZE_SMALL_HEADING,
-                        weight=ft.FontWeight.BOLD,
-                        max_lines=1,
-                        overflow=ft.TextOverflow.ELLIPSIS,
-                    ),
-                    ft.Text(codes, size=FONT_SIZE_XS, color=GREY_700),
-                    ft.Text(
-                        f"{_('stamps.face_value')}: "
-                        f"{self._stamp.get('face_value') or '-'}",
-                        size=FONT_SIZE_XS,
-                        color=GREY_700,
-                    ),
-                    ft.Text(
-                        f"{_('stamps.color')}: {colors}",
-                        size=FONT_SIZE_XS,
-                        color=GREY_700,
-                    ),
-                    ft.Text(
-                        f"{_('stamps.mint')}: {mint} · {_('stamps.used')}: {used}",
-                        size=FONT_SIZE_XS,
-                        color=DARK_BLUE_GREY,
-                    ),
-                ],
-                spacing=2,
-                tight=True,
+            content=ft.Text(
+                f"{label} {value}",
+                size=FONT_SIZE_XS,
+                weight=ft.FontWeight.W_600,
+                color=ink,
             ),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=2),
+            bgcolor=background,
+            border_radius=6,
         )
 
     # ------------------------------------------------------------------
@@ -207,117 +283,138 @@ class CollectionStampCard(ft.Container):
         self._copy_box.content = (
             self.__copy_form() if self._editing else self.__copy_display()
         )
+        self.__dim_copy()
         try:
             self.update()
         except RuntimeError:
             pass
 
+    def __dim_copy(self) -> None:
+        """A stamp the user does not own is shown dimmed, as the mockup does."""
+        self._copy_box.opacity = 1 if self._item is not None else 0.62
+
     def __copy_display(self) -> ft.Control:
-        """`Your copy` when it exists, or the button to create it."""
+        """The copy's values, the edit link or the button to create it."""
         if self._item is None:
             return ft.Column(
                 controls=[
-                    self.__copy_title(),
                     ft.Text(
                         _("collections.no_copy"),
                         size=FONT_SIZE_XS,
                         color=GREY_700,
                     ),
-                    PrimaryButton(
-                        text=_("collections.add_my_copy"),
-                        icon=ft.Icons.ADD,
-                        on_click=self._add,
-                        expand=False,
+                    LinkButton(
+                        _("collections.add_my_copy"), on_click=self._add
                     ),
                 ],
-                spacing=8,
+                spacing=6,
                 tight=True,
             )
 
         item = self._item
-        condition = (item.get("condition_type") or {}).get("name") or "-"
-        location = (item.get("location") or {}).get("name") or "-"
-        acquired = fmt_date(item.get("acquisition_date") or "", self._lang)
+        values = [
+            (
+                _("collections.condition"),
+                (item.get("condition_type") or {}).get("name") or "-",
+            ),
+            (
+                _("collections.quantity"),
+                str(item.get("quantity") or "-"),
+            ),
+            (
+                _("collections.paid"),
+                fmt_currency(item.get("price_paid"), self._lang),
+            ),
+            (
+                _("collections.acquired"),
+                fmt_date(item.get("acquisition_date") or "", self._lang),
+            ),
+            (
+                _("collections.location"),
+                (item.get("location") or {}).get("name") or "-",
+            ),
+            (_("collections.note"), item.get("note") or "-"),
+        ]
 
         return ft.Column(
             controls=[
-                self.__copy_title(editable=True),
-                self.__line(_("collections.condition"), condition),
-                self.__line(
-                    _("collections.quantity"), str(item.get("quantity") or "-")
-                ),
-                self.__line(
-                    _("collections.paid"),
-                    fmt_currency(item.get("price_paid"), self._lang),
-                ),
-                self.__line(_("collections.acquired"), acquired),
-                self.__line(_("collections.location"), location),
-                self.__line(_("collections.note"), item.get("note") or "-"),
+                self.__caption(),
+                *[
+                    ft.Row(
+                        controls=[
+                            self.__cell(key, value)
+                            for key, value in values[start:start + self.CELLS_PER_ROW]
+                        ],
+                        spacing=12,
+                    )
+                    for start in range(0, len(values), self.CELLS_PER_ROW)
+                ],
             ],
-            spacing=4,
+            spacing=8,
             tight=True,
         )
 
-    def __copy_title(self, editable: bool = False) -> ft.Row:
-        """The block's title and, when there is a copy, its edit link."""
-        controls: list = [
-            ft.Text(
-                _("collections.your_copy"),
-                size=FONT_SIZE_SMALL_HEADING,
-                weight=ft.FontWeight.BOLD,
-            )
-        ]
-        if editable:
-            controls.append(ft.Container(expand=True))
-            controls.append(
-                LinkButton(_("collections.edit"), on_click=self._start_edit)
-            )
+    @staticmethod
+    def __cell(key: str, value: str) -> ft.Column:
+        """One label and its value, in the copy grid."""
+        return ft.Column(
+            controls=[
+                ft.Text(key, size=FONT_SIZE_XS, color=GREY_700),
+                ft.Text(
+                    value,
+                    size=FONT_SIZE_DEFAULT,
+                    max_lines=2,
+                    overflow=ft.TextOverflow.ELLIPSIS,
+                ),
+            ],
+            spacing=0,
+            tight=True,
+            expand=True,
+        )
+
+    def __caption(self) -> ft.Row:
+        """`YOUR COPY` and the edit link."""
         return ft.Row(
-            controls=controls,
+            controls=[
+                ft.Text(
+                    _("collections.your_copy").upper(),
+                    size=FONT_SIZE_XS,
+                    weight=ft.FontWeight.BOLD,
+                    color=GREY_700,
+                ),
+                ft.Container(expand=True),
+                LinkButton(_("collections.edit"), on_click=self._start_edit),
+            ],
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-    @staticmethod
-    def __line(label: str, value: str) -> ft.Row:
-        """One label and its value."""
-        return ft.Row(
-            controls=[
-                ft.Text(label, size=FONT_SIZE_XS, color=GREY_700, width=90),
-                ft.Text(value, size=FONT_SIZE_XS),
-            ],
-            spacing=6,
-            vertical_alignment=ft.CrossAxisAlignment.START,
-        )
-
     def __copy_form(self) -> ft.Control:
-        """The six fields, with save, cancel and remove."""
+        """The six fields, in the same three-column grid, and the actions."""
         self._condition = self.__condition_field()
         self._quantity = ft.TextField(
             label=_("collections.quantity"),
             value=str(self._item.get("quantity") or "")
             if self._item and self._item.get("quantity") is not None
             else "",
-            width=90,
+            expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
         )
         self._paid = ft.TextField(
             label=_("collections.paid"),
             value=self._item.get("price_paid") or "" if self._item else "",
-            width=140,
+            expand=True,
         )
         self._date = DatePickerField(
             page=self._page,
             label=_("collections.acquired"),
             value=self.__date_value(),
-            width=170,
+            expand=True,
         )
         self._location = self.__location_field()
         self._note = ft.TextField(
             label=_("collections.note"),
             value=self._item.get("note") or "" if self._item else "",
-            multiline=True,
-            min_lines=2,
-            max_lines=3,
+            expand=True,
         )
         self._error: ft.Text = ft.Text(
             "", color=RED, size=FONT_SIZE_XS, visible=False
@@ -332,18 +429,7 @@ class CollectionStampCard(ft.Container):
             else None
         )
 
-        actions = [
-            PrimaryButton(
-                text=_("collections.save"),
-                on_click=self._save,
-                expand=False,
-            ),
-            DefaultButton(
-                text=_("collections.cancel"),
-                on_click=self._cancel,
-                expand=False,
-            ),
-        ]
+        actions = []
         if self._item is not None:
             actions.append(
                 AlertButton(
@@ -352,17 +438,39 @@ class CollectionStampCard(ft.Container):
                     expand=False,
                 )
             )
+        actions.extend(
+            [
+                DefaultButton(
+                    text=_("collections.cancel"),
+                    on_click=self._cancel,
+                    expand=False,
+                ),
+                PrimaryButton(
+                    text=_("collections.save"),
+                    on_click=self._save,
+                    expand=False,
+                ),
+            ]
+        )
 
         return ft.Column(
             controls=[
-                self.__copy_title(),
-                ft.Row(controls=[self._condition, self._quantity], spacing=8),
-                ft.Row(controls=[self._paid, self._date], spacing=8),
-                self._location,
-                self._note,
+                self.__caption(),
+                ft.Row(
+                    controls=[self._condition, self._quantity, self._paid],
+                    spacing=12,
+                ),
+                ft.Row(
+                    controls=[self._date, self._location, self._note],
+                    spacing=12,
+                ),
                 *([references_warning] if references_warning is not None else []),
                 self._error,
-                ft.Row(controls=actions, spacing=8),
+                ft.Row(
+                    controls=actions,
+                    spacing=8,
+                    alignment=ft.MainAxisAlignment.END,
+                ),
             ],
             spacing=8,
             tight=True,
@@ -373,7 +481,7 @@ class CollectionStampCard(ft.Container):
         current = (self._item or {}).get("condition_type") or {}
         return ft.Dropdown(
             label=_("collections.condition"),
-            width=170,
+            expand=True,
             value=str(current["id"]) if current.get("id") else None,
             options=[
                 ft.dropdown.Option(
@@ -389,7 +497,7 @@ class CollectionStampCard(ft.Container):
         current = (self._item or {}).get("location") or {}
         return ft.Dropdown(
             label=_("collections.location"),
-            width=250,
+            expand=True,
             value=str(current["id"]) if current.get("id") else None,
             options=[
                 ft.dropdown.Option(key=str(location["id"]), text=location["name"])
