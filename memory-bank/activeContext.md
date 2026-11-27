@@ -188,6 +188,29 @@ afirmar nada que las fuentes no sostengan.
   `/issues/`** with no DataDesk; services are Flet-free; neutral labels; `PUT` for renames
   and item edits. The catalogue browser is a later phase.
 
+## Próximo paso (decidido 2026-11-27)
+
+Fase B cerrada. Lo que queda de colecciones está en **`user-collections-plan.md` §10**:
+
+- **Fase C, añadir sellos a una colección** — el hueco que deja una colección vacía sin
+  puerta de entrada. Un diálogo con tres alcances (un sello, una serie, un año entero) sobre
+  una búsqueda del catálogo, y una escritura en bloque por petición (tope de 500, duplicados
+  omitidos, la copia se crea sólo con colección y sello). Pasos **C0** (mockup del diálogo),
+  **C1** (`POST collections/<pk>/items/bulk/`), **C2** (endpoints de catálogo), **C3**
+  (`CatalogueService`), **C4** (`AddStampsDialog` y sus dos entradas), **C5** (cierre).
+- **B3b-2, aparcado por decisión** y anotado para no perderlo: paginador con números de
+  página del mockup, `h1` a 26 px y la meta al tamaño del diseño. Se retoma cuando usar la
+  app con datos reales diga que molesta.
+
+**C0 hecho (2026-11-27)**: el mockup del diálogo está en
+`memory-bank/mockups/add-stamps-dialog.html`, con los cuatro estados (búsqueda, serie
+desplegada, año entero y confirmación) y un conmutador para verlos; comprobado en Chromium a
+1493x900 con las fotos reales. Lo siguiente es **C1**, el endpoint en bloque, que no depende
+de nada.
+
+Todo vive en `memory-bank/` dentro del repo, así que sobrevive a una reconstrucción del
+devcontainer. **C0 ya está**; seguir por **C1** (backend), que no depende de nada.
+
 ## Session Log
 - [Today] Colecciones B3b, **la lista de series como el mockup**: las filas eran lo único que
   venía del diseño; la cabecera, los filtros y el paginador no. La cabecera gana la línea del

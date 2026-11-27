@@ -33,6 +33,13 @@ At the **very start of every session** (before any tool calls or responses), you
   next to the mockup. The shape of the screen (header, filter card, rows, paginator)
   is what the step is judged on, not only its data. Tests cannot see a screen that
   renders nothing like it was drawn.
+- **A mockup is drawn with the app's own controls and tokens.** `colors.py` and
+  `components/constants.py` are the palette and the radii, and the shapes are the ones
+  Flet will render: the house `TextField` (label above, underline, no box), the house
+  dropdown, `PrimaryButton`/`DefaultButton`/`LinkButton`. A mockup that invents boxed
+  inputs or a second button style cannot be built without a rewrite, and the comparison
+  above then fails on the controls instead of the layout. The three first mockups
+  (overview, series, detail) predate this rule and are kept as they are.
 
 ## Language and GitHub
 

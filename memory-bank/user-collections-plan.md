@@ -681,3 +681,148 @@ three figures and the cover in two queries; 21 tests, suite **1.802**.
 single-year range) and they are fixed; frontend suite **784**. The plan is closed except
 for one follow-up written down in B5: **a way to add the first stamp/series to an empty
 collection**, which the current screens do not have.
+
+## 10. Phase C — Adding stamps to a collection (planned 2026-11-27)
+
+The three reading screens are done, but a collection has **no door in**: the series list
+only shows series the collection already holds something of, and the detail only adds
+copies of stamps of a series that is already there. An empty collection is a dead end —
+seen with the two collections of the dev database, both at 0.
+
+This phase opens that door with three scopes, because entering a collection one stamp at a
+time is not how a collector fills one: **one stamp**, **one series**, or **one whole year**.
+
+### C-decisions
+
+- **One dialog, three scopes.** `Add stamps` opens a search over the catalogue; a result
+  row adds its whole series in one click, expands to its stamps to add one, and when a
+  single year is chosen the dialog offers to add every stamp of that year. The three
+  scopes share one endpoint call shape, so the frontend never loops writes.
+- **The write is one request, one transaction.** Doing N calls to `items/` would be slow and
+  would leave half a series in on a failure. A bulk endpoint takes the scope, resolves it
+  server-side and answers with how many were created and how many were already there.
+- **Adding is not editing.** A new copy gets `collection` and `stamp` only: condition,
+  price, date, location and note are the user's to fill later in the series screen, and
+  inventing defaults would write data nobody typed. `quantity` stays at the model's default.
+- **Duplicates are skipped, not refused.** A series half-owned adds only what is missing and
+  answers `created` and `skipped`; the screen says both. This is not the single-item
+  endpoint's 409, which exists to protect a copy that is there: here the whole point is to
+  complete a set.
+- **A cap, said out loud.** One request adds at most **500 stamps**; a year over that
+  answers 400 `too_many` with the number, and the dialog asks the user to narrow it rather
+  than silently doing half. The frontend shows the count in the confirmation before asking.
+- **Catalogue search is its own endpoint, not a flag on B1.** B1 answers "series I hold
+  something of"; the picker needs the opposite. Two endpoints that read differently and
+  cost the same two queries are clearer than one that changes its filter with a parameter.
+- **The detail of a series the collection does not own yet** needs a catalogue route: B2's
+  `/collections/<pk>/issues/<issue_pk>/` answers 404 when nothing of that series is held,
+  which is right for the reading screen and useless for the picker. The catalogue detail
+  reuses B2's service without the ownership precondition.
+
+### C-contracts
+
+1. `GET /collections/<pk>/catalogue/issues/` — the page of the catalogue, with how much of
+   each series the collection already has. Same parameters and `pagination` block as B1
+   (`name`, `year` with open ends, `sortBy`, `order`, `page`, `pageSize`), plus
+   `owned_stamps` per row. **Two queries**, pinned. 403 without a token, 404 for a foreign
+   collection.
+2. `GET /collections/<pk>/catalogue/issues/<issue_pk>/` — the series with every stamp and
+   its `item` or `null`, and the summary; same shape as B2 and **four queries** (the colour
+   prefetch is the fourth). Any catalogue series, owned or not.
+3. `POST /collections/<pk>/items/bulk/` — body:
+
+   ```json
+   {"scope": "stamp", "ids": [10, 11]}
+   {"scope": "issue", "issue": 42}
+   {"scope": "year", "year": 1850}
+   ```
+
+   One transaction, `bulk_create(ignore_conflicts=True)` over
+   `CollectionItem(collection, stamp)`. Answers `{"created": n, "skipped": n, "total": n}`
+   where `total` is the number of stamps the scope resolves to. 400 for an unknown scope, a
+   missing key, a non-numeric id or more than 500 stamps; 404 when the series or the year
+   holds nothing; 403 for a foreign collection or no token.
+
+### C-steps
+
+| # | Step | Depends on | Size | State |
+|---|---|---|---|---|
+| C0 | Mockup of the dialog (search, series row with both actions, stamp list, year footer, confirmation) | — | S | **done 2026-11-27** |
+| C1 | `POST collections/<pk>/items/bulk/` + tests | — | M | pending |
+| C2 | Catalogue search and catalogue detail endpoints + tests | — | M | pending |
+| C3 | `CatalogueService` in the frontend (Flet-free, JWT) + tests | C2 | S | pending |
+| C4 | `AddStampsDialog` and its entry points + tests | C0, C1, C3 | L | pending |
+| C5 | Close-out: empty state with its button, notifications, browser pass, keys, suites | C4 | S | pending |
+
+**C0 — Mockup — DONE 2026-11-27.** `memory-bank/mockups/add-stamps-dialog.html`, in the same
+language as the three existing ones: a dialog over a dimmed screen, `Add stamps` as its title, the two
+filters, one row per series (cover, year and date, name, `3 of 5 in your collection`), the
+row's two actions (`Add the series`, `Show its stamps`), the stamp list unfolded under a
+row with one `Add` per stamp, a footer that says `Add every stamp of 1850 (214)` when one
+year is chosen, and the confirmation for a big add. Browser-checked at 1493x800 with the
+real stamp pictures. The step exists because the AGENTS rule now says a screen is compared
+with its mockup before it is called done, and this dialog is a screen.
+
+*What the mockup settles, beyond the drawing:* the row's two actions are `Show its stamps`
+(expands the series in place, no second dialog) and `Add the series` / `Add the missing N`
+when some of it is already held, with `Already complete` disabled; a series already whole
+says so instead of hiding; the year action lives in the footer, only when a single year is
+filtered, and carries the count; the confirmation says what the copies arrive **without**
+(condition, price, date, location); and the dialog's own filters are the same two as the
+screen behind, so the vocabulary does not change between them. Four states are in the file
+(search, a series open, a whole year, the confirmation) and each was rendered in Chromium
+at 1493x900 with the real stamp pictures.
+
+*Redrawn on the same day, at the first review:* the first version used the boxed inputs
+and the outlined buttons of the older mockups, which Flet does not render — the app has
+underline fields with the label above and text buttons in `SKY_BLUE`. The file now uses
+`colors.py` and `components/constants.py` (bar, page, line, sky, green, radius 8 for cards
+and 4 for buttons, height 40) and the shapes of `TextField`, the house dropdown,
+`DefaultButton` and `PrimaryButton`, so the dialog can be built without translating it.
+`AGENTS.md` now requires this of every new mockup.
+
+**C1 — Bulk add.** `collections_api/services/collection_items_bulk_service.py`: resolve the
+scope to a queryset of stamps (`stamp` by ids, `issue` by `stamp__issue_id`, `year` by
+`stamp__issue__year__year`), count it, refuse over the cap, `bulk_create` with
+`ignore_conflicts=True`, and answer the three numbers. The count and the insert share one
+transaction so two of them cannot disagree. Tests: each scope, the three numbers, a
+half-owned series (created + skipped), the cap answered as 400 with `too_many`, unknown
+series and empty year as 404, foreign collection as 404, no token as 403, and one query
+count for the insert path.
+
+**C2 — Catalogue endpoints.** `CollectionCatalogueService` with `page()` (all series,
+`owned_stamps` as a `Subquery` so the join is not multiplied, cover like B1, **two
+queries**) and `detail()` (B2's `CollectionIssueDetailService` without the ownership
+precondition; **four queries**). Serializers reuse B1's and B2's shapes. Tests: a series
+the collection holds nothing of appears in the page and in the detail (this is the
+difference with B1/B2), `owned_stamps` counts only this user's items, the filters and the
+order mirror B1, the query counts are pinned, and 403/404 as in C1.
+
+**C3 — `CatalogueService`.** `frontend/services/catalogue_service.py` on `BaseService`,
+Flet-free, token in the constructor, `search_issues`, `get_issue`, `add_stamps`, `add_issue`,
+`add_year`, each one URL in `URLs.Backend`. Tests with `_make_request` mocked: URL, method,
+JWT header, payload, and `None` on a network error.
+
+**C4 — The dialog.** `frontend/components/collection/add_stamps_dialog.py`, built on the
+same pieces as the A5 dialogs (`DefaultButton`/`PrimaryButton`, the house `TextField`, the
+house `Dropdown`): the two filters debounced, the results list, the expandable stamps,
+`Add the series`, `Add`, the year footer, a confirmation past twenty stamps, the API's
+counts in a notification, and a reload of the screen. Opening it: an `Add stamps` button in
+the series screen next to the filters, and the same action in the empty state, which today
+only says "This collection has no series yet". Locale keys (neutral, no plurals) handed
+over for en/es: title, the two filters, `Add the series`, `Show its stamps`, `Add`,
+`Add every stamp of {year} ({count})`, the confirmation question, `{created} added`,
+`{skipped} already there`, `too many` and the retry text.
+
+**C5 — Close-out.** The empty state gains its button and its explanation; after a clean add
+the screen reloads to the first page with the new series visible; the notification says both
+numbers; keys in both languages; suites green; screenshots of the dialog (empty result, a
+series unfolded, a year confirmation) next to C0's mockup.
+
+### Deferred on purpose (recorded so they are not lost)
+
+- **B3b-2, the rest of the series screen's mockup**: `TablePagination` with the mockup's
+  numbered pages (today it is the house paginator, dressed as a card by the page), the `h1`
+  at the mockup's 26px instead of 24 (`FONT_SIZE_HEADING`), and the meta line at the mockup's
+  size. Deferred on 2026-11-27 by decision: revisit when the app is used with real data and
+  one of the three actually bothers. It is not part of phase C.
