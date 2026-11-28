@@ -24,7 +24,7 @@ from components.buttons.alert_button import AlertButton
 from components.buttons.default_button import DefaultButton
 from components.buttons.primary_button import PrimaryButton
 from components.colors import (
-    BG_ALT,
+    DARK_IMG_BG,
     GREY_700,
     MINT_BG,
     MINT_INK,
@@ -134,7 +134,7 @@ class CollectionStampCard(ft.Container):
                     width=self.PLATE_SIZE,
                     height=self.PLATE_SIZE,
                     padding=4,
-                    bgcolor=BG_ALT,
+                    bgcolor=DARK_IMG_BG,
                     border_radius=CARD_BORDER_RADIUS,
                     alignment=ft.Alignment.CENTER,
                     content=self._image,

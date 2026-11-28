@@ -28,7 +28,11 @@
     background: var(--bar); color: #fff;
   }
   .bar .menu { font-size: 22px; opacity: .9; }
-  .bar .title { font-weight: 700; font-size: 20px; }
+  /* the path lives in the header (D1): 14px, links in a light blue */
+  .bar .title { font-weight: 400; font-size: 20px; display: flex; align-items: center; gap: 6px; }
+  .bar .title a { color: #90caf9; text-decoration: none; }
+  .bar .title b { color: #fff; font-weight: 700; }
+  .bar .title .sep { color: #b0bec5; }
 
   main { max-width: 1240px; margin: 0 auto; padding: 24px 24px 48px; }
 
@@ -62,7 +66,7 @@
   .list { display: flex; flex-direction: column; gap: 10px; }
   .row {
     display: grid;
-    grid-template-columns: 64px minmax(220px, 1.6fr) minmax(180px, 1fr) 150px 130px 24px;
+    grid-template-columns: 64px minmax(220px, 1.6fr) minmax(180px, 1fr) 150px 130px 24px 28px;
     align-items: center; gap: 16px;
     padding: 12px 16px;
     background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -71,7 +75,7 @@
   .row:hover { box-shadow: 0 6px 18px rgba(16, 24, 40, .14); }
   .thumb {
     display: grid; place-items: center;
-    width: 64px; height: 56px; border-radius: 4px; background: #eef1f4;
+    width: 64px; height: 56px; border-radius: 4px; background: #313131;
     overflow: hidden;
   }
   .thumb img { max-height: 50px; max-width: 58px; }
@@ -90,6 +94,8 @@
   .money .value { font-weight: 600; font-variant-numeric: tabular-nums; }
   .money .value.muted { font-weight: 400; color: var(--muted); }
   .chev { color: #b6c0cc; font-size: 18px; }
+  .bin { color: #616161; font-size: 16px; cursor: pointer; background: none; border: 0; }
+  .bin:hover { color: #d32f2f; }
 
   /* --- pagination ------------------------------------------------------ */
   .pager {
@@ -114,11 +120,10 @@
 
 <header class="bar">
   <span class="menu">☰</span>
-  <span class="title">Collections</span>
+  <span class="title"><a href="#">Collections</a><span class="sep">›</span><b>Isabel II</b></span>
 </header>
 
 <main>
-  <div class="crumbs"><a href="#">Collections</a> / <b>Isabel II</b></div>
   <div class="head">
     <h1>Isabel II</h1>
     <span class="meta">3 series · 14 stamps · 1,240.00 € paid</span>
@@ -169,6 +174,7 @@
         <div class="value muted">24,850.00 €</div>
       </div>
       <div class="chev">›</div>
+      <button class="bin" title="Remove from the collection">🗑</button>
     </article>
 
     <article class="row">
@@ -191,6 +197,7 @@
         <div class="value muted">48,527.50 €</div>
       </div>
       <div class="chev">›</div>
+      <button class="bin" title="Remove from the collection">🗑</button>
     </article>
 
     <article class="row">
@@ -213,6 +220,7 @@
         <div class="value muted">7,627.50 €</div>
       </div>
       <div class="chev">›</div>
+      <button class="bin" title="Remove from the collection">🗑</button>
     </article>
   </section>
 

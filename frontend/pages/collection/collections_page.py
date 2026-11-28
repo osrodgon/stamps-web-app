@@ -34,6 +34,8 @@ from components.form.dialogs.collection_form import (
 )
 from components.layout.app_drawer import AppDrawer
 from components.layout.app_header import AppHeader
+from components.layout.header_crumbs import HeaderCrumbs
+from core.collection_names import CollectionNames
 from components.templates.standard_page import StandardPage
 from core.severity import Severity
 from core.translations import _, get_language
@@ -75,14 +77,20 @@ class CollectionsPage(StandardPage):
             bgcolor=DARK_BLUE_GREY,
             on_click=self.menu_clicked,
         )
-        title = ft.Text(
-            _("collections.title"),
-            color=ft.Colors.WHITE,
-            font_family="Roboto-Bold",
-            size=20,
-        )
+        #: The root of the path, in the same place the deeper screens use it.
+        self._crumbs: HeaderCrumbs = HeaderCrumbs([(_("collections.title"), None)])
         self.header.add_left(menu)
-        self.header.add_left(title)
+        self.header.center_area.alignment = ft.MainAxisAlignment.START
+        self.header.add_center(self._crumbs)
+        # The action lives in the header, as the admin's "add issue" does.
+        self.header.add_right(
+            IconButton(
+                icon=ft.Icons.ADD,
+                bgcolor=DARK_BLUE_GREY,
+                on_click=self._handle_new,
+                tooltip=_("collections.new"),
+            )
+        )
 
         self.drawer = AppDrawer(on_logout=self.request_logout)
 
@@ -126,23 +134,9 @@ class CollectionsPage(StandardPage):
     # ------------------------------------------------------------------
 
     def _build_toolbar(self) -> ft.Row:
-        """The screen's title, how many collections there are, and the button."""
+        """How many collections there are; title and action live in the header."""
         return ft.Row(
-            controls=[
-                ft.Text(
-                    _("collections.your_collections"),
-                    size=FONT_SIZE_HEADING,
-                    weight=ft.FontWeight.BOLD,
-                ),
-                self._count,
-                ft.Container(expand=True),
-                PrimaryButton(
-                    text=_("collections.new"),
-                    icon=ft.Icons.ADD,
-                    on_click=self._handle_new,
-                    expand=False,
-                ),
-            ],
+            controls=[self._count, ft.Container(expand=True)],
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=12,
         )
@@ -235,8 +229,14 @@ class CollectionsPage(StandardPage):
         self._render()
 
     def _render(self) -> None:
-        """Paint the cards, the count and the empty state."""
+        """Paint the cards, the count and the empty state.
+
+        Every name listed here is kept, so the deeper screens do not have to ask for
+        it again when they open (and do not paint an empty breadcrumb first).
+        """
         self._lang = get_language()
+        for row in self._collections:
+            CollectionNames.remember(row.get("id"), row.get("name") or "")
         self._count.value = self.count_label(len(self._collections))
         self._grid.controls = [self._card(row) for row in self._collections]
         self._grid.visible = bool(self._collections)
@@ -291,6 +291,8 @@ class CollectionsPage(StandardPage):
         """Ask before deleting one collection."""
         if self._service is None:
             return
+        # Its name is remembered for the header; a deleted one is not asked again.
+        CollectionNames.forget(collection.get("id") or 0)
         CollectionDeleteDialog(
             self.main_page,
             self._service,

@@ -33,6 +33,12 @@ class IssueHeaderSection(ft.Container):
         on_delete_click: Fired when the delete icon is clicked.
         on_save_click: Fired when the save icon is clicked.
         on_cancel_click: Fired when the cancel icon is clicked.
+        hide_action_icons: Leaves the admin's four icons out.
+        trailing: Controls that take the place of those icons, at the height of
+            the name and to the right. The collection detail puts its arrows and
+            its bin here (plan D2).
+        subtitle_trailing: Controls that go at the end of the date line. The
+            collection detail puts its read-only chip here.
     """
 
     def __init__(
@@ -44,6 +50,8 @@ class IssueHeaderSection(ft.Container):
         on_save_click: Optional[Callable] = None,
         on_cancel_click: Optional[Callable] = None,
         hide_action_icons: bool = False,
+        trailing: Optional[list[ft.Control]] = None,
+        subtitle_trailing: Optional[list[ft.Control]] = None,
     ) -> None:
         super().__init__()
         self._issue: dict = issue
@@ -53,6 +61,8 @@ class IssueHeaderSection(ft.Container):
         self._on_save_click: Optional[Callable] = on_save_click
         self._on_cancel_click: Optional[Callable] = on_cancel_click
         self._hide_action_icons: bool = hide_action_icons
+        self._trailing: list[ft.Control] = trailing or []
+        self._subtitle_trailing: list[ft.Control] = subtitle_trailing or []
 
         self._original_name: str = self._issue.get("name") or _("ui.no_text_value")
         raw_mint = self._issue.get("market_value_mnh")
@@ -101,12 +111,43 @@ class IssueHeaderSection(ft.Container):
             visible=visible,
         )
 
+    def __subtitle(self) -> ft.Control:
+        """The date, alone unless something travels with it.
+
+        The collection detail adds its read-only chip here; the admin keeps the
+        plain date it always had, so its layout does not change.
+        """
+        if not self._subtitle_trailing:
+            return self._date_container
+        return ft.Row(
+            controls=[
+                self._date_container,
+                ft.Container(expand=True),
+                *self._subtitle_trailing,
+            ],
+            spacing=8,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
     def _build_name_control(self) -> ft.Container:
+        """The series' name, on one line and cut with an ellipsis when it is long.
+
+        It is a *loose* flex child: it takes what it needs up to its share and the
+        name truncates instead of pushing the badges and the actions out of the
+        row. With a short name it keeps its size, so the pills stay where they
+        were (plan D7).
+        """
         return ft.Container(
+            expand=True,
+            expand_loose=True,
+            alignment=ft.Alignment.CENTER_LEFT,
             content=ft.Text(
                 self._original_name,
                 size=FONT_SIZE_XLARGE,
                 font_family="Roboto-Black",
+                max_lines=1,
+                overflow=ft.TextOverflow.ELLIPSIS,
+                tooltip=self._original_name,
             ),
         )
 
@@ -167,20 +208,24 @@ class IssueHeaderSection(ft.Container):
                         self._name_container,
                         self._badges_row,
                         ft.Row(
-                            controls=[
-                                self._edit_icon,
-                                self._save_icon,
-                                self._cancel_icon,
-                                self._delete_icon,
-                            ],
+                            controls=(
+                                self._trailing
+                                if self._trailing
+                                else [
+                                    self._edit_icon,
+                                    self._save_icon,
+                                    self._cancel_icon,
+                                    self._delete_icon,
+                                ]
+                            ),
                             alignment=ft.MainAxisAlignment.END,
-                            spacing=0,
+                            spacing=4,
                         ),
                     ],
                     spacing=16,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
-                self._date_container,
+                self.__subtitle(),
             ],
             spacing=4,
         )

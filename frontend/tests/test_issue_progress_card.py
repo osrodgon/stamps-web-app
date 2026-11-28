@@ -7,6 +7,7 @@ chose, the progress it shows and the two figures.
 from unittest.mock import patch
 
 from components.collection.issue_progress_card import IssueProgressCard
+from core.translations import _
 from components.table.column_def import fmt_currency
 from settings import NO_STAMP
 
@@ -118,7 +119,7 @@ class TestFigures:
     @staticmethod
     def __texts(row: IssueProgressCard) -> list[str]:
         """Every text the row painted."""
-        figures = row.content.controls[3]
+        figures = row.content.controls[0].content.controls[3]
         return [
             control.value
             for figure in figures.controls
@@ -127,17 +128,42 @@ class TestFigures:
 
 
 class TestLink:
-    """The row is a link when the page gives it a handler."""
+    """The columns are the link; the bin is outside it, so it cannot open."""
 
     def test_it_is_not_clickable_without_a_handler(self):
         row = Rows.build(Rows.data())
 
-        assert row.on_click is None
+        assert row._open_area.on_click is None
 
     def test_it_opens_the_series(self):
         opened = []
 
         row = IssueProgressCard(Rows.data(), "en", on_open=opened.append)
-        row.on_click(None)
+        row._open_area.on_click(None)
 
         assert opened == [1]
+
+    def test_the_bin_is_only_there_when_the_page_asks(self):
+        plain = Rows.build(Rows.data())
+        with_bin = IssueProgressCard(
+            Rows.data(), "en", on_open=lambda _id: None, on_remove=lambda _row: None
+        )
+
+        assert plain._remove_icon is None
+        assert with_bin._remove_icon is not None
+        assert with_bin._remove_icon.tooltip == _("collections.remove_series")
+
+    def test_the_bin_reports_the_row_and_does_not_open_it(self):
+        removed = []
+        opened = []
+
+        row = IssueProgressCard(
+            Rows.data(),
+            "en",
+            on_open=opened.append,
+            on_remove=removed.append,
+        )
+        row._remove_icon.on_click(None)
+
+        assert removed == [Rows.data()]
+        assert opened == []

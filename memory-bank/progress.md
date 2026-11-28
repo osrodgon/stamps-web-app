@@ -1055,6 +1055,45 @@ when A is merged into `development`.
         copy form uses the house `TextField`/`Dropdown`, and the unavailable-references message
         no longer says "could not be loaded" when the tables are simply empty. 5 tests;
         frontend suite **841**.
+- [x] **D1 — the path in the header** (2026-11-28, S): `HeaderCrumbs` moves the breadcrumb
+      into the dark bar **at the 20px the title had** (links `BLUE_200`, the current screen
+      white and bold), in the header's centre area — the part that stretches — with the last
+      step taking the leftover width so a long name truncates with ellipsis and tooltip. The
+      three collection screens lose the content row it used to take, the overview shows a
+      single step, and `LinkButton` gained `color` for the header's lighter blue. The header
+      also took the screen's action: **`New collection` moved from the toolbar to
+      `right_area`** as the admin's add-issue icon, and the "Your collections" title left the
+      body (the row keeps only the count).
+- [x] **D2 — the series' actions at the height of its name** (2026-11-28, S):
+      `IssueHeaderSection` gained `trailing` and `subtitle_trailing`; the detail puts
+      `‹ n / total ›` and the bin there, right-aligned with the title, and the read-only chip
+      travels with the date. The badge row disappeared.
+- [x] **D3 — removing a series from the list** (2026-11-28, S): every row carries a bin
+      (`ActionIcon`, grey → red) **outside the clickable area** — the five columns are the
+      link — so it cannot open the series; the confirm dialog moved to
+      `components/collection/remove_series_dialog.py` and is shared by the list and the
+      detail. Checked in Chromium: the bin opens the question and the URL does not change.
+- [x] **D4 — the plate behind a stamp is dark** (2026-11-28, XS): `DARK_IMG_BG` (#313131)
+      replaces `BG_ALT` behind every stamp picture — the list thumbnails, the detail card's
+      plate, the dialog's covers and stamps and the collection card's collage — because the
+      files are RGBA and a white stamp frame vanishes against a light plate.
+      Mockups of the list, the detail and the overview updated with D1–D4. Frontend suite
+      **874**.
+- [x] **D6 — the collection's name is not asked for again** (2026-11-28, XS):
+      `core/collection_names.py` keeps `{id: name}` for the life of the process: the overview
+      remembers every name it lists, the series screen the one it opens, and the series detail
+      reads it **before** asking the API, so moving between series (or clicking the collection
+      in the breadcrumb) paints the header complete on the first frame and costs no extra
+      request — measured in Chromium: **zero** `/collections/` calls while walking a series
+      with `‹`/`›`. A miss still falls back to the request it always made, and a deleted
+      collection is forgotten. 12 tests; frontend suite **886**.
+- [x] **D7 — the series' name in its row is cut with an ellipsis** (2026-11-28, XS): the
+      detail's title row carries the name, the three values, the arrows, the counter and the
+      bin; a long name pushed them. The name is now a **loose flex child** (`expand_loose`)
+      with `max_lines=1`, ellipsis and tooltip, so it truncates and the rest stays put — with a
+      short name the layout is the one it had. Seen in Chromium with «Bicentenario de la
+      Constitución de los Estados Unidos»: `Bicentenario de la Constitución de los E…`, and the
+      pills, `6.000.000`, `‹ 11 / 28 ›` and the bin in place. 1 test; frontend suite **887**.
 - [ ] **B3b-2 — what the series screen still owes its mockup** (deferred 2026-11-27 by
       decision, revisit with real data): the mockup's **numbered paginator** (`TablePagination`
       is the house one, only dressed as a card today), the `h1` at the mockup's **26px**

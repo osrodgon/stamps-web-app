@@ -12,6 +12,7 @@ import pytest
 
 from components.buttons.primary_button import PrimaryButton
 from components.constants import PAGE_SCROLL_GUTTER
+from core.collection_names import CollectionNames
 from components.form.dropdown import Dropdown as HouseDropdown
 from core.translations import _
 from pages.collection.collection_series_page import CollectionSeriesPage
@@ -63,9 +64,9 @@ class TestConstruction(PageTest):
         assert view._collection_id == 7
         assert view._sort_key == CollectionSeriesPage.DEFAULT_SORT
 
-    def test_the_header_has_no_separator(self, view):
-        assert len(view.header.left_area.controls) == 2
-        assert view.header.right_area.controls == []
+    def test_the_header_carries_the_menu_and_the_path(self, view):
+        assert len(view.header.left_area.controls) == 1
+        assert view.header.center_area.controls == [view._crumbs]
 
     def test_the_content_scrolls_in_a_list_with_a_gutter(self, view):
         """A list, not a column: its right padding is where the scrollbar floats."""
@@ -131,17 +132,33 @@ class TestYearFilter(PageTest):
         assert CollectionSeriesPage.year_filter("1850", "x") == "1850-"
 
 
-class TestBreadcrumb(PageTest):
-    """A tight link, an even separator and the name in bold, as the mockup."""
+class TestCrumbs(PageTest):
+    """The path lives in the header, not in a row of the page (plan D1)."""
 
-    def test_the_link_is_not_underlined_and_has_no_padding(self, view):
-        link = view._build_breadcrumb().controls[0]
+    def test_the_header_carries_it_in_the_middle(self, view):
+        """The middle is the space that stretches, so the names can truncate."""
+        assert view.header.center_area.controls == [view._crumbs]
 
-        assert link.style.padding == ft.Padding.all(0)
-        assert link.style.text_style.decoration == ft.TextDecoration.NONE
+    def test_a_remembered_name_is_there_from_the_start(self, page):
+        """Coming back from a series does not paint the header empty first."""
+        CollectionNames.remember(7, "Test")
 
-    def test_the_name_is_bold(self, view):
-        assert view._crumb_name.weight == ft.FontWeight.BOLD
+        view = CollectionSeriesPage(
+            page, 7, collection_service=MagicMock(), item_service=MagicMock()
+        )
+
+        assert view._crumbs.text(1) == "Test"
+
+    def test_the_collection_fills_the_last_step(self, view):
+        view._crumbs.set_text(1, "Isabel II")
+
+        assert view._crumbs.text(1) == "Isabel II"
+
+    def test_the_current_step_is_white_and_bold(self, view):
+        label = view._crumbs._steps[1]
+
+        assert label.weight == ft.FontWeight.BOLD
+        assert label.color == ft.Colors.WHITE
 
 
 class TestEmptyState(PageTest):
@@ -234,7 +251,8 @@ class TestRender(PageTest):
         assert view._rows_box.visible is True
         assert view._empty_text.visible is False
         assert view._pagination.visible is True
-        assert view._rows_column.controls[0].on_click is not None
+        assert view._rows_column.controls[0]._open_area.on_click is not None
+        assert view._rows_column.controls[0]._remove_icon is not None
 
     def test_an_empty_page_shows_the_empty_state(self, view, mocker):
         mocker.patch(
@@ -277,7 +295,8 @@ class TestCollectionLoading(PageTest):
         await view._load_collection()
 
         assert view._name_text.value == "Isabel II"
-        assert view._crumb_name.value == "Isabel II"
+        assert view._crumbs.text(1) == "Isabel II"
+        assert CollectionNames.get(7) == "Isabel II"
         assert view._collection is not None
 
     async def test_a_missing_collection_goes_back_to_the_list(self, view):

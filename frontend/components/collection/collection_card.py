@@ -16,7 +16,7 @@ from typing import Callable, List, Optional, Tuple
 
 import flet as ft
 
-from components.colors import BG_ALT, GREY_700, ROW_BORDER, SKY_BLUE
+from components.colors import BG_ALT, DARK_IMG_BG, GREY_700, ROW_BORDER, SKY_BLUE
 from components.constants import (
     CARD_BORDER_RADIUS,
     CARD_PADDING,
@@ -140,7 +140,7 @@ class CollectionCard(ft.Container):
             content=collage,
             height=self.COVER_HEIGHT,
             padding=self.COVER_PADDING,
-            bgcolor=BG_ALT,
+            bgcolor=DARK_IMG_BG,
             border=ft.Border(bottom=ft.BorderSide(1, ROW_BORDER)),
             alignment=ft.Alignment.CENTER,
         )
